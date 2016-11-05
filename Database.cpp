@@ -93,6 +93,30 @@ void Database::consume(const Symbol &s) {
         return;
 }
 
+bool Database::purge(const char *path) {
+    assert(path != nullptr);
+
+    if (m_delete == nullptr) {
+        if (sqlite3_prepare_v2(m_db, "delete from symbols where path = @path;",
+                -1, &m_delete, nullptr) != SQLITE_OK)
+            return false;
+    } else {
+        if (sqlite3_reset(m_delete) != SQLITE_OK)
+            return false;
+    }
+
+    int index = sqlite3_bind_parameter_index(m_delete, "@path");
+    assert(index != 0);
+    if (sqlite3_bind_text(m_delete, index, path, -1, SQLITE_STATIC)
+            != SQLITE_OK)
+        return false;
+
+    if (sqlite3_step(m_delete) != SQLITE_DONE)
+        return false;
+
+    return true;
+}
+
 Database::~Database() {
     if (m_db)
         close();
