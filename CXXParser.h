@@ -4,12 +4,12 @@
 #include "Parser.h"
 #include "Symbol.h"
 
-class CPPParser : public Parser {
+class CXXParser : public Parser {
 
 public:
 
-    CPPParser();
-    ~CPPParser();
+    CXXParser();
+    ~CXXParser();
 
     /* Load a new file. Automatically unloads any currently loaded file. Returns
      * true on success.

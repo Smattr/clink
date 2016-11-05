@@ -13,13 +13,13 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
 
 using namespace std;
 
-CPPParser::CPPParser(void)
+CXXParser::CXXParser(void)
         : m_tu(nullptr), m_path(nullptr) {
     m_index = clang_createIndex(0 /* include PCH */,
         0 /* exclude diagnostics */);
 }
 
-bool CPPParser::load(const char *path) {
+bool CXXParser::load(const char *path) {
 
     // Unload any currently loaded file.
     if (m_tu) unload();
@@ -35,7 +35,7 @@ bool CPPParser::load(const char *path) {
     return m_tu != nullptr;
 }
 
-void CPPParser::unload() {
+void CXXParser::unload() {
     assert(m_tu != nullptr);
     clang_disposeTranslationUnit(m_tu);
     m_tu = nullptr;
@@ -43,7 +43,7 @@ void CPPParser::unload() {
     m_path = nullptr;
 }
 
-CPPParser::~CPPParser() {
+CXXParser::~CXXParser() {
     if (m_tu) unload();
     clang_disposeIndex(m_index);
 }
@@ -143,7 +143,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
     return CXChildVisit_Continue;
 }
 
-void CPPParser::process(SymbolConsumer &consumer) {
+void CXXParser::process(SymbolConsumer &consumer) {
     assert(m_tu != nullptr);
     CXCursor cursor = clang_getTranslationUnitCursor(m_tu);
     clang_visitChildren(cursor, visitor, &consumer);

@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    CPPParser parser;
+    CXXParser parser;
     if (!parser.load("foo.cpp")) {
         cerr << "failed to load foo.cpp\n";
         return EXIT_FAILURE;
