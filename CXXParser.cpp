@@ -6,7 +6,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
     CXClientData data);
 
 #include <assert.h>
-#include "CPPParser.h"
+#include "CXXParser.h"
 #include <iostream>
 #include <string.h>
 #include "Symbol.h"
