@@ -1,11 +1,10 @@
 #pragma once
 
 typedef enum {
-    ST_FUNCTION_DEFINITION,
+    ST_DEFINITION,
     ST_FUNCTION_CALL,
-    ST_STRUCT_DEFINITION,
-    ST_VARIABLE_DEFINITION,
-    ST_TYPE_DEFINITION,
+    ST_REFERENCE,
+    ST_INCLUDE,
 
     ST_RESERVED,
 } symbol_category_t;

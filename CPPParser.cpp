@@ -59,7 +59,50 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
     symbol_category_t category;
     switch (kind) {
         case CXCursor_StructDecl:
-            category = ST_STRUCT_DEFINITION;
+        case CXCursor_UnionDecl:
+        case CXCursor_ClassDecl:
+        case CXCursor_EnumDecl:
+        case CXCursor_FieldDecl:
+        case CXCursor_EnumConstantDecl:
+        case CXCursor_FunctionDecl:
+        case CXCursor_VarDecl:
+        case CXCursor_ParmDecl:
+        case CXCursor_TypedefDecl:
+        case CXCursor_CXXMethod:
+        case CXCursor_Namespace:
+        case CXCursor_Constructor:
+        case CXCursor_Destructor:
+        case CXCursor_ConversionFunction:
+        case CXCursor_TemplateTypeParameter:
+        case CXCursor_NonTypeTemplateParameter:
+        case CXCursor_TemplateTemplateParameter:
+        case CXCursor_FunctionTemplate:
+        case CXCursor_ClassTemplate:
+        case CXCursor_ClassTemplatePartialSpecialization:
+        case CXCursor_NamespaceAlias:
+        case CXCursor_TypeAliasDecl:
+        case CXCursor_MacroDefinition:
+            category = ST_DEFINITION;
+            break;
+        case CXCursor_CallExpr:
+            category = ST_FUNCTION_CALL;
+            break;
+        case CXCursor_UsingDirective:
+        case CXCursor_UsingDeclaration:
+        case CXCursor_TypeRef:
+        case CXCursor_TemplateRef:
+        case CXCursor_NamespaceRef:
+        case CXCursor_MemberRef:
+        case CXCursor_LabelRef:
+        case CXCursor_OverloadedDeclRef:
+        case CXCursor_VariableRef:
+        case CXCursor_DeclRefExpr:
+        case CXCursor_MemberRefExpr:
+        case CXCursor_CXXThisExpr:
+            category = ST_REFERENCE;
+            break;
+        case CXCursor_InclusionDirective:
+            category = ST_INCLUDE;
             break;
         default:
             category = ST_RESERVED;
