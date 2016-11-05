@@ -1,4 +1,4 @@
-# Clink - the sound of code navigation
+# Clink — the sound of code navigation
 
 Wait and see...
 

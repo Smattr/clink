@@ -15,11 +15,21 @@ static void usage(const char *progname) {
          << " --file FILE | -f FILE    database to use (.clink.db by default)\n";
 }
 
+typedef enum {
+    UI_NONE,
+    UI_CURSES,
+    UI_LINE,
+} ui_t;
+
 /* Default options. */
 static struct {
     const char *database;
+    bool update_database;
+    ui_t ui;
 } opts = {
     .database = default_database,
+    .update_database = true,
+    .ui = UI_CURSES,
 };
 
 static void parse_options(int argc, char **argv) {
@@ -30,14 +40,26 @@ static void parse_options(int argc, char **argv) {
         };
 
         int index = 0;
-        int c = getopt_long(argc, argv, "f:", options, &index);
+        int c = getopt_long(argc, argv, "bdf:l", options, &index);
 
         if (c == -1)
             break;
 
         switch (c) {
+            case 'b':
+                opts.ui = UI_NONE;
+                break;
+
+            case 'd':
+                opts.update_database = false;
+                break;
+
             case 'f':
                 opts.database = optarg;
+                break;
+
+            case 'l':
+                opts.ui = UI_LINE;
                 break;
 
             default:
