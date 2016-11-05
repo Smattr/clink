@@ -10,10 +10,10 @@ typedef enum {
 } symbol_category_t;
 
 struct Symbol {
-    symbol_category_t m_category;
-    const char *m_name;
-    const char *m_path;
-    unsigned lineno;
+    const char *name;
+    const char *path;
+    symbol_category_t category;
+    unsigned line;
     unsigned col;
 };
 

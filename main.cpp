@@ -6,12 +6,6 @@
 
 using namespace std;
 
-class Printer : public SymbolConsumer {
-    void consume (const Symbol &s) override {
-        cout << s.m_name << " in " << s.m_path << "\n";
-    }
-};
-
 static const char default_database[] = ".clink.db";
 
 int main() {
@@ -28,8 +22,7 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    Printer printer;
-    parser.process(printer);
+    parser.process(db);
 
     return EXIT_SUCCESS;
 }

@@ -5,8 +5,8 @@
 #include <unistd.h>
 
 static const char SYMBOLS_SCHEMA[] = "create table if not exists symbols (name "
-    "text not null, type integer not null, line integer not null, col integer "
-    "not null);";
+    "text not null, path text not null, category integer not null, line "
+    "integer not null, col integer not null);";
 
 static int init(sqlite3 *db) {
     assert(db != nullptr);
@@ -42,9 +42,55 @@ bool Database::open(const char *path) {
 
 void Database::close() {
     if (m_db) {
+        if (m_insert)
+            sqlite3_finalize(m_insert);
         sqlite3_close(m_db);
         m_db = nullptr;
     }
+}
+
+void Database::consume(const Symbol &s) {
+    assert(m_db != nullptr);
+
+    if (m_insert == nullptr) {
+        if (sqlite3_prepare_v2(m_db, "insert into symbols (name, path, "
+                "category, line, col) values (@name, @path, @category, "
+                "@line, @col);", -1, &m_insert, nullptr) != SQLITE_OK)
+            return;
+    } else {
+        if (sqlite3_reset(m_insert) != SQLITE_OK)
+            return;
+    }
+
+    int index = sqlite3_bind_parameter_index(m_insert, "@name");
+    assert(index != 0);
+    if (sqlite3_bind_text(m_insert, index, s.name, -1, SQLITE_STATIC)
+            != SQLITE_OK)
+        return;
+
+    index = sqlite3_bind_parameter_index(m_insert, "@path");
+    assert(index != 0);
+    if (sqlite3_bind_text(m_insert, index, s.path, -1, SQLITE_STATIC)
+            != SQLITE_OK)
+        return;
+
+    index = sqlite3_bind_parameter_index(m_insert, "@category");
+    assert(index != 0);
+    if (sqlite3_bind_int(m_insert, index, s.category) != SQLITE_OK)
+        return;
+
+    index = sqlite3_bind_parameter_index(m_insert, "@line");
+    assert(index != 0);
+    if (sqlite3_bind_int(m_insert, index, s.line) != SQLITE_OK)
+        return;
+
+    index = sqlite3_bind_parameter_index(m_insert, "@col");
+    assert(index != 0);
+    if (sqlite3_bind_int(m_insert, index, s.col) != SQLITE_OK)
+        return;
+
+    if (sqlite3_step(m_insert) != SQLITE_DONE)
+        return;
 }
 
 Database::~Database() {
