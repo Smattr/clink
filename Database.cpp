@@ -6,7 +6,8 @@
 
 static const char SYMBOLS_SCHEMA[] = "create table if not exists symbols (name "
     "text not null, path text not null, category integer not null, line "
-    "integer not null, col integer not null);";
+    "integer not null, col integer not null, unique(name, path, category, "
+    "line, col));";
 
 static int init(sqlite3 *db) {
     assert(db != nullptr);
