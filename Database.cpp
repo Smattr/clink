@@ -50,6 +50,18 @@ void Database::close() {
     }
 }
 
+bool Database::open_transaction() {
+    assert(m_db != nullptr);
+    return sqlite3_exec(m_db, "begin transaction;", nullptr, nullptr, nullptr)
+        == SQLITE_OK;
+}
+
+bool Database::close_transaction() {
+    assert(m_db != nullptr);
+    return sqlite3_exec(m_db, "commit transaction;", nullptr, nullptr, nullptr)
+        == SQLITE_OK;
+}
+
 void Database::consume(const Symbol &s) {
     assert(m_db != nullptr);
 
