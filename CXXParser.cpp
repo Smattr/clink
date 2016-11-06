@@ -108,7 +108,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
             category = ST_RESERVED;
     };
 
-    if (kind != ST_RESERVED) {
+    if (category != ST_RESERVED) {
 
         /* Retrieve the name of this entity. */
         CXString cxtext = clang_getCursorSpelling(cursor);
