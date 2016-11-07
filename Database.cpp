@@ -79,30 +79,30 @@ void Database::consume(const Symbol &s) {
             return;
     }
 
-    int index = sqlite3_bind_parameter_index(m_insert, "@name");
-    assert(index != 0);
+    int index = 1;
+    assert(index == sqlite3_bind_parameter_index(m_insert, "@name"));
     if (sqlite3_bind_text(m_insert, index, s.name, -1, SQLITE_STATIC)
             != SQLITE_OK)
         return;
 
-    index = sqlite3_bind_parameter_index(m_insert, "@path");
-    assert(index != 0);
+    index = 2;
+    assert(index == sqlite3_bind_parameter_index(m_insert, "@path"));
     if (sqlite3_bind_text(m_insert, index, s.path, -1, SQLITE_STATIC)
             != SQLITE_OK)
         return;
 
-    index = sqlite3_bind_parameter_index(m_insert, "@category");
-    assert(index != 0);
+    index = 3;
+    assert(index == sqlite3_bind_parameter_index(m_insert, "@category"));
     if (sqlite3_bind_int(m_insert, index, s.category) != SQLITE_OK)
         return;
 
-    index = sqlite3_bind_parameter_index(m_insert, "@line");
-    assert(index != 0);
+    index = 4;
+    assert(index == sqlite3_bind_parameter_index(m_insert, "@line"));
     if (sqlite3_bind_int(m_insert, index, s.line) != SQLITE_OK)
         return;
 
-    index = sqlite3_bind_parameter_index(m_insert, "@col");
-    assert(index != 0);
+    index = 5;
+    assert(index == sqlite3_bind_parameter_index(m_insert, "@col"));
     if (sqlite3_bind_int(m_insert, index, s.col) != SQLITE_OK)
         return;
 
