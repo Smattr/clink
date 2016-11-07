@@ -8,6 +8,7 @@
 #include "Symbol.h"
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "UILine.h"
 #include <unistd.h>
 
 using namespace std;
@@ -41,6 +42,7 @@ static void parse_options(int argc, char **argv) {
     for (;;) {
         static const struct option options[] = {
             {"file", required_argument, 0, 'f'},
+            {"line-oriented", no_argument, 0, 'l'},
             {0, 0, 0, 0},
         };
 
@@ -167,6 +169,19 @@ int main(int argc, char **argv) {
         closedir(dir);
 
         db.close_transaction();
+    }
+
+    switch (opts.ui) {
+        case UI_LINE: {
+            UILine ui;
+            return ui.run(db);
+        }
+
+        case UI_CURSES: {
+            // TODO
+            return EXIT_SUCCESS;
+        }
+
     }
 
     return EXIT_SUCCESS;
