@@ -124,14 +124,21 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
 
             if (file != nullptr) {
 
+                CXCursor parent = clang_getCursorSemanticParent(cursor);
+                CXString cxparent_name = clang_getCursorSpelling(parent);
+                const char *parent_name = clang_getCString(cxparent_name);
+                if (strcmp(parent_name, "") == 0)
+                    parent_name = nullptr;
+
                 CXString cxfilename = clang_getFileName(file);
                 const char *filename = clang_getCString(cxfilename);
 
                 SymbolConsumer *consumer = (SymbolConsumer*)data;
-                Symbol s {text, filename, category, line, column};
+                Symbol s {text, filename, category, line, column, parent_name};
                 consumer->consume(s);
 
                 clang_disposeString(cxfilename);
+                clang_disposeString(cxparent_name);
             }
 
         }

@@ -69,7 +69,7 @@ int UILine::run(Database &db) {
                 cout << "cscope " << vs.size() << " lines\n";
                 for (auto sym : vs) {
                     char *text = get_file_line(sym.path, sym.line);
-                    cout << sym.path << " <TODO> " << sym.line << " ";
+                    cout << sym.path << " " << (sym.parent ? sym.parent : "<global>") << " " << sym.line << " ";
                     if (text) {
                         char *p = text;
                         while (isspace(*p))
@@ -80,6 +80,7 @@ int UILine::run(Database &db) {
                         cout << "\n";
                     }
                     free((void*)sym.path);
+                    free((void*)sym.parent);
                 }
                 break;
             }

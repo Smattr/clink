@@ -15,6 +15,7 @@ struct Symbol {
     symbol_category_t category;
     unsigned line;
     unsigned col;
+    const char *parent;
 };
 
 class SymbolConsumer {

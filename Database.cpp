@@ -10,8 +10,8 @@ using namespace std;
 
 static const char SYMBOLS_SCHEMA[] = "create table if not exists symbols (name "
     "text not null, path text not null, category integer not null, line "
-    "integer not null, col integer not null, unique(name, path, category, "
-    "line, col));";
+    "integer not null, col integer not null, parent text, unique(name, path, "
+    "category, line, col));";
 
 static int init(sqlite3 *db) {
     assert(db != nullptr);
@@ -71,8 +71,8 @@ void Database::consume(const Symbol &s) {
 
     if (m_insert == nullptr) {
         if (sqlite3_prepare_v2(m_db, "insert into symbols (name, path, "
-                "category, line, col) values (@name, @path, @category, "
-                "@line, @col);", -1, &m_insert, nullptr) != SQLITE_OK)
+                "category, line, col, parent) values (@name, @path, @category, "
+                "@line, @col, @parent);", -1, &m_insert, nullptr) != SQLITE_OK)
             return;
     } else {
         if (sqlite3_reset(m_insert) != SQLITE_OK)
@@ -104,6 +104,12 @@ void Database::consume(const Symbol &s) {
     index = 5;
     assert(index == sqlite3_bind_parameter_index(m_insert, "@col"));
     if (sqlite3_bind_int(m_insert, index, s.col) != SQLITE_OK)
+        return;
+
+    index = 6;
+    assert(index == sqlite3_bind_parameter_index(m_insert, "@parent"));
+    if (sqlite3_bind_text(m_insert, index, s.parent, -2, SQLITE_STATIC)
+            != SQLITE_OK)
         return;
 
     if (sqlite3_step(m_insert) != SQLITE_DONE)
@@ -140,20 +146,23 @@ vector<Symbol> Database::find_symbols(const char *name) {
     vector<Symbol> vs;
 
     sqlite3_stmt *stmt = nullptr;
-    if (sqlite3_prepare_v2(m_db, "select path, category, line, col from "
-            "symbols where name = @name;", -1, &stmt, nullptr) != SQLITE_OK)
+    if (sqlite3_prepare_v2(m_db, "select path, category, line, col, parent "
+            "from symbols where name = @name;", -1, &stmt, nullptr)
+            != SQLITE_OK)
         goto done;
 
     if (sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC) != SQLITE_OK)
         goto done;
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char *parent = (char*)sqlite3_column_text(stmt, 4);
         Symbol s {
             .name = name,
             .path = strdup((char*)sqlite3_column_text(stmt, 0)),
             .category = symbol_category_t(sqlite3_column_int(stmt, 1)),
             .line = unsigned(sqlite3_column_int(stmt, 2)),
             .col = unsigned(sqlite3_column_int(stmt, 3)),
+            .parent = parent ? strdup(parent) : nullptr,
         };
 
         if (s.path == nullptr)
