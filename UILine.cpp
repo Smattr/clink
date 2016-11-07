@@ -4,14 +4,40 @@
 #include <iostream>
 #include <readline/history.h>
 #include <readline/readline.h>
+#include "Symbol.h"
 #include "UILine.h"
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 
+static char *get_file_line(const char *path, unsigned lineno) {
+
+    FILE *f = fopen(path, "r");
+    if (f == nullptr)
+        return nullptr;
+
+    char *line = nullptr;
+    size_t size;
+    while (lineno > 0) {
+        if (getline(&line, &size, f) < 0) {
+            free(line);
+            line = nullptr;
+            break;
+        }
+        lineno--;
+    }
+
+    fclose(f);
+
+    return line;
+}
+
 int UILine::run(Database &db) {
 
-    // Set up history for readline.
+    /* Though we're not expecting a human to use this interface, give them a
+     * useful history just in case.
+     */
     const char *home = getenv("HOME");
     char *path;
     if (asprintf(&path, "%s/.clink_history", home) < 0) {
@@ -23,7 +49,7 @@ int UILine::run(Database &db) {
     int ret = EXIT_SUCCESS;
 
     char *line;
-    while ((line = readline("clink> "))) {
+    while ((line = readline(">> "))) {
 
         // Skip leading white space
         char *command = line;
@@ -38,8 +64,25 @@ int UILine::run(Database &db) {
 
         switch (*command) {
 
-            case '0': // find symbol
+            case '0': { // find symbol
+                vector<Symbol> vs = db.find_symbols(command + 1);
+                cout << "cscope " << vs.size() << " lines\n";
+                for (auto sym : vs) {
+                    char *text = get_file_line(sym.path, sym.line);
+                    cout << sym.path << " <TODO> " << sym.line << " ";
+                    if (text) {
+                        char *p = text;
+                        while (isspace(*p))
+                            p++;
+                        cout << (*p == '\0' ? "\n" : p);
+                        free(text);
+                    } else {
+                        cout << "\n";
+                    }
+                    free((void*)sym.path);
+                }
                 break;
+            }
 
             case '1': // find definition
                 break;

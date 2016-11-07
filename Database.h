@@ -2,6 +2,7 @@
 
 #include <sqlite3.h>
 #include "Symbol.h"
+#include <vector>
 
 class Database : public SymbolConsumer {
 
@@ -13,6 +14,8 @@ public:
     bool purge(const char *path);
     bool open_transaction();
     bool close_transaction();
+
+    std::vector<Symbol> find_symbols(const char *name);
 
 private:
     sqlite3 *m_db = nullptr;
