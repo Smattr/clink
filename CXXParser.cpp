@@ -134,7 +134,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
                 const char *filename = clang_getCString(cxfilename);
 
                 SymbolConsumer *consumer = (SymbolConsumer*)data;
-                Symbol s {text, filename, category, line, column, parent_name};
+                Symbol s(text, filename, category, line, column, parent_name);
                 consumer->consume(s);
 
                 clang_disposeString(cxfilename);

@@ -3,6 +3,7 @@
 #include "errno.h"
 #include <sqlite3.h>
 #include <string.h>
+#include "Symbol.h"
 #include <unistd.h>
 #include <vector>
 
@@ -81,34 +82,34 @@ void Database::consume(const Symbol &s) {
 
     int index = 1;
     assert(index == sqlite3_bind_parameter_index(m_insert, "@name"));
-    if (sqlite3_bind_text(m_insert, index, s.name, -1, SQLITE_STATIC)
+    if (sqlite3_bind_text(m_insert, index, s.name(), -1, SQLITE_STATIC)
             != SQLITE_OK)
         return;
 
     index = 2;
     assert(index == sqlite3_bind_parameter_index(m_insert, "@path"));
-    if (sqlite3_bind_text(m_insert, index, s.path, -1, SQLITE_STATIC)
+    if (sqlite3_bind_text(m_insert, index, s.path(), -1, SQLITE_STATIC)
             != SQLITE_OK)
         return;
 
     index = 3;
     assert(index == sqlite3_bind_parameter_index(m_insert, "@category"));
-    if (sqlite3_bind_int(m_insert, index, s.category) != SQLITE_OK)
+    if (sqlite3_bind_int(m_insert, index, s.category()) != SQLITE_OK)
         return;
 
     index = 4;
     assert(index == sqlite3_bind_parameter_index(m_insert, "@line"));
-    if (sqlite3_bind_int(m_insert, index, s.line) != SQLITE_OK)
+    if (sqlite3_bind_int(m_insert, index, s.line()) != SQLITE_OK)
         return;
 
     index = 5;
     assert(index == sqlite3_bind_parameter_index(m_insert, "@col"));
-    if (sqlite3_bind_int(m_insert, index, s.col) != SQLITE_OK)
+    if (sqlite3_bind_int(m_insert, index, s.col()) != SQLITE_OK)
         return;
 
     index = 6;
     assert(index == sqlite3_bind_parameter_index(m_insert, "@parent"));
-    if (sqlite3_bind_text(m_insert, index, s.parent, -2, SQLITE_STATIC)
+    if (sqlite3_bind_text(m_insert, index, s.parent(), -2, SQLITE_STATIC)
             != SQLITE_OK)
         return;
 
@@ -155,19 +156,13 @@ vector<Symbol> Database::find_symbols(const char *name) {
         goto done;
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char *parent = (char*)sqlite3_column_text(stmt, 4);
-        Symbol s {
-            .name = name,
-            .path = strdup((char*)sqlite3_column_text(stmt, 0)),
-            .category = symbol_category_t(sqlite3_column_int(stmt, 1)),
-            .line = unsigned(sqlite3_column_int(stmt, 2)),
-            .col = unsigned(sqlite3_column_int(stmt, 3)),
-            .parent = parent ? strdup(parent) : nullptr,
-        };
-
-        if (s.path == nullptr)
-            goto done;
-
+        Symbol s(
+            name,
+            (char*)sqlite3_column_text(stmt, 0),
+            symbol_category_t(sqlite3_column_int(stmt, 1)),
+            unsigned(sqlite3_column_int(stmt, 2)),
+            unsigned(sqlite3_column_int(stmt, 3)),
+            (char*)sqlite3_column_text(stmt, 4));
         vs.push_back(s);
     }
 
