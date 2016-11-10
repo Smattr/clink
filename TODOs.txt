@@ -1,4 +1,0 @@
-A sort of plan of attack:
-
- - Think about disk space? The database and the history file are surprisingly
-   bloated.

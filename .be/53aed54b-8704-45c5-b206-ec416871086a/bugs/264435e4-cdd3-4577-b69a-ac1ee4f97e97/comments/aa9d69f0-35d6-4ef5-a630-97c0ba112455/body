@@ -1,0 +1,2 @@
+The code database is surprisingly large. We should look into reducing
+this if it proves a problem in large code bases.
