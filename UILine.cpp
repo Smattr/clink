@@ -68,8 +68,15 @@ int UILine::run(Database &db) {
             case '2': // find callees
                 break;
 
-            case '3': // find callers
+            case '3': { // find callers
+                vector<Symbol> vs = db.find_caller(command + 1);
+                cout << "cscope " << vs.size() << " lines\n";
+                for (auto &&s : vs) {
+                    cout << s.path() << " " << s.parent() << " " << s.line() <<
+                        " " << lstrip(s.context());
+                }
                 break;
+            }
 
             case '7': // find file
                 break;
