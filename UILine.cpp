@@ -10,20 +10,19 @@
 
 using namespace std;
 
-static void report_results(const vector<Symbol> &vs) {
-    cout << "cscope " << vs.size() << " lines\n";
-    for (auto sym : vs) {
-        const char *text = sym.context();
-        cout << sym.path() << " " << sym.parent() << " " << sym.line() << " ";
-        if (text) {
-            const char *p = text;
-            while (isspace(*p))
-                p++;
-            cout << (*p == '\0' ? "\n" : p);
-        } else {
-            cout << "\n";
-        }
-    }
+static const char *lstrip(const char *s) {
+
+    if (!s)
+        return "\n";
+
+    const char *t = s;
+    while (isspace(*t))
+        t++;
+
+    if (*t == '\0')
+        return "\n";
+
+    return t;
 }
 
 int UILine::run(Database &db) {
@@ -48,13 +47,21 @@ int UILine::run(Database &db) {
 
             case '0': { // find symbol
                 vector<Symbol> vs = db.find_symbols(command + 1);
-                report_results(vs);
+                cout << "cscope " << vs.size() << " lines\n";
+                for (auto &&s : vs) {
+                    cout << s.path() << " " << s.parent() << " " << s.line() <<
+                        " " << lstrip(s.context());
+                }
                 break;
             }
 
             case '1': { // find definition
                 vector<Symbol> vs = db.find_symbols(command + 1, ST_DEFINITION);
-                report_results(vs);
+                cout << "cscope " << vs.size() << " lines\n";
+                for (auto sym : vs) {
+                    cout << sym.path() << " " << (command + 1) << " " <<
+                        sym.line() << " " << lstrip(sym.context());
+                }
                 break;
             }
 
