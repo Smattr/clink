@@ -1,0 +1,2 @@
+A parser for assembly files would let us to jump between C/C++ sources
+and assembly. This is invaluable in kernel repos.
