@@ -109,7 +109,7 @@ void Database::consume(const Symbol &s) {
 
     index = 6;
     assert(index == sqlite3_bind_parameter_index(m_insert, "@parent"));
-    if (sqlite3_bind_text(m_insert, index, s.parent(), -2, SQLITE_STATIC)
+    if (sqlite3_bind_text(m_insert, index, s.parent(), -1, SQLITE_STATIC)
             != SQLITE_OK)
         return;
 
