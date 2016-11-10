@@ -1,0 +1,2 @@
+By doing C++ parsing using all cores we should be able to gain a pretty
+significant speed up.
