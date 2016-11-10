@@ -1,6 +1,5 @@
 A sort of plan of attack:
 
- - Implement fleshed out Cscope masquerading.
  - Multithreading.
  - Vim pipe for syntax highlighting.
  - Assembly parser.
