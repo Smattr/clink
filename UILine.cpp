@@ -58,9 +58,9 @@ int UILine::run(Database &db) {
             case '1': { // find definition
                 vector<Symbol> vs = db.find_definition(command + 1);
                 cout << "cscope " << vs.size() << " lines\n";
-                for (auto sym : vs) {
-                    cout << sym.path() << " " << (command + 1) << " " <<
-                        sym.line() << " " << lstrip(sym.context());
+                for (auto &&s : vs) {
+                    cout << s.path() << " " << (command + 1) << " " <<
+                        s.line() << " " << lstrip(s.context());
                 }
                 break;
             }
