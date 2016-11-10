@@ -148,29 +148,54 @@ bool Database::purge(const char *path) {
     return true;
 }
 
-vector<Symbol> Database::find_symbols(const char *name) {
+vector<Symbol> Database::find_symbols(const char *name,
+        symbol_category_t category) {
     assert(m_db != nullptr);
 
     vector<Symbol> vs;
 
     sqlite3_stmt *stmt = nullptr;
-    if (sqlite3_prepare_v2(m_db, "select path, category, line, col, parent, "
-            "context from symbols where name = @name;", -1, &stmt, nullptr)
-            != SQLITE_OK)
-        goto done;
+    if (category == ST_RESERVED) {
+        if (sqlite3_prepare_v2(m_db, "select path, category, line, col, parent, "
+                "context from symbols where name = @name;", -1, &stmt, nullptr)
+                != SQLITE_OK)
+            goto done;
+    } else {
+        if (sqlite3_prepare_v2(m_db, "select path, line, col, parent, context "
+                "from symbols where name = @name and category = @category;", -1,
+                &stmt, nullptr) != SQLITE_OK)
+            goto done;
+    }
 
     if (sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC) != SQLITE_OK)
         goto done;
 
+    if (category != ST_RESERVED) {
+        if (sqlite3_bind_int(stmt, 2, category) != SQLITE_OK)
+            goto done;
+    }
+
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        Symbol s(
-            name,
-            (char*)sqlite3_column_text(stmt, 0),
-            symbol_category_t(sqlite3_column_int(stmt, 1)),
-            unsigned(sqlite3_column_int(stmt, 2)),
-            unsigned(sqlite3_column_int(stmt, 3)),
-            (char*)sqlite3_column_text(stmt, 4),
-            (char*)sqlite3_column_text(stmt, 5));
+        const char *path, *parent, *context;
+        symbol_category_t cat;
+        unsigned line, col;
+        if (category == ST_RESERVED) {
+            path = (char*)sqlite3_column_text(stmt, 0);
+            cat = symbol_category_t(sqlite3_column_int(stmt, 1));
+            line = unsigned(sqlite3_column_int(stmt, 2));
+            col = unsigned(sqlite3_column_int(stmt, 3));
+            parent = (char*)sqlite3_column_text(stmt, 4);
+            context = (char*)sqlite3_column_text(stmt, 5);
+        } else {
+            path = (char*)sqlite3_column_text(stmt, 0);
+            cat = category;
+            line = unsigned(sqlite3_column_int(stmt, 1));
+            col = unsigned(sqlite3_column_int(stmt, 2));
+            parent = (char*)sqlite3_column_text(stmt, 3);
+            context = (char*)sqlite3_column_text(stmt, 4);
+        }
+
+        Symbol s(name, path, cat, line, col, parent, context);
         vs.push_back(s);
     }
 

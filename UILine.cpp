@@ -10,6 +10,22 @@
 
 using namespace std;
 
+static void report_results(const vector<Symbol> &vs) {
+    cout << "cscope " << vs.size() << " lines\n";
+    for (auto sym : vs) {
+        const char *text = sym.context();
+        cout << sym.path() << " " << sym.parent() << " " << sym.line() << " ";
+        if (text) {
+            const char *p = text;
+            while (isspace(*p))
+                p++;
+            cout << (*p == '\0' ? "\n" : p);
+        } else {
+            cout << "\n";
+        }
+    }
+}
+
 int UILine::run(Database &db) {
 
     int ret = EXIT_SUCCESS;
@@ -32,24 +48,15 @@ int UILine::run(Database &db) {
 
             case '0': { // find symbol
                 vector<Symbol> vs = db.find_symbols(command + 1);
-                cout << "cscope " << vs.size() << " lines\n";
-                for (auto sym : vs) {
-                    const char *text = sym.context();
-                    cout << sym.path() << " " << sym.parent() << " " << sym.line() << " ";
-                    if (text) {
-                        const char *p = text;
-                        while (isspace(*p))
-                            p++;
-                        cout << (*p == '\0' ? "\n" : p);
-                    } else {
-                        cout << "\n";
-                    }
-                }
+                report_results(vs);
                 break;
             }
 
-            case '1': // find definition
+            case '1': { // find definition
+                vector<Symbol> vs = db.find_symbols(command + 1, ST_DEFINITION);
+                report_results(vs);
                 break;
+            }
 
             case '2': // find callees
                 break;
