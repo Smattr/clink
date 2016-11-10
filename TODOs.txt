@@ -1,7 +1,5 @@
 A sort of plan of attack:
 
- - Store line contents of files in the database to avoid re-reading them at the
-   point where we're in the UI.
  - Implement fleshed out Cscope masquerading.
  - Multithreading.
  - Vim pipe for syntax highlighting.
