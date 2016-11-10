@@ -10,28 +10,6 @@
 
 using namespace std;
 
-static char *get_file_line(const char *path, unsigned lineno) {
-
-    FILE *f = fopen(path, "r");
-    if (f == nullptr)
-        return nullptr;
-
-    char *line = nullptr;
-    size_t size;
-    while (lineno > 0) {
-        if (getline(&line, &size, f) < 0) {
-            free(line);
-            line = nullptr;
-            break;
-        }
-        lineno--;
-    }
-
-    fclose(f);
-
-    return line;
-}
-
 int UILine::run(Database &db) {
 
     int ret = EXIT_SUCCESS;
@@ -56,14 +34,13 @@ int UILine::run(Database &db) {
                 vector<Symbol> vs = db.find_symbols(command + 1);
                 cout << "cscope " << vs.size() << " lines\n";
                 for (auto sym : vs) {
-                    char *text = get_file_line(sym.path(), sym.line());
+                    const char *text = sym.context();
                     cout << sym.path() << " " << sym.parent() << " " << sym.line() << " ";
                     if (text) {
-                        char *p = text;
+                        const char *p = text;
                         while (isspace(*p))
                             p++;
                         cout << (*p == '\0' ? "\n" : p);
-                        free(text);
                     } else {
                         cout << "\n";
                     }

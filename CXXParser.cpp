@@ -44,9 +44,53 @@ void CXXParser::unload() {
 }
 
 CXXParser::~CXXParser() {
+    for (auto it : m_lines_pending)
+        fclose(it.second);
+    for (auto it : m_lines)
+        for (auto p : it.second)
+            free(p);
     if (m_tu) unload();
     clang_disposeIndex(m_index);
 }
+
+const char *CXXParser::get_context(const char *filename, unsigned line) {
+
+    if (m_lines.find(filename) == m_lines.end()) {
+
+        if (m_lines_pending.find(filename) == m_lines_pending.end()) {
+            FILE *f = fopen(filename, "r");
+            if (!f)
+                return nullptr;
+            m_lines_pending[filename] = f;
+        }
+
+        m_lines[filename] = vector<char*>();
+    }
+
+    while (m_lines[filename].size() < line &&
+            m_lines_pending.find(filename) != m_lines_pending.end()) {
+
+        FILE *f = m_lines_pending[filename];
+        char *line = nullptr;
+        size_t size;
+        if (getline(&line, &size, f) == -1) {
+            fclose(f);
+            m_lines_pending.erase(filename);
+        } else {
+            m_lines[filename].push_back(line);
+        }
+    }
+
+    if (m_lines[filename].size() >= line)
+        return m_lines[filename][line - 1];
+
+    return nullptr;
+}
+
+typedef struct {
+    CXXParser *me;
+    SymbolConsumer *consumer;
+} visitor_state_t;
 
 // Clang visitor. Herein is the core logic of the parser.
 static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
@@ -133,9 +177,11 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
                 CXString cxfilename = clang_getFileName(file);
                 const char *filename = clang_getCString(cxfilename);
 
-                SymbolConsumer *consumer = (SymbolConsumer*)data;
-                Symbol s(text, filename, category, line, column, parent_name);
-                consumer->consume(s);
+                visitor_state_t *vs = (visitor_state_t*)data;
+                const char *context = vs->me->get_context(filename, line);
+
+                Symbol s(text, filename, category, line, column, parent_name, context);
+                vs->consumer->consume(s);
 
                 clang_disposeString(cxfilename);
                 clang_disposeString(cxparent_name);
@@ -153,5 +199,6 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
 void CXXParser::process(SymbolConsumer &consumer) {
     assert(m_tu != nullptr);
     CXCursor cursor = clang_getTranslationUnitCursor(m_tu);
-    clang_visitChildren(cursor, visitor, &consumer);
+    visitor_state_t vs { this, &consumer };
+    clang_visitChildren(cursor, visitor, &vs);
 }

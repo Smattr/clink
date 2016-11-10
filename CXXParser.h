@@ -3,6 +3,8 @@
 #include <clang-c/Index.h>
 #include "Parser.h"
 #include "Symbol.h"
+#include <unordered_map>
+#include <vector>
 
 class CXXParser : public Parser {
 
@@ -27,7 +29,10 @@ public:
      */
     void process(SymbolConsumer &consumer) override;
 
-protected:
+private:
+    const char *get_context(const char *filename, unsigned line);
+
+private:
     // Internal handle to Clang.
     CXIndex m_index;
 
@@ -37,6 +42,9 @@ protected:
     CXTranslationUnit m_tu;
 
     char *m_path;
+
+    std::unordered_map<std::string, std::vector<char*>> m_lines;
+    std::unordered_map<std::string, FILE*> m_lines_pending;
 
     friend CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
         CXClientData data);

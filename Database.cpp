@@ -11,8 +11,8 @@ using namespace std;
 
 static const char SYMBOLS_SCHEMA[] = "create table if not exists symbols (name "
     "text not null, path text not null, category integer not null, line "
-    "integer not null, col integer not null, parent text, unique(name, path, "
-    "category, line, col));";
+    "integer not null, col integer not null, parent text, context text, "
+    "unique(name, path, category, line, col));";
 
 static int init(sqlite3 *db) {
     assert(db != nullptr);
@@ -72,8 +72,9 @@ void Database::consume(const Symbol &s) {
 
     if (m_insert == nullptr) {
         if (sqlite3_prepare_v2(m_db, "insert into symbols (name, path, "
-                "category, line, col, parent) values (@name, @path, @category, "
-                "@line, @col, @parent);", -1, &m_insert, nullptr) != SQLITE_OK)
+                "category, line, col, parent, context) values (@name, @path, "
+                "@category, @line, @col, @parent, @context);", -1, &m_insert,
+                nullptr) != SQLITE_OK)
             return;
     } else {
         if (sqlite3_reset(m_insert) != SQLITE_OK)
@@ -113,6 +114,12 @@ void Database::consume(const Symbol &s) {
             != SQLITE_OK)
         return;
 
+    index = 7;
+    assert(index == sqlite3_bind_parameter_index(m_insert, "@context"));
+    if (sqlite3_bind_text(m_insert, index, s.context(), -1, SQLITE_STATIC)
+            != SQLITE_OK)
+        return;
+
     if (sqlite3_step(m_insert) != SQLITE_DONE)
         return;
 }
@@ -147,8 +154,8 @@ vector<Symbol> Database::find_symbols(const char *name) {
     vector<Symbol> vs;
 
     sqlite3_stmt *stmt = nullptr;
-    if (sqlite3_prepare_v2(m_db, "select path, category, line, col, parent "
-            "from symbols where name = @name;", -1, &stmt, nullptr)
+    if (sqlite3_prepare_v2(m_db, "select path, category, line, col, parent, "
+            "context from symbols where name = @name;", -1, &stmt, nullptr)
             != SQLITE_OK)
         goto done;
 
@@ -162,7 +169,8 @@ vector<Symbol> Database::find_symbols(const char *name) {
             symbol_category_t(sqlite3_column_int(stmt, 1)),
             unsigned(sqlite3_column_int(stmt, 2)),
             unsigned(sqlite3_column_int(stmt, 3)),
-            (char*)sqlite3_column_text(stmt, 4));
+            (char*)sqlite3_column_text(stmt, 4),
+            (char*)sqlite3_column_text(stmt, 5));
         vs.push_back(s);
     }
 
