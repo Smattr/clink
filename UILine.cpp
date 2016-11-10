@@ -2,7 +2,6 @@
 #include <ctype.h>
 #include "Database.h"
 #include <iostream>
-#include <readline/history.h>
 #include <readline/readline.h>
 #include "Symbol.h"
 #include "UILine.h"
@@ -34,17 +33,6 @@ static char *get_file_line(const char *path, unsigned lineno) {
 }
 
 int UILine::run(Database &db) {
-
-    /* Though we're not expecting a human to use this interface, give them a
-     * useful history just in case.
-     */
-    const char *home = getenv("HOME");
-    char *path;
-    if (asprintf(&path, "%s/.clink_history", home) < 0) {
-        cerr << "out of memory\n";
-        return EXIT_FAILURE;
-    }
-    (void)read_history(path); // Ignore failure
 
     int ret = EXIT_SUCCESS;
 
@@ -116,13 +104,10 @@ int UILine::run(Database &db) {
 
         }
 
-        add_history(line);
         free(line);
     }
 
 break2:
-    (void)write_history(path);
-    free(path);
 
     return ret;
 }
