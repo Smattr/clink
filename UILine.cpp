@@ -46,7 +46,7 @@ int UILine::run(Database &db) {
         switch (*command) {
 
             case '0': { // find symbol
-                vector<Symbol> vs = db.find_symbols(command + 1);
+                vector<Symbol> vs = db.find_symbol(command + 1);
                 cout << "cscope " << vs.size() << " lines\n";
                 for (auto &&s : vs) {
                     cout << s.path() << " " << s.parent() << " " << s.line() <<
@@ -56,7 +56,7 @@ int UILine::run(Database &db) {
             }
 
             case '1': { // find definition
-                vector<Symbol> vs = db.find_symbols(command + 1, ST_DEFINITION);
+                vector<Symbol> vs = db.find_definition(command + 1);
                 cout << "cscope " << vs.size() << " lines\n";
                 for (auto sym : vs) {
                     cout << sym.path() << " " << (command + 1) << " " <<

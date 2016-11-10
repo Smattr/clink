@@ -15,8 +15,8 @@ public:
     bool open_transaction();
     bool close_transaction();
 
-    std::vector<Symbol> find_symbols(const char *name,
-        symbol_category_t category = ST_RESERVED);
+    std::vector<Symbol> find_symbol(const char *name);
+    std::vector<Symbol> find_definition(const char *name);
 
 private:
     sqlite3 *m_db = nullptr;
