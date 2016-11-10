@@ -1,6 +1,5 @@
 A sort of plan of attack:
 
- - Vim pipe for syntax highlighting.
  - Assembly parser.
  - Think about disk space? The database and the history file are surprisingly
    bloated.
