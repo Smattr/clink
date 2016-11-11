@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Matthew Fernandez <matthew.fernandez@gmail.com>", 
+
+
+
+
+
+
+    "reporter": "Matthew Fernandez <matthew.fernandez@gmail.com>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "type safety across SQL boundary", 
+
+
+
+
+
+
+    "time": "Fri, 11 Nov 2016 04:43:16 +0000"
+
+
+
+
+
+
+}
