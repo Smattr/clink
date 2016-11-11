@@ -1,0 +1,3 @@
+This is now implemented. No particularly noticeable speed up, but that
+wasn't the main motivation for this change. We now get accurate results
+for queries about, e.g., callers.

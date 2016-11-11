@@ -90,6 +90,7 @@ const char *CXXParser::get_context(const char *filename, unsigned line) {
 typedef struct {
     CXXParser *me;
     SymbolConsumer *consumer;
+    const char *container;
 } visitor_state_t;
 
 // Clang visitor. Herein is the core logic of the parser.
@@ -158,6 +159,8 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
         CXString cxtext = clang_getCursorSpelling(cursor);
         const char *text = clang_getCString(cxtext);
 
+        visitor_state_t *vs = (visitor_state_t*)data;
+
         if (strcmp(text, "")) {
 
             /* Retrieve its location. */
@@ -168,37 +171,37 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
 
             if (file != nullptr) {
 
-                CXCursor parent = clang_getCursorSemanticParent(cursor);
-                CXString cxparent_name = clang_getCursorSpelling(parent);
-                const char *parent_name = clang_getCString(cxparent_name);
-                if (strcmp(parent_name, "") == 0)
-                    parent_name = nullptr;
-
                 CXString cxfilename = clang_getFileName(file);
                 const char *filename = clang_getCString(cxfilename);
 
-                visitor_state_t *vs = (visitor_state_t*)data;
                 const char *context = vs->me->get_context(filename, line);
 
-                Symbol s(text, filename, category, line, column, parent_name, context);
+                Symbol s(text, filename, category, line, column, vs->container, context);
                 vs->consumer->consume(s);
 
                 clang_disposeString(cxfilename);
-                clang_disposeString(cxparent_name);
             }
 
         }
+
+        visitor_state_t for_child = *vs;
+        if (category == ST_DEFINITION && strcmp(text, ""))
+            for_child.container = text;
+        clang_visitChildren(cursor, visitor, &for_child);
+
         clang_disposeString(cxtext);
 
+    } else {
+        clang_visitChildren(cursor, visitor, data);
     }
 
-    clang_visitChildren(cursor, visitor, data);
     return CXChildVisit_Continue;
 }
 
 void CXXParser::process(SymbolConsumer &consumer) {
     assert(m_tu != nullptr);
     CXCursor cursor = clang_getTranslationUnitCursor(m_tu);
-    visitor_state_t vs { this, &consumer };
+    visitor_state_t vs {
+        .me = this, .consumer = &consumer, .container = nullptr };
     clang_visitChildren(cursor, visitor, &vs);
 }
