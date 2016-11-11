@@ -1,0 +1,5 @@
+clink
+
+.be/id-cache
+cscope.out
+callgrind.out.*
