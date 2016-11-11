@@ -18,6 +18,7 @@ public:
     std::vector<Symbol> find_symbol(const char *name);
     std::vector<Symbol> find_definition(const char *name);
     std::vector<Symbol> find_caller(const char *name);
+    std::vector<Symbol> find_call(const char *name);
 
 private:
     sqlite3 *m_db = nullptr;

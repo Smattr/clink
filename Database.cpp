@@ -248,6 +248,40 @@ done:
     return vs;
 }
 
+vector<Symbol> Database::find_call(const char *name) {
+    assert(m_db != nullptr);
+
+    vector<Symbol> vs;
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(m_db, "select name, path, line, col, context from "
+            "symbols where parent = @parent and category = @category;",
+            -1, &stmt, nullptr) != SQLITE_OK)
+        goto done;
+
+    if (sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC) != SQLITE_OK)
+        goto done;
+
+    if (sqlite3_bind_int(stmt, 2, ST_FUNCTION_CALL) != SQLITE_OK)
+        goto done;
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char *call = (char*)sqlite3_column_text(stmt, 0);
+        const char *path = (char*)sqlite3_column_text(stmt, 1);
+        unsigned line = unsigned(sqlite3_column_int(stmt, 2));
+        unsigned col = unsigned(sqlite3_column_int(stmt, 3));
+        const char *context = (char*)sqlite3_column_text(stmt, 4);
+
+        Symbol s(call, path, ST_FUNCTION_CALL, line, col, name, context);
+        vs.push_back(s);
+    }
+
+done:
+    if (stmt != nullptr)
+        sqlite3_finalize(stmt);
+    return vs;
+}
+
 Database::~Database() {
     if (m_db)
         close();
