@@ -16,11 +16,11 @@ public:
     bool open_transaction();
     bool close_transaction();
 
-    std::vector<Symbol> find_symbol(const char *name);
-    std::vector<Symbol> find_definition(const char *name);
-    std::vector<Symbol> find_caller(const char *name);
-    std::vector<Symbol> find_call(const char *name);
-    std::vector<std::string> find_file(const char *name);
+    std::vector<Symbol> find_symbol(const char *name) const;
+    std::vector<Symbol> find_definition(const char *name) const;
+    std::vector<Symbol> find_caller(const char *name) const;
+    std::vector<Symbol> find_call(const char *name) const;
+    std::vector<std::string> find_file(const char *name) const;
 
 private:
     sqlite3 *m_db = nullptr;

@@ -149,7 +149,7 @@ bool Database::purge(const char *path) {
     return true;
 }
 
-vector<Symbol> Database::find_symbol(const char *name) {
+vector<Symbol> Database::find_symbol(const char *name) const {
     assert(m_db != nullptr);
 
     vector<Symbol> vs;
@@ -181,7 +181,7 @@ done:
     return vs;
 }
 
-vector<Symbol> Database::find_definition(const char *name) {
+vector<Symbol> Database::find_definition(const char *name) const {
     assert(m_db != nullptr);
 
     vector<Symbol> vs;
@@ -215,7 +215,7 @@ done:
     return vs;
 }
 
-vector<Symbol> Database::find_caller(const char *name) {
+vector<Symbol> Database::find_caller(const char *name) const {
     assert(m_db != nullptr);
 
     vector<Symbol> vs;
@@ -249,7 +249,7 @@ done:
     return vs;
 }
 
-vector<Symbol> Database::find_call(const char *name) {
+vector<Symbol> Database::find_call(const char *name) const {
     assert(m_db != nullptr);
 
     vector<Symbol> vs;
@@ -283,7 +283,7 @@ done:
     return vs;
 }
 
-vector<string> Database::find_file(const char *name) {
+vector<string> Database::find_file(const char *name) const {
     assert(m_db != nullptr);
 
     vector<string> vs;
