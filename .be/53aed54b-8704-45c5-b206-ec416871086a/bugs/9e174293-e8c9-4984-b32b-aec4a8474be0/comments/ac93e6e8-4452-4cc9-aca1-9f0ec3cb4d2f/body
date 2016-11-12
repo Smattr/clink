@@ -1,0 +1,4 @@
+It turns out this could actually be seen as a legitimate bug in Cscope.
+Jumping around in Vim, bar.h is not directly accessible from foo.c
+because of this Cscope behaviour. If we tied the knot at this point, I
+think Clink would be one up on Cscope here.
