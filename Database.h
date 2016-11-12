@@ -21,6 +21,7 @@ public:
     std::vector<Symbol> find_caller(const char *name) const;
     std::vector<Symbol> find_call(const char *name) const;
     std::vector<std::string> find_file(const char *name) const;
+    std::vector<Symbol> find_includer(const char *name) const;
 
 private:
     sqlite3 *m_db = nullptr;

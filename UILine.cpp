@@ -101,8 +101,14 @@ int UILine::run(Database &db) {
                 break;
             }
 
-            case '8': // find includers
+            case '8': { // find includers
+                vector<Symbol> vs = db.find_includer(command + 1);
+                print_leader(vs);
+                for (auto &&s : vs)
+                    cout << s.path() << " " << s.parent() << " " << s.line() <<
+                        " " << lstrip(s.context());
                 break;
+            }
 
             // Commands we don't support. Just pretend there were no results.
             case '4': // find text
