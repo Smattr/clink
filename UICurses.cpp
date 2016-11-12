@@ -86,10 +86,7 @@ int UICurses::run(Database &db) {
                 if (index > 0) {
                     // Blank the current line.
                     move(y, offset_x(index));
-                    for (auto &c __attribute__((unused)) : left)
-                        printw(" ");
-                    for (auto &c __attribute__((unused)) : right)
-                        printw(" ");
+                    printw("%s", string(left.size() + right.size(), ' ').c_str());
 
                     index--;
                     x = offset_x(index);
@@ -107,10 +104,7 @@ int UICurses::run(Database &db) {
                 if (index < functions_sz - 1) {
                     // Blank the current line.
                     move(y, offset_x(index));
-                    for (auto &c __attribute__((unused)) : left)
-                        printw(" ");
-                    for (auto &c __attribute__((unused)) : right)
-                        printw(" ");
+                    printw("%s", string(left.size() + right.size(), ' ').c_str());
 
                     index++;
                     x = offset_x(index);
