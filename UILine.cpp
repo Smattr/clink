@@ -25,7 +25,8 @@ static const char *lstrip(const char *s) {
     return t;
 }
 
-static void print_leader(const vector<Symbol> &vs) {
+template<typename T>
+static void print_leader(const vector<T> &vs) {
     cout << "cscope: " << vs.size() << " lines\n";
 }
 
@@ -89,8 +90,16 @@ int UILine::run(Database &db) {
                 break;
             }
 
-            case '7': // find file
+            case '7': { // find file
+                vector<string> vs = db.find_file(command + 1);
+                print_leader(vs);
+                /* XXX: what kind of nonsense output is this? I don't know what
+                 * value Cscope is attempting to add with the trailing garbage.
+                 */
+                for (auto &&s : vs)
+                    cout << s << " <unknown> 1 <unknown>\n";
                 break;
+            }
 
             case '8': // find includers
                 break;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sqlite3.h>
+#include <string>
 #include "Symbol.h"
 #include <vector>
 
@@ -19,6 +20,7 @@ public:
     std::vector<Symbol> find_definition(const char *name);
     std::vector<Symbol> find_caller(const char *name);
     std::vector<Symbol> find_call(const char *name);
+    std::vector<std::string> find_file(const char *name);
 
 private:
     sqlite3 *m_db = nullptr;

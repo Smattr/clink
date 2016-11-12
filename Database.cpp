@@ -2,6 +2,7 @@
 #include "Database.h"
 #include "errno.h"
 #include <sqlite3.h>
+#include <string>
 #include <string.h>
 #include "Symbol.h"
 #include <unistd.h>
@@ -273,6 +274,39 @@ vector<Symbol> Database::find_call(const char *name) {
         const char *context = (char*)sqlite3_column_text(stmt, 4);
 
         Symbol s(call, path, ST_FUNCTION_CALL, line, col, name, context);
+        vs.push_back(s);
+    }
+
+done:
+    if (stmt != nullptr)
+        sqlite3_finalize(stmt);
+    return vs;
+}
+
+vector<string> Database::find_file(const char *name) {
+    assert(m_db != nullptr);
+
+    vector<string> vs;
+
+    string path2("%/");
+    path2 += name;
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(m_db, "select distinct path from symbols where "
+            "path = @path1 or path like @path2;", -1, &stmt, nullptr)
+            != SQLITE_OK)
+        goto done;
+
+    if (sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC) != SQLITE_OK)
+        goto done;
+
+    if (sqlite3_bind_text(stmt, 2, path2.c_str(), -1, SQLITE_STATIC)
+            != SQLITE_OK)
+        goto done;
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char *path = (char*)sqlite3_column_text(stmt, 0);
+        string s(path);
         vs.push_back(s);
     }
 
