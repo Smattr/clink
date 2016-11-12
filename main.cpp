@@ -9,6 +9,7 @@
 #include "Symbol.h"
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "UICurses.h"
 #include "UILine.h"
 #include <unistd.h>
 
@@ -169,10 +170,13 @@ int main(int argc, char **argv) {
         }
 
         case UI_CURSES: {
-            // TODO
-            return EXIT_SUCCESS;
+            UICurses ui;
+            return ui.run(db);
         }
 
+        case UI_NONE:
+            // do nothing
+            break;
     }
 
     return EXIT_SUCCESS;
