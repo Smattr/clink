@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <getopt.h>
 #include <iostream>
+#include "Options.h"
 #include "Symbol.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -21,18 +22,8 @@ static void usage(const char *progname) {
          << " --file FILE | -f FILE    database to use (.clink.db by default)\n";
 }
 
-typedef enum {
-    UI_NONE,
-    UI_CURSES,
-    UI_LINE,
-} ui_t;
-
 /* Default options. */
-static struct {
-    const char *database;
-    bool update_database;
-    ui_t ui;
-} opts = {
+Options opts = {
     .database = default_database,
     .update_database = true,
     .ui = UI_CURSES,
