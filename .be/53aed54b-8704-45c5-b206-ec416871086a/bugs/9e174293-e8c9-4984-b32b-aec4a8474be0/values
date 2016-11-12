@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Matthew Fernandez <matthew.fernandez@gmail.com>", 
+
+
+
+
+
+
+    "reporter": "Matthew Fernandez <matthew.fernandez@gmail.com>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "line-oriented interface vs ncurses differences", 
+
+
+
+
+
+
+    "time": "Sat, 12 Nov 2016 02:59:41 +0000"
+
+
+
+
+
+
+}
