@@ -25,6 +25,10 @@ static const char *lstrip(const char *s) {
     return t;
 }
 
+static void print_leader(const vector<Symbol> &vs) {
+    cout << "cscope: " << vs.size() << " lines\n";
+}
+
 int UILine::run(Database &db) {
 
     int ret = EXIT_SUCCESS;
@@ -47,7 +51,7 @@ int UILine::run(Database &db) {
 
             case '0': { // find symbol
                 vector<Symbol> vs = db.find_symbol(command + 1);
-                cout << "cscope " << vs.size() << " lines\n";
+                print_leader(vs);
                 for (auto &&s : vs) {
                     cout << s.path() << " " << s.parent() << " " << s.line() <<
                         " " << lstrip(s.context());
@@ -57,7 +61,7 @@ int UILine::run(Database &db) {
 
             case '1': { // find definition
                 vector<Symbol> vs = db.find_definition(command + 1);
-                cout << "cscope " << vs.size() << " lines\n";
+                print_leader(vs);
                 for (auto &&s : vs) {
                     cout << s.path() << " " << (command + 1) << " " <<
                         s.line() << " " << lstrip(s.context());
@@ -67,7 +71,7 @@ int UILine::run(Database &db) {
 
             case '2': { // find calls
                 vector<Symbol> vs = db.find_call(command + 1);
-                cout << "cscope " << vs.size() << " lines\n";
+                print_leader(vs);
                 for (auto &&s : vs) {
                     cout << s.path() << " " << s.name() << " " << s.line() <<
                         " " << lstrip(s.context());
@@ -77,7 +81,7 @@ int UILine::run(Database &db) {
 
             case '3': { // find callers
                 vector<Symbol> vs = db.find_caller(command + 1);
-                cout << "cscope " << vs.size() << " lines\n";
+                print_leader(vs);
                 for (auto &&s : vs) {
                     cout << s.path() << " " << s.parent() << " " << s.line() <<
                         " " << lstrip(s.context());
