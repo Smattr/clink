@@ -1,29 +1,14 @@
 #include <cstdlib>
-#include <ctype.h>
 #include "Database.h"
 #include <iostream>
 #include <readline/readline.h>
 #include "Symbol.h"
 #include "UILine.h"
 #include <unistd.h>
+#include "util.h"
 #include <vector>
 
 using namespace std;
-
-static const char *lstrip(const char *s) {
-
-    if (!s)
-        return "\n";
-
-    const char *t = s;
-    while (isspace(*t))
-        t++;
-
-    if (*t == '\0')
-        return "\n";
-
-    return t;
-}
 
 template<typename T>
 static void print_leader(const vector<T> &vs) {

@@ -1,7 +1,7 @@
 # FIXME: Beat libclang sufficiently into submission to replace this with CMake
 
 SOURCES = CXXParser.cpp CXXParser.h Database.cpp Database.h main.cpp Options.h \
-  Parser.h Symbol.h UI.h UICurses.cpp UICurses.h UILine.cpp UILine.h
+  Parser.h Symbol.h UI.h UICurses.cpp UICurses.h UILine.cpp UILine.h util.h
 
 CXX ?= c++
 CXXFLAGS += -std=c++11 -g -W -Wall -Wextra -O3

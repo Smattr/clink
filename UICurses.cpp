@@ -6,6 +6,7 @@
 #include <string.h>
 #include "Symbol.h"
 #include "UICurses.h"
+#include "util.h"
 #include <vector>
 
 using namespace std;
@@ -36,7 +37,7 @@ static Results find_symbol(const Database &db, const char *query) {
         row.text.push_back(s.path());
         row.text.push_back(s.parent());
         row.text.push_back(to_string(s.line()));
-        row.text.push_back(s.context());
+        row.text.push_back(lstrip(s.context()));
         row.path = s.path();
         row.line = s.line();
         row.col = s.col();
