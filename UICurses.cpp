@@ -189,6 +189,20 @@ int UICurses::run(Database &db) {
                 }
                 break;
 
+            case KEY_HOME:
+                right = left + right;
+                left = "";
+                x = offset_x(index);
+                move(y, x);
+                break;
+
+            case KEY_END:
+                left += right;
+                right = "";
+                x = offset_x(index) + left.size();
+                move(y, x);
+                break;
+
             case KEY_BACKSPACE:
                 if (left.empty()) {
                     move(y, x);
