@@ -109,6 +109,23 @@ static int print_results(const Results &results, unsigned from_row) {
     return 0;
 }
 
+static void move_to_line(unsigned target, unsigned &x, unsigned &y, unsigned &index,
+        const string &left, const string &right) {
+    // Blank the current line.
+    move(y, offset_x(index));
+    printw("%s", string(left.size() + right.size(), ' ').c_str());
+
+    index = target;
+    x = offset_x(index);
+    y = offset_y(index);
+
+    // Paste the previous contents into the new line.
+    move(y, x);
+    printw("%s%s", left.c_str(), right.c_str());
+    x += left.size();
+    move(y, x);
+}
+
 int UICurses::run(Database &db) {
 
     (void)initscr();
@@ -154,39 +171,13 @@ int UICurses::run(Database &db) {
                 break;
 
             case KEY_UP:
-                if (index > 0) {
-                    // Blank the current line.
-                    move(y, offset_x(index));
-                    printw("%s", string(left.size() + right.size(), ' ').c_str());
-
-                    index--;
-                    x = offset_x(index);
-                    y = offset_y(index);
-
-                    // Paste the previous contents into the new line.
-                    move(y, x);
-                    printw("%s%s", left.c_str(), right.c_str());
-                    x += left.size();
-                    move(y, x);
-                }
+                if (index > 0)
+                    move_to_line(index - 1, x, y, index, left, right);
                 break;
 
             case KEY_DOWN:
-                if (index < functions_sz - 1) {
-                    // Blank the current line.
-                    move(y, offset_x(index));
-                    printw("%s", string(left.size() + right.size(), ' ').c_str());
-
-                    index++;
-                    x = offset_x(index);
-                    y = offset_y(index);
-
-                    // Paste the previous contents into the new line.
-                    move(y, x);
-                    printw("%s%s", left.c_str(), right.c_str());
-                    x += left.size();
-                    move(y, x);
-                }
+                if (index < functions_sz - 1)
+                    move_to_line(index + 1, x, y, index, left, right);
                 break;
 
             case KEY_HOME:
@@ -201,6 +192,14 @@ int UICurses::run(Database &db) {
                 right = "";
                 x = offset_x(index) + left.size();
                 move(y, x);
+                break;
+
+            case KEY_PPAGE:
+                move_to_line(0, x, y, index, left, right);
+                break;
+
+            case KEY_NPAGE:
+                move_to_line(functions_sz - 1, x, y, index, left, right);
                 break;
 
             case KEY_BACKSPACE:
