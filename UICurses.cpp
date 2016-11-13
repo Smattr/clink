@@ -118,16 +118,16 @@ static int print_results(const Results &results, unsigned from_row) {
 
     /* Print the rows. */
     for (unsigned i = from_row; i < from_row + row_count; i++) {
-        move(i - from_row, 0);
+        move(1 + i - from_row, 0);
         for (unsigned j = 0; j < widths.size(); j++) {
-            size_t padding = widths[i] - results.rows[i].text[j].size();
+            size_t padding = widths[j] - results.rows[i].text[j].size();
             printw("%s%s", results.rows[i].text[j].c_str(),
                 string(padding, ' ').c_str());
         }
     }
 
     /* Print footer. */
-    move(LINES - functions_sz, 0);
+    move(LINES - functions_sz - 1, 0);
     printw("* Lines %u-%u of %u", from_row, from_row + row_count,
         results.rows.size());
     if (from_row + row_count < results.rows.size())
@@ -178,6 +178,15 @@ int UICurses::run(Database &db) {
         switch (c) {
             case 4: /* Ctrl-D */
                 goto break2;
+
+            case 10: /* enter */
+                if (!left.empty() || !right.empty()) {
+                    string query = left + right;
+                    Results results = functions[index].handler(db, query.c_str());
+                    print_results(results, 0);
+                }
+                move(y, x);
+                break;
 
             case KEY_LEFT:
                 if (!left.empty()) {
