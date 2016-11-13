@@ -4,16 +4,53 @@
 #include "Database.h"
 #include <string>
 #include <string.h>
+#include "Symbol.h"
 #include "UICurses.h"
 #include <vector>
 
 using namespace std;
 
+struct ResultRow {
+    vector<string> text;
+    string path;
+    unsigned line;
+    unsigned col;
+};
+
+struct Results {
+    vector<string> headings;
+    vector<ResultRow> rows;
+};
+
+static Results find_symbol(const Database &db, const char *query) {
+    Results results;
+
+    results.headings.push_back("File");
+    results.headings.push_back("Function");
+    results.headings.push_back("Line");
+    results.headings.push_back("");
+
+    vector<Symbol> vs = db.find_symbol(query);
+    for (auto s : vs) {
+        ResultRow row;
+        row.text.push_back(s.path());
+        row.text.push_back(s.parent());
+        row.text.push_back(to_string(s.line()));
+        row.text.push_back(s.context());
+        row.path = s.path();
+        row.line = s.line();
+        row.col = s.col();
+        results.rows.push_back(row);
+    }
+
+    return results;
+}
+
 static struct {
     const char *prompt;
-    void (*handler)(const char *query);
+    Results (*handler)(const Database &db, const char *query);
 } functions[] = {
-    { "Find this C symbol", nullptr },
+    { "Find this C symbol", find_symbol },
     { "Find this global definition", nullptr },
     { "Find functions called by this function", nullptr },
     { "Find functions calling this function", nullptr },
@@ -38,18 +75,6 @@ static unsigned offset_y(unsigned index) {
     assert(index < functions_sz);
     return LINES - functions_sz + index;
 }
-
-struct ResultRow {
-    vector<string> text;
-    string path;
-    unsigned line;
-    unsigned col;
-};
-
-struct Results {
-    vector<string> headings;
-    vector<ResultRow> rows;
-};
 
 static int print_results(const Results &results, unsigned from_row) {
     assert(from_row == 0 || from_row < results.rows.size());
@@ -102,9 +127,13 @@ static int print_results(const Results &results, unsigned from_row) {
     }
 
     /* Print footer. */
-    move(row_count + 1, 0);
-    printw("* Lines %u-%u of %u *", from_row, from_row + row_count,
+    move(LINES - functions_sz, 0);
+    printw("* Lines %u-%u of %u", from_row, from_row + row_count,
         results.rows.size());
+    if (from_row + row_count < results.rows.size())
+        printw(", %u more - press the space bar to display more",
+            results.rows.size() - from_row - row_count);
+    printw(" *");
 
     return 0;
 }
