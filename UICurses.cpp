@@ -213,6 +213,14 @@ int UICurses::run(Database &db) {
                 }
                 break;
 
+            case KEY_DC:
+                if (!right.empty()) {
+                    right = right.substr(1, right.size() - 1);
+                    printw("%s ", right.c_str());
+                    move(y, x);
+                }
+                break;
+
             default:
                 x++;
                 left += c;
