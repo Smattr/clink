@@ -159,7 +159,7 @@ typedef enum {
 struct State {
     state_t state;
     string left, right;
-    unsigned index, x, y;
+    unsigned index, x, y, select_index;
     int ret;
 };
 
@@ -180,6 +180,9 @@ static void move_to_line(unsigned target, State &st) {
 }
 
 static void input_loop(State &st, Database &db) {
+
+    echo();
+
     move(st.y, st.x);
 
     for (;;) {
@@ -200,6 +203,10 @@ static void input_loop(State &st, Database &db) {
                 }
                 move(st.y, st.x);
                 break;
+
+            case '\t':
+                st.state = ROWSELECT;
+                return;
 
             case KEY_LEFT:
                 if (!st.left.empty()) {
@@ -285,7 +292,30 @@ static void input_loop(State &st, Database &db) {
 }
 
 static void select_loop(State &st, Database &db) {
-    // nothing yet...
+    assert(st.state == ROWSELECT);
+
+    noecho();
+
+    for (;;) {
+
+        move(st.select_index + 1, 0);
+        int c = getch();
+
+        switch (c) {
+
+            case KEY_UP:
+                st.select_index--;
+                break;
+
+            case KEY_DOWN:
+                st.select_index++;
+                break;
+
+            case '\t':
+                st.state = INPUT;
+                return;
+        }
+    }
 }
 
 int UICurses::run(Database &db) {
@@ -297,7 +327,7 @@ int UICurses::run(Database &db) {
     print_menu();
     refresh();
 
-    State st { INPUT, "", "", 0, offset_x(0), offset_y(0), EXIT_SUCCESS };
+    State st { INPUT, "", "", 0, offset_x(0), offset_y(0), 0, EXIT_SUCCESS };
 
     for (;;) {
 
