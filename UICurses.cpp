@@ -161,6 +161,8 @@ struct State {
     string left, right;
     unsigned index, x, y, select_index;
     int ret;
+    Results results;
+    unsigned from_row;
 };
 
 static void move_to_line(unsigned target, State &st) {
@@ -196,8 +198,14 @@ static void input_loop(State &st, Database &db) {
             case 10: /* enter */
                 if (!st.left.empty() || !st.right.empty()) {
                     string query = st.left + st.right;
-                    Results results = functions[st.index].handler(db, query.c_str());
-                    print_results(results, 0);
+                    st.results = functions[st.index].handler(db, query.c_str());
+                    print_results(st.results, 0);
+                    st.from_row = 0;
+                    st.select_index = 0;
+                    if (!st.results.rows.empty()) {
+                        st.state = ROWSELECT;
+                        return;
+                    }
                 }
                 break;
 
@@ -284,17 +292,21 @@ static void select_loop(State &st) {
 
     for (;;) {
 
-        move(st.select_index + 1, 0);
+        assert(st.select_index >= st.from_row);
+        move(st.select_index - st.from_row + 1, 0);
         int c = getch();
 
         switch (c) {
 
             case KEY_UP:
-                st.select_index--;
+                if (st.select_index - st.from_row > 0)
+                    st.select_index--;
                 break;
 
             case KEY_DOWN:
-                st.select_index++;
+                if (st.select_index < st.results.rows.size() - 1 &&
+                        st.select_index - st.from_row < 61)
+                    st.select_index++;
                 break;
 
             case '\t':
@@ -313,7 +325,7 @@ int UICurses::run(Database &db) {
     print_menu();
     refresh();
 
-    State st { INPUT, "", "", 0, offset_x(0), offset_y(0), 0, EXIT_SUCCESS };
+    State st { INPUT, "", "", 0, offset_x(0), offset_y(0), 0, EXIT_SUCCESS, Results(), 0 };
 
     for (;;) {
 
