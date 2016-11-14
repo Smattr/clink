@@ -277,7 +277,7 @@ static void input_loop(State &st, Database &db) {
     }
 }
 
-static void select_loop(State &st, Database &db) {
+static void select_loop(State &st) {
     assert(st.state == ROWSELECT);
 
     noecho();
@@ -324,7 +324,7 @@ int UICurses::run(Database &db) {
                 break;
 
             case ROWSELECT:
-                select_loop(st, db);
+                select_loop(st);
                 break;
 
             case EXITING:
