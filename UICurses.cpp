@@ -120,21 +120,29 @@ static int print_results(const Results &results, unsigned from_row) {
     
     /* Print column headings. */
     move(0, 0);
-    printw("  ");
+    int printed = printw("  ");
     for (unsigned i = 0; i < results.headings.size(); i++) {
         size_t padding = widths[i] - results.headings[i].size();
-        printw("%s%s", results.headings[i].c_str(),
+        printed += printw("%s%s", results.headings[i].c_str(),
             string(padding, ' ').c_str());
     }
+    printw("%s", string(COLS - printed, ' ').c_str());
 
     /* Print the rows. */
-    for (unsigned i = from_row; i < from_row + row_count; i++) {
-        move(1 + i - from_row, 0);
-        printw("%c ", hotkey(i));
-        for (unsigned j = 0; j < widths.size(); j++) {
-            size_t padding = widths[j] - results.rows[i].text[j].size();
-            printw("%s%s", results.rows[i].text[j].c_str(),
-                string(padding, ' ').c_str());
+    for (unsigned i = 0; i < 61 && i < LINES - functions_sz - 1 - 1; i++) {
+        move(1 + i, 0);
+        if (from_row + i < row_count) {
+            printed = 0;
+            printed += printw("%c ", hotkey(i));
+            for (unsigned j = 0; j < widths.size(); j++) {
+                size_t padding = widths[j] - results.rows[i + from_row].text[j].size();
+                printed += printw("%s%s",
+                    results.rows[i + from_row].text[j].c_str(),
+                    string(padding, ' ').c_str());
+            }
+            printw("%s", string(COLS - printed, ' ').c_str());
+        } else {
+            printw("%s", string(COLS, ' ').c_str());
         }
     }
 
