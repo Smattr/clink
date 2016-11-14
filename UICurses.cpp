@@ -77,6 +77,15 @@ static unsigned offset_y(unsigned index) {
     return LINES - functions_sz + index;
 }
 
+static char hotkey(unsigned index) {
+    switch (index) {
+        case 0 ... 9: return '0' + index;
+        case 10 ... 35: return 'a' + index - 10;
+        case 36 ... 61: return 'A' + index - 36;
+        default: return -1;
+    }
+}
+
 static int print_results(const Results &results, unsigned from_row) {
     assert(from_row == 0 || from_row < results.rows.size());
 
@@ -111,6 +120,7 @@ static int print_results(const Results &results, unsigned from_row) {
     
     /* Print column headings. */
     move(0, 0);
+    printw("  ");
     for (unsigned i = 0; i < results.headings.size(); i++) {
         size_t padding = widths[i] - results.headings[i].size();
         printw("%s%s", results.headings[i].c_str(),
@@ -120,6 +130,7 @@ static int print_results(const Results &results, unsigned from_row) {
     /* Print the rows. */
     for (unsigned i = from_row; i < from_row + row_count; i++) {
         move(1 + i - from_row, 0);
+        printw("%c ", hotkey(i));
         for (unsigned j = 0; j < widths.size(); j++) {
             size_t padding = widths[j] - results.rows[i].text[j].size();
             printw("%s%s", results.rows[i].text[j].c_str(),
