@@ -61,6 +61,11 @@ static struct {
 
 static const size_t functions_sz = sizeof(functions) / sizeof(functions[0]);
 
+static void print_white(unsigned length) {
+    string s(length, ' ');
+    printw("%s", s.c_str());
+}
+
 static void print_menu() {
     move(LINES - functions_sz, 0);
     for (unsigned i = 0; i < functions_sz; i++)
@@ -123,10 +128,11 @@ static int print_results(const Results &results, unsigned from_row) {
     int printed = printw("  ");
     for (unsigned i = 0; i < results.headings.size(); i++) {
         size_t padding = widths[i] - results.headings[i].size();
-        printed += printw("%s%s", results.headings[i].c_str(),
-            string(padding, ' ').c_str());
+        printed += printw("%s", results.headings[i].c_str());
+        print_white(padding);
+        printed += padding;
     }
-    printw("%s", string(COLS - printed, ' ').c_str());
+    print_white(COLS - printed);
 
     /* Print the rows. */
     for (unsigned i = 0; i < 61 && i < LINES - functions_sz - 1 - 1; i++) {
@@ -136,13 +142,13 @@ static int print_results(const Results &results, unsigned from_row) {
             printed += printw("%c ", hotkey(i));
             for (unsigned j = 0; j < widths.size(); j++) {
                 size_t padding = widths[j] - results.rows[i + from_row].text[j].size();
-                printed += printw("%s%s",
-                    results.rows[i + from_row].text[j].c_str(),
-                    string(padding, ' ').c_str());
+                printed += printw("%s", results.rows[i + from_row].text[j].c_str());
+                print_white(padding);
+                printed += padding;
             }
-            printw("%s", string(COLS - printed, ' ').c_str());
+            print_white(COLS - printed);
         } else {
-            printw("%s", string(COLS, ' ').c_str());
+            print_white(COLS);
         }
     }
 
@@ -176,7 +182,7 @@ struct State {
 static void move_to_line(unsigned target, State &st) {
     // Blank the current line.
     move(st.y, offset_x(st.index));
-    printw("%s", string(st.left.size() + st.right.size(), ' ').c_str());
+    print_white(st.left.size() + st.right.size());
 
     st.index = target;
     st.x = offset_x(st.index);
