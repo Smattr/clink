@@ -176,17 +176,15 @@ static void move_to_line(unsigned target, State &st) {
     move(st.y, st.x);
     printw("%s%s", st.left.c_str(), st.right.c_str());
     st.x += st.left.size();
-    move(st.y, st.x);
 }
 
 static void input_loop(State &st, Database &db) {
 
     echo();
 
-    move(st.y, st.x);
-
     for (;;) {
 
+        move(st.y, st.x);
         int c = getch();
 
         switch (c) {
@@ -201,7 +199,6 @@ static void input_loop(State &st, Database &db) {
                     Results results = functions[st.index].handler(db, query.c_str());
                     print_results(results, 0);
                 }
-                move(st.y, st.x);
                 break;
 
             case '\t':
@@ -213,18 +210,14 @@ static void input_loop(State &st, Database &db) {
                     st.right = st.left.substr(st.left.size() - 1, 1) + st.right;
                     st.left.pop_back();
                     st.x--;
-                    move(st.y, st.x);
                 }
                 break;
 
             case KEY_RIGHT:
-                if (st.right.empty()) {
-                    move(st.y, st.x);
-                } else {
+                if (!st.right.empty()) {
                     st.left.push_back(st.right[0]);
                     st.right = st.right.substr(1, st.right.size() - 1);
                     st.x++;
-                    move(st.y, st.x);
                 }
                 break;
 
@@ -242,14 +235,12 @@ static void input_loop(State &st, Database &db) {
                 st.right = st.left + st.right;
                 st.left = "";
                 st.x = offset_x(st.index);
-                move(st.y, st.x);
                 break;
 
             case KEY_END:
                 st.left += st.right;
                 st.right = "";
                 st.x = offset_x(st.index) + st.left.size();
-                move(st.y, st.x);
                 break;
 
             case KEY_PPAGE:
@@ -261,13 +252,10 @@ static void input_loop(State &st, Database &db) {
                 break;
 
             case KEY_BACKSPACE:
-                if (st.left.empty()) {
-                    move(st.y, st.x);
-                } else {
+                if (!st.left.empty()) {
                     st.left.pop_back();
                     st.x--;
                     printw("%s ", st.right.c_str());
-                    move(st.y, st.x);
                 }
                 break;
 
@@ -275,7 +263,6 @@ static void input_loop(State &st, Database &db) {
                 if (!st.right.empty()) {
                     st.right = st.right.substr(1, st.right.size() - 1);
                     printw("%s ", st.right.c_str());
-                    move(st.y, st.x);
                 }
                 break;
 
@@ -284,7 +271,6 @@ static void input_loop(State &st, Database &db) {
                 st.left += c;
                 if (!st.right.empty()) {
                     printw("%s", st.right.c_str());
-                    move(st.y, st.x);
                 }
         }
 
