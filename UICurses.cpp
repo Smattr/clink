@@ -160,6 +160,7 @@ struct State {
     state_t state;
     string left, right;
     unsigned index, x, y;
+    int ret;
 };
 
 static void move_to_line(unsigned target, State &st) {
@@ -178,17 +179,7 @@ static void move_to_line(unsigned target, State &st) {
     move(st.y, st.x);
 }
 
-int UICurses::run(Database &db) {
-
-    (void)initscr();
-    keypad(stdscr, TRUE);
-    (void)cbreak();
-
-    print_menu();
-    refresh();
-
-    State st { INPUT, "", "", 0, offset_x(0), offset_y(0) };
-
+static void input_loop(State &st, Database &db) {
     move(st.y, st.x);
 
     for (;;) {
@@ -197,7 +188,9 @@ int UICurses::run(Database &db) {
 
         switch (c) {
             case 4: /* Ctrl-D */
-                goto break2;
+                st.state = EXITING;
+                assert(st.ret == EXIT_SUCCESS);
+                return;
 
             case 10: /* enter */
                 if (!st.left.empty() || !st.right.empty()) {
@@ -289,9 +282,42 @@ int UICurses::run(Database &db) {
         }
 
     }
+}
+
+static void select_loop(State &st, Database &db) {
+    // nothing yet...
+}
+
+int UICurses::run(Database &db) {
+
+    (void)initscr();
+    keypad(stdscr, TRUE);
+    (void)cbreak();
+
+    print_menu();
+    refresh();
+
+    State st { INPUT, "", "", 0, offset_x(0), offset_y(0), EXIT_SUCCESS };
+
+    for (;;) {
+
+        switch (st.state) {
+
+            case INPUT:
+                input_loop(st, db);
+                break;
+
+            case ROWSELECT:
+                select_loop(st, db);
+                break;
+
+            case EXITING:
+                goto break2;
+        }
+    }
 
 break2:
     endwin();
 
-    return EXIT_SUCCESS;
+    return st.ret;
 }
