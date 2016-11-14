@@ -162,21 +162,20 @@ struct State {
     unsigned index, x, y;
 };
 
-static void move_to_line(unsigned target, unsigned &x, unsigned &y, unsigned &index,
-        const string &left, const string &right) {
+static void move_to_line(unsigned target, State &st) {
     // Blank the current line.
-    move(y, offset_x(index));
-    printw("%s", string(left.size() + right.size(), ' ').c_str());
+    move(st.y, offset_x(st.index));
+    printw("%s", string(st.left.size() + st.right.size(), ' ').c_str());
 
-    index = target;
-    x = offset_x(index);
-    y = offset_y(index);
+    st.index = target;
+    st.x = offset_x(st.index);
+    st.y = offset_y(st.index);
 
     // Paste the previous contents into the new line.
-    move(y, x);
-    printw("%s%s", left.c_str(), right.c_str());
-    x += left.size();
-    move(y, x);
+    move(st.y, st.x);
+    printw("%s%s", st.left.c_str(), st.right.c_str());
+    st.x += st.left.size();
+    move(st.y, st.x);
 }
 
 int UICurses::run(Database &db) {
@@ -231,12 +230,12 @@ int UICurses::run(Database &db) {
 
             case KEY_UP:
                 if (st.index > 0)
-                    move_to_line(st.index - 1, st.x, st.y, st.index, st.left, st.right);
+                    move_to_line(st.index - 1, st);
                 break;
 
             case KEY_DOWN:
                 if (st.index < functions_sz - 1)
-                    move_to_line(st.index + 1, st.x, st.y, st.index, st.left, st.right);
+                    move_to_line(st.index + 1, st);
                 break;
 
             case KEY_HOME:
@@ -254,11 +253,11 @@ int UICurses::run(Database &db) {
                 break;
 
             case KEY_PPAGE:
-                move_to_line(0, st.x, st.y, st.index, st.left, st.right);
+                move_to_line(0, st);
                 break;
 
             case KEY_NPAGE:
-                move_to_line(functions_sz - 1, st.x, st.y, st.index, st.left, st.right);
+                move_to_line(functions_sz - 1, st);
                 break;
 
             case KEY_BACKSPACE:
