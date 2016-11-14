@@ -150,6 +150,18 @@ static int print_results(const Results &results, unsigned from_row) {
     return 0;
 }
 
+typedef enum {
+    INPUT,
+    ROWSELECT,
+    EXITING,
+} state_t;
+
+struct State {
+    state_t state;
+    string left, right;
+    unsigned index, x, y;
+};
+
 static void move_to_line(unsigned target, unsigned &x, unsigned &y, unsigned &index,
         const string &left, const string &right) {
     // Blank the current line.
@@ -176,12 +188,9 @@ int UICurses::run(Database &db) {
     print_menu();
     refresh();
 
-    unsigned index = 0;
-    unsigned x = offset_x(index);
-    unsigned y = offset_y(index);
-    move(y, x);
+    State st { INPUT, "", "", 0, offset_x(0), offset_y(0) };
 
-    string left, right;
+    move(st.y, st.x);
 
     for (;;) {
 
@@ -192,91 +201,91 @@ int UICurses::run(Database &db) {
                 goto break2;
 
             case 10: /* enter */
-                if (!left.empty() || !right.empty()) {
-                    string query = left + right;
-                    Results results = functions[index].handler(db, query.c_str());
+                if (!st.left.empty() || !st.right.empty()) {
+                    string query = st.left + st.right;
+                    Results results = functions[st.index].handler(db, query.c_str());
                     print_results(results, 0);
                 }
-                move(y, x);
+                move(st.y, st.x);
                 break;
 
             case KEY_LEFT:
-                if (!left.empty()) {
-                    right = left.substr(left.size() - 1, 1) + right;
-                    left.pop_back();
-                    x--;
-                    move(y, x);
+                if (!st.left.empty()) {
+                    st.right = st.left.substr(st.left.size() - 1, 1) + st.right;
+                    st.left.pop_back();
+                    st.x--;
+                    move(st.y, st.x);
                 }
                 break;
 
             case KEY_RIGHT:
-                if (right.empty()) {
-                    move(y, x);
+                if (st.right.empty()) {
+                    move(st.y, st.x);
                 } else {
-                    left.push_back(right[0]);
-                    right = right.substr(1, right.size() - 1);
-                    x++;
-                    move(y, x);
+                    st.left.push_back(st.right[0]);
+                    st.right = st.right.substr(1, st.right.size() - 1);
+                    st.x++;
+                    move(st.y, st.x);
                 }
                 break;
 
             case KEY_UP:
-                if (index > 0)
-                    move_to_line(index - 1, x, y, index, left, right);
+                if (st.index > 0)
+                    move_to_line(st.index - 1, st.x, st.y, st.index, st.left, st.right);
                 break;
 
             case KEY_DOWN:
-                if (index < functions_sz - 1)
-                    move_to_line(index + 1, x, y, index, left, right);
+                if (st.index < functions_sz - 1)
+                    move_to_line(st.index + 1, st.x, st.y, st.index, st.left, st.right);
                 break;
 
             case KEY_HOME:
-                right = left + right;
-                left = "";
-                x = offset_x(index);
-                move(y, x);
+                st.right = st.left + st.right;
+                st.left = "";
+                st.x = offset_x(st.index);
+                move(st.y, st.x);
                 break;
 
             case KEY_END:
-                left += right;
-                right = "";
-                x = offset_x(index) + left.size();
-                move(y, x);
+                st.left += st.right;
+                st.right = "";
+                st.x = offset_x(st.index) + st.left.size();
+                move(st.y, st.x);
                 break;
 
             case KEY_PPAGE:
-                move_to_line(0, x, y, index, left, right);
+                move_to_line(0, st.x, st.y, st.index, st.left, st.right);
                 break;
 
             case KEY_NPAGE:
-                move_to_line(functions_sz - 1, x, y, index, left, right);
+                move_to_line(functions_sz - 1, st.x, st.y, st.index, st.left, st.right);
                 break;
 
             case KEY_BACKSPACE:
-                if (left.empty()) {
-                    move(y, x);
+                if (st.left.empty()) {
+                    move(st.y, st.x);
                 } else {
-                    left.pop_back();
-                    x--;
-                    printw("%s ", right.c_str());
-                    move(y, x);
+                    st.left.pop_back();
+                    st.x--;
+                    printw("%s ", st.right.c_str());
+                    move(st.y, st.x);
                 }
                 break;
 
             case KEY_DC:
-                if (!right.empty()) {
-                    right = right.substr(1, right.size() - 1);
-                    printw("%s ", right.c_str());
-                    move(y, x);
+                if (!st.right.empty()) {
+                    st.right = st.right.substr(1, st.right.size() - 1);
+                    printw("%s ", st.right.c_str());
+                    move(st.y, st.x);
                 }
                 break;
 
             default:
-                x++;
-                left += c;
-                if (!right.empty()) {
-                    printw("%s", right.c_str());
-                    move(y, x);
+                st.x++;
+                st.left += c;
+                if (!st.right.empty()) {
+                    printw("%s", st.right.c_str());
+                    move(st.y, st.x);
                 }
         }
 
