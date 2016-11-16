@@ -23,13 +23,13 @@ struct Results {
     vector<ResultRow> rows;
 };
 
-static Results find_symbol(const Database &db, const char *query) {
-    Results results;
+static Results *find_symbol(const Database &db, const char *query) {
+    Results *results = new Results;
 
-    results.headings.push_back("File");
-    results.headings.push_back("Function");
-    results.headings.push_back("Line");
-    results.headings.push_back("");
+    results->headings.push_back("File");
+    results->headings.push_back("Function");
+    results->headings.push_back("Line");
+    results->headings.push_back("");
 
     vector<Symbol> vs = db.find_symbol(query);
     for (auto s : vs) {
@@ -41,7 +41,7 @@ static Results find_symbol(const Database &db, const char *query) {
         row.path = s.path();
         row.line = s.line();
         row.col = s.col();
-        results.rows.push_back(row);
+        results->rows.push_back(row);
     }
 
     return results;
@@ -49,7 +49,7 @@ static Results find_symbol(const Database &db, const char *query) {
 
 static struct {
     const char *prompt;
-    Results (*handler)(const Database &db, const char *query);
+    Results *(*handler)(const Database &db, const char *query);
 } functions[] = {
     { "Find this C symbol", find_symbol },
     { "Find this global definition", nullptr },
@@ -164,193 +164,189 @@ static int print_results(const Results &results, unsigned from_row) {
     return 0;
 }
 
-typedef enum {
-    INPUT,
-    ROWSELECT,
-    EXITING,
-} state_t;
-
-struct State {
-    state_t state;
-    string left, right;
-    unsigned index, x, y, select_index;
-    int ret;
-    Results results;
-    unsigned from_row;
-};
-
-static void move_to_line(unsigned target, State &st) {
+void UICurses::move_to_line(unsigned target) {
     // Blank the current line.
-    move(st.y, offset_x(st.index));
-    print_white(st.left.size() + st.right.size());
+    move(m_y, offset_x(m_index));
+    print_white(m_left.size() + m_right.size());
 
-    st.index = target;
-    st.x = offset_x(st.index);
-    st.y = offset_y(st.index);
+    m_index = target;
+    m_x = offset_x(m_index);
+    m_y = offset_y(m_index);
 
     // Paste the previous contents into the new line.
-    move(st.y, st.x);
-    printw("%s%s", st.left.c_str(), st.right.c_str());
-    st.x += st.left.size();
+    move(m_y, m_x);
+    printw("%s%s", m_left.c_str(), m_right.c_str());
+    m_x += m_left.size();
 }
 
-static void handle_input(State &st, Database &db) {
+void UICurses::handle_input(Database &db) {
 
     echo();
 
-    move(st.y, st.x);
+    move(m_y, m_x);
     int c = getch();
 
     switch (c) {
         case 4: /* Ctrl-D */
-            st.state = EXITING;
-            assert(st.ret == EXIT_SUCCESS);
+            m_state = UICS_EXITING;
+            m_ret = EXIT_SUCCESS;
             break;
 
         case 10: /* enter */
-            if (!st.left.empty() || !st.right.empty()) {
-                string query = st.left + st.right;
-                st.results = functions[st.index].handler(db, query.c_str());
-                print_results(st.results, 0);
-                st.from_row = 0;
-                st.select_index = 0;
-                if (!st.results.rows.empty())
-                    st.state = ROWSELECT;
+            if (!m_left.empty() || !m_right.empty()) {
+                delete m_results;
+                string query = m_left + m_right;
+                m_results = functions[m_index].handler(db, query.c_str());
+                print_results(*m_results, 0);
+                m_from_row = 0;
+                m_select_index = 0;
+                if (!m_results->rows.empty())
+                    m_state = UICS_ROWSELECT;
             }
             break;
 
         case '\t':
-            st.state = ROWSELECT;
+            m_state = UICS_ROWSELECT;
             break;
 
         case KEY_LEFT:
-            if (!st.left.empty()) {
-                st.right = st.left.substr(st.left.size() - 1, 1) + st.right;
-                st.left.pop_back();
-                st.x--;
+            if (!m_left.empty()) {
+                m_right = m_left.substr(m_left.size() - 1, 1) + m_right;
+                m_left.pop_back();
+                m_x--;
             }
             break;
 
         case KEY_RIGHT:
-            if (!st.right.empty()) {
-                st.left.push_back(st.right[0]);
-                st.right = st.right.substr(1, st.right.size() - 1);
-                st.x++;
+            if (!m_right.empty()) {
+                m_left.push_back(m_right[0]);
+                m_right = m_right.substr(1, m_right.size() - 1);
+                m_x++;
             }
             break;
 
         case KEY_UP:
-            if (st.index > 0)
-                move_to_line(st.index - 1, st);
+            if (m_index > 0)
+                move_to_line(m_index - 1);
             break;
 
         case KEY_DOWN:
-            if (st.index < functions_sz - 1)
-                move_to_line(st.index + 1, st);
+            if (m_index < functions_sz - 1)
+                move_to_line(m_index + 1);
             break;
 
         case KEY_HOME:
-            st.right = st.left + st.right;
-            st.left = "";
-            st.x = offset_x(st.index);
+            m_right = m_left + m_right;
+            m_left = "";
+            m_x = offset_x(m_index);
             break;
 
         case KEY_END:
-            st.left += st.right;
-            st.right = "";
-            st.x = offset_x(st.index) + st.left.size();
+            m_left += m_right;
+            m_right = "";
+            m_x = offset_x(m_index) + m_left.size();
             break;
 
         case KEY_PPAGE:
-            move_to_line(0, st);
+            move_to_line(0);
             break;
 
         case KEY_NPAGE:
-            move_to_line(functions_sz - 1, st);
+            move_to_line(functions_sz - 1);
             break;
 
         case KEY_BACKSPACE:
-            if (!st.left.empty()) {
-                st.left.pop_back();
-                st.x--;
-                printw("%s ", st.right.c_str());
+            if (!m_left.empty()) {
+                m_left.pop_back();
+                m_x--;
+                printw("%s ", m_right.c_str());
             }
             break;
 
         case KEY_DC:
-            if (!st.right.empty()) {
-                st.right = st.right.substr(1, st.right.size() - 1);
-                printw("%s ", st.right.c_str());
+            if (!m_right.empty()) {
+                m_right = m_right.substr(1, m_right.size() - 1);
+                printw("%s ", m_right.c_str());
             }
             break;
 
         default:
-            st.x++;
-            st.left += c;
-            if (!st.right.empty()) {
-                printw("%s", st.right.c_str());
+            m_x++;
+            m_left += c;
+            if (!m_right.empty()) {
+                printw("%s", m_right.c_str());
             }
     }
 }
 
-static void handle_select(State &st) {
-    assert(st.state == ROWSELECT);
+void UICurses::handle_select() {
+    assert(m_state == UICS_ROWSELECT);
 
     noecho();
 
-    assert(st.select_index >= st.from_row);
-    move(st.select_index - st.from_row + 1, 0);
+    assert(m_select_index >= m_from_row);
+    move(m_select_index - m_from_row + 1, 0);
     int c = getch();
 
     switch (c) {
 
         case KEY_UP:
-            if (st.select_index - st.from_row > 0)
-                st.select_index--;
+            if (m_select_index - m_from_row > 0)
+                m_select_index--;
             break;
 
         case KEY_DOWN:
-            if (st.select_index < st.results.rows.size() - 1 &&
-                    st.select_index - st.from_row < 61)
-                st.select_index++;
+            if (m_select_index < m_results->rows.size() - 1 &&
+                    m_select_index - m_from_row < 61)
+                m_select_index++;
             break;
 
         case '\t':
-            st.state = INPUT;
+            m_state = UICS_INPUT;
             break;
     }
 }
 
 int UICurses::run(Database &db) {
 
-    (void)initscr();
-    keypad(stdscr, TRUE);
-    (void)cbreak();
-
     print_menu();
     refresh();
 
-    State st { INPUT, "", "", 0, offset_x(0), offset_y(0), 0, EXIT_SUCCESS, Results(), 0 };
-
     for (;;) {
 
-        switch (st.state) {
+        switch (m_state) {
 
-            case INPUT:
-                handle_input(st, db);
+            case UICS_INPUT:
+                handle_input(db);
                 break;
 
-            case ROWSELECT:
-                handle_select(st);
+            case UICS_ROWSELECT:
+                handle_select();
                 break;
 
-            case EXITING:
+            case UICS_EXITING:
                 goto break2;
         }
     }
 
 break2:
-    endwin();
 
-    return st.ret;
+    return m_ret;
+}
+
+UICurses::UICurses() : m_state(UICS_INPUT), m_left(""), m_right(""), m_index(0),
+        m_select_index(0), m_results(nullptr), m_from_row(0) {
+
+    (void)initscr();
+    keypad(stdscr, TRUE);
+    (void)cbreak();
+
+    // These need to come after ncurses init.
+    m_x = offset_x(0);
+    m_y = offset_y(0);
+}
+
+UICurses::~UICurses() {
+    delete m_results;
+    endwin();
 }
