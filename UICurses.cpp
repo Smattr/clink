@@ -194,139 +194,130 @@ static void move_to_line(unsigned target, State &st) {
     st.x += st.left.size();
 }
 
-static void input_loop(State &st, Database &db) {
+static void handle_input(State &st, Database &db) {
 
     echo();
 
-    for (;;) {
+    move(st.y, st.x);
+    int c = getch();
 
-        move(st.y, st.x);
-        int c = getch();
+    switch (c) {
+        case 4: /* Ctrl-D */
+            st.state = EXITING;
+            assert(st.ret == EXIT_SUCCESS);
+            break;
 
-        switch (c) {
-            case 4: /* Ctrl-D */
-                st.state = EXITING;
-                assert(st.ret == EXIT_SUCCESS);
-                return;
+        case 10: /* enter */
+            if (!st.left.empty() || !st.right.empty()) {
+                string query = st.left + st.right;
+                st.results = functions[st.index].handler(db, query.c_str());
+                print_results(st.results, 0);
+                st.from_row = 0;
+                st.select_index = 0;
+                if (!st.results.rows.empty())
+                    st.state = ROWSELECT;
+            }
+            break;
 
-            case 10: /* enter */
-                if (!st.left.empty() || !st.right.empty()) {
-                    string query = st.left + st.right;
-                    st.results = functions[st.index].handler(db, query.c_str());
-                    print_results(st.results, 0);
-                    st.from_row = 0;
-                    st.select_index = 0;
-                    if (!st.results.rows.empty()) {
-                        st.state = ROWSELECT;
-                        return;
-                    }
-                }
-                break;
+        case '\t':
+            st.state = ROWSELECT;
+            break;
 
-            case '\t':
-                st.state = ROWSELECT;
-                return;
+        case KEY_LEFT:
+            if (!st.left.empty()) {
+                st.right = st.left.substr(st.left.size() - 1, 1) + st.right;
+                st.left.pop_back();
+                st.x--;
+            }
+            break;
 
-            case KEY_LEFT:
-                if (!st.left.empty()) {
-                    st.right = st.left.substr(st.left.size() - 1, 1) + st.right;
-                    st.left.pop_back();
-                    st.x--;
-                }
-                break;
-
-            case KEY_RIGHT:
-                if (!st.right.empty()) {
-                    st.left.push_back(st.right[0]);
-                    st.right = st.right.substr(1, st.right.size() - 1);
-                    st.x++;
-                }
-                break;
-
-            case KEY_UP:
-                if (st.index > 0)
-                    move_to_line(st.index - 1, st);
-                break;
-
-            case KEY_DOWN:
-                if (st.index < functions_sz - 1)
-                    move_to_line(st.index + 1, st);
-                break;
-
-            case KEY_HOME:
-                st.right = st.left + st.right;
-                st.left = "";
-                st.x = offset_x(st.index);
-                break;
-
-            case KEY_END:
-                st.left += st.right;
-                st.right = "";
-                st.x = offset_x(st.index) + st.left.size();
-                break;
-
-            case KEY_PPAGE:
-                move_to_line(0, st);
-                break;
-
-            case KEY_NPAGE:
-                move_to_line(functions_sz - 1, st);
-                break;
-
-            case KEY_BACKSPACE:
-                if (!st.left.empty()) {
-                    st.left.pop_back();
-                    st.x--;
-                    printw("%s ", st.right.c_str());
-                }
-                break;
-
-            case KEY_DC:
-                if (!st.right.empty()) {
-                    st.right = st.right.substr(1, st.right.size() - 1);
-                    printw("%s ", st.right.c_str());
-                }
-                break;
-
-            default:
+        case KEY_RIGHT:
+            if (!st.right.empty()) {
+                st.left.push_back(st.right[0]);
+                st.right = st.right.substr(1, st.right.size() - 1);
                 st.x++;
-                st.left += c;
-                if (!st.right.empty()) {
-                    printw("%s", st.right.c_str());
-                }
-        }
+            }
+            break;
 
+        case KEY_UP:
+            if (st.index > 0)
+                move_to_line(st.index - 1, st);
+            break;
+
+        case KEY_DOWN:
+            if (st.index < functions_sz - 1)
+                move_to_line(st.index + 1, st);
+            break;
+
+        case KEY_HOME:
+            st.right = st.left + st.right;
+            st.left = "";
+            st.x = offset_x(st.index);
+            break;
+
+        case KEY_END:
+            st.left += st.right;
+            st.right = "";
+            st.x = offset_x(st.index) + st.left.size();
+            break;
+
+        case KEY_PPAGE:
+            move_to_line(0, st);
+            break;
+
+        case KEY_NPAGE:
+            move_to_line(functions_sz - 1, st);
+            break;
+
+        case KEY_BACKSPACE:
+            if (!st.left.empty()) {
+                st.left.pop_back();
+                st.x--;
+                printw("%s ", st.right.c_str());
+            }
+            break;
+
+        case KEY_DC:
+            if (!st.right.empty()) {
+                st.right = st.right.substr(1, st.right.size() - 1);
+                printw("%s ", st.right.c_str());
+            }
+            break;
+
+        default:
+            st.x++;
+            st.left += c;
+            if (!st.right.empty()) {
+                printw("%s", st.right.c_str());
+            }
     }
 }
 
-static void select_loop(State &st) {
+static void handle_select(State &st) {
     assert(st.state == ROWSELECT);
 
     noecho();
 
-    for (;;) {
+    assert(st.select_index >= st.from_row);
+    move(st.select_index - st.from_row + 1, 0);
+    int c = getch();
 
-        assert(st.select_index >= st.from_row);
-        move(st.select_index - st.from_row + 1, 0);
-        int c = getch();
+    switch (c) {
 
-        switch (c) {
+        case KEY_UP:
+            if (st.select_index - st.from_row > 0)
+                st.select_index--;
+            break;
 
-            case KEY_UP:
-                if (st.select_index - st.from_row > 0)
-                    st.select_index--;
-                break;
+        case KEY_DOWN:
+            if (st.select_index < st.results.rows.size() - 1 &&
+                    st.select_index - st.from_row < 61)
+                st.select_index++;
+            break;
 
-            case KEY_DOWN:
-                if (st.select_index < st.results.rows.size() - 1 &&
-                        st.select_index - st.from_row < 61)
-                    st.select_index++;
-                break;
-
-            case '\t':
-                st.state = INPUT;
-                return;
-        }
+        case '\t':
+            st.state = INPUT;
+            break;
     }
 }
 
@@ -346,11 +337,11 @@ int UICurses::run(Database &db) {
         switch (st.state) {
 
             case INPUT:
-                input_loop(st, db);
+                handle_input(st, db);
                 break;
 
             case ROWSELECT:
-                select_loop(st);
+                handle_select(st);
                 break;
 
             case EXITING:
