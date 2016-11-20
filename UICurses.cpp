@@ -59,7 +59,7 @@ static struct {
     { "Find files #including this file", nullptr },
 };
 
-static const size_t functions_sz = sizeof(functions) / sizeof(functions[0]);
+static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
 
 static void print_white(unsigned length) {
     string s(length, ' ');
@@ -67,19 +67,19 @@ static void print_white(unsigned length) {
 }
 
 static void print_menu() {
-    move(LINES - functions_sz, 0);
-    for (unsigned i = 0; i < functions_sz; i++)
+    move(LINES - FUNCTIONS_SZ, 0);
+    for (unsigned i = 0; i < FUNCTIONS_SZ; i++)
         printw("%s: \n", functions[i].prompt);
 }
 
 static unsigned offset_x(unsigned index) {
-    assert(index < functions_sz);
+    assert(index < FUNCTIONS_SZ);
     return strlen(functions[index].prompt) + sizeof(": ") - 1;
 }
 
 static unsigned offset_y(unsigned index) {
-    assert(index < functions_sz);
-    return LINES - functions_sz + index;
+    assert(index < FUNCTIONS_SZ);
+    return LINES - FUNCTIONS_SZ + index;
 }
 
 static char hotkey(unsigned index) {
@@ -97,9 +97,9 @@ static int print_results(const Results &results, unsigned from_row) {
     /* The number of rows we can fit is the number of lines on the screen with
      * some room extracted for the column headings, menu and status.
      */
-    if ((unsigned)LINES < functions_sz + 2 + 1 + 1)
+    if ((unsigned)LINES < FUNCTIONS_SZ + 2 + 1 + 1)
         return -1;
-    unsigned row_count = LINES - functions_sz - 2 - 1;
+    unsigned row_count = LINES - FUNCTIONS_SZ - 2 - 1;
     if (row_count > results.rows.size() - from_row) {
         /* Can't show more rows than we have. */
         row_count = results.rows.size() - from_row;
@@ -135,7 +135,7 @@ static int print_results(const Results &results, unsigned from_row) {
     print_white(COLS - printed);
 
     /* Print the rows. */
-    for (unsigned i = 0; i < 61 && i < LINES - functions_sz - 1 - 1; i++) {
+    for (unsigned i = 0; i < 61 && i < LINES - FUNCTIONS_SZ - 1 - 1; i++) {
         move(1 + i, 0);
         if (from_row + i < row_count) {
             printed = 0;
@@ -153,7 +153,7 @@ static int print_results(const Results &results, unsigned from_row) {
     }
 
     /* Print footer. */
-    move(LINES - functions_sz - 1, 0);
+    move(LINES - FUNCTIONS_SZ - 1, 0);
     printw("* Lines %u-%u of %u", from_row, from_row + row_count,
         results.rows.size());
     if (from_row + row_count < results.rows.size())
@@ -231,7 +231,7 @@ void UICurses::handle_input(Database &db) {
             break;
 
         case KEY_DOWN:
-            if (m_index < functions_sz - 1)
+            if (m_index < FUNCTIONS_SZ - 1)
                 move_to_line(m_index + 1);
             break;
 
@@ -252,7 +252,7 @@ void UICurses::handle_input(Database &db) {
             break;
 
         case KEY_NPAGE:
-            move_to_line(functions_sz - 1);
+            move_to_line(FUNCTIONS_SZ - 1);
             break;
 
         case KEY_BACKSPACE:
