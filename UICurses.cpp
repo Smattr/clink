@@ -205,7 +205,8 @@ void UICurses::handle_input(Database &db) {
             break;
 
         case '\t':
-            m_state = UICS_ROWSELECT;
+            if (!m_results->rows.empty())
+                m_state = UICS_ROWSELECT;
             break;
 
         case KEY_LEFT:
