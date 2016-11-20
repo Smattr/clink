@@ -153,7 +153,7 @@ static int print_results(const Results &results, unsigned from_row) {
 
     /* Print footer. */
     move(LINES - FUNCTIONS_SZ - 1, 0);
-    printw("* Lines %u-%u of %u", from_row, from_row + row_count,
+    printw("* Lines %u-%u of %u", from_row + 1, from_row + row_count,
         results.rows.size());
     if (from_row + row_count < results.rows.size())
         printw(", %u more - press the space bar to display more",
