@@ -289,6 +289,11 @@ void UICurses::handle_select() {
 
     switch (c) {
 
+        case 4: /* Ctrl-D */
+            m_state = UICS_EXITING;
+            m_ret = EXIT_SUCCESS;
+            break;
+
         case KEY_UP:
             if (m_select_index - m_from_row > 0)
                 m_select_index--;
