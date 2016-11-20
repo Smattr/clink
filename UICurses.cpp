@@ -33,14 +33,13 @@ static Results *find_symbol(const Database &db, const char *query) {
 
     vector<Symbol> vs = db.find_symbol(query);
     for (auto s : vs) {
-        ResultRow row;
-        row.text.push_back(s.path());
-        row.text.push_back(s.parent());
-        row.text.push_back(to_string(s.line()));
-        row.text.push_back(lstrip(s.context()));
-        row.path = s.path();
-        row.line = s.line();
-        row.col = s.col();
+        ResultRow row {
+            .text = { s.path(), s.parent(), to_string(s.line()),
+                lstrip(s.context()) },
+            .path = s.path(),
+            .line = s.line(),
+            .col = s.col(),
+        };
         results->rows.push_back(row);
     }
 
