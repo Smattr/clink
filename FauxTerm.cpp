@@ -2,10 +2,12 @@ static void *bridge(void *state);
 
 #include <cassert>
 #include <cstdio>
+#include <errno.h>
 #include "FauxTerm.h"
 #include <pthread.h>
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
+#include <system_error>
 #include <unistd.h>
 #include <vector>
 
@@ -44,26 +46,22 @@ FauxTerm::FauxTerm() {
      * this object's lifetime.
      */
     struct winsize ws;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) < 0) {
-        // TODO
-    }
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) < 0)
+        throw system_error(errno, system_category());
 
     m_width = unsigned(ws.ws_col);
     m_height = unsigned(ws.ws_row);
 
     m_screen = new TermChar[m_width * m_height]();
 
-    if (pipe(m_pipe_fd) < 0) {
-        // TODO
-    }
+    if (pipe(m_pipe_fd) < 0)
+        throw system_error(errno, system_category());
 
-    if ((m_sig_fd = eventfd(0, 0)) < 0) {
-        // TODO
-    }
+    if ((m_sig_fd = eventfd(0, 0)) < 0)
+        throw system_error(errno, system_category());
 
-    if (pthread_create(&m_child, nullptr, bridge, this) < 0) {
-        // TODO
-    }
+    if (pthread_create(&m_child, nullptr, bridge, this) < 0)
+        throw system_error(errno, system_category());
 
 }
 
