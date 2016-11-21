@@ -201,6 +201,20 @@ void UICurses::handle_input(Database &db) {
             }
             break;
 
+        case 23: { /* Ctrl-W */
+            while (!m_left.empty() && isspace(m_left[m_left.size() - 1]))
+                m_left.pop_back();
+            while (!m_left.empty() && !isspace(m_left[m_left.size() - 1]))
+                m_left.pop_back();
+            move(m_y, offset_x(m_index));
+            size_t padding = COLS - (offset_x(m_index) + m_left.size() + m_right.size());
+            string blank(padding, ' ');
+            printw("%s%s%s", m_left.c_str(), m_right.c_str(), blank.c_str());
+            m_x = offset_x(m_index) + m_left.size();
+            move(m_y, m_x);
+            break;
+        }
+
         case '\t':
             if (!m_results->rows.empty())
                 m_state = UICS_ROWSELECT;
