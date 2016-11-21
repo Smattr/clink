@@ -8,6 +8,7 @@
 #include "UICurses.h"
 #include "util.h"
 #include <vector>
+#include "Vim.h"
 
 using namespace std;
 
@@ -305,6 +306,21 @@ void UICurses::handle_select() {
             m_state = UICS_EXITING;
             m_ret = EXIT_SUCCESS;
             break;
+
+        case 10: { /* enter */
+            def_prog_mode();
+            endwin();
+            int ret = vim_open(m_results->rows[m_select_index].path,
+                m_results->rows[m_select_index].line,
+                m_results->rows[m_select_index].col);
+            if (ret != EXIT_SUCCESS) {
+                m_state = UICS_EXITING;
+                m_ret = ret;
+            }
+            reset_prog_mode();
+            refresh();
+            break;
+        }
 
         case KEY_UP:
             if (m_select_index - m_from_row > 0)
