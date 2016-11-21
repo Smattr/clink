@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include "FauxTerm.h"
 #include <string>
 
 using namespace std;
