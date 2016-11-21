@@ -13,6 +13,23 @@ static void *bridge(void *state);
 
 using namespace std;
 
+namespace { class AutoLock {
+
+public:
+    AutoLock(pthread_mutex_t *mutex) : m_mutex(mutex) {
+        if (pthread_mutex_lock(mutex) < 0)
+            throw system_error(errno, system_category());
+    }
+
+    ~AutoLock() {
+        pthread_mutex_unlock(m_mutex);
+    }
+
+private:
+    pthread_mutex_t *m_mutex;
+
+}; };
+
 static void *bridge(void *state) {
     FauxTerm *parent = (FauxTerm*)state;
 
@@ -60,6 +77,9 @@ FauxTerm::FauxTerm() {
     if ((m_sig_fd = eventfd(0, 0)) < 0)
         throw system_error(errno, system_category());
 
+    if (pthread_mutex_init(&m_screen_lock, 0) < 0)
+        throw system_error(errno, system_category());
+
     if (pthread_create(&m_child, nullptr, bridge, this) < 0)
         throw system_error(errno, system_category());
 
@@ -73,6 +93,8 @@ FauxTerm::~FauxTerm() {
     assert(ret == sizeof(indicator));
     pthread_join(m_child, nullptr);
 
+    pthread_mutex_destroy(&m_screen_lock);
+
     close(m_sig_fd);
     close(m_pipe_fd[0]);
     close(m_pipe_fd[1]);
@@ -84,15 +106,17 @@ static TermChar blank_char() {
     return TermChar { 0, TC_BLACK, TC_BLACK, 0, 0 };
 }
 
-TermChar FauxTerm::get_char(unsigned x, unsigned y) const {
+TermChar FauxTerm::get_char(unsigned x, unsigned y) {
     if (x >= m_width)
         return blank_char();
     if (y >= m_height)
         return blank_char();
+    // FIXME: taking this lock for every character is going to perform terribly
+    AutoLock lock(&m_screen_lock);
     return m_screen[y * m_width + x];
 }
 
-vector<TermChar> FauxTerm::get_line(unsigned y) const {
+vector<TermChar> FauxTerm::get_line(unsigned y) {
     vector<TermChar> line;
     for (unsigned i = 0; i < m_width; i++)
         line.push_back(get_char(i, y));

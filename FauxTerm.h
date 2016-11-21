@@ -45,14 +45,15 @@ public:
         return m_pipe_fd[1];
     }
 
-    TermChar get_char(unsigned x, unsigned y) const;
-    std::vector<TermChar> get_line(unsigned y) const;
+    TermChar get_char(unsigned x, unsigned y);
+    std::vector<TermChar> get_line(unsigned y);
 
 private:
     unsigned m_width, m_height;
     int m_pipe_fd[2], m_sig_fd;
     TermChar *m_screen;
     pthread_t m_child;
+    pthread_mutex_t m_screen_lock;
 
     friend void *bridge(void *state);
 
