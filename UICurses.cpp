@@ -61,11 +61,6 @@ static struct {
 
 static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
 
-static void print_rpad(const string &s) {
-    string white(COLS - s.length(), ' ');
-    printw("%s%s", s.c_str(), white.c_str());
-}
-
 static void print_menu() {
     move(LINES - FUNCTIONS_SZ, 0);
     for (unsigned i = 0; i < FUNCTIONS_SZ; i++)
@@ -125,37 +120,37 @@ static int print_results(const Results &results, unsigned from_row) {
     
     /* Print column headings. */
     move(0, 0);
-    string buffer("  ");
+    printw("  ");
     for (unsigned i = 0; i < results.headings.size(); i++) {
         size_t padding = widths[i] - results.headings[i].size();
-        buffer += results.headings[i] + string(padding, ' ');
+        string blank(padding, ' ');
+        printw("%s%s", results.headings[i].c_str(), blank.c_str());
     }
-    print_rpad(buffer);
+    clrtoeol();
 
     /* Print the rows. */
     for (unsigned i = 0; i < 61 && i < LINES - FUNCTIONS_SZ - 1 - 1; i++) {
         move(1 + i, 0);
-        buffer = "";
         if (from_row + i < row_count) {
-            buffer += hotkey(i) + string(" ");
+            printw("%c ", hotkey(i));
             for (unsigned j = 0; j < widths.size(); j++) {
                 size_t padding = widths[j] - results.rows[i + from_row].text[j].size();
-                buffer += results.rows[i + from_row].text[j] + string(padding, ' ');
+                string blank(padding, ' ');
+                printw("%s%s", results.rows[i + from_row].text[j].c_str(), blank.c_str());
             }
         }
-        print_rpad(buffer);
+        clrtoeol();
     }
 
     /* Print footer. */
     move(LINES - FUNCTIONS_SZ - 1, 0);
-    buffer = "* Lines " + to_string(from_row + 1) + "-" +
-        to_string(from_row + row_count) + " of " +
-        to_string(results.rows.size());
+    printw("* Lines %u-%u of %u", from_row + 1, from_row + row_count,
+        results.rows.size());
     if (from_row + row_count < results.rows.size())
-        buffer += ", " + to_string(results.rows.size() - from_row - row_count) +
-            " more - press the space bar to display more";
-    buffer += " *";
-    print_rpad(buffer);
+        printw(", %u more - press the space bar to display more",
+            results.rows.size() - from_row - row_count);
+    printw(" *");
+    clrtoeol();
 
     return 0;
 }
@@ -163,8 +158,7 @@ static int print_results(const Results &results, unsigned from_row) {
 void UICurses::move_to_line(unsigned target) {
     // Blank the current line.
     move(m_y, offset_x(m_index));
-    string blank(m_left.size() + m_right.size(), ' ');
-    printw("%s", blank.c_str());
+    clrtoeol();
 
     m_index = target;
     m_x = offset_x(m_index);
@@ -208,9 +202,8 @@ void UICurses::handle_input(Database &db) {
             while (!m_left.empty() && !isspace(m_left[m_left.size() - 1]))
                 m_left.pop_back();
             move(m_y, offset_x(m_index));
-            size_t padding = COLS - (offset_x(m_index) + m_left.size() + m_right.size());
-            string blank(padding, ' ');
-            printw("%s%s%s", m_left.c_str(), m_right.c_str(), blank.c_str());
+            printw("%s%s", m_left.c_str(), m_right.c_str());
+            clrtoeol();
             m_x = offset_x(m_index) + m_left.size();
             move(m_y, m_x);
             break;
@@ -271,14 +264,16 @@ void UICurses::handle_input(Database &db) {
             if (!m_left.empty()) {
                 m_left.pop_back();
                 m_x--;
-                printw("%s ", m_right.c_str());
+                printw("%s", m_right.c_str());
+                clrtoeol();
             }
             break;
 
         case KEY_DC:
             if (!m_right.empty()) {
                 m_right = m_right.substr(1, m_right.size() - 1);
-                printw("%s ", m_right.c_str());
+                printw("%s", m_right.c_str());
+                clrtoeol();
             }
             break;
 
