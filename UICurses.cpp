@@ -60,9 +60,9 @@ static struct {
 
 static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
 
-static void print_white(unsigned length) {
-    string s(length, ' ');
-    printw("%s", s.c_str());
+static void print_rpad(const string &s) {
+    string white(COLS - s.length(), ' ');
+    printw("%s%s", s.c_str(), white.c_str());
 }
 
 static void print_menu() {
@@ -124,41 +124,37 @@ static int print_results(const Results &results, unsigned from_row) {
     
     /* Print column headings. */
     move(0, 0);
-    int printed = printw("  ");
+    string buffer("  ");
     for (unsigned i = 0; i < results.headings.size(); i++) {
         size_t padding = widths[i] - results.headings[i].size();
-        printed += printw("%s", results.headings[i].c_str());
-        print_white(padding);
-        printed += padding;
+        buffer += results.headings[i] + string(padding, ' ');
     }
-    print_white(COLS - printed);
+    print_rpad(buffer);
 
     /* Print the rows. */
     for (unsigned i = 0; i < 61 && i < LINES - FUNCTIONS_SZ - 1 - 1; i++) {
         move(1 + i, 0);
+        buffer = "";
         if (from_row + i < row_count) {
-            printed = 0;
-            printed += printw("%c ", hotkey(i));
+            buffer += hotkey(i) + string(" ");
             for (unsigned j = 0; j < widths.size(); j++) {
                 size_t padding = widths[j] - results.rows[i + from_row].text[j].size();
-                printed += printw("%s", results.rows[i + from_row].text[j].c_str());
-                print_white(padding);
-                printed += padding;
+                buffer += results.rows[i + from_row].text[j] + string(padding, ' ');
             }
-            print_white(COLS - printed);
-        } else {
-            print_white(COLS);
         }
+        print_rpad(buffer);
     }
 
     /* Print footer. */
     move(LINES - FUNCTIONS_SZ - 1, 0);
-    printw("* Lines %u-%u of %u", from_row + 1, from_row + row_count,
-        results.rows.size());
+    buffer = "* Lines " + to_string(from_row + 1) + "-" +
+        to_string(from_row + row_count) + " of " +
+        to_string(results.rows.size());
     if (from_row + row_count < results.rows.size())
-        printw(", %u more - press the space bar to display more",
-            results.rows.size() - from_row - row_count);
-    printw(" *");
+        buffer += ", " + to_string(results.rows.size() - from_row - row_count) +
+            " more - press the space bar to display more";
+    buffer += " *";
+    print_rpad(buffer);
 
     return 0;
 }
@@ -166,7 +162,8 @@ static int print_results(const Results &results, unsigned from_row) {
 void UICurses::move_to_line(unsigned target) {
     // Blank the current line.
     move(m_y, offset_x(m_index));
-    print_white(m_left.size() + m_right.size());
+    string blank(m_left.size() + m_right.size(), ' ');
+    printw("%s", blank.c_str());
 
     m_index = target;
     m_x = offset_x(m_index);
