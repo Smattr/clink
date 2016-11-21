@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pthread.h>
 #include <string>
 #include <vector>
 
@@ -48,8 +49,11 @@ public:
     std::vector<TermChar> get_line(unsigned y) const;
 
 private:
-    int m_width, m_height;
+    unsigned m_width, m_height;
     int m_pipe_fd[2], m_sig_fd;
     TermChar *m_screen;
+    pthread_t m_child;
+
+    friend void *bridge(void *state);
 
 };

@@ -1,0 +1,102 @@
+static void *bridge(void *state);
+
+#include <cassert>
+#include <cstdio>
+#include "FauxTerm.h"
+#include <pthread.h>
+#include <sys/eventfd.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <vector>
+
+using namespace std;
+
+static void *bridge(void *state) {
+    FauxTerm *parent = (FauxTerm*)state;
+
+    const int nfds = (parent->m_pipe_fd[0] > parent->m_sig_fd ?
+        parent->m_pipe_fd[0] : parent->m_sig_fd) + 1;
+
+    for (;;) {
+        fd_set fds;
+        FD_ZERO(&fds);
+
+        FD_SET(parent->m_pipe_fd[0], &fds);
+        FD_SET(parent->m_sig_fd, &fds);
+        
+        if (select(nfds, &fds, nullptr, nullptr, nullptr) < 0)
+            break;
+
+        if (FD_ISSET(parent->m_pipe_fd[0], &fds)) {
+            // TODO: transfer to m_screen
+        }
+
+        if (FD_ISSET(parent->m_sig_fd, &fds))
+            break;
+    }
+
+    return nullptr;
+}
+
+FauxTerm::FauxTerm() {
+
+    /* Figure out the size of the terminal. We assume it won't be resized during
+     * this object's lifetime.
+     */
+    struct winsize ws;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) < 0) {
+        // TODO
+    }
+
+    m_width = unsigned(ws.ws_col);
+    m_height = unsigned(ws.ws_row);
+
+    m_screen = new TermChar[m_width * m_height]();
+
+    if (pipe(m_pipe_fd) < 0) {
+        // TODO
+    }
+
+    if ((m_sig_fd = eventfd(0, 0)) < 0) {
+        // TODO
+    }
+
+    if (pthread_create(&m_child, nullptr, bridge, this) < 0) {
+        // TODO
+    }
+
+}
+
+FauxTerm::~FauxTerm() {
+    // Signal the child that we're exiting.
+    uint64_t indicator = 1;
+    int ret __attribute__((unused)) = write(m_sig_fd, &indicator,
+        sizeof(indicator));
+    assert(ret == sizeof(indicator));
+    pthread_join(m_child, nullptr);
+
+    close(m_sig_fd);
+    close(m_pipe_fd[0]);
+    close(m_pipe_fd[1]);
+
+    delete[] m_screen;
+}
+
+static TermChar blank_char() {
+    return TermChar { 0, TC_BLACK, TC_BLACK, 0, 0 };
+}
+
+TermChar FauxTerm::get_char(unsigned x, unsigned y) const {
+    if (x >= m_width)
+        return blank_char();
+    if (y >= m_height)
+        return blank_char();
+    return m_screen[y * m_width + x];
+}
+
+vector<TermChar> FauxTerm::get_line(unsigned y) const {
+    vector<TermChar> line;
+    for (unsigned i = 0; i < m_width; i++)
+        line.push_back(get_char(i, y));
+    return line;
+}
