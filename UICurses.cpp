@@ -329,7 +329,35 @@ void UICurses::handle_select() {
             m_ret = EXIT_SUCCESS;
             break;
 
+/* XXX: egregious abuse of interstice to provide a parameter for function-like
+ * label hotkey_select below. At least we can use scoping to contain the damage.
+ */
+{
+unreachable();
+int base;
+
+        case '0' ... '9':
+            base = '0';
+            goto hotkey_select;
+
+        case 'a' ... 'z':
+            base = 'a' - 10 /* '0' - '9' */;
+            goto hotkey_select;
+
+        case 'A' ... 'Z':
+            base = 'A' - 10 /* '0' - '9' */ - 26 /* 'a' - 'z' */;
+            goto hotkey_select;
+
+hotkey_select:
+            if (m_from_row + c - base < m_results->rows.size()) {
+                m_select_index = m_from_row + c - base;
+                goto enter;
+            }
+            break;
+}
+
         case 10: { /* enter */
+enter:
             def_prog_mode();
             endwin();
             int ret = vim_open(m_results->rows[m_select_index].path,

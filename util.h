@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <ctype.h>
 
 static inline const char *lstrip(const char *s) {
@@ -16,3 +17,9 @@ static inline const char *lstrip(const char *s) {
 
     return t;
 }
+
+#ifdef NDEBUG
+    #define unreachable() __builtin_unreachable()
+#else
+    #define unreachable() assert(!"unreachable")
+#endif
