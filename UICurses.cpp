@@ -65,13 +65,34 @@ static Results *find_definition(const Database &db, const char *query) {
     return results;
 }
 
+static Results *find_call(const Database &db, const char *query) {
+    Results *results = new Results {
+        .headings = { "File", "Function", "Line", "" },
+        .rows = vector<ResultRow>(),
+    };
+
+    vector<Symbol> vs = db.find_call(query);
+    for (const auto &s : vs) {
+        ResultRow row {
+            .text = { s.path(), s.parent(), to_string(s.line()),
+                lstrip(s.context()) },
+            .path = s.path(),
+            .line = s.line(),
+            .col = s.col(),
+        };
+        results->rows.push_back(row);
+    }
+
+    return results;
+}
+
 static struct {
     const char *prompt;
     Results *(*handler)(const Database &db, const char *query);
 } functions[] = {
     { "Find this C symbol", find_symbol },
     { "Find this global definition", find_definition },
-    { "Find functions called by this function", nullptr },
+    { "Find functions called by this function", find_call },
     { "Find functions calling this function", nullptr },
     { "Find this file", nullptr },
     { "Find files #including this file", nullptr },
