@@ -156,8 +156,14 @@ static int print_results(const Results &results, unsigned from_row) {
             printw("%c ", hotkey(i));
             for (unsigned j = 0; j < widths.size(); j++) {
                 size_t padding = widths[j] - results.rows[i + from_row].text[j].size();
-                string blank(padding, ' ');
-                printw("%s%s", results.rows[i + from_row].text[j].c_str(), blank.c_str());
+                // XXX: right-align line numbers
+                if (results.headings[j] == "Line") {
+                    string blank(padding - 1, ' ');
+                    printw("%s%s ", blank.c_str(), results.rows[i + from_row].text[j].c_str());
+                } else {
+                    string blank(padding, ' ');
+                    printw("%s%s", results.rows[i + from_row].text[j].c_str(), blank.c_str());
+                }
             }
         }
         clrtoeol();
