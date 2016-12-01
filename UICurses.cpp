@@ -25,12 +25,10 @@ struct Results {
 };
 
 static Results *find_symbol(const Database &db, const char *query) {
-    Results *results = new Results;
-
-    results->headings.push_back("File");
-    results->headings.push_back("Function");
-    results->headings.push_back("Line");
-    results->headings.push_back("");
+    Results *results = new Results {
+        .headings = { "File", "Function", "Line", "" },
+        .rows = vector<ResultRow>(),
+    };
 
     vector<Symbol> vs = db.find_symbol(query);
     for (const auto &s : vs) {
@@ -48,11 +46,10 @@ static Results *find_symbol(const Database &db, const char *query) {
 }
 
 static Results *find_definition(const Database &db, const char *query) {
-    Results *results = new Results;
-
-    results->headings.push_back("File");
-    results->headings.push_back("Line");
-    results->headings.push_back("");
+    Results *results = new Results {
+        .headings = { "File", "Line", "" },
+        .rows = vector<ResultRow>(),
+    };
 
     vector<Symbol> vs = db.find_definition(query);
     for (const auto &s : vs) {
