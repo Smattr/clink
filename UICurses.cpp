@@ -33,7 +33,7 @@ static Results *find_symbol(const Database &db, const char *query) {
     results->headings.push_back("");
 
     vector<Symbol> vs = db.find_symbol(query);
-    for (auto s : vs) {
+    for (const auto &s : vs) {
         ResultRow row {
             .text = { s.path(), s.parent(), to_string(s.line()),
                 lstrip(s.context()) },
@@ -55,7 +55,7 @@ static Results *find_definition(const Database &db, const char *query) {
     results->headings.push_back("");
 
     vector<Symbol> vs = db.find_definition(query);
-    for (auto s : vs) {
+    for (const auto &s : vs) {
         ResultRow row {
             .text = { s.path(), to_string(s.line()), lstrip(s.context()) },
             .path = s.path(),
