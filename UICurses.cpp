@@ -13,8 +13,10 @@
 
 using namespace std;
 
+static const size_t HEADINGS_SZ = 4;
+
 struct ResultRow {
-    vector<string> text;
+    array<string, HEADINGS_SZ> text;
     string path;
     unsigned line;
     unsigned col;
@@ -140,7 +142,8 @@ static int print_results(const Results &results, unsigned from_row) {
     assert(from_row == 0 || from_row < results.rows.size());
 
     // The column headings, excluding the initial hotkey column.
-    static const array<string, 4> HEADINGS { "File", "Function", "Line", "" };
+    static const array<string, HEADINGS_SZ> HEADINGS {
+        "File", "Function", "Line", "" };
 
     /* The number of rows we can fit is the number of lines on the screen with
      * some room extracted for the column headings, menu and status.
