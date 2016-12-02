@@ -49,14 +49,15 @@ static Results *find_symbol(const Database &db, const string &query) {
 
 static Results *find_definition(const Database &db, const string &query) {
     Results *results = new Results {
-        .headings = { "File", "Line", "" },
+        .headings = { "File", "Function", "Line", "" },
         .rows = vector<ResultRow>(),
     };
 
     vector<Symbol> vs = db.find_definition(query);
     for (const auto &s : vs) {
         ResultRow row {
-            .text = { s.path(), to_string(s.line()), lstrip(s.context()) },
+            .text = { s.path(), s.parent(), to_string(s.line()),
+                lstrip(s.context()) },
             .path = s.path(),
             .line = s.line(),
             .col = s.col(),
@@ -114,7 +115,7 @@ static struct {
     Results *(*handler)(const Database &db, const string &query);
 } functions[] = {
     { "Find this C symbol", find_symbol },
-    { "Find this global definition", find_definition },
+    { "Find this definition", find_definition },
     { "Find functions called by this function", find_call },
     { "Find functions calling this function", find_caller },
     { "Find files #including this file", nullptr },
