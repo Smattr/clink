@@ -1,3 +1,4 @@
+#include <array>
 #include <cassert>
 #include <cstdlib>
 #include <curses.h>
@@ -151,6 +152,9 @@ static char hotkey(unsigned index) {
 static int print_results(const Results &results, unsigned from_row) {
     assert(from_row == 0 || from_row < results.rows.size());
 
+    // The column headings, excluding the initial hotkey column.
+    static const array<string, 4> HEADINGS { "File", "Function", "Line", "" };
+
     /* The number of rows we can fit is the number of lines on the screen with
      * some room extracted for the column headings, menu and status.
      */
@@ -168,9 +172,9 @@ static int print_results(const Results &results, unsigned from_row) {
 
     /* Figure out column widths. */
     vector<unsigned> widths;
-    for (unsigned i = 0; i < results.headings.size(); i++) {
+    for (unsigned i = 0; i < HEADINGS.size(); i++) {
         /* Find the maximum width of this column's results. */
-        unsigned width = results.headings[i].size();
+        unsigned width = HEADINGS[i].size();
         for (unsigned j = from_row; j < from_row + row_count; j++) {
             assert(j < results.rows.size());
             assert(i < results.rows[j].text.size());
@@ -183,10 +187,10 @@ static int print_results(const Results &results, unsigned from_row) {
     /* Print column headings. */
     move(0, 0);
     printw("  ");
-    for (unsigned i = 0; i < results.headings.size(); i++) {
-        size_t padding = widths[i] - results.headings[i].size();
+    for (unsigned i = 0; i < HEADINGS.size(); i++) {
+        size_t padding = widths[i] - HEADINGS[i].size();
         string blank(padding, ' ');
-        printw("%s%s", results.headings[i].c_str(), blank.c_str());
+        printw("%s%s", HEADINGS[i].c_str(), blank.c_str());
     }
     clrtoeol();
 
@@ -198,7 +202,7 @@ static int print_results(const Results &results, unsigned from_row) {
             for (unsigned j = 0; j < widths.size(); j++) {
                 size_t padding = widths[j] - results.rows[i + from_row].text[j].size();
                 // XXX: right-align line numbers
-                if (results.headings[j] == "Line") {
+                if (HEADINGS[j] == "Line") {
                     string blank(padding - 1, ' ');
                     printw("%s%s ", blank.c_str(), results.rows[i + from_row].text[j].c_str());
                 } else {
