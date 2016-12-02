@@ -24,7 +24,9 @@ struct Results {
     vector<ResultRow> rows;
 };
 
-static Results *find_symbol(const Database &db, const char *query) {
+// Wrappers for each database query follow.
+
+static Results *find_symbol(const Database &db, const string &query) {
     Results *results = new Results {
         .headings = { "File", "Function", "Line", "" },
         .rows = vector<ResultRow>(),
@@ -45,7 +47,7 @@ static Results *find_symbol(const Database &db, const char *query) {
     return results;
 }
 
-static Results *find_definition(const Database &db, const char *query) {
+static Results *find_definition(const Database &db, const string &query) {
     Results *results = new Results {
         .headings = { "File", "Line", "" },
         .rows = vector<ResultRow>(),
@@ -65,7 +67,7 @@ static Results *find_definition(const Database &db, const char *query) {
     return results;
 }
 
-static Results *find_call(const Database &db, const char *query) {
+static Results *find_call(const Database &db, const string &query) {
     Results *results = new Results {
         .headings = { "File", "Function", "Line", "" },
         .rows = vector<ResultRow>(),
@@ -88,7 +90,7 @@ static Results *find_call(const Database &db, const char *query) {
 
 static struct {
     const char *prompt;
-    Results *(*handler)(const Database &db, const char *query);
+    Results *(*handler)(const Database &db, const string &query);
 } functions[] = {
     { "Find this C symbol", find_symbol },
     { "Find this global definition", find_definition },
@@ -232,7 +234,7 @@ void UICurses::handle_input(Database &db) {
             if (!m_left.empty() || !m_right.empty()) {
                 delete m_results;
                 string query = m_left + m_right;
-                m_results = functions[m_index].handler(db, query.c_str());
+                m_results = functions[m_index].handler(db, query);
                 print_results(*m_results, 0);
                 m_from_row = 0;
                 m_select_index = 0;

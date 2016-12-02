@@ -23,6 +23,26 @@ public:
     std::vector<std::string> find_file(const char *name) const;
     std::vector<Symbol> find_includer(const char *name) const;
 
+    // Give callers the convenience of passing a string instead.
+    std::vector<Symbol> find_symbol(const std::string &name) const {
+        return find_symbol(name.c_str());
+    }
+    std::vector<Symbol> find_definition(const std::string &name) const {
+        return find_definition(name.c_str());
+    }
+    std::vector<Symbol> find_caller(const std::string &name) const {
+        return find_caller(name.c_str());
+    }
+    std::vector<Symbol> find_call(const std::string &name) const {
+        return find_call(name.c_str());
+    }
+    std::vector<std::string> find_file(const std::string &name) const {
+        return find_file(name.c_str());
+    }
+    std::vector<Symbol> find_includer(const std::string &name) const {
+        return find_includer(name.c_str());
+    }
+
 private:
     sqlite3 *m_db = nullptr;
     sqlite3_stmt *m_insert = nullptr;
