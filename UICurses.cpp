@@ -26,78 +26,43 @@ struct Results {
     vector<ResultRow> rows;
 };
 
+static Results *format_results(const vector<Symbol> &vs) {
+    Results *results = new Results;
+
+    for (const auto &s : vs) {
+        ResultRow row {
+            .text = { s.path(), s.parent(), to_string(s.line()),
+                lstrip(s.context()) },
+            .path = s.path(),
+            .line = s.line(),
+            .col = s.col(),
+        };
+        results->rows.push_back(row);
+    }
+
+    return results;
+}
+
 // Wrappers for each database query follow.
 
 static Results *find_symbol(const Database &db, const string &query) {
-    Results *results = new Results;
-
     vector<Symbol> vs = db.find_symbol(query);
-    for (const auto &s : vs) {
-        ResultRow row {
-            .text = { s.path(), s.parent(), to_string(s.line()),
-                lstrip(s.context()) },
-            .path = s.path(),
-            .line = s.line(),
-            .col = s.col(),
-        };
-        results->rows.push_back(row);
-    }
-
-    return results;
+    return format_results(vs);
 }
 
 static Results *find_definition(const Database &db, const string &query) {
-    Results *results = new Results;
-
     vector<Symbol> vs = db.find_definition(query);
-    for (const auto &s : vs) {
-        ResultRow row {
-            .text = { s.path(), s.parent(), to_string(s.line()),
-                lstrip(s.context()) },
-            .path = s.path(),
-            .line = s.line(),
-            .col = s.col(),
-        };
-        results->rows.push_back(row);
-    }
-
-    return results;
+    return format_results(vs);
 }
 
 static Results *find_call(const Database &db, const string &query) {
-    Results *results = new Results;
-
     vector<Symbol> vs = db.find_call(query);
-    for (const auto &s : vs) {
-        ResultRow row {
-            .text = { s.path(), s.parent(), to_string(s.line()),
-                lstrip(s.context()) },
-            .path = s.path(),
-            .line = s.line(),
-            .col = s.col(),
-        };
-        results->rows.push_back(row);
-    }
-
-    return results;
+    return format_results(vs);
 }
 
 static Results *find_caller(const Database &db, const string &query) {
-    Results *results = new Results;
-
     vector<Symbol> vs = db.find_caller(query);
-    for (const auto &s : vs) {
-        ResultRow row {
-            .text = { s.path(), s.parent(), to_string(s.line()),
-                lstrip(s.context()) },
-            .path = s.path(),
-            .line = s.line(),
-            .col = s.col(),
-        };
-        results->rows.push_back(row);
-    }
-
-    return results;
+    return format_results(vs);
 }
 
 static struct {
