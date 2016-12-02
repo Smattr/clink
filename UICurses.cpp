@@ -117,7 +117,6 @@ static struct {
     { "Find this global definition", find_definition },
     { "Find functions called by this function", find_call },
     { "Find functions calling this function", find_caller },
-    { "Find this file", nullptr },
     { "Find files #including this file", nullptr },
 };
 
