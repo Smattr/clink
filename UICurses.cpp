@@ -21,17 +21,13 @@ struct ResultRow {
 };
 
 struct Results {
-    vector<string> headings;
     vector<ResultRow> rows;
 };
 
 // Wrappers for each database query follow.
 
 static Results *find_symbol(const Database &db, const string &query) {
-    Results *results = new Results {
-        .headings = { "File", "Function", "Line", "" },
-        .rows = vector<ResultRow>(),
-    };
+    Results *results = new Results;
 
     vector<Symbol> vs = db.find_symbol(query);
     for (const auto &s : vs) {
@@ -49,10 +45,7 @@ static Results *find_symbol(const Database &db, const string &query) {
 }
 
 static Results *find_definition(const Database &db, const string &query) {
-    Results *results = new Results {
-        .headings = { "File", "Function", "Line", "" },
-        .rows = vector<ResultRow>(),
-    };
+    Results *results = new Results;
 
     vector<Symbol> vs = db.find_definition(query);
     for (const auto &s : vs) {
@@ -70,10 +63,7 @@ static Results *find_definition(const Database &db, const string &query) {
 }
 
 static Results *find_call(const Database &db, const string &query) {
-    Results *results = new Results {
-        .headings = { "File", "Function", "Line", "" },
-        .rows = vector<ResultRow>(),
-    };
+    Results *results = new Results;
 
     vector<Symbol> vs = db.find_call(query);
     for (const auto &s : vs) {
@@ -91,10 +81,7 @@ static Results *find_call(const Database &db, const string &query) {
 }
 
 static Results *find_caller(const Database &db, const string &query) {
-    Results *results = new Results {
-        .headings = { "File", "Function", "Line", "" },
-        .rows = vector<ResultRow>(),
-    };
+    Results *results = new Results;
 
     vector<Symbol> vs = db.find_caller(query);
     for (const auto &s : vs) {
