@@ -65,6 +65,11 @@ static Results *find_caller(const Database &db, const string &query) {
     return format_results(vs);
 }
 
+static Results *find_includer(const Database &db, const string &query) {
+    vector<Symbol> vs = db.find_includer(query);
+    return format_results(vs);
+}
+
 static struct {
     const char *prompt;
     Results *(*handler)(const Database &db, const string &query);
@@ -73,7 +78,7 @@ static struct {
     { "Find this definition", find_definition },
     { "Find functions called by this function", find_call },
     { "Find functions calling this function", find_caller },
-    { "Find files #including this file", nullptr },
+    { "Find files #including this file", find_includer },
 };
 
 static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
