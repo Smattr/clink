@@ -108,6 +108,10 @@ static char hotkey(unsigned index) {
     return -1;
 }
 
+static unsigned usable_rows() {
+    return LINES - FUNCTIONS_SZ - 2 - 1;
+}
+
 static int print_results(const Results &results, unsigned from_row) {
     assert(from_row == 0 || from_row < results.rows.size());
 
@@ -120,7 +124,7 @@ static int print_results(const Results &results, unsigned from_row) {
      */
     if ((unsigned)LINES < FUNCTIONS_SZ + 2 + 1 + 1)
         return -1;
-    unsigned row_count = LINES - FUNCTIONS_SZ - 2 - 1;
+    unsigned row_count = usable_rows();
     if (row_count > results.rows.size() - from_row) {
         /* Can't show more rows than we have. */
         row_count = results.rows.size() - from_row;
@@ -383,7 +387,7 @@ enter:
 
         case KEY_DOWN:
             if (m_select_index < m_results->rows.size() - 1 &&
-                    m_select_index - m_from_row < 61)
+                    m_select_index - m_from_row + 1 < usable_rows())
                 m_select_index++;
             break;
 
