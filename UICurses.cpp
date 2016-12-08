@@ -184,6 +184,8 @@ static int print_results(const Results &results, unsigned from_row) {
     if (from_row + row_count < results.rows.size())
         printw(", %u more - press the space bar to display more",
             results.rows.size() - from_row - row_count);
+    else if (from_row > 0)
+        printw(", press the space bar to display the first lines again");
     printw(" *");
     clrtoeol();
 
