@@ -391,6 +391,15 @@ enter:
                 m_select_index++;
             break;
 
+        case ' ':
+            if (m_from_row + usable_rows() < m_results->rows.size())
+                m_from_row += usable_rows();
+            else
+                m_from_row = 0;
+            m_select_index = m_from_row;
+            print_results(*m_results, m_from_row);
+            break;
+
         case '\t':
             m_state = UICS_INPUT;
             break;
