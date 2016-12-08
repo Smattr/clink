@@ -38,7 +38,7 @@ int UILine::run(Database &db) {
             case '0': { // find symbol
                 vector<Symbol> vs = db.find_symbol(command + 1);
                 print_leader(vs);
-                for (auto &&s : vs) {
+                for (const auto &s : vs) {
                     cout << s.path() << " " << s.parent() << " " << s.line() <<
                         " " << lstrip(s.context());
                 }
@@ -48,7 +48,7 @@ int UILine::run(Database &db) {
             case '1': { // find definition
                 vector<Symbol> vs = db.find_definition(command + 1);
                 print_leader(vs);
-                for (auto &&s : vs) {
+                for (const auto &s : vs) {
                     cout << s.path() << " " << (command + 1) << " " <<
                         s.line() << " " << lstrip(s.context());
                 }
@@ -58,7 +58,7 @@ int UILine::run(Database &db) {
             case '2': { // find calls
                 vector<Symbol> vs = db.find_call(command + 1);
                 print_leader(vs);
-                for (auto &&s : vs) {
+                for (const auto &s : vs) {
                     cout << s.path() << " " << s.name() << " " << s.line() <<
                         " " << lstrip(s.context());
                 }
@@ -68,7 +68,7 @@ int UILine::run(Database &db) {
             case '3': { // find callers
                 vector<Symbol> vs = db.find_caller(command + 1);
                 print_leader(vs);
-                for (auto &&s : vs) {
+                for (const auto &s : vs) {
                     cout << s.path() << " " << s.parent() << " " << s.line() <<
                         " " << lstrip(s.context());
                 }
@@ -81,7 +81,7 @@ int UILine::run(Database &db) {
                 /* XXX: what kind of nonsense output is this? I don't know what
                  * value Cscope is attempting to add with the trailing garbage.
                  */
-                for (auto &&s : vs)
+                for (const auto &s : vs)
                     cout << s << " <unknown> 1 <unknown>\n";
                 break;
             }
@@ -89,7 +89,7 @@ int UILine::run(Database &db) {
             case '8': { // find includers
                 vector<Symbol> vs = db.find_includer(command + 1);
                 print_leader(vs);
-                for (auto &&s : vs)
+                for (const auto &s : vs)
                     cout << s.path() << " " << s.parent() << " " << s.line() <<
                         " " << lstrip(s.context());
                 break;
