@@ -99,13 +99,13 @@ static unsigned offset_y(unsigned index) {
     return LINES - FUNCTIONS_SZ + index;
 }
 
+static const char HOTKEYS[] =
+    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
 static char hotkey(unsigned index) {
-    switch (index) {
-        case 0 ... 9: return '0' + index;
-        case 10 ... 35: return 'a' + index - 10;
-        case 36 ... 61: return 'A' + index - 36;
-        default: return -1;
-    }
+    if (index < sizeof(HOTKEYS) - 1)
+        return HOTKEYS[index];
+    return -1;
 }
 
 static int print_results(const Results &results, unsigned from_row) {
@@ -125,9 +125,8 @@ static int print_results(const Results &results, unsigned from_row) {
         /* Can't show more rows than we have. */
         row_count = results.rows.size() - from_row;
     }
-    if (row_count > 62) {
-        /* We only have 62 addressable rows. */
-        row_count = 62;
+    if (row_count > sizeof(HOTKEYS) - 1) {
+        row_count = sizeof(HOTKEYS) - 1;
     }
 
     /* Figure out column widths. */
@@ -155,9 +154,9 @@ static int print_results(const Results &results, unsigned from_row) {
     clrtoeol();
 
     /* Print the rows. */
-    for (unsigned i = 0; i < 61 && i < LINES - FUNCTIONS_SZ - 1 - 1; i++) {
+    for (unsigned i = 0; i < LINES - FUNCTIONS_SZ - 1 - 1; i++) {
         move(1 + i, 0);
-        if (from_row + i < row_count) {
+        if (i < row_count) {
             printw("%c ", hotkey(i));
             for (unsigned j = 0; j < widths.size(); j++) {
                 size_t padding = widths[j] - results.rows[i + from_row].text[j].size();
