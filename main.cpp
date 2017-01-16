@@ -3,6 +3,7 @@
 #include "CXXParser.h"
 #include "Database.h"
 #include <dirent.h>
+#include "FileQueue.h"
 #include <getopt.h>
 #include <iostream>
 #include "Options.h"
@@ -68,50 +69,24 @@ static void parse_options(int argc, char **argv) {
     }
 }
 
-static bool ends_with(const char *s, const char *suffix) {
-    size_t s_len = strlen(s);
-    size_t suffix_len = strlen(suffix);
-    return s_len >= suffix_len && strcmp(&s[s_len - suffix_len], suffix) == 0;
-}
-
 static void update(Database &db, CXXParser &parser, time_t era_start,
-        const char *prefix, DIR *directory) {
-    struct dirent entry, *result;
-    while (readdir_r(directory, &entry, &result) == 0 && result != nullptr) {
+        const string &prefix) {
 
-        // If this entry is a directory, descend and scan for contained files.
-        if (entry.d_type == DT_DIR && strcmp(entry.d_name, ".") &&
-                strcmp(entry.d_name, "..")) {
-            char *path;
-            if (asprintf(&path, "%s%s/", prefix, entry.d_name) < 0)
-                continue;
-            DIR *subdir = opendir(path);
-            if (subdir != nullptr)
-                update(db, parser, era_start, path, subdir);
-            closedir(subdir);
-            free(path);
+    FileQueue fq(prefix, era_start);
 
-        // If this entry is a C/C++ file, scan it for relevant things.
-        } else if (entry.d_type == DT_REG && (ends_with(entry.d_name, ".c") ||
-                                              ends_with(entry.d_name, ".cpp") ||
-                                              ends_with(entry.d_name, ".h") ||
-                                              ends_with(entry.d_name, ".hpp"))) {
-            char *path;
-            if (asprintf(&path, "%s%s", prefix, entry.d_name) < 0)
-                continue;
-            struct stat buf;
-            if (stat(path, &buf) < 0 || buf.st_mtime <= era_start) {
-                free(path);
-                continue;
-            }
-            db.purge(path);
-            bool ret = parser.load(path);
-            free(path);
-            if (!ret)
-                continue;
-            parser.process(db);
-            parser.unload();
+    for (;;) {
+        string path;
+        try {
+            path = fq.pop();
+        } catch (NoMoreEntries &) {
+            break;
         }
+
+        db.purge(path.c_str());
+        if (!parser.load(path.c_str()))
+            continue;
+        parser.process(db);
+        parser.unload();
     }
 }
 
@@ -152,13 +127,7 @@ int main(int argc, char **argv) {
         /* Scan the directory for files that have changed since the database
          * was last updated.
          */
-        DIR *dir = opendir(".");
-        if (dir == nullptr) {
-            cerr << "failed to open directory\n";
-            return EXIT_FAILURE;
-        }
-        update(db, parser, era_start, "", dir);
-        closedir(dir);
+        update(db, parser, era_start, ".");
 
         db.close_transaction();
     }
