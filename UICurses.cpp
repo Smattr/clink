@@ -179,13 +179,18 @@ static int print_results(const Results &results, unsigned from_row) {
 
     /* Print footer. */
     move(LINES - FUNCTIONS_SZ - 1, 0);
-    printw("* Lines %u-%u of %u", from_row + 1, from_row + row_count,
-        results.rows.size());
-    if (from_row + row_count < results.rows.size())
-        printw(", %u more - press the space bar to display more",
-            results.rows.size() - from_row - row_count);
-    else if (from_row > 0)
-        printw(", press the space bar to display the first lines again");
+    printw("* ");
+    if (results.rows.empty()) {
+        printw("No results");
+    } else {
+        printw("Lines %u-%u of %u", from_row + 1, from_row + row_count,
+            results.rows.size());
+        if (from_row + row_count < results.rows.size())
+            printw(", %u more - press the space bar to display more",
+                results.rows.size() - from_row - row_count);
+        else if (from_row > 0)
+            printw(", press the space bar to display the first lines again");
+    }
     printw(" *");
     clrtoeol();
 
