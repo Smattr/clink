@@ -125,8 +125,7 @@ void Database::consume(const Symbol &s) {
         return;
 }
 
-bool Database::purge(const char *path) {
-    assert(path != nullptr);
+bool Database::purge(const string &path) {
 
     if (m_delete == nullptr) {
         if (sqlite3_prepare_v2(m_db, "delete from symbols where path = @path;",
@@ -139,7 +138,7 @@ bool Database::purge(const char *path) {
 
     int index = sqlite3_bind_parameter_index(m_delete, "@path");
     assert(index != 0);
-    if (sqlite3_bind_text(m_delete, index, path, -1, SQLITE_STATIC)
+    if (sqlite3_bind_text(m_delete, index, path.c_str(), -1, SQLITE_STATIC)
             != SQLITE_OK)
         return false;
 

@@ -82,7 +82,7 @@ static void update(Database &db, CXXParser &parser, time_t era_start,
             break;
         }
 
-        db.purge(path.c_str());
+        db.purge(path);
         if (!parser.load(path.c_str()))
             continue;
         parser.process(db);
