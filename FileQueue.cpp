@@ -1,6 +1,7 @@
 #include <cstring>
 #include <dirent.h>
 #include "FileQueue.h"
+#include <mutex>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -82,4 +83,9 @@ restart2:;
 
         // If we reached here, the directory entry was irrelevant to us.
     }
+}
+
+string ThreadSafeFileQueue::pop() {
+    lock_guard<mutex> guard(stack_mutex);
+    return FileQueue::pop();
 }
