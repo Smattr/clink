@@ -87,6 +87,17 @@ static void parse_options(int argc, char **argv) {
                 exit(EXIT_FAILURE);
         }
     }
+
+    // If the user wanted automatic parallelism, give them a thread per core.
+    if (opts.threads == 0) {
+        long cores = sysconf(_SC_NPROCESSORS_ONLN);
+        if (cores <= 0) {
+            cerr << "your system appears to have an invalid number of "
+                "processors, " << cores << "\n";
+            exit(EXIT_FAILURE);
+        }
+        opts.threads = (unsigned long)cores;
+    }
 }
 
 static void update(SymbolConsumer &db, CXXParser &parser, time_t era_start,

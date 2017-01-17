@@ -12,7 +12,7 @@ struct Options {
     ui_t ui;
 
     // Parallelism (0 == auto).
-    unsigned threads;
+    unsigned long threads;
 };
 
 extern Options opts;
