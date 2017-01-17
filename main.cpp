@@ -69,7 +69,7 @@ static void parse_options(int argc, char **argv) {
     }
 }
 
-static void update(Database &db, CXXParser &parser, time_t era_start,
+static void update(SymbolConsumer &db, CXXParser &parser, time_t era_start,
         const string &prefix) {
 
     FileQueue fq(prefix, era_start);
