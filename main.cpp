@@ -3,9 +3,11 @@
 #include "CXXParser.h"
 #include "Database.h"
 #include <dirent.h>
+#include <errno.h>
 #include "FileQueue.h"
 #include <getopt.h>
 #include <iostream>
+#include <limits.h>
 #include "Options.h"
 #include "Symbol.h"
 #include <sys/stat.h>
@@ -21,7 +23,9 @@ static const char default_database[] = ".clink.db";
 static void usage(const char *progname) {
     cerr << "usage: " << progname << " [options]\n"
          << "\n"
-         << " --file FILE | -f FILE    database to use (.clink.db by default)\n";
+         << " --file FILE | -f FILE    database to use (.clink.db by default)\n"
+         << " --jobs JOBS | -j JOBS    set number of threads to use (0 or "
+            "\"auto\" for the default, which is the number of cores)\n";
 }
 
 /* Default options. */
@@ -29,18 +33,20 @@ Options opts = {
     .database = default_database,
     .update_database = true,
     .ui = UI_CURSES,
+    .threads = 0,
 };
 
 static void parse_options(int argc, char **argv) {
     for (;;) {
         static const struct option options[] = {
             {"file", required_argument, 0, 'f'},
+            {"jobs", required_argument, 0, 'j'},
             {"line-oriented", no_argument, 0, 'l'},
             {0, 0, 0, 0},
         };
 
         int index = 0;
-        int c = getopt_long(argc, argv, "bdf:l", options, &index);
+        int c = getopt_long(argc, argv, "bdf:j:l", options, &index);
 
         if (c == -1)
             break;
@@ -56,6 +62,20 @@ static void parse_options(int argc, char **argv) {
 
             case 'f':
                 opts.database = optarg;
+                break;
+
+            case 'j':
+                if (strcmp(optarg, "auto") == 0) {
+                    opts.threads = 0;
+                } else {
+                    char *endptr;
+                    opts.threads = strtoul(optarg, &endptr, 0);
+                    if (optarg == endptr || (opts.threads == ULONG_MAX &&
+                            errno == ERANGE)) {
+                        cerr << "illegal value to --jobs\n";
+                        exit(EXIT_FAILURE);
+                    }
+                }
                 break;
 
             case 'l':
