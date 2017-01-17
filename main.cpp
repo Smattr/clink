@@ -109,13 +109,13 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    CXXParser parser;
-    if (!parser.load("foo.cpp")) {
-        cerr << "failed to load foo.cpp\n";
-        return EXIT_FAILURE;
-    }
-
     if (opts.update_database) {
+
+        CXXParser parser;
+        if (!parser.load("foo.cpp")) {
+            cerr << "failed to load foo.cpp\n";
+            return EXIT_FAILURE;
+        }
 
         /* Open a transaction before starting to manipulate the database.
          * Repeated insertions without a containing transaction are wrapped in
