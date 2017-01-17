@@ -5,6 +5,32 @@
 #include "Symbol.h"
 #include <vector>
 
+class Database;
+
+/* An object for tracking a list of actions to be applied to a Database.
+ *
+ * The idea is that, since actions are not expected to conflict cross-file, we
+ * can run multiple threads accumulating per-thread PendingActions, and then
+ * serially replay them into a single Database.
+ */
+class PendingActions : public SymbolConsumer {
+
+public:
+    void consume(const Symbol &s) override {
+        symbols.push_back(s);
+    }
+    bool purge(const std::string &path) override {
+        to_purge.push_back(path);
+        return true;
+    }
+
+private:
+    std::vector<Symbol> symbols;
+    std::vector<std::string> to_purge;
+
+    friend class Database;
+};
+
 class Database : public SymbolConsumer {
 
 public:
@@ -43,33 +69,16 @@ public:
         return find_includer(name.c_str());
     }
 
+    void replay(const PendingActions &pending) {
+        for (const std::string &s : pending.to_purge)
+            (void)purge(s);
+        for (const Symbol &s : pending.symbols)
+            consume(s);
+    }
+
 private:
     sqlite3 *m_db = nullptr;
     sqlite3_stmt *m_insert = nullptr;
     sqlite3_stmt *m_delete = nullptr;
 
-};
-
-/* An object for tracking a list of actions to be applied to a Database.
- *
- * The idea is that, since actions are not expected to conflict cross-file, we
- * can run multiple threads accumulating per-thread PendingActions, and then
- * serially replay them into a single Database.
- */
-class PendingActions : public SymbolConsumer {
-
-public:
-    void consume(const Symbol &s) override {
-        symbols.push_back(s);
-    }
-    bool purge(const std::string &path) override {
-        to_purge.push_back(path);
-        return true;
-    }
-
-private:
-    std::vector<Symbol> symbols;
-    std::vector<std::string> to_purge;
-
-    friend class Database;
 };
