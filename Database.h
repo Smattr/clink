@@ -12,7 +12,7 @@ public:
     bool open(const char *path);
     void close();
     void consume(const Symbol &s) override;
-    bool purge(const char *path);
+    bool purge(const char *path) override;
     bool open_transaction();
     bool close_transaction();
 

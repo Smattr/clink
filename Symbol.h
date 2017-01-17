@@ -45,5 +45,6 @@ class SymbolConsumer {
 
 public:
     virtual void consume(const Symbol &s) = 0;
+    virtual bool purge(const char *path) = 0;
 
 };
