@@ -139,10 +139,6 @@ int main(int argc, char **argv) {
     if (opts.update_database) {
 
         CXXParser parser;
-        if (!parser.load("foo.cpp")) {
-            cerr << "failed to load foo.cpp\n";
-            return EXIT_FAILURE;
-        }
 
         FileQueue queue(".", era_start);
 
