@@ -1,7 +1,7 @@
+#include <cstring>
 #include <dirent.h>
 #include "FileQueue.h"
 #include <string>
-#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <tuple>

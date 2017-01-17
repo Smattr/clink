@@ -1,10 +1,10 @@
 #include <array>
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 #include <curses.h>
 #include "Database.h"
 #include <string>
-#include <string.h>
 #include "Symbol.h"
 #include "UICurses.h"
 #include "util.h"

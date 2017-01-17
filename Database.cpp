@@ -1,9 +1,9 @@
 #include <cassert>
+#include <cstring>
 #include "Database.h"
 #include "errno.h"
 #include <sqlite3.h>
 #include <string>
-#include <string.h>
 #include "Symbol.h"
 #include <unistd.h>
 #include <vector>

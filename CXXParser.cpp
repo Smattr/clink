@@ -6,9 +6,9 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
     CXClientData data);
 
 #include <cassert>
+#include <cstring>
 #include "CXXParser.h"
 #include <iostream>
-#include <string.h>
 #include "Symbol.h"
 
 using namespace std;
