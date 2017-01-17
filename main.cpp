@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstdio>
 #include <cstring>
 #include "CXXParser.h"
@@ -5,6 +6,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include "FileQueue.h"
+#include <functional>
 #include <getopt.h>
 #include <iostream>
 #include <limits.h>
@@ -101,7 +103,10 @@ static void parse_options(int argc, char **argv) {
     }
 }
 
-static void update(SymbolConsumer &db, CXXParser &parser, FileQueue &fq) {
+static void update(SymbolConsumer &db, FileQueue &fq) {
+    // FIXME: Create CXXParser lazily.
+    CXXParser parser;
+
     for (;;) {
         string path;
         try {
@@ -139,23 +144,64 @@ int main(int argc, char **argv) {
 
     if (opts.update_database) {
 
-        CXXParser parser;
+        if (opts.threads == 1) {
 
-        FileQueue queue(".", era_start);
+            /* When running single-threaded, we can create a thread-unsafe file
+             * queue and just directly pump results into the database.
+             */
 
-        /* Open a transaction before starting to manipulate the database.
-         * Repeated insertions without a containing transaction are wrapped in
-         * an automatic transaction. Commiting these automatic transactions
-         * intolerably slows the database update.
-         */
-        db.open_transaction();
+            FileQueue queue(".", era_start);
 
-        /* Scan the directory for files that have changed since the database
-         * was last updated.
-         */
-        update(db, parser, queue);
+            /* Open a transaction before starting to manipulate the database.
+             * Repeated insertions without a containing transaction are wrapped in
+             * an automatic transaction. Commiting these automatic transactions
+             * intolerably slows the database update.
+             */
+            db.open_transaction();
 
-        db.close_transaction();
+            /* Scan the directory for files that have changed since the database
+             * was last updated.
+             */
+            update(db, queue);
+
+            db.close_transaction();
+
+        } else {
+            assert(opts.threads > 1);
+
+            // Create a single, shared file queue.
+            ThreadSafeFileQueue queue(".", era_start);
+
+            // Create and start N - 1 threads.
+            vector<thread*> threads;
+            vector<PendingActions*> pending;
+            for (unsigned long i = 0; i < opts.threads - 1; i++) {
+                PendingActions *pa = new PendingActions();
+                thread *t = new thread(update, ref(*pa), ref(queue));
+                threads.push_back(t);
+                pending.push_back(pa);
+            }
+
+            /* Join in ourselves, but let's operate directly on the database to
+             * save one set of replay actions.
+             */
+            db.open_transaction();
+            update(db, queue);
+
+            // Clean up all the other threads.
+            for (thread *t : threads) {
+                t->join();
+                delete t;
+            }
+
+            // Merge their results.
+            for (PendingActions *pa : pending) {
+                db.replay(*pa);
+                delete pa;
+            }
+
+            db.close_transaction();
+        }
     }
 
     switch (opts.ui) {
