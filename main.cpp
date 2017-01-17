@@ -100,11 +100,7 @@ static void parse_options(int argc, char **argv) {
     }
 }
 
-static void update(SymbolConsumer &db, CXXParser &parser, time_t era_start,
-        const string &prefix) {
-
-    FileQueue fq(prefix, era_start);
-
+static void update(SymbolConsumer &db, CXXParser &parser, FileQueue &fq) {
     for (;;) {
         string path;
         try {
@@ -148,6 +144,8 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
+        FileQueue queue(".", era_start);
+
         /* Open a transaction before starting to manipulate the database.
          * Repeated insertions without a containing transaction are wrapped in
          * an automatic transaction. Commiting these automatic transactions
@@ -158,7 +156,7 @@ int main(int argc, char **argv) {
         /* Scan the directory for files that have changed since the database
          * was last updated.
          */
-        update(db, parser, era_start, ".");
+        update(db, parser, queue);
 
         db.close_transaction();
     }
