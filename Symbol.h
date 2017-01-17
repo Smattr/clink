@@ -47,4 +47,6 @@ public:
     virtual void consume(const Symbol &s) = 0;
     virtual bool purge(const std::string &path) = 0;
 
+    virtual ~SymbolConsumer() {}
+
 };

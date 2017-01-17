@@ -24,6 +24,8 @@ public:
         return true;
     }
 
+    virtual ~PendingActions() {}
+
 private:
     std::vector<Symbol> symbols;
     std::vector<std::string> to_purge;
@@ -34,7 +36,7 @@ private:
 class Database : public SymbolConsumer {
 
 public:
-    ~Database();
+    virtual ~Database();
     bool open(const char *path);
     void close();
     void consume(const Symbol &s) override;
