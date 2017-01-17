@@ -11,7 +11,7 @@ class CXXParser : public Parser {
 public:
 
     CXXParser();
-    ~CXXParser();
+    virtual ~CXXParser();
 
     /* Load a new file. Automatically unloads any currently loaded file. Returns
      * true on success.
