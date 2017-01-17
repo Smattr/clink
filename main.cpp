@@ -104,8 +104,11 @@ static void parse_options(int argc, char **argv) {
 }
 
 static void update(SymbolConsumer &db, FileQueue &fq) {
-    // FIXME: Create CXXParser lazily.
-    CXXParser parser;
+    /* A C/C++ parser that we'll lazily construct. It's possible we'll complete
+     * this function without ever having to parse a C/C++ file, in which case
+     * constructing this ahead of time would be a waste.
+     */
+    CXXParser *parser = nullptr;
 
     for (;;) {
         string path;
@@ -116,11 +119,15 @@ static void update(SymbolConsumer &db, FileQueue &fq) {
         }
 
         db.purge(path);
-        if (!parser.load(path.c_str()))
+        if (parser == nullptr)
+            parser = new CXXParser;
+        if (!parser->load(path.c_str()))
             continue;
-        parser.process(db);
-        parser.unload();
+        parser->process(db);
+        parser->unload();
     }
+
+    delete parser;
 }
 
 int main(int argc, char **argv) {
