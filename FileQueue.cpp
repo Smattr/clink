@@ -7,14 +7,9 @@
 #include <sys/types.h>
 #include <tuple>
 #include <unistd.h>
+#include "util.h"
 
 using namespace std;
-
-static bool ends_with(const char *s, const char *suffix) {
-    size_t s_len = strlen(s);
-    size_t suffix_len = strlen(suffix);
-    return s_len >= suffix_len && strcmp(&s[s_len - suffix_len], suffix) == 0;
-}
 
 FileQueue::FileQueue(const string &directory, time_t era_start)
         : era_start(era_start) {
@@ -71,7 +66,9 @@ restart2:;
         if (entry.d_type == DT_REG && (ends_with(entry.d_name, ".c") ||
                                        ends_with(entry.d_name, ".cpp") ||
                                        ends_with(entry.d_name, ".h") ||
-                                       ends_with(entry.d_name, ".hpp"))) {
+                                       ends_with(entry.d_name, ".hpp") ||
+                                       ends_with(entry.d_name, ".s") ||
+                                       ends_with(entry.d_name, ".S"))) {
             string path = prefix + entry.d_name;
             struct stat buf;
             if (stat(path.c_str(), &buf) < 0 || buf.st_mtime <= era_start) {
