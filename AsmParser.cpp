@@ -29,11 +29,11 @@ void AsmLexer::unload() {
     m_file = nullptr;
 }
 
-static bool is_identifier_char(char c) {
+static bool is_identifier_char(int c) {
     return isalnum(c) || c == '_' || c == '.' || c == '$' || c == '@';
 }
 
-static bool is_whitespace_char(char c) {
+static bool is_whitespace_char(int c) {
     return isspace(c) && c != '\n';
 }
 
