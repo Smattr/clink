@@ -13,9 +13,9 @@ to be bring the Cscope experience into the twenty first century.
     understands your code (including macros) as well as your compiler does.
   * **Multicore support** Parsing multiple, independent files trivially
     parallelises, so why be limited by one core?
-  * **_TBC: not implemented yet_** **Assembly support** Systems code often calls
-    into assembly, at which point Cscope gets lost. Clink parses assembly
-    fuzzily and can maintain a call graph across this boundary.
+  * **Assembly support** Systems code often calls into assembly, at which point
+    Cscope gets lost. Clink parses assembly fuzzily and can maintain a call
+    graph across this boundary.
   * **_TBC: not implemented yet_** **Syntax highlighting** You're probably used
     to looking at code in Vim with syntax highlighting, so Clink can ask Vim to
     highlight the snippets it shows you.
