@@ -30,6 +30,12 @@ public:
 private:
     FILE *m_file;
 
+    enum {
+        IDLE,
+        HASH,
+        INCLUDE,
+        IGNORING,
+    } state;
 };
 
 class AsmParser : public Parser {

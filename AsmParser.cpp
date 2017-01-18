@@ -8,7 +8,7 @@
 
 using namespace std;
 
-AsmLexer::AsmLexer() : m_file(nullptr) {
+AsmLexer::AsmLexer() : m_file(nullptr), state(IDLE) {
 }
 
 AsmLexer::~AsmLexer() {
@@ -47,6 +47,7 @@ AsmToken AsmLexer::next() {
     if (c == '\n') {
         token.category = ASM_NEWLINE;
         token.text = "\n";
+        state = IDLE;
         return token;
     }
 
@@ -67,9 +68,14 @@ AsmToken AsmLexer::next() {
         token.text += char(c);
         while (is_identifier_char(c = fgetc(m_file)))
             token.text += char(c);
+        if (state == HASH && token.text == "include") {
+            state = INCLUDE;
+        } else {
+            state = IGNORING;
+        }
     }
 
-    else if (c == '"' || c == '<') {
+    else if (state == INCLUDE && (c == '"' || c == '<')) {
         // Note that we don't care about discriminating between "..." and <...>
         token.category = ASM_STRING;
         int ender = c == '"' ? '"' : '>';
@@ -80,12 +86,18 @@ AsmToken AsmLexer::next() {
             token.text += char(c);
 
         }
+        state = IGNORING;
         return token;
     }
 
     else {
         token.category = ASM_OTHER;
         token.text = char(c);
+        if (state == IDLE && token.text == "#") {
+            state = HASH;
+        } else {
+            state = IGNORING;
+        }
         return token;
     }
 
