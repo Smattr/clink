@@ -29,10 +29,6 @@ to be bring the Cscope experience into the twenty first century.
 
 ## Notes for devs
 
-  * If you've tried using this, you will note it is extremely slow currently.
-    Almost no effort has been put into optimisation yet and there is likely an
-    abundance of low hanging fruit. I'm focusing on getting feature complete
-    first.
   * If Clink is modern, its build system is decidedly ancient. I haven't spent
     the time to divine a CMakeFiles.txt that can find libclang, but it is on my
     todo list.
