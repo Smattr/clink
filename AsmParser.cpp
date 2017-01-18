@@ -237,7 +237,7 @@ void AsmParser::process(SymbolConsumer &consumer) {
                 state = IDLE;
                 line++;
                 column = 1;
-                break;
+                continue;
 
             case ASM_WHITESPACE:
                 if (state == IDLE)
