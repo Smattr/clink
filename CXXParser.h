@@ -39,9 +39,9 @@ private:
     /* The current translation unit. This gets reassigned whenever we load a new
      * file. NULL when no file is currently loaded.
      */
-    CXTranslationUnit m_tu;
+    CXTranslationUnit m_tu = nullptr;
 
-    char *m_path;
+    char *m_path = nullptr;
 
     std::unordered_map<std::string, std::vector<char*>> m_lines;
     std::unordered_map<std::string, FILE*> m_lines_pending;

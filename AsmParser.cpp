@@ -8,9 +8,6 @@
 
 using namespace std;
 
-AsmLexer::AsmLexer() : m_file(nullptr), state(IDLE) {
-}
-
 AsmLexer::~AsmLexer() {
     if (m_file)
         unload();

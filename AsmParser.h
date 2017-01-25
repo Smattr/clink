@@ -48,21 +48,20 @@ struct AsmToken {
 class AsmLexer {
 
 public:
-    AsmLexer();
     ~AsmLexer();
     bool load(const char *path);
     void unload();
     AsmToken next();
 
 private:
-    FILE *m_file;
+    FILE *m_file = nullptr;
 
     enum {
         IDLE,
         HASH,
         INCLUDE,
         IGNORING,
-    } state;
+    } state = IDLE;
 };
 
 class AsmParser : public Parser {

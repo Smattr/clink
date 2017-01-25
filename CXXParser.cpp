@@ -13,8 +13,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
 
 using namespace std;
 
-CXXParser::CXXParser(void)
-        : m_tu(nullptr), m_path(nullptr) {
+CXXParser::CXXParser(void) {
     m_index = clang_createIndex(0 /* include PCH */,
         0 /* exclude diagnostics */);
 }

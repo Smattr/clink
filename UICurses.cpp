@@ -440,8 +440,7 @@ break2:
     return m_ret;
 }
 
-UICurses::UICurses() : m_state(UICS_INPUT), m_left(""), m_right(""), m_index(0),
-        m_select_index(0), m_results(nullptr), m_from_row(0) {
+UICurses::UICurses() {
 
     (void)initscr();
     keypad(stdscr, TRUE);
