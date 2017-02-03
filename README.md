@@ -29,9 +29,6 @@ to be bring the Cscope experience into the twenty first century.
 
 ## Notes for devs
 
-  * If Clink is modern, its build system is decidedly ancient. I haven't spent
-    the time to divine a CMakeFiles.txt that can find libclang, but it is on my
-    todo list.
   * The on-disk database format is extremely bloated. As with performance, I
     have put no effort into optimising this yet and easy wins abound.
   * Vim integration is currently hard coded. I didn't make this parametric
