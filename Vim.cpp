@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctype.h>
-#include "FauxTerm.h"
 #include <limits.h>
 #include <regex.h>
 #include <string>
