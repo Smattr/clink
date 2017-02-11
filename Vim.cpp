@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctype.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <regex.h>
 #include <string>
@@ -11,18 +12,70 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include "Vim.h"
 #include <vector>
 
-// FIXME: Use a safer method of calling Vim that doesn't choke on paths with spaces etc
-
 using namespace std;
 
+static int run(const char **argv) {
+
+    int p[2];
+    if (pipe(p) < 0)
+        return EXIT_FAILURE;
+
+    if (fcntl(p[1], F_SETFD, FD_CLOEXEC) < 0) {
+        close(p[0]);
+        close(p[1]);
+    }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(p[0]);
+        close(p[1]);
+        return EXIT_FAILURE;
+    }
+
+    if (pid == 0) {
+        close(p[0]);
+
+        (void)execvp(argv[0], const_cast<char *const*>(argv));
+
+        char c = 0;
+        (void)write(p[1], &c, sizeof(c));
+
+        exit(EXIT_FAILURE);
+    }
+
+    close(p[1]);
+
+    char ignored;
+    ssize_t r;
+    do {
+        r = read(p[0], &ignored, sizeof(ignored));
+    } while (r == -1 && errno == EINTR);
+    if (r == 1) {
+        close(p[0]);
+        return EXIT_FAILURE;
+    }
+
+    close(p[0]);
+
+    int status;
+    if (waitpid(pid, &status, 0) < 0)
+        return EXIT_FAILURE;
+
+    if (WIFEXITED(status))
+        return WEXITSTATUS(status);
+
+    return EXIT_FAILURE;
+}
+
 int vim_open(const string &filename, unsigned line, unsigned col) {
-    string cmd = "vim \"+call cursor(" + to_string(line) + "," + to_string(col)
-        + ")\" " + filename;
-    return system(cmd.c_str());
+    string cursor = "+call cursor(" + to_string(line) + "," + to_string(col) + ")";
+    char const *argv[] = { "vim", cursor.c_str(), filename.c_str(), nullptr };
+    return run(argv);
 }
 
 #ifdef TEST_VIM_OPEN
@@ -93,10 +146,11 @@ static int convert_to_html(const string &input, const string &output) {
      * FIXME wrap it in timeout
      * in case the user has a weird ~/.vimrc and we end up hanging.
      */
-    string command = "vim -n '+set nonumber' '+TOhtml' '+w " + output +
-        "' '+qa!' " + input;
+    string save = "+w " + output;
+    char const *command[] = { "vim", "-n", "+set nonumber", "+TOhtml",
+        save.c_str(), "+qa!", input.c_str(), nullptr };
 
-    return system(command.c_str());
+    return run(command);
 }
 
 /* Decode a fragment of HTML text produced by Vim's TOhtml. It is assumed that
