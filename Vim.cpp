@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
  * to work reliably.                                                          *
  *                                                                            *
  * So what is one to do? Well, brood on the problem for a while before        *
- * landing on an idea that so crazy it just might work. Vim ships with a tool *
+ * landing on an idea so crazy it just might work. Vim ships with a tool      *
  * called 2html.vim that generates an HTML document with syntax highlighting  *
  * of the file you have open. So all we need to do is puppet Vim into running *
  * :TOhtml, parse the generated HTML and render the result using ANSI color   *
