@@ -19,7 +19,7 @@
 
 using namespace std;
 
-static int run(const char **argv) {
+static int run(const char **argv, bool mask_stdout = false) {
 
     int p[2];
     if (pipe(p) < 0)
@@ -40,8 +40,25 @@ static int run(const char **argv) {
     if (pid == 0) {
         close(p[0]);
 
+        if (mask_stdout) {
+            /* Here we need to create a new PTY, rather than simply duping
+             * /dev/null over the top of std*. If Vim detects stdout is not a
+             * TTY, it throws a warning and its processing somehow slows down. I
+             * haven't investigated, but I suspect this is actually an artefact
+             * of OS interaction, rather than anything specific Vim is doing.
+             */
+            int fd = posix_openpt(O_RDWR);
+            if (fd < 0)
+                goto fail;
+            if (dup2(fd, STDIN_FILENO) < 0 ||
+                dup2(fd, STDOUT_FILENO) < 0 ||
+                dup2(fd, STDERR_FILENO) < 0)
+                goto fail;
+        }
+
         (void)execvp(argv[0], const_cast<char *const*>(argv));
 
+fail:
         char c = 0;
         (void)write(p[1], &c, sizeof(c));
 
@@ -150,7 +167,7 @@ static int convert_to_html(const string &input, const string &output) {
     char const *command[] = { "vim", "-n", "+set nonumber", "+TOhtml",
         save.c_str(), "+qa!", input.c_str(), nullptr };
 
-    return run(command);
+    return run(command, true);
 }
 
 /* Decode a fragment of HTML text produced by Vim's TOhtml. It is assumed that
