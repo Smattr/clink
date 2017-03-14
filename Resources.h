@@ -2,6 +2,7 @@
 
 #include "AsmParser.h"
 #include "CXXParser.h"
+#include "Symbol.h"
 
 /* Management of C/C++ and assembly parsers that we'll lazily construct. It's
  * possible we'll not need one or both of them, in which case we don't have to
@@ -14,7 +15,9 @@
 class Resources {
 
  public:
-  Resources() noexcept {}
+  Resources(SymbolConsumer *consumer) noexcept
+    : consumer(consumer) {
+  }
 
   // It doesn't make sense to copy one of these.
   Resources(const Resources &) = delete;
@@ -22,10 +25,13 @@ class Resources {
   Resources(Resources &&other) noexcept {
     CXXParser *cxx_parser = other.cxx_parser;
     AsmParser *asm_parser = other.asm_parser;
+    SymbolConsumer *consumer = other.consumer;
     other.cxx_parser = nullptr;
     other.asm_parser = nullptr;
+    other.consumer = nullptr;
     this->cxx_parser = cxx_parser;
     this->asm_parser = asm_parser;
+    this->consumer = consumer;
   }
 
   ~Resources() {
@@ -39,12 +45,15 @@ class Resources {
   Resources &operator=(Resources &&other) noexcept {
     CXXParser *cxx_parser = other.cxx_parser;
     AsmParser *asm_parser = other.asm_parser;
+    SymbolConsumer *consumer = other.consumer;
     other.cxx_parser = nullptr;
     other.asm_parser = nullptr;
+    other.consumer = nullptr;
     delete this->cxx_parser;
     delete this->asm_parser;
     this->cxx_parser = cxx_parser;
     this->asm_parser = asm_parser;
+    this->consumer = consumer;
     return *this;
   }
 
@@ -59,6 +68,8 @@ class Resources {
       asm_parser = new AsmParser;
     return asm_parser;
   }
+
+  SymbolConsumer *consumer;
 
  private:
   CXXParser *cxx_parser = nullptr;

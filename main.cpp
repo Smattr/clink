@@ -107,7 +107,7 @@ static void parse_options(int argc, char **argv) {
 }
 
 static void update(SymbolConsumer &db, WorkQueue &fq) {
-    Resources r;
+    Resources r(&db);
 
     for (;;) {
         string path;
