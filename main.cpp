@@ -12,6 +12,7 @@
 #include <iostream>
 #include <limits.h>
 #include "Options.h"
+#include "Resources.h"
 #include "Symbol.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -106,12 +107,7 @@ static void parse_options(int argc, char **argv) {
 }
 
 static void update(SymbolConsumer &db, FileQueue &fq) {
-    /* C/C++ and assembly parsers that we'll lazily construct. It's possible
-     * we'll complete this function without needing one or both of them, in
-     * which case we don't have to pay the construction overhead.
-     */
-    CXXParser *cxx_parser = nullptr;
-    AsmParser *asm_parser = nullptr;
+    Resources r;
 
     for (;;) {
         string path;
@@ -125,8 +121,7 @@ static void update(SymbolConsumer &db, FileQueue &fq) {
 
         // Is this assembly?
         if (ends_with(path.c_str(), ".s") || ends_with(path.c_str(), ".S")) {
-            if (asm_parser == nullptr)
-                asm_parser = new AsmParser;
+            AsmParser *asm_parser = r.get_asm_parser();
             if (!asm_parser->load(path.c_str()))
                 continue;
             asm_parser->process(db);
@@ -135,17 +130,13 @@ static void update(SymbolConsumer &db, FileQueue &fq) {
 
         else {
             // OK, it must be C/C++.
-            if (cxx_parser == nullptr)
-                cxx_parser = new CXXParser;
+            CXXParser *cxx_parser = r.get_cxx_parser();
             if (!cxx_parser->load(path.c_str()))
                 continue;
             cxx_parser->process(db);
             cxx_parser->unload();
         }
     }
-
-    delete asm_parser;
-    delete cxx_parser;
 }
 
 int main(int argc, char **argv) {
