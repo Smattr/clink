@@ -1,6 +1,5 @@
 #include <cstring>
 #include <dirent.h>
-#include "WorkQueue.h"
 #include <mutex>
 #include <string>
 #include <sys/stat.h>
@@ -8,6 +7,8 @@
 #include <tuple>
 #include <unistd.h>
 #include "util.h"
+#include "WorkItem.h"
+#include "WorkQueue.h"
 
 using namespace std;
 
@@ -32,7 +33,7 @@ bool WorkQueue::push_directory_stack(const string &directory) {
     return true;
 }
 
-string WorkQueue::pop() {
+WorkItem *WorkQueue::pop() {
 
 restart1:
     if (directory_stack.empty()) {
@@ -75,14 +76,21 @@ restart2:;
                 // Consider this file "old".
                 continue;
             }
-            return path;
+
+            if (ends_with(entry.d_name, ".c") || ends_with(entry.d_name, ".cpp")
+                || ends_with(entry.d_name, ".h") ||
+                ends_with(entry.d_name, ".hpp")) {
+                return new ParseCXXFile(path);
+            } else {
+                return new ParseAsmFile(path);
+            }
         }
 
         // If we reached here, the directory entry was irrelevant to us.
     }
 }
 
-string ThreadSafeWorkQueue::pop() {
+WorkItem *ThreadSafeWorkQueue::pop() {
     lock_guard<mutex> guard(stack_mutex);
     return WorkQueue::pop();
 }

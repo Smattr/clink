@@ -6,7 +6,6 @@
 #include "Database.h"
 #include <dirent.h>
 #include <errno.h>
-#include "WorkQueue.h"
 #include <functional>
 #include <getopt.h>
 #include <iostream>
@@ -21,6 +20,8 @@
 #include "UILine.h"
 #include <unistd.h>
 #include "util.h"
+#include "WorkItem.h"
+#include "WorkQueue.h"
 
 using namespace std;
 
@@ -110,32 +111,16 @@ static void update(SymbolConsumer &db, WorkQueue &fq) {
     Resources r(&db);
 
     for (;;) {
-        string path;
+        WorkItem *item;
         try {
-            path = fq.pop();
+            item = fq.pop();
         } catch (NoMoreEntries &) {
             break;
         }
 
-        db.purge(path);
+        item->run(r);
 
-        // Is this assembly?
-        if (ends_with(path.c_str(), ".s") || ends_with(path.c_str(), ".S")) {
-            AsmParser *asm_parser = r.get_asm_parser();
-            if (!asm_parser->load(path.c_str()))
-                continue;
-            asm_parser->process(db);
-            asm_parser->unload();
-        }
-
-        else {
-            // OK, it must be C/C++.
-            CXXParser *cxx_parser = r.get_cxx_parser();
-            if (!cxx_parser->load(path.c_str()))
-                continue;
-            cxx_parser->process(db);
-            cxx_parser->unload();
-        }
+        delete item;
     }
 }
 

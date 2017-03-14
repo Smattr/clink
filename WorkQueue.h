@@ -7,6 +7,7 @@
 #include <string>
 #include <sys/types.h>
 #include <tuple>
+#include "WorkItem.h"
 
 class NoMoreEntries : public std::exception {
     virtual const char *what() const noexcept {
@@ -18,7 +19,7 @@ class WorkQueue {
 
 public:
     WorkQueue(const std::string &directory, time_t era_start);
-    virtual std::string pop();
+    virtual WorkItem *pop();
 
 private:
     time_t era_start;
@@ -33,7 +34,7 @@ public:
     ThreadSafeWorkQueue(const std::string &directory, time_t era_start)
         : WorkQueue(directory, era_start) {
     }
-    std::string pop() override;
+    WorkItem *pop() override;
 
 private:
     std::mutex stack_mutex;
