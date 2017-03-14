@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Database.h"
+#include <signal.h>
 #include <string>
 #include "UI.h"
 
@@ -31,5 +32,6 @@ private:
     int m_ret;
     Results *m_results = nullptr;
     unsigned m_from_row = 0;
+    struct sigaction m_original_sigtstp_handler;
 
 };

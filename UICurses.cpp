@@ -4,6 +4,7 @@
 #include <cstring>
 #include <curses.h>
 #include "Database.h"
+#include <signal.h>
 #include <string>
 #include "Symbol.h"
 #include "UICurses.h"
@@ -375,6 +376,19 @@ hotkey_select:
 enter:
             def_prog_mode();
             endwin();
+
+            /* Restore the SIGTSTP handler we had prior to starting up ncurses.
+             * Ncurses registers a SIGTSTP handler that it leaves in place until
+             * process exit. This means that when we exec Vim below, if the user
+             * suspends Vim (^Z) the SIGTSTP to Clink is masked by the ncurses
+             * handler. A consequence of this is that the Clink menu is not
+             * repainted when Vim exits. By restoring the original handler, we
+             * can claw our way back to regular TTY behaviour.
+             */
+            struct sigaction curses_act;
+            int read_signal = sigaction(SIGTSTP, &m_original_sigtstp_handler,
+                &curses_act);
+
             int ret = vim_open(m_results->rows[m_select_index].path,
                 m_results->rows[m_select_index].line,
                 m_results->rows[m_select_index].col);
@@ -382,7 +396,13 @@ enter:
                 m_state = UICS_EXITING;
                 m_ret = ret;
             }
+
             reset_prog_mode();
+
+            // Restore ncurses' SIGTSTP handler.
+            if (read_signal == 0)
+                (void)sigaction(SIGTSTP, &curses_act, nullptr);
+
             refresh();
             break;
         }
@@ -441,6 +461,12 @@ break2:
 }
 
 UICurses::UICurses() {
+
+    /* Save any registered SIGTSTP handler, that we'll need to temporarily
+     * restore later. There is most likely no handler (SIG_DFL) at this point,
+     * but future-proof this against us registering handlers elsewhere in Clink.
+     */
+    (void)sigaction(SIGTSTP, nullptr, &m_original_sigtstp_handler);
 
     (void)initscr();
     keypad(stdscr, TRUE);
