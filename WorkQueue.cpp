@@ -1,6 +1,6 @@
 #include <cstring>
 #include <dirent.h>
-#include "FileQueue.h"
+#include "WorkQueue.h"
 #include <mutex>
 #include <string>
 #include <sys/stat.h>
@@ -11,7 +11,7 @@
 
 using namespace std;
 
-FileQueue::FileQueue(const string &directory, time_t era_start)
+WorkQueue::WorkQueue(const string &directory, time_t era_start)
         : era_start(era_start) {
 
     string prefix = directory + "/";
@@ -20,7 +20,7 @@ FileQueue::FileQueue(const string &directory, time_t era_start)
         directory_stack.push(make_tuple(prefix, dir));
 }
 
-bool FileQueue::push_directory_stack(const string &directory) {
+bool WorkQueue::push_directory_stack(const string &directory) {
 
     DIR *dir = opendir(directory.c_str());
     if (dir == nullptr) {
@@ -32,7 +32,7 @@ bool FileQueue::push_directory_stack(const string &directory) {
     return true;
 }
 
-string FileQueue::pop() {
+string WorkQueue::pop() {
 
 restart1:
     if (directory_stack.empty()) {
@@ -82,7 +82,7 @@ restart2:;
     }
 }
 
-string ThreadSafeFileQueue::pop() {
+string ThreadSafeWorkQueue::pop() {
     lock_guard<mutex> guard(stack_mutex);
-    return FileQueue::pop();
+    return WorkQueue::pop();
 }

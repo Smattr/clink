@@ -6,7 +6,7 @@
 #include "Database.h"
 #include <dirent.h>
 #include <errno.h>
-#include "FileQueue.h"
+#include "WorkQueue.h"
 #include <functional>
 #include <getopt.h>
 #include <iostream>
@@ -106,7 +106,7 @@ static void parse_options(int argc, char **argv) {
     }
 }
 
-static void update(SymbolConsumer &db, FileQueue &fq) {
+static void update(SymbolConsumer &db, WorkQueue &fq) {
     Resources r;
 
     for (;;) {
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
              * queue and just directly pump results into the database.
              */
 
-            FileQueue queue(".", era_start);
+            WorkQueue queue(".", era_start);
 
             /* Open a transaction before starting to manipulate the database.
              * Repeated insertions without a containing transaction are wrapped in
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
             assert(opts.threads > 1);
 
             // Create a single, shared file queue.
-            ThreadSafeFileQueue queue(".", era_start);
+            ThreadSafeWorkQueue queue(".", era_start);
 
             // Create and start N - 1 threads.
             vector<thread*> threads;

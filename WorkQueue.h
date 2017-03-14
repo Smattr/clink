@@ -14,10 +14,10 @@ class NoMoreEntries : public std::exception {
     }
 };
 
-class FileQueue {
+class WorkQueue {
 
 public:
-    FileQueue(const std::string &directory, time_t era_start);
+    WorkQueue(const std::string &directory, time_t era_start);
     virtual std::string pop();
 
 private:
@@ -27,11 +27,11 @@ private:
     bool push_directory_stack(const std::string &directory);
 };
 
-class ThreadSafeFileQueue : public FileQueue {
+class ThreadSafeWorkQueue : public WorkQueue {
 
 public:
-    ThreadSafeFileQueue(const std::string &directory, time_t era_start)
-        : FileQueue(directory, era_start) {
+    ThreadSafeWorkQueue(const std::string &directory, time_t era_start)
+        : WorkQueue(directory, era_start) {
     }
     std::string pop() override;
 
