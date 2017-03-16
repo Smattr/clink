@@ -147,7 +147,7 @@ static int print_results(const Results &results, unsigned from_row) {
         }
         widths.push_back(width + 1);
     }
-    
+
     /* Print column headings. */
     move(0, 0);
     printw("  ");
