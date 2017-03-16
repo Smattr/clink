@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <unordered_map>
 #include "Vim.h"
 #include <vector>
 
@@ -170,10 +171,22 @@ static int convert_to_html(const string &input, const string &output) {
     return run(command, true);
 }
 
+namespace {
+
+struct Style {
+    unsigned fg;
+    unsigned bg;
+    bool bold;
+    bool underline;
+};
+
+}
+
 /* Decode a fragment of HTML text produced by Vim's TOhtml. It is assumed that
  * the input contains no HTML tags.
  */
-string VimHighlighter::from_html(const string &text) {
+static string from_html(const unordered_map<string, Style> &styles,
+    const string &text) {
 
     // The HTML escapes produced by TOhtml.
     struct translation_t {
@@ -218,8 +231,8 @@ string VimHighlighter::from_html(const string &text) {
                 size_t end = text.find("\">", start);
                 if (end != string::npos) {
                     string style_name = text.substr(start, end - start);
-                    auto it = m_styles.find(style_name);
-                    if (it != m_styles.end()) {
+                    auto it = styles.find(style_name);
+                    if (it != styles.end()) {
                         Style s = it->second;
                         result += "\033[3" + to_string(s.fg) +
                                       ";4" + to_string(s.bg);
@@ -307,11 +320,15 @@ static unsigned to_ansi_color(const char *html_color,
     return unsigned(min_index);
 }
 
-VimHighlighter::VimHighlighter(const string &filename) {
+namespace {
 
-    // Create a temporary directory to use for scratch space.
+class TemporaryDirectory {
 
-    static const char *TMPDIR = getenv("TMPDIR");
+ public:
+
+  TemporaryDirectory() {
+
+    const char *TMPDIR = getenv("TMPDIR");
     if (TMPDIR == nullptr) {
         TMPDIR = "/tmp";
     }
@@ -325,17 +342,43 @@ VimHighlighter::VimHighlighter(const string &filename) {
         return;
     }
 
-    m_tempdir = temp;
+    dir = temp;
     free(temp);
+  }
+
+  const string &get_path() const {
+    return dir;
+  }
+
+  ~TemporaryDirectory() {
+    if (dir != "")
+      (void)rmdir(dir.c_str());
+  }
+
+ private:
+  string dir;
+
+};
+
+}
+
+vector<string> vim_highlight(const string &filename) {
+
+    vector<string> lines;
+
+    // Create a temporary directory to use for scratch space.
+    TemporaryDirectory temp;
+    if (temp.get_path() == "")
+        return lines;
 
     // Convert the input to highlighted HTML.
-    string output = m_tempdir + "/temp.html";
+    string output = temp.get_path() + "/temp.html";
     if (convert_to_html(filename, output) != 0)
-        return;
+        return lines;
 
     FILE *html = fopen(output.c_str(), "r");
     if (html == nullptr)
-        return;
+        return lines;
 
     /* The file we have open at this point has a structure like the following:
      *
@@ -369,18 +412,24 @@ VimHighlighter::VimHighlighter(const string &filename) {
             "(text-decoration:[[:blank:]]*underline;[[:blank:]]*)?",
             REG_EXTENDED) != 0) {
         fclose(html);
-        return;
+        (void)remove(output.c_str());
+        return lines;
     }
+
+    char *last_line = nullptr;
+    size_t last_line_sz = 0;
+    unordered_map<string, Style> styles;
 
     for (;;) {
 
-        if (getline(&m_last_line, &m_last_line_sz, html) == -1) {
-            fclose(html);
+        if (getline(&last_line, &last_line_sz, html) == -1) {
             regfree(&style);
-            return;
+            fclose(html);
+            (void)remove(output.c_str());
+            return lines;
         }
 
-        if (m_last_line[0] == '.') {
+        if (last_line[0] == '.') {
 
             /* Setup for extraction of CSS attributes. The entries of match will
              * be:
@@ -399,26 +448,26 @@ VimHighlighter::VimHighlighter(const string &filename) {
             static const size_t NMATCH = sizeof(match) / sizeof(match[0]);
 
             // Extract CSS attributes from this line.
-            if (regexec(&style, m_last_line, NMATCH, match, 0) == REG_NOMATCH)
+            if (regexec(&style, last_line, NMATCH, match, 0) == REG_NOMATCH)
                 continue;
 
             // Build a style defining these attributes.
             Style s { .fg = 9, .bg = 9, .bold = false, .underline = false };
             if (match[2].rm_so != -1)
-                s.fg = to_ansi_color(&m_last_line[match[3].rm_so], 6);
+                s.fg = to_ansi_color(&last_line[match[3].rm_so], 6);
             if (match[4].rm_so != -1)
-                s.bg = to_ansi_color(&m_last_line[match[5].rm_so], 6);
+                s.bg = to_ansi_color(&last_line[match[5].rm_so], 6);
             if (match[7].rm_so != -1)
                 s.bold = true;
             if (match[9].rm_so != -1)
                 s.underline = true;
 
             // Register this style for later highlighting.
-            string name(m_last_line, match[1].rm_so,
+            string name(last_line, match[1].rm_so,
                 match[1].rm_eo - match[1].rm_so);
-            m_styles[name] = s;
+            styles[name] = s;
 
-        } else if (strcmp(m_last_line, "<pre id='vimCodeElement'>\n") == 0) {
+        } else if (strcmp(last_line, "<pre id='vimCodeElement'>\n") == 0) {
             // We found the content itself. We're done.
             break;
         }
@@ -426,45 +475,27 @@ VimHighlighter::VimHighlighter(const string &filename) {
     }
 
     regfree(&style);
-    m_html = html;
-}
 
-VimHighlighter::~VimHighlighter() {
-    if (m_tempdir != "") {
-        (void)remove((m_tempdir + "/temp.html").c_str());
-        (void)rmdir(m_tempdir.c_str());
-    }
-    free(m_last_line);
-    if (m_html != nullptr)
-        fclose(m_html);
-}
+    for (;;) {
 
-string VimHighlighter::get_line(unsigned lineno) {
-
-    if (lineno == 0)
-        return "";
-
-    while (lineno > m_lines.size() && m_html != nullptr) {
-        if (getline(&m_last_line, &m_last_line_sz, m_html) == -1) {
-            fclose(m_html);
-            m_html = nullptr;
+        if (getline(&last_line, &last_line_sz, html) == -1) {
+            fclose(html);
             break;
         }
 
-        if (strcmp(m_last_line, "</pre>\n") == 0) {
-            // End of content.
-            fclose(m_html);
-            m_html = nullptr;
+        if (strcmp(last_line, "</pre>\n") == 0) {
+            fclose(html);
             break;
         }
 
-        m_lines.push_back(from_html(m_last_line));
+        lines.push_back(from_html(styles, last_line));
+
     }
 
-    if (lineno <= m_lines.size())
-        return m_lines[lineno - 1];
+    free(last_line);
+    (void)remove(output.c_str());
 
-    return "";
+    return lines;
 }
 
 #ifdef TEST_VIM_HIGHLIGHTER
@@ -474,14 +505,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    VimHighlighter vh(argv[1]);
-
-    for (unsigned i = 1; ; i++) {
-        string line = vh.get_line(i);
-        if (line == "")
-            break;
+    for (const string &line : vim_highlight(argv[1]))
         cout << line;
-    }
 
     return EXIT_SUCCESS;
 }
