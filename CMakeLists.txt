@@ -4,7 +4,7 @@ project(clink CXX)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -W -Wall -Wextra")
 
 add_executable(clink  AsmParser.cpp CXXParser.cpp Database.cpp WorkQueue.cpp
-  FileReader.cpp main.cpp UICurses.cpp UILine.cpp Vim.cpp)
+  main.cpp UICurses.cpp UILine.cpp Vim.cpp)
 
 find_program(LLVM_CONFIG llvm-config)
 if (NOT LLVM_CONFIG)
