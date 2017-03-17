@@ -34,7 +34,7 @@ public:
     ThreadSafeWorkQueue(const std::string &directory, time_t era_start)
         : WorkQueue(directory, era_start) {
     }
-    WorkItem *pop() override;
+    WorkItem *pop() final;
 
 private:
     std::mutex stack_mutex;

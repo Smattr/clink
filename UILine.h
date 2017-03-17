@@ -10,6 +10,6 @@
 class UILine : public UI {
 
 public:
-    int run(Database &db) override;
+    int run(Database &db) final;
 
 };

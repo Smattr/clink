@@ -16,7 +16,7 @@ struct Results;
 class UICurses : public UI {
 
 public:
-    int run(Database &db) override;
+    int run(Database &db) final;
     UICurses();
     ~UICurses();
 

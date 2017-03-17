@@ -27,7 +27,7 @@ public:
      * This function assumes there is a currently loaded file. You are expected
      * to retrieve the extracted data following this using next().
      */
-    void process(SymbolConsumer &consumer) override;
+    void process(SymbolConsumer &consumer) final;
 
 private:
     const char *get_context(const char *filename, unsigned line);

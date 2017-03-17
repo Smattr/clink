@@ -16,10 +16,10 @@ class Database;
 class PendingActions : public SymbolConsumer {
 
 public:
-    void consume(const Symbol &s) override {
+    void consume(const Symbol &s) final {
         symbols.push_back(s);
     }
-    bool purge(const std::string &path) override {
+    bool purge(const std::string &path) final {
         to_purge.push_back(path);
         return true;
     }
@@ -39,8 +39,8 @@ public:
     virtual ~Database();
     bool open(const char *path);
     void close();
-    void consume(const Symbol &s) override;
-    bool purge(const std::string &path) override;
+    void consume(const Symbol &s) final;
+    bool purge(const std::string &path) final;
     bool open_transaction();
     bool close_transaction();
 

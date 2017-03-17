@@ -72,7 +72,7 @@ public:
     bool load(const char *path);
     void unload();
 
-    void process(SymbolConsumer &consumer) override;
+    void process(SymbolConsumer &consumer) final;
 
 private:
     AsmLexer lexer;
