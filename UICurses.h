@@ -33,5 +33,6 @@ private:
     Results *m_results = nullptr;
     unsigned m_from_row = 0;
     struct sigaction m_original_sigtstp_handler;
+    bool m_color;
 
 };
