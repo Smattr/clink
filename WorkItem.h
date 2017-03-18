@@ -4,6 +4,7 @@
 #include "CXXParser.h"
 #include "Resources.h"
 #include <string>
+#include "Vim.h"
 
 class WorkItem {
 
@@ -61,6 +62,25 @@ class ParseAsmFile : public WorkItem {
  }
 
  virtual ~ParseAsmFile() {}
+
+ private:
+  std::string path;
+
+};
+
+class ReadFile : public WorkItem {
+
+ public:
+  ReadFile(const std::string &path)
+    : path(path) {
+  }
+
+  void run(Resources &resources) final {
+    std::vector<std::string> lines = vim_highlight(path);
+    resources.contexts.register_lines(path, lines);
+  }
+
+  virtual ~ReadFile() {}
 
  private:
   std::string path;
