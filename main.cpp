@@ -10,6 +10,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <limits.h>
+#include "log.h"
 #include "Options.h"
 #include "Resources.h"
 #include "Symbol.h"
@@ -30,6 +31,7 @@ static const char default_database[] = ".clink.db";
 static void usage(const char *progname) {
     cerr << "usage: " << progname << " [options]\n"
          << "\n"
+         << " --debug-log FILE         log operations to the given file\n"
          << " --file FILE | -f FILE    database to use (.clink.db by default)\n"
          << " --jobs JOBS | -j JOBS    set number of threads to use (0 or "
             "\"auto\" for the default, which is the number of cores)\n";
@@ -44,8 +46,12 @@ Options opts = {
 };
 
 static void parse_options(int argc, char **argv) {
+
+    enum { DEBUG_LOG_ID = 1000 };
+
     for (;;) {
         static const struct option options[] = {
+            {"debug-log", required_argument, 0, DEBUG_LOG_ID},
             {"file", required_argument, 0, 'f'},
             {"jobs", required_argument, 0, 'j'},
             {"line-oriented", no_argument, 0, 'l'},
@@ -87,6 +93,14 @@ static void parse_options(int argc, char **argv) {
 
             case 'l':
                 opts.ui = UI_LINE;
+                break;
+
+            case DEBUG_LOG_ID:
+                log_file = fopen(optarg, "w");
+                if (log_file == nullptr) {
+                    cerr << "failed to open " << optarg << "\n";
+                    exit(EXIT_FAILURE);
+                }
                 break;
 
             default:
