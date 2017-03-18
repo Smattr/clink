@@ -5,6 +5,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -W -Wall -Wextra")
 
 add_executable(clink
   AsmParser.cpp
+  colours.cpp
   CXXParser.cpp
   Database.cpp
   log.cpp
@@ -14,7 +15,10 @@ add_executable(clink
   Vim.cpp
   WorkQueue.cpp)
 
-add_executable(vimcat  Vim.cpp vimcat.cpp)
+add_executable(vimcat
+  colours.cpp
+  Vim.cpp
+  vimcat.cpp)
 
 find_program(LLVM_CONFIG llvm-config)
 if (NOT LLVM_CONFIG)

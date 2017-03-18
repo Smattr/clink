@@ -1,5 +1,6 @@
 #include <array>
 #include <cassert>
+#include "colours.h"
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -261,65 +262,6 @@ static string from_html(const unordered_map<string, Style> &styles,
     return result;
 }
 
-static uint8_t hex_to_int(char c) {
-    assert(isxdigit(c));
-    switch (c) {
-        case '0' ... '9': return c - '0';
-        case 'a' ... 'f': return uint8_t(c - 'a') + 10;
-        case 'A' ... 'F': return uint8_t(c - 'A') + 10;
-    }
-    __builtin_unreachable();
-}
-
-/* Turn a six character string representing an HTML color into a value 0-7
- * representing an ANSI terminal code to most closely match that color.
- */
-static unsigned to_ansi_color(const char *html_color,
-        [[gnu::unused]] size_t length) {
-    assert(length == 6);
-
-    // Extract the color as RGB.
-    uint8_t red = hex_to_int(html_color[0]) * 16 + hex_to_int(html_color[1]);
-    uint8_t green = hex_to_int(html_color[2]) * 16 + hex_to_int(html_color[3]);
-    uint8_t blue = hex_to_int(html_color[4]) * 16 + hex_to_int(html_color[5]);
-
-    /* HTML has a 24-bit color space, but ANSI color codes have an 8-bit color
-     * space. We map an HTML color onto an ANSI color by finding the "closest"
-     * one using an ad hoc notion of distance between colors.
-     */
-
-    /* First, we define the ANSI colors as RGB values. These definitions match
-     * what 2html uses for 8-bit color, so an HTML color intended to map
-     * *exactly* to one of these should correctly end up with a distance of 0.
-     */
-    static const array<uint8_t[3], 8> ANSI { {
-        /* black   */ { 0x00, 0x00, 0x00 },
-        /* red     */ { 0xff, 0x60, 0x60 },
-        /* green   */ { 0x00, 0xff, 0x00 },
-        /* yellow  */ { 0xff, 0xff, 0x00 },
-        /* blue    */ { 0x80, 0x80, 0xff },
-        /* magenta */ { 0xff, 0x40, 0xff },
-        /* cyan    */ { 0x00, 0xff, 0xff },
-        /* white   */ { 0xff, 0xff, 0xff },
-    } };
-
-    // Now find the color with the least distance to the input.
-    size_t min_index;
-    unsigned min_distance = UINT_MAX;
-    for (size_t i = 0; i < ANSI.size(); i++) {
-        unsigned distance =
-            (ANSI[i][0] > red ? ANSI[i][0] - red : red - ANSI[i][0]) +
-            (ANSI[i][1] > green ? ANSI[i][1] - green : green - ANSI[i][1]) +
-            (ANSI[i][2] > blue ? ANSI[i][2] - blue : blue - ANSI[i][2]);
-        if (distance < min_distance) {
-            min_index = i;
-            min_distance = distance;
-        }
-    }
-
-    return unsigned(min_index);
-}
-
 namespace {
 
 class TemporaryDirectory {
@@ -454,9 +396,9 @@ vector<string> vim_highlight(const string &filename) {
             // Build a style defining these attributes.
             Style s { .fg = 9, .bg = 9, .bold = false, .underline = false };
             if (match[2].rm_so != -1)
-                s.fg = to_ansi_color(&last_line[match[3].rm_so], 6);
+                s.fg = html_colour_to_ansi(&last_line[match[3].rm_so], 6);
             if (match[4].rm_so != -1)
-                s.bg = to_ansi_color(&last_line[match[5].rm_so], 6);
+                s.bg = html_colour_to_ansi(&last_line[match[5].rm_so], 6);
             if (match[7].rm_so != -1)
                 s.bold = true;
             if (match[9].rm_so != -1)
