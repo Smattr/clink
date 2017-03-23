@@ -4,9 +4,9 @@
 
 class Parser {
 
-public:
-    virtual void process(SymbolConsumer &consumer) = 0;
+ public:
+  virtual void process(SymbolConsumer &consumer) = 0;
 
-    virtual ~Parser() {}
+  virtual ~Parser() {}
 
 };

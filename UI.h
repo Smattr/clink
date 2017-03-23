@@ -4,7 +4,7 @@
 
 class UI {
 
-public:
-    virtual int run(Database &db) = 0;
+ public:
+  virtual int run(Database &db) = 0;
 
 };

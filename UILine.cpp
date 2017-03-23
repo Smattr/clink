@@ -12,111 +12,111 @@ using namespace std;
 
 template<typename T>
 static void print_leader(const vector<T> &vs) {
-    cout << "cscope: " << vs.size() << " lines\n";
+  cout << "cscope: " << vs.size() << " lines\n";
 }
 
 int UILine::run(Database &db) {
 
-    int ret = EXIT_SUCCESS;
+  int ret = EXIT_SUCCESS;
 
-    char *line;
-    while ((line = readline(">> "))) {
+  char *line;
+  while ((line = readline(">> "))) {
 
-        // Skip leading white space
-        char *command = line;
-        while (isspace(*command))
-            command++;
+    // Skip leading white space
+    char *command = line;
+    while (isspace(*command))
+      command++;
 
-        // Ignore blank lines
-        if (strcmp(command, "") == 0) {
-            free(line);
-            continue;
-        }
-
-        switch (*command) {
-
-            case '0': { // find symbol
-                vector<Symbol> vs = db.find_symbol(command + 1);
-                print_leader(vs);
-                for (const auto &s : vs) {
-                    cout << s.path() << " " << s.parent() << " " << s.line() <<
-                        " " << lstrip(s.context());
-                }
-                break;
-            }
-
-            case '1': { // find definition
-                vector<Symbol> vs = db.find_definition(command + 1);
-                print_leader(vs);
-                for (const auto &s : vs) {
-                    cout << s.path() << " " << (command + 1) << " " <<
-                        s.line() << " " << lstrip(s.context());
-                }
-                break;
-            }
-
-            case '2': { // find calls
-                vector<Symbol> vs = db.find_call(command + 1);
-                print_leader(vs);
-                for (const auto &s : vs) {
-                    cout << s.path() << " " << s.name() << " " << s.line() <<
-                        " " << lstrip(s.context());
-                }
-                break;
-            }
-
-            case '3': { // find callers
-                vector<Symbol> vs = db.find_caller(command + 1);
-                print_leader(vs);
-                for (const auto &s : vs) {
-                    cout << s.path() << " " << s.parent() << " " << s.line() <<
-                        " " << lstrip(s.context());
-                }
-                break;
-            }
-
-            case '7': { // find file
-                vector<string> vs = db.find_file(command + 1);
-                print_leader(vs);
-                /* XXX: what kind of nonsense output is this? I don't know what
-                 * value Cscope is attempting to add with the trailing garbage.
-                 */
-                for (const auto &s : vs)
-                    cout << s << " <unknown> 1 <unknown>\n";
-                break;
-            }
-
-            case '8': { // find includers
-                vector<Symbol> vs = db.find_includer(command + 1);
-                print_leader(vs);
-                for (const auto &s : vs)
-                    cout << s.path() << " " << s.parent() << " " << s.line() <<
-                        " " << lstrip(s.context());
-                break;
-            }
-
-            // Commands we don't support. Just pretend there were no results.
-            case '4': // find text
-            case '5': // change text
-            case '6': // find pattern
-            case '9': // find assignments
-                cout << "cscope: 0 lines\n";
-                break;
-
-            /* Bail out on any unrecognised command, under the assumption Vim
-             * would never send us a malformed command.
-             */
-            default:
-                free(line);
-                ret = EXIT_FAILURE;
-                goto break2;
-
-        }
-
-        free(line);
+    // Ignore blank lines
+    if (strcmp(command, "") == 0) {
+      free(line);
+      continue;
     }
+
+    switch (*command) {
+
+      case '0': { // find symbol
+        vector<Symbol> vs = db.find_symbol(command + 1);
+        print_leader(vs);
+        for (const auto &s : vs) {
+          cout << s.path() << " " << s.parent() << " " << s.line() << " " <<
+            lstrip(s.context());
+        }
+        break;
+      }
+
+      case '1': { // find definition
+        vector<Symbol> vs = db.find_definition(command + 1);
+        print_leader(vs);
+        for (const auto &s : vs) {
+          cout << s.path() << " " << (command + 1) << " " << s.line() << " " <<
+            lstrip(s.context());
+        }
+        break;
+      }
+
+      case '2': { // find calls
+        vector<Symbol> vs = db.find_call(command + 1);
+        print_leader(vs);
+        for (const auto &s : vs) {
+          cout << s.path() << " " << s.name() << " " << s.line() << " " <<
+            lstrip(s.context());
+        }
+        break;
+      }
+
+      case '3': { // find callers
+        vector<Symbol> vs = db.find_caller(command + 1);
+        print_leader(vs);
+        for (const auto &s : vs) {
+          cout << s.path() << " " << s.parent() << " " << s.line() << " " <<
+            lstrip(s.context());
+        }
+        break;
+      }
+
+      case '7': { // find file
+        vector<string> vs = db.find_file(command + 1);
+        print_leader(vs);
+        /* XXX: what kind of nonsense output is this? I don't know what value
+         * Cscope is attempting to add with the trailing garbage.
+         */
+        for (const auto &s : vs)
+          cout << s << " <unknown> 1 <unknown>\n";
+        break;
+      }
+
+      case '8': { // find includers
+        vector<Symbol> vs = db.find_includer(command + 1);
+        print_leader(vs);
+        for (const auto &s : vs)
+          cout << s.path() << " " << s.parent() << " " << s.line() << " " <<
+            lstrip(s.context());
+        break;
+      }
+
+      // Commands we don't support. Just pretend there were no results.
+      case '4': // find text
+      case '5': // change text
+      case '6': // find pattern
+      case '9': // find assignments
+        cout << "cscope: 0 lines\n";
+        break;
+
+      /* Bail out on any unrecognised command, under the assumption Vim would
+       * never send us a malformed command.
+       */
+      default:
+        free(line);
+        ret = EXIT_FAILURE;
+        goto break2;
+
+    }
+
+    free(line);
+  }
 
 break2:
 
-    return ret;
+  return ret;
 }

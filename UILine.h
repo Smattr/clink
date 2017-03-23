@@ -9,7 +9,7 @@
  */
 class UILine : public UI {
 
-public:
-    int run(Database &db) final;
+ public:
+  int run(Database &db) final;
 
 };

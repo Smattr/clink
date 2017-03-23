@@ -3,12 +3,12 @@
 #include <string>
 
 typedef enum {
-    ST_DEFINITION,
-    ST_FUNCTION_CALL,
-    ST_REFERENCE,
-    ST_INCLUDE,
+  ST_DEFINITION,
+  ST_FUNCTION_CALL,
+  ST_REFERENCE,
+  ST_INCLUDE,
 
-    ST_RESERVED,
+  ST_RESERVED,
 } symbol_category_t;
 
 class SymbolCore {
@@ -71,10 +71,10 @@ class Symbol : public SymbolCore {
 
 class SymbolConsumer {
 
-public:
-    virtual void consume(const Symbol &s) = 0;
-    virtual bool purge(const std::string &path) = 0;
+ public:
+  virtual void consume(const Symbol &s) = 0;
+  virtual bool purge(const std::string &path) = 0;
 
-    virtual ~SymbolConsumer() {}
+  virtual ~SymbolConsumer() {}
 
 };
