@@ -2,6 +2,7 @@
 #include <cstring>
 #include "Database.h"
 #include "errno.h"
+#include "log.h"
 #include <sqlite3.h>
 #include <string>
 #include "Symbol.h"
@@ -10,7 +11,7 @@
 
 using namespace std;
 
-static int sql_run(sqlite3 *db, const char *query) {
+static int sql_exec(sqlite3 *db, const char *query) {
   return sqlite3_exec(db, query, nullptr, nullptr, nullptr);
 }
 
@@ -24,14 +25,20 @@ static int sql_bind_text(sqlite3_stmt *stmt, int index, const char *value) {
 
 static const char SYMBOLS_SCHEMA[] = "create table if not exists symbols (name "
   "text not null, path text not null, category integer not null, line integer "
-  "not null, col integer not null, parent text, context text, "
+  "not null, col integer not null, parent text, "
   "unique(name, path, category, line, col));";
+
+static const char CONTENT_SCHEMA[] = "create table if not exists content "
+  "(path text not null, line integer not null, body text not null, "
+  "unique(path, line));";
 
 static int init(sqlite3 *db) {
   assert(db != nullptr);
 
-  if (sqlite3_exec(db, SYMBOLS_SCHEMA, nullptr, nullptr, nullptr)
-      != SQLITE_OK)
+  if (sql_exec(db, SYMBOLS_SCHEMA) != SQLITE_OK)
+    return -1;
+
+  if (sql_exec(db, CONTENT_SCHEMA) != SQLITE_OK)
     return -1;
 
   return 0;
@@ -60,9 +67,15 @@ bool Database::open(const char *path) {
 }
 
 void Database::close() {
-  if (m_db) {
-    if (m_insert)
-      sqlite3_finalize(m_insert);
+  if (m_db != nullptr) {
+    if (m_symbol_insert != nullptr)
+      sqlite3_finalize(m_symbol_insert);
+    if (m_content_insert != nullptr)
+      sqlite3_finalize(m_content_insert);
+    if (m_symbols_delete != nullptr)
+      sqlite3_finalize(m_symbols_delete);
+    if (m_content_delete != nullptr)
+      sqlite3_finalize(m_content_delete);
     sqlite3_close(m_db);
     m_db = nullptr;
   }
@@ -70,83 +83,136 @@ void Database::close() {
 
 bool Database::open_transaction() {
   assert(m_db != nullptr);
-  return sql_run(m_db, "begin transaction;") == SQLITE_OK;
+  return sql_exec(m_db, "begin transaction;") == SQLITE_OK;
 }
 
 bool Database::close_transaction() {
   assert(m_db != nullptr);
-  return sql_run(m_db, "commit transaction;") == SQLITE_OK;
+  return sql_exec(m_db, "commit transaction;") == SQLITE_OK;
 }
 
 void Database::consume(const Symbol &s) {
   assert(m_db != nullptr);
 
-  if (m_insert == nullptr) {
-    if (sql_prepare(m_db, "insert into symbols (name, path, "
-        "category, line, col, parent, context) values (@name, @path, "
-        "@category, @line, @col, @parent, @context);", &m_insert) != SQLITE_OK)
+  // Insert into the symbol table.
+
+  static const char SYMBOL_INSERT[] = "insert into symbols (name, path, "
+    "category, line, col, parent) values (@name, @path, @category, @line, "
+    "@col, @parent);";
+
+  if (m_symbol_insert == nullptr) {
+    if (sql_prepare(m_db, SYMBOL_INSERT, &m_symbol_insert) != SQLITE_OK)
       return;
   } else {
-      if (sqlite3_reset(m_insert) != SQLITE_OK)
+      if (sqlite3_reset(m_symbol_insert) != SQLITE_OK)
         return;
   }
 
   int index = 1;
-  assert(index == sqlite3_bind_parameter_index(m_insert, "@name"));
-  if (sql_bind_text(m_insert, index, s.name()) != SQLITE_OK)
+  assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@name"));
+  if (sql_bind_text(m_symbol_insert, index, s.name()) != SQLITE_OK)
     return;
 
   index = 2;
-  assert(index == sqlite3_bind_parameter_index(m_insert, "@path"));
-  if (sql_bind_text(m_insert, index, s.path()) != SQLITE_OK)
+  assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@path"));
+  if (sql_bind_text(m_symbol_insert, index, s.path()) != SQLITE_OK)
     return;
 
   index = 3;
-  assert(index == sqlite3_bind_parameter_index(m_insert, "@category"));
-  if (sqlite3_bind_int(m_insert, index, s.category()) != SQLITE_OK)
+  assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@category"));
+  if (sqlite3_bind_int(m_symbol_insert, index, s.category()) != SQLITE_OK)
     return;
 
   index = 4;
-  assert(index == sqlite3_bind_parameter_index(m_insert, "@line"));
-  if (sqlite3_bind_int(m_insert, index, s.line()) != SQLITE_OK)
+  assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@line"));
+  if (sqlite3_bind_int(m_symbol_insert, index, s.line()) != SQLITE_OK)
     return;
 
   index = 5;
-  assert(index == sqlite3_bind_parameter_index(m_insert, "@col"));
-  if (sqlite3_bind_int(m_insert, index, s.col()) != SQLITE_OK)
+  assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@col"));
+  if (sqlite3_bind_int(m_symbol_insert, index, s.col()) != SQLITE_OK)
     return;
 
   index = 6;
-  assert(index == sqlite3_bind_parameter_index(m_insert, "@parent"));
-  if (sql_bind_text(m_insert, index, s.parent()) != SQLITE_OK)
+  assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@parent"));
+  if (sql_bind_text(m_symbol_insert, index, s.parent()) != SQLITE_OK)
     return;
 
-  index = 7;
-  assert(index == sqlite3_bind_parameter_index(m_insert, "@context"));
-  if (sql_bind_text(m_insert, index, s.context()) != SQLITE_OK)
+  if (sqlite3_step(m_symbol_insert) != SQLITE_DONE)
     return;
 
-  if (sqlite3_step(m_insert) != SQLITE_DONE)
+  // Insert into the content table.
+
+  static const char CONTENT_INSERT[] = "insert into content (path, line, body) "
+    "values (@path, @line, @body);";
+
+  if (m_content_insert == nullptr) {
+    if (sql_prepare(m_db, CONTENT_INSERT, &m_content_insert) != SQLITE_OK)
+      return;
+  } else {
+    if (sqlite3_reset(m_content_insert) != SQLITE_OK)
+      return;
+  }
+
+  index = 1;
+  assert(index == sqlite3_bind_parameter_index(m_content_insert, "@path"));
+  if (sql_bind_text(m_content_insert, index, s.path()) != SQLITE_OK)
+    return;
+
+  index = 2;
+  assert(index == sqlite3_bind_parameter_index(m_content_insert, "@line"));
+  if (sqlite3_bind_int(m_content_insert, index, s.line()) != SQLITE_OK)
+    return;
+
+  index = 3;
+  assert(index == sqlite3_bind_parameter_index(m_content_insert, "@body"));
+  if (sql_bind_text(m_content_insert, index, s.context()) != SQLITE_OK)
+    return;
+
+  if (sqlite3_step(m_content_insert) != SQLITE_DONE)
     return;
 }
 
 bool Database::purge(const string &path) {
 
-  if (m_delete == nullptr) {
-    if (sql_prepare(m_db, "delete from symbols where path = @path;", &m_delete)
-        != SQLITE_OK)
+  // First delete it from the symbols table.
+
+  static const char SYMBOLS_DELETE[] = "delete from symbols where path = @path";
+
+  if (m_symbols_delete == nullptr) {
+    if (sql_prepare(m_db, SYMBOLS_DELETE, &m_symbols_delete) != SQLITE_OK)
       return false;
   } else {
-    if (sqlite3_reset(m_delete) != SQLITE_OK)
+    if (sqlite3_reset(m_symbols_delete) != SQLITE_OK)
       return false;
   }
 
-  int index = sqlite3_bind_parameter_index(m_delete, "@path");
+  int index = sqlite3_bind_parameter_index(m_symbols_delete, "@path");
   assert(index != 0);
-  if (sql_bind_text(m_delete, index, path.c_str()) != SQLITE_OK)
+  if (sql_bind_text(m_symbols_delete, index, path.c_str()) != SQLITE_OK)
     return false;
 
-  if (sqlite3_step(m_delete) != SQLITE_DONE)
+  if (sqlite3_step(m_symbols_delete) != SQLITE_DONE)
+    return false;
+
+  // Now delete it from the content table.
+
+  static const char CONTENT_DELETE[] = "delete from content where path = @path";
+
+  if (m_content_delete == nullptr) {
+    if (sql_prepare(m_db, CONTENT_DELETE, &m_content_delete) != SQLITE_OK)
+      return false;
+  } else {
+    if (sqlite3_reset(m_content_delete) != SQLITE_OK)
+      return false;
+  }
+
+  index = sqlite3_bind_parameter_index(m_content_delete, "@path");
+  assert(index != 0);
+  if (sql_bind_text(m_content_delete, index, path.c_str()) != SQLITE_OK)
+    return false;
+
+  if (sqlite3_step(m_content_delete) != SQLITE_DONE)
     return false;
 
   return true;
@@ -157,10 +223,16 @@ vector<Symbol> Database::find_symbol(const char *name) const {
 
   vector<Symbol> vs;
 
+  static const char QUERY[] = "select symbols.path, symbols.category, "
+    "symbols.line, symbols.col, symbols.parent, content.body from symbols left "
+    "join content on symbols.path = content.path and symbols.line = "
+    "content.line where symbols.name = @name;";
+
   sqlite3_stmt *stmt = nullptr;
-  if (sql_prepare(m_db, "select path, category, line, col, parent, "
-      "context from symbols where name = @name;", &stmt) != SQLITE_OK)
+  if (sql_prepare(m_db, QUERY, &stmt) != SQLITE_OK) {
+    LOG("failed to prepare query \"%s\"\n", QUERY);
     goto done;
+  }
 
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;
@@ -188,11 +260,16 @@ vector<Symbol> Database::find_definition(const char *name) const {
 
   vector<Symbol> vs;
 
+  static const char QUERY[] = "select symbols.path, symbols.line, symbols.col, "
+    "symbols.parent, content.body from symbols left join content on "
+    "symbols.path = content.path and symbols.line = content.line where "
+    "symbols.name = @name and symbols.category = @category;";
+
   sqlite3_stmt *stmt = nullptr;
-  if (sql_prepare(m_db, "select path, line, col, parent, context from "
-      "symbols where name = @name and category = @category;", &stmt)
-      != SQLITE_OK)
+  if (sql_prepare(m_db, QUERY, &stmt) != SQLITE_OK) {
+    LOG("failed to prepare query \"%s\"", QUERY);
     goto done;
+  }
 
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;
@@ -222,11 +299,16 @@ vector<Symbol> Database::find_caller(const char *name) const {
 
   vector<Symbol> vs;
 
+  static const char QUERY[] = "select symbols.path, symbols.line, symbols.col, "
+    "symbols.parent, content.body from symbols left join content on "
+    "symbols.path = content.path and symbols.line = content.line where "
+    "symbols.name = @name and symbols.category = @category;";
+
   sqlite3_stmt *stmt = nullptr;
-  if (sql_prepare(m_db, "select path, line, col, parent, context from "
-      "symbols where name = @name and category = @category;", &stmt)
-      != SQLITE_OK)
+  if (sql_prepare(m_db, QUERY, &stmt) != SQLITE_OK) {
+    LOG("failed to prepare query \"%s\"", QUERY);
     goto done;
+  }
 
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;
@@ -256,11 +338,16 @@ vector<Symbol> Database::find_call(const char *name) const {
 
   vector<Symbol> vs;
 
+  static const char QUERY[] = "select symbols.name, symbols.path, "
+    "symbols.line, symbols.col, content.body from symbols left join content on "
+    "symbols.path = content.path and symbols.line = content.line where "
+    "symbols.parent = @parent and symbols.category = @category;";
+
   sqlite3_stmt *stmt = nullptr;
-  if (sql_prepare(m_db, "select name, path, line, col, context from "
-      "symbols where parent = @parent and category = @category;", &stmt)
-      != SQLITE_OK)
+  if (sql_prepare(m_db, QUERY, &stmt) != SQLITE_OK) {
+    LOG("failed to prepare query \"%s\"", QUERY);
     goto done;
+  }
 
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;
@@ -321,11 +408,16 @@ vector<Symbol> Database::find_includer(const char *name) const {
 
   vector<Symbol> vs;
 
+  static const char QUERY[] = "select symbols.path, symbols.line, symbols.col, "
+    "symbols.parent, content.body from symbols left join content on "
+    "symbols.path = content.path and symbols.line = content.line where "
+    "symbols.name = @name and symbols.category = @category;";
+
   sqlite3_stmt *stmt = nullptr;
-  if (sql_prepare(m_db, "select path, line, col, parent, context from "
-      "symbols where name = @name and category = @category;", &stmt)
-      != SQLITE_OK)
+  if (sql_prepare(m_db, QUERY, &stmt) != SQLITE_OK) {
+    LOG("failed to prepare query \"%s\"", QUERY);
     goto done;
+  }
 
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;

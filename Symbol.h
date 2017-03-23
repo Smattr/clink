@@ -52,12 +52,14 @@ class Symbol : public SymbolCore {
  public:
   Symbol(const char *name, const char *path, symbol_category_t category,
     unsigned line, unsigned col, const char *parent, const char *context)
-    : SymbolCore(name, path, category, line, col, parent), m_context(context) {
+    : SymbolCore(name, path, category, line, col, parent),
+      m_context(context == nullptr ? "" : context) {
   }
 
   Symbol(const std::string &name, std::string &path, symbol_category_t category,
     unsigned line, unsigned col, const char *parent, const char *context)
-    : SymbolCore(name, path, category, line, col, parent), m_context(context) {
+    : SymbolCore(name, path, category, line, col, parent),
+      m_context(context == nullptr ? "" : context) {
   }
 
   const char *context() const { return m_context.c_str(); }

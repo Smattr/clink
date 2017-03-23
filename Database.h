@@ -80,7 +80,9 @@ class Database : public SymbolConsumer {
 
  private:
   sqlite3 *m_db = nullptr;
-  sqlite3_stmt *m_insert = nullptr;
-  sqlite3_stmt *m_delete = nullptr;
+  sqlite3_stmt *m_symbol_insert = nullptr;
+  sqlite3_stmt *m_content_insert = nullptr;
+  sqlite3_stmt *m_symbols_delete = nullptr;
+  sqlite3_stmt *m_content_delete = nullptr;
 
 };
