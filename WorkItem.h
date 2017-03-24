@@ -76,8 +76,11 @@ class ReadFile : public WorkItem {
   }
 
   void run(Resources &resources) final {
-    std::vector<std::string> lines = vim_highlight(path);
-    resources.contexts.register_lines(path, lines);
+    unsigned lineno = 1;
+    for (const std::string &line : vim_highlight(path)) {
+      resources.consumer->consume(path, lineno, line);
+      lineno++;
+    }
   }
 
   virtual ~ReadFile() {}

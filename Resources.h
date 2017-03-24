@@ -2,7 +2,6 @@
 
 #include "AsmParser.h"
 #include "CXXParser.h"
-#include "FileContexts.h"
 #include "Symbol.h"
 
 /* Management of C/C++ and assembly parsers that we'll lazily construct. It's
@@ -71,7 +70,6 @@ class Resources {
   }
 
   SymbolConsumer *consumer;
-  FileContexts contexts;
 
  private:
   CXXParser *cxx_parser = nullptr;
