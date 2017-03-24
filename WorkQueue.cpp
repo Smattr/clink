@@ -33,6 +33,13 @@ bool WorkQueue::push_directory_stack(const string &directory) {
 
 WorkItem *WorkQueue::pop() {
 
+  if (!files_to_read.empty()) {
+    const string path = files_to_read.front();
+    files_to_read.pop();
+    WorkItem *wi = new ReadFile(path);
+    return wi;
+  }
+
 restart1:
   if (directory_stack.empty())
     return nullptr;
@@ -87,7 +94,19 @@ restart2:;
   }
 }
 
+void WorkQueue::push(const string &path) {
+  auto it = files_seen.insert(path);
+  if (it.second) {
+    files_to_read.push(path);
+  }
+}
+
 WorkItem *ThreadSafeWorkQueue::pop() {
   lock_guard<mutex> guard(stack_mutex);
   return WorkQueue::pop();
+}
+
+void ThreadSafeWorkQueue::push(const string &path) {
+  lock_guard<mutex> guard(stack_mutex);
+  WorkQueue::push(path);
 }
