@@ -173,6 +173,42 @@ void Database::consume(const Symbol &s) {
     return;
 }
 
+void Database::consume(const string &path, unsigned lineno,
+    const string &line) {
+  assert(m_db != nullptr);
+
+  // Insert into the content table.
+
+  static const char CONTENT_INSERT[] = "insert into content (path, line, body) "
+    "values (@path, @line, @body);";
+
+  if (m_content_insert == nullptr) {
+    if (sql_prepare(m_db, CONTENT_INSERT, &m_content_insert) != SQLITE_OK)
+      return;
+  } else {
+    if (sqlite3_reset(m_content_insert) != SQLITE_OK)
+      return;
+  }
+
+  int index = 1;
+  assert(index == sqlite3_bind_parameter_index(m_content_insert, "@path"));
+  if (sql_bind_text(m_content_insert, index, path.c_str()) != SQLITE_OK)
+    return;
+
+  index = 2;
+  assert(index == sqlite3_bind_parameter_index(m_content_insert, "@line"));
+  if (sqlite3_bind_int(m_content_insert, index, lineno) != SQLITE_OK)
+    return;
+
+  index = 3;
+  assert(index == sqlite3_bind_parameter_index(m_content_insert, "@body"));
+  if (sql_bind_text(m_content_insert, index, line.c_str()) != SQLITE_OK)
+    return;
+
+  if (sqlite3_step(m_content_insert) != SQLITE_DONE)
+    return;
+}
+
 bool Database::purge(const string &path) {
 
   // First delete it from the symbols table.

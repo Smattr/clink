@@ -3,6 +3,7 @@
 #include <sqlite3.h>
 #include <string>
 #include "Symbol.h"
+#include <unordered_map>
 #include <vector>
 
 class Database;
@@ -19,6 +20,17 @@ class PendingActions : public SymbolConsumer {
   void consume(const Symbol &s) final {
     symbols.push_back(s);
   }
+  void consume(const std::string &path, unsigned lineno,
+      const std::string &line) final {
+    auto it = lines.find(path);
+    if (it == lines.end()) {
+      std::unordered_map<unsigned, std::string> ls;
+      ls[lineno] = line;
+      lines[path] = ls;
+    } else {
+      it->second[lineno] = line;
+    }
+  }
   bool purge(const std::string &path) final {
     to_purge.push_back(path);
     return true;
@@ -29,6 +41,7 @@ class PendingActions : public SymbolConsumer {
  private:
   std::vector<Symbol> symbols;
   std::vector<std::string> to_purge;
+  std::unordered_map<std::string, std::unordered_map<unsigned, std::string>> lines;
 
   friend class Database;
 };
@@ -40,6 +53,8 @@ class Database : public SymbolConsumer {
   bool open(const char *path);
   void close();
   void consume(const Symbol &s) final;
+  void consume(const std::string &path, unsigned lineno,
+    const std::string &line) final;
   bool purge(const std::string &path) final;
   bool open_transaction();
   bool close_transaction();
@@ -76,6 +91,9 @@ class Database : public SymbolConsumer {
       (void)purge(s);
     for (const Symbol &s : pending.symbols)
       consume(s);
+    for (auto &kv : pending.lines)
+      for (auto &ls : kv.second)
+        consume(kv.first, ls.first, ls.second);
   }
 
  private:
