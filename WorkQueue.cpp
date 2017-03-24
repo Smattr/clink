@@ -34,9 +34,8 @@ bool WorkQueue::push_directory_stack(const string &directory) {
 WorkItem *WorkQueue::pop() {
 
 restart1:
-  if (directory_stack.empty()) {
-    throw NoMoreEntries();
-  }
+  if (directory_stack.empty())
+    return nullptr;
 
 restart2:;
   DIR *current;

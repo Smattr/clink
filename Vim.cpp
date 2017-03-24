@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctype.h>
+#include <exception>
 #include <fcntl.h>
 #include <limits.h>
 #include <regex.h>

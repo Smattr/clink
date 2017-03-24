@@ -124,12 +124,9 @@ static void update(SymbolConsumer &db, WorkQueue &fq) {
   Resources r(&db);
 
   for (;;) {
-    WorkItem *item;
-    try {
-      item = fq.pop();
-    } catch (NoMoreEntries &) {
+    WorkItem *item = fq.pop();
+    if (item == nullptr)
       break;
-    }
 
     item->run(r);
 

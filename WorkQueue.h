@@ -1,19 +1,12 @@
 #pragma once
 
 #include <dirent.h>
-#include <exception>
 #include <mutex>
 #include <stack>
 #include <string>
 #include <sys/types.h>
 #include <tuple>
 #include "WorkItem.h"
-
-class NoMoreEntries : public std::exception {
-  virtual const char *what() const noexcept {
-    return "no more entries";
-  }
-};
 
 class WorkQueue {
 
