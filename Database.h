@@ -17,7 +17,7 @@ class Database;
 class PendingActions : public SymbolConsumer {
 
  public:
-  void consume(const Symbol &s) final {
+  void consume(const SymbolCore &s) final {
     symbols.push_back(s);
   }
   void consume(const std::string &path, unsigned lineno,
@@ -39,7 +39,7 @@ class PendingActions : public SymbolConsumer {
   virtual ~PendingActions() {}
 
  private:
-  std::vector<Symbol> symbols;
+  std::vector<SymbolCore> symbols;
   std::vector<std::string> to_purge;
   std::unordered_map<std::string, std::unordered_map<unsigned, std::string>> lines;
 
@@ -52,7 +52,7 @@ class Database : public SymbolConsumer {
   virtual ~Database();
   bool open(const char *path);
   void close();
-  void consume(const Symbol &s) final;
+  void consume(const SymbolCore &s) final;
   void consume(const std::string &path, unsigned lineno,
     const std::string &line) final;
   bool purge(const std::string &path) final;
@@ -89,7 +89,7 @@ class Database : public SymbolConsumer {
   void replay(const PendingActions &pending) {
     for (const std::string &s : pending.to_purge)
       (void)purge(s);
-    for (const Symbol &s : pending.symbols)
+    for (const SymbolCore &s : pending.symbols)
       consume(s);
     for (auto &kv : pending.lines)
       for (auto &ls : kv.second)

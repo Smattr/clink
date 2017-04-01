@@ -247,9 +247,9 @@ void AsmParser::process(SymbolConsumer &consumer, WorkQueue *wq) {
 
       case ASM_IDENTIFIER:
         if (state == IDLE || state == DEFINE) {
-          Symbol s(token.text, filename, ST_DEFINITION, line, column, nullptr,
-            get_context(line));
+          SymbolCore s(token.text, filename, ST_DEFINITION, line, column, nullptr);
           consumer.consume(s);
+          wq->push(filename);
           last_defn = token.text;
           state = IGNORING;
         } else if (state == INDENTED) {
@@ -259,9 +259,10 @@ void AsmParser::process(SymbolConsumer &consumer, WorkQueue *wq) {
             state = IGNORING;
           }
         } else if (state == JUMP) {
-          Symbol s(token.text, filename, ST_FUNCTION_CALL, line, column,
-            last_defn == "" ? nullptr : last_defn.c_str(), get_context(line));
+          SymbolCore s(token.text, filename, ST_FUNCTION_CALL, line, column,
+            last_defn == "" ? nullptr : last_defn.c_str());
           consumer.consume(s);
+          wq->push(filename);
           state = IGNORING;
         } else if (state == HASH) {
           if (token.text == "define") {
@@ -278,9 +279,9 @@ void AsmParser::process(SymbolConsumer &consumer, WorkQueue *wq) {
 
       case ASM_STRING:
         if (state == INCLUDE) {
-          Symbol s(token.text, filename, ST_INCLUDE, line, column, nullptr,
-            get_context(line));
+          SymbolCore s(token.text, filename, ST_INCLUDE, line, column, nullptr);
           consumer.consume(s);
+          wq->push(filename);
         }
         state = IGNORING;
         /* Account for the quotes that are not included in the contents of this

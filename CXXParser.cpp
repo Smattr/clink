@@ -174,10 +174,14 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
         CXString cxfilename = clang_getFileName(file);
         const char *filename = clang_getCString(cxfilename);
 
-        const char *context = vs->me->get_context(filename, line);
-
-        Symbol s(text, filename, category, line, column, vs->container, context);
+        SymbolCore s(text, filename, category, line, column, vs->container);
         vs->consumer->consume(s);
+
+        /* Queue a read of this file, now we know we need its data. Note that
+         * we (or someone else) may have already requested this file's contents
+         * in which case the work queue will dedupe this request.
+         */
+        vs->wq->push(filename);
 
         clang_disposeString(cxfilename);
       }
