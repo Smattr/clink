@@ -9,6 +9,7 @@
 #include <tuple>
 #include <unordered_set>
 #include "WorkItem.h"
+#include "WorkQueueStub.h"
 
 class WorkQueue {
 
