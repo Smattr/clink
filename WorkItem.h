@@ -2,6 +2,7 @@
 
 #include "AsmParser.h"
 #include "CXXParser.h"
+#include "log.h"
 #include "Resources.h"
 #include <string>
 #include "Vim.h"
@@ -77,6 +78,7 @@ class ReadFile : public WorkItem {
 
   void run(Resources &resources) final {
     unsigned lineno = 1;
+    LOG("highlighting %s", path.c_str());
     for (const std::string &line : vim_highlight(path)) {
       resources.consumer->consume(path, lineno, line);
       lineno++;
