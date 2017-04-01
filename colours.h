@@ -10,7 +10,12 @@
 
 #pragma once
 
+#include <string>
+
 /* Turn a six character string representing an HTML color into a value 0-7
  * representing an ANSI terminal code to most closely match that color.
  */
 unsigned html_colour_to_ansi(const char *html, size_t length);
+
+// Strip ANSI colour codes from a string.
+std::string strip_ansi(const std::string &s);

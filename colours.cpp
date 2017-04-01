@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ctype.h>
 #include <limits.h>
+#include <string>
 
 using namespace std;
 
@@ -60,4 +61,47 @@ unsigned html_colour_to_ansi(const char *html, [[gnu::unused]] size_t length) {
   }
 
   return unsigned(min_index);
+}
+
+string strip_ansi(const string &s) {
+
+  enum {
+    IDLE,
+    SAW_ESC,
+    SAW_LSQUARE,
+  } state = IDLE;
+
+  string output;
+
+  for (const char &c : s) {
+
+    switch (state) {
+
+      case IDLE:
+        if (c == 27) {
+          state = SAW_ESC;
+        } else {
+          output += c;
+        }
+        break;
+
+      case SAW_ESC:
+        if (c == '[') {
+          state = SAW_LSQUARE;
+        } else {
+          output += c;
+          state = IDLE;
+        }
+        break;
+
+      case SAW_LSQUARE:
+        if (c == 'm')
+          state = IDLE;
+        break;
+
+    }
+
+  }
+
+  return output;
 }
