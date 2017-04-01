@@ -3,7 +3,6 @@
 #include <clang-c/Index.h>
 #include "Parser.h"
 #include "Symbol.h"
-#include <unordered_map>
 #include <vector>
 #include "WorkQueueStub.h"
 
@@ -30,9 +29,6 @@ class CXXParser : public Parser {
   void process(SymbolConsumer &consumer, WorkQueue *wq) final;
 
  private:
-  const char *get_context(const char *filename, unsigned line);
-
- private:
   // Internal handle to Clang.
   CXIndex m_index;
 
@@ -40,9 +36,6 @@ class CXXParser : public Parser {
    * file. NULL when no file is currently loaded.
    */
   CXTranslationUnit m_tu = nullptr;
-
-  std::unordered_map<std::string, std::vector<char*>> m_lines;
-  std::unordered_map<std::string, FILE*> m_lines_pending;
 
   friend CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
       CXClientData data);

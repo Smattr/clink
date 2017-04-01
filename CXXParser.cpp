@@ -37,47 +37,8 @@ void CXXParser::unload() {
 }
 
 CXXParser::~CXXParser() {
-  for (auto it : m_lines_pending)
-    fclose(it.second);
-  for (auto it : m_lines)
-    for (auto p : it.second)
-      free(p);
   if (m_tu) unload();
   clang_disposeIndex(m_index);
-}
-
-const char *CXXParser::get_context(const char *filename, unsigned line) {
-
-  if (m_lines.find(filename) == m_lines.end()) {
-
-    if (m_lines_pending.find(filename) == m_lines_pending.end()) {
-      FILE *f = fopen(filename, "r");
-      if (!f)
-        return nullptr;
-      m_lines_pending[filename] = f;
-    }
-
-    m_lines[filename] = vector<char*>();
-  }
-
-  while (m_lines[filename].size() < line &&
-          m_lines_pending.find(filename) != m_lines_pending.end()) {
-
-    FILE *f = m_lines_pending[filename];
-    char *line = nullptr;
-    size_t size;
-    if (getline(&line, &size, f) == -1) {
-      fclose(f);
-      m_lines_pending.erase(filename);
-    } else {
-      m_lines[filename].push_back(line);
-    }
-  }
-
-  if (m_lines[filename].size() >= line)
-    return m_lines[filename][line - 1];
-
-  return nullptr;
 }
 
 typedef struct {
