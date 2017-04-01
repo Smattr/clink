@@ -3,6 +3,7 @@
 #include "AsmParser.h"
 #include "CXXParser.h"
 #include "Symbol.h"
+#include "WorkQueueStub.h"
 
 /* Management of C/C++ and assembly parsers that we'll lazily construct. It's
  * possible we'll not need one or both of them, in which case we don't have to
@@ -15,8 +16,8 @@
 class Resources {
 
  public:
-  Resources(SymbolConsumer *consumer) noexcept
-    : consumer(consumer) {
+  Resources(SymbolConsumer *consumer, WorkQueue *wq) noexcept
+    : consumer(consumer), wq(wq) {
   }
 
   // It doesn't make sense to copy one of these.
@@ -26,12 +27,15 @@ class Resources {
     CXXParser *cxx_parser = other.cxx_parser;
     AsmParser *asm_parser = other.asm_parser;
     SymbolConsumer *consumer = other.consumer;
+    WorkQueue *wq = other.wq;
     other.cxx_parser = nullptr;
     other.asm_parser = nullptr;
     other.consumer = nullptr;
+    other.wq = nullptr;
     this->cxx_parser = cxx_parser;
     this->asm_parser = asm_parser;
     this->consumer = consumer;
+    this->wq = wq;
   }
 
   ~Resources() {
@@ -46,14 +50,17 @@ class Resources {
     CXXParser *cxx_parser = other.cxx_parser;
     AsmParser *asm_parser = other.asm_parser;
     SymbolConsumer *consumer = other.consumer;
+    WorkQueue *wq = other.wq;
     other.cxx_parser = nullptr;
     other.asm_parser = nullptr;
     other.consumer = nullptr;
+    other.wq = nullptr;
     delete this->cxx_parser;
     delete this->asm_parser;
     this->cxx_parser = cxx_parser;
     this->asm_parser = asm_parser;
     this->consumer = consumer;
+    this->wq = wq;
     return *this;
   }
 
@@ -70,6 +77,7 @@ class Resources {
   }
 
   SymbolConsumer *consumer;
+  WorkQueue *wq;
 
  private:
   CXXParser *cxx_parser = nullptr;
