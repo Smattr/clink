@@ -23,10 +23,6 @@ bool CXXParser::load(const char *path) {
   // Unload any currently loaded file.
   if (m_tu) unload();
 
-  m_path = strdup(path);
-  if (!m_path)
-    return false;
-
   // Load and parse the file.
   m_tu = clang_parseTranslationUnit(m_index, path, nullptr, 0, nullptr, 0,
     CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_KeepGoing);
@@ -38,8 +34,6 @@ void CXXParser::unload() {
   assert(m_tu != nullptr);
   clang_disposeTranslationUnit(m_tu);
   m_tu = nullptr;
-  free(m_path);
-  m_path = nullptr;
 }
 
 CXXParser::~CXXParser() {

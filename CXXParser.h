@@ -41,8 +41,6 @@ class CXXParser : public Parser {
    */
   CXTranslationUnit m_tu = nullptr;
 
-  char *m_path = nullptr;
-
   std::unordered_map<std::string, std::vector<char*>> m_lines;
   std::unordered_map<std::string, FILE*> m_lines_pending;
 
