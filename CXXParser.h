@@ -5,6 +5,7 @@
 #include "Symbol.h"
 #include <unordered_map>
 #include <vector>
+#include "WorkQueueStub.h"
 
 class CXXParser : public Parser {
 
@@ -26,7 +27,7 @@ class CXXParser : public Parser {
   /* Process the currently loaded file. That is, extract all relevant content.
    * This function assumes there is a currently loaded file.
    */
-  void process(SymbolConsumer &consumer) final;
+  void process(SymbolConsumer &consumer, WorkQueue *wq) final;
 
  private:
   const char *get_context(const char *filename, unsigned line);

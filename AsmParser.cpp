@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <string>
 #include <unordered_set>
+#include "WorkQueue.h"
 
 using namespace std;
 
@@ -201,7 +202,7 @@ static bool is_jump_instruction(const string &instruction) {
   return JUMP_INSTRUCTIONS.find(instruction) != JUMP_INSTRUCTIONS.end();
 }
 
-void AsmParser::process(SymbolConsumer &consumer) {
+void AsmParser::process(SymbolConsumer &consumer, WorkQueue *wq) {
 
   enum {
     IDLE,

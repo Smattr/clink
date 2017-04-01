@@ -30,6 +30,7 @@
 #include <cstdio>
 #include <string>
 #include "Parser.h"
+#include "WorkQueueStub.h"
 
 enum AsmTokenCategory {
   ASM_NEWLINE,
@@ -72,7 +73,7 @@ class AsmParser : public Parser {
   bool load(const char *path);
   void unload();
 
-  void process(SymbolConsumer &consumer) final;
+  void process(SymbolConsumer &consumer, WorkQueue *wq) final;
 
  private:
   AsmLexer lexer;

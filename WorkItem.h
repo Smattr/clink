@@ -32,7 +32,7 @@ class ParseCXXFile : public WorkItem {
       // failed
       return;
     }
-    cxx_parser->process(*resources.consumer);
+    cxx_parser->process(*resources.consumer, resources.wq);
     cxx_parser->unload();
   }
 
@@ -57,7 +57,7 @@ class ParseAsmFile : public WorkItem {
       // failed
       return;
     }
-    asm_parser->process(*resources.consumer);
+    asm_parser->process(*resources.consumer, resources.wq);
     asm_parser->unload();
  }
 

@@ -10,6 +10,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
 #include "CXXParser.h"
 #include <iostream>
 #include "Symbol.h"
+#include "WorkQueue.h"
 
 using namespace std;
 
@@ -89,6 +90,7 @@ typedef struct {
   CXXParser *me;
   SymbolConsumer *consumer;
   const char *container;
+  WorkQueue *wq;
 } visitor_state_t;
 
 // Clang visitor. Herein is the core logic of the parser.
@@ -196,9 +198,11 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
   return CXChildVisit_Continue;
 }
 
-void CXXParser::process(SymbolConsumer &consumer) {
+void CXXParser::process(SymbolConsumer &consumer, WorkQueue *wq) {
   assert(m_tu != nullptr);
   CXCursor cursor = clang_getTranslationUnitCursor(m_tu);
-  visitor_state_t vs { .me = this, .consumer = &consumer, .container = nullptr };
+  visitor_state_t vs {
+    .me = this, .consumer = &consumer, .container = nullptr, .wq = wq
+  };
   clang_visitChildren(cursor, visitor, &vs);
 }
