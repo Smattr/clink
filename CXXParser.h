@@ -24,8 +24,7 @@ class CXXParser : public Parser {
   void unload();
 
   /* Process the currently loaded file. That is, extract all relevant content.
-   * This function assumes there is a currently loaded file. You are expected
-   * to retrieve the extracted data following this using next().
+   * This function assumes there is a currently loaded file.
    */
   void process(SymbolConsumer &consumer) final;
 
