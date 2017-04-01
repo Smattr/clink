@@ -79,10 +79,4 @@ class AsmParser : public Parser {
   AsmLexer lexer;
   std::string filename;
 
-  FILE *file;
-
-  std::string last_line_text;
-  unsigned last_line_number;
-
-  const char *get_context(unsigned line);
 };

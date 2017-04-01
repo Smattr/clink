@@ -110,8 +110,6 @@ AsmToken AsmLexer::next() {
 
 bool AsmParser::load(const char *path) {
   if (lexer.load(path)) {
-    file = fopen(path, "r");
-    last_line_number = 0;
     filename = path;
     return true;
   } else {
@@ -123,35 +121,6 @@ bool AsmParser::load(const char *path) {
 void AsmParser::unload() {
   lexer.unload();
   filename = "";
-  if (file != nullptr)
-    fclose(file);
-  file = nullptr;
-}
-
-/* It is expected that we move through the file linearly forwards, so calls will
- * only be made to this function with monotonically increasing arguments.
- */
-const char *AsmParser::get_context(unsigned line) {
-  assert(line >= last_line_number);
-
-  if (file == nullptr)
-    return "";
-
-  char *buffer = nullptr;
-  size_t dummy;
-  while (line > last_line_number) {
-    if (getline(&buffer, &dummy, file) < 0) {
-      // EOF or error
-      fclose(file);
-      file = nullptr;
-      return "";
-    }
-    last_line_text = buffer;
-    last_line_number++;
-  }
-  free(buffer);
-
-  return last_line_text.c_str();
 }
 
 static bool is_jump_instruction(const string &instruction) {
