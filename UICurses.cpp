@@ -1,5 +1,6 @@
 #include <array>
 #include <cassert>
+#include "colours.h"
 #include <cstdlib>
 #include <cstring>
 #include <curses.h>
@@ -170,7 +171,9 @@ static int print_results(const Results &results, unsigned from_row) {
           printw("%s%s ", blank.c_str(), results.rows[i + from_row].text[j].c_str());
         } else {
           string blank(padding, ' ');
-          printw("%s%s", results.rows[i + from_row].text[j].c_str(), blank.c_str());
+          // TODO: translate colour codes if we support colour
+          printw("%s%s", strip_ansi(results.rows[i + from_row].text[j]).c_str(),
+            blank.c_str());
         }
       }
     }
