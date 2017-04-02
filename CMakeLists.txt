@@ -41,6 +41,8 @@ set(CURSES_NEED_NCURSES True)
 find_package(Curses)
 target_include_directories(clink PUBLIC ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
+target_include_directories(vimcat PUBLIC ${CURSES_INCLUDE_DIR})
+target_link_libraries(vimcat ${CURSES_LIBRARIES})
 
 find_package(PkgConfig)
 

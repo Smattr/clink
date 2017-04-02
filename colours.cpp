@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ctype.h>
 #include <limits.h>
+#include <ncurses.h>
 #include <string>
 
 using namespace std;
@@ -61,6 +62,32 @@ unsigned html_colour_to_ansi(const char *html, [[gnu::unused]] size_t length) {
   }
 
   return unsigned(min_index);
+}
+
+void init_ncurses_colours() {
+
+  /* This function is only expected to be called when we know we have colour
+   * support.
+   */
+  assert(has_colors());
+  assert(can_change_color());
+
+  // Make the current terminal colour scheme available.
+  use_default_colors();
+
+  static const array<short, 9> COLOURS = { { COLOR_BLACK, COLOR_RED,
+    COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN,
+    COLOR_WHITE, -1 } };
+
+  /* Use a simple encoding scheme to configure every possible colour
+   * combination.
+   */
+  for (const short &fg : COLOURS) {
+    for (const short &bg : COLOURS) {
+      short id = (fg << 8) | bg;
+      init_pair(id, fg, bg);
+    }
+  }
 }
 
 string strip_ansi(const string &s) {
