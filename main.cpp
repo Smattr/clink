@@ -30,10 +30,13 @@ static const char default_database[] = ".clink.db";
 
 static void usage(const char *progname) {
   cerr << "usage: " << progname << " [options]\n"
-       << "\n"
-       << " --debug-log FILE         log operations to the given file\n"
-       << " --file FILE | -f FILE    database to use (.clink.db by default)\n"
-       << " --jobs JOBS | -j JOBS    set number of threads to use (0 or "
+          "\n"
+          " -b                       exit after updating the database\n"
+          " -d                       don't update the database\n"
+          " --debug-log FILE         log operations to the given file\n"
+          " --file FILE | -f FILE    database to use (.clink.db by default)\n"
+          " --line-oriented | -l     open line-oriented UI instead of ncurses\n"
+          " --jobs JOBS | -j JOBS    set number of threads to use (0 or "
           "\"auto\" for the default, which is the number of cores)\n";
 }
 
