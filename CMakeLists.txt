@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(clink CXX)
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -W -Wall -Wextra")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -W -Wall -Wextra -Wwrite-strings")
 
 add_executable(clink
   AsmParser.cpp
