@@ -10,5 +10,6 @@ extern FILE *log_file;
       fprintf(log_file, "%s:%d: ", __func__, __LINE__); \
       fprintf(log_file, args); \
       fprintf(log_file, "\n"); \
+      fflush(log_file); \
     } \
   } while (0)
