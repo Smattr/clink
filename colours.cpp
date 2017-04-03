@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ctype.h>
 #include <limits.h>
+#include "log.h"
 #include <ncurses.h>
 #include <string>
 
@@ -64,7 +65,7 @@ unsigned html_colour_to_ansi(const char *html, [[gnu::unused]] size_t length) {
   return unsigned(min_index);
 }
 
-void init_ncurses_colours() {
+int init_ncurses_colours() {
 
   /* This function is only expected to be called when we know we have colour
    * support.
@@ -84,9 +85,14 @@ void init_ncurses_colours() {
   for (const short &fg : COLOURS) {
     for (const short &bg : COLOURS) {
       short id = (fg << 8) | bg;
-      init_pair(id, fg, bg);
+      if (init_pair(id, fg, bg) != 0) {
+        LOG("failed to init colour pair %hd", id);
+        return -1;
+      }
     }
   }
+
+  return 0;
 }
 
 void printw_in_colour(const string &text) {
