@@ -90,6 +90,92 @@ void init_ncurses_colours() {
   }
 }
 
+void printw_in_colour(const string &text) {
+
+  enum {
+    IDLE,
+    SAW_ESC,
+    SAW_LSQUARE,
+  } state = IDLE;
+
+  // A partial ANSI code we've parsed.
+  string pending_code;
+
+  // Pending attributes that we've accrued while parsing.
+  bool bold;
+  bool underline;
+  short fg;
+  short bg;
+
+  for (const char &c : text) {
+
+    switch (state) {
+
+      case IDLE:
+        if (c == 27) {
+          state = SAW_ESC;
+        } else {
+          addch(c);
+        }
+        break;
+
+      case SAW_ESC:
+        if (c == '[') {
+          bold = false;
+          underline = false;
+          fg = -1;
+          bg = -1;
+          pending_code = "";
+          state = SAW_LSQUARE;
+        } else {
+          addch(c);
+          state = IDLE;
+        }
+        break;
+
+      case SAW_LSQUARE:
+
+        if (c == ';' || c == 'm') {
+          if (pending_code != "") {
+            int code = stoi(pending_code);
+            pending_code = "";
+            if (code == 1) {
+              bold = true;
+            } else if (code == 4) {
+              underline = true;
+            } else if (code >= 30 && code <= 37) {
+              fg = code - 30;
+            } else if (code >= 40 && code <= 47) {
+              bg = code - 40;
+            } else if (code == 0) { // reset
+              fg = -1;
+              bg = -1;
+              attron(A_NORMAL | COLOR_PAIR((fg << 8) | bg));
+              state = IDLE;
+              continue;
+            }
+            // otherwise, ignore
+          }
+        }
+
+        if (c == 'm') {
+          attron((bold ? A_BOLD : 0) | (underline ? A_UNDERLINE : 0) |
+            COLOR_PAIR((fg << 8) | bg));
+          state = IDLE;
+        } else if (c >= '0' && c <= '9') {
+          pending_code += c;
+        } else {
+          // something unrecognised
+          addch(c);
+          state = IDLE;
+        }
+
+        break;
+
+    }
+  }
+}
+
 string strip_ansi(const string &s) {
 
   enum {

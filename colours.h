@@ -20,5 +20,8 @@ unsigned html_colour_to_ansi(const char *html, size_t length);
 // Configure Ncurses colour pairs for use later.
 void init_ncurses_colours();
 
+// Equivalent of ncurses' printw, but interpret ANSI colour codes.
+void printw_in_colour(const std::string &text);
+
 // Strip ANSI colour codes from a string.
 std::string strip_ansi(const std::string &s);
