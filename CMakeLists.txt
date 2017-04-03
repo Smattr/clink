@@ -17,6 +17,7 @@ add_executable(clink
 
 add_executable(vimcat
   colours.cpp
+  log.cpp
   Vim.cpp
   vimcat.cpp)
 
