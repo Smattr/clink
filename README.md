@@ -16,9 +16,9 @@ to be bring the Cscope experience into the twenty first century.
   * **Assembly support** Systems code often calls into assembly, at which point
     Cscope gets lost. Clink parses assembly fuzzily and can maintain a call
     graph across this boundary.
-  * **_TBC: not implemented yet_** **Syntax highlighting** You're probably used
-    to looking at code in Vim with syntax highlighting, so Clink can ask Vim to
-    highlight the snippets it shows you.
+  * **Syntax highlighting** You're probably used to looking at code in Vim with
+    syntax highlighting, so Clink can ask Vim to highlight the snippets it shows
+    you.
   * **Exact jumps** Clink opens Vim not only at the right line, but at the right
     column for the entry you've asked for.
   * **Fewer features** Cscope's options to find files and regex text are now
@@ -42,13 +42,6 @@ to be bring the Cscope experience into the twenty first century.
     have never used this query. Have you? It actually sounds really useful, but
     I have never once thought of this until enumerating Cscope's options while
     implementing Clink.
-  * An inevitable question is why I didn't just modify Cscope and push the
-    changes upstream. However, I think it's pretty clear that Clink takes a
-    different (and incompatible) path to upstream. Pulling in libclang as a
-    dependency is unacceptable for many constrained environments where Cscope
-    needs to run. I myself have used Cscope in many environments where libclang
-    would have been an immediate deal breaker. Essentially, Cscope has no dress
-    code, while Clink expects you to have plenty of cores and RAM for days.
   * Some open questions about Cscope that I haven't yet explored:
     * Why do Cscope's line-oriented and curses interface results differ? The
       example I have on hand is a file that #includes a file from a parent
@@ -56,11 +49,6 @@ to be bring the Cscope experience into the twenty first century.
       The discrepancy seems to lead to a worse user experience in Cscope (file
       jumping in Vim that doesn't work) though admittedly I've never actually
       noticed this until staring at Cscope results while implementing Clink.
-    * Why does Cscope open Vim at the right line, but at the first column? It
-      (indirectly) has the column information as well, so why not take advantage
-      of it?
-    * Why does Cscope display results with differing white space from the source
-      file? It has the exact white space information, doesn't it?
 
 Anything else you don't understand, ask away. Questions are the only way I
 learned enough to write this thing.
