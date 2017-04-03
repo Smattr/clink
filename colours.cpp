@@ -70,7 +70,6 @@ void init_ncurses_colours() {
    * support.
    */
   assert(has_colors());
-  assert(can_change_color());
 
   // Make the current terminal colour scheme available.
   use_default_colors();

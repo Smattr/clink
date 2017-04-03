@@ -471,7 +471,7 @@ UICurses::UICurses() {
   (void)sigaction(SIGTSTP, nullptr, &m_original_sigtstp_handler);
 
   (void)initscr();
-  m_color = has_colors() && can_change_color();
+  m_color = has_colors();
   keypad(stdscr, TRUE);
   (void)cbreak();
 
