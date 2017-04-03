@@ -97,6 +97,11 @@ restart2:;
 void WorkQueue::push(const string &path) {
   auto it = files_seen.insert(path);
   if (it.second) {
+    struct stat buf;
+    if (stat(path.c_str(), &buf) < 0 || buf.st_mtime <= era_start) {
+      // Ignore this file as we already know its contents or can't read it.
+      return;
+    }
     files_to_read.push(path);
   }
 }
