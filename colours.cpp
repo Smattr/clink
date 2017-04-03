@@ -65,6 +65,14 @@ unsigned html_colour_to_ansi(const char *html, [[gnu::unused]] size_t length) {
   return unsigned(min_index);
 }
 
+/* We need to pack a colour combination in this way because the default ncurses
+ * implementation only supports 64 colour pairs and hence rejects any colour ID
+ * above 64.
+ */
+static constexpr short colour_pair_id(short fg, short bg) {
+  return ((fg << 3) | bg) + 1;
+}
+
 int init_ncurses_colours() {
 
   /* This function is only expected to be called when we know we have colour
@@ -72,19 +80,25 @@ int init_ncurses_colours() {
    */
   assert(has_colors());
 
+  if (start_color() != 0)
+    return -1;
+
   // Make the current terminal colour scheme available.
   use_default_colors();
 
-  static const array<short, 9> COLOURS = { { COLOR_BLACK, COLOR_RED,
+  LOG("COLORS == %d", COLORS);
+  LOG("COLOR_PAIRS == %d", COLOR_PAIRS);
+
+  static const array<short, 8> COLOURS = { { COLOR_BLACK, COLOR_RED,
     COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN,
-    COLOR_WHITE, -1 } };
+    COLOR_WHITE } };
 
   /* Use a simple encoding scheme to configure every possible colour
    * combination.
    */
   for (const short &fg : COLOURS) {
     for (const short &bg : COLOURS) {
-      short id = (fg << 8) | bg;
+      short id = colour_pair_id(fg, bg);
       if (init_pair(id, fg, bg) != 0) {
         LOG("failed to init colour pair %hd", id);
         return -1;
@@ -128,8 +142,8 @@ void printw_in_colour(const string &text) {
         if (c == '[') {
           bold = false;
           underline = false;
-          fg = -1;
-          bg = -1;
+          fg = COLOR_WHITE;
+          bg = COLOR_BLACK;
           pending_code = "";
           state = SAW_LSQUARE;
         } else {
@@ -153,9 +167,8 @@ void printw_in_colour(const string &text) {
             } else if (code >= 40 && code <= 47) {
               bg = code - 40;
             } else if (code == 0) { // reset
-              fg = -1;
-              bg = -1;
-              attron(A_NORMAL | COLOR_PAIR((fg << 8) | bg));
+              LOG("resetting ncurses colours");
+              standend();
               state = IDLE;
               continue;
             }
@@ -164,11 +177,15 @@ void printw_in_colour(const string &text) {
         }
 
         if (c == 'm') {
-          attron((bold ? A_BOLD : 0) | (underline ? A_UNDERLINE : 0) |
-            COLOR_PAIR((fg << 8) | bg));
+          LOG("switching to ncurses fg = %hd, bg = %hd, %sbold, %sunderline",
+            fg, bg, bold ? "" : "no ", underline ? "" : "no ");
+          attrset((bold ? A_BOLD : 0) | (underline ? A_UNDERLINE : 0) |
+            COLOR_PAIR(colour_pair_id(fg, bg)));
           state = IDLE;
         } else if (c >= '0' && c <= '9') {
           pending_code += c;
+        } else if (c == ';') {
+          // nothing
         } else {
           // something unrecognised
           addch(c);

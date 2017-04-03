@@ -113,7 +113,8 @@ static unsigned usable_rows() {
   return LINES - FUNCTIONS_SZ - 2 - 1;
 }
 
-static int print_results(const Results &results, unsigned from_row) {
+static int print_results(const Results &results, unsigned from_row,
+    bool colour) {
   assert(from_row == 0 || from_row < results.rows.size());
 
   // The column headings, excluding the initial hotkey column.
@@ -170,10 +171,13 @@ static int print_results(const Results &results, unsigned from_row) {
           string blank(padding - 1, ' ');
           printw("%s%s ", blank.c_str(), results.rows[i + from_row].text[j].c_str());
         } else {
+          if (colour) {
+            printw_in_colour(results.rows[i + from_row].text[j]);
+          } else {
+            printw("%s", strip_ansi(results.rows[i + from_row].text[j]).c_str());
+          }
           string blank(padding, ' ');
-          // TODO: translate colour codes if we support colour
-          printw("%s%s", strip_ansi(results.rows[i + from_row].text[j]).c_str(),
-            blank.c_str());
+          printw("%s", blank.c_str());
         }
       }
     }
@@ -233,7 +237,7 @@ void UICurses::handle_input(Database &db) {
         delete m_results;
         string query = m_left + m_right;
         m_results = functions[m_index].handler(db, query);
-        print_results(*m_results, 0);
+        print_results(*m_results, 0, m_color);
         m_from_row = 0;
         m_select_index = 0;
         if (!m_results->rows.empty())
@@ -426,7 +430,7 @@ enter:
       else
         m_from_row = 0;
       m_select_index = m_from_row;
-      print_results(*m_results, m_from_row);
+      print_results(*m_results, m_from_row, m_color);
       break;
 
     case '\t':
@@ -472,6 +476,11 @@ UICurses::UICurses() {
 
   (void)initscr();
   m_color = has_colors();
+  if (m_color) {
+    if (init_ncurses_colours() != 0)
+      m_color = false;
+  }
+
   keypad(stdscr, TRUE);
   (void)cbreak();
 
