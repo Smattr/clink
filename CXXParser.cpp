@@ -125,6 +125,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
       category = ST_DEFINITION;
       break;
     case CXCursor_CallExpr:
+    case CXCursor_MacroExpansion:
       category = ST_FUNCTION_CALL;
       break;
     case CXCursor_UsingDirective:
