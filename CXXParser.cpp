@@ -9,6 +9,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
 #include <cstring>
 #include "CXXParser.h"
 #include <iostream>
+#include "log.h"
 #include "Symbol.h"
 #include "WorkQueue.h"
 
@@ -47,6 +48,45 @@ typedef struct {
   const char *container;
   WorkQueue *wq;
 } visitor_state_t;
+
+// Debugging method
+static void log_symbol_ignore(CXCursor cursor) {
+  assert(log_file != nullptr);
+
+  // Get the text of the symbol itself.
+  CXString cxtext = clang_getCursorSpelling(cursor);
+  const char *text = clang_getCString(cxtext);
+
+  // If the symbol text is unavailable, don't bother logging this.
+  if (strcmp(text, "") == 0) {
+    clang_disposeString(cxtext);
+    return;
+  }
+
+  // Figure out what type of thing it is.
+  CXCursorKind kind = clang_getCursorKind(cursor);
+  CXString cxkind = clang_getCursorKindSpelling(kind);
+  const char *kindstr = clang_getCString(cxkind);
+
+  // Find the file we're looking at.
+  CXSourceLocation loc = clang_getCursorLocation(cursor);
+  unsigned line, column;
+  CXFile file;
+  clang_getSpellingLocation(loc, &file, &line, &column, nullptr);
+
+  if (file != nullptr) {
+    CXString cxfilename = clang_getFileName(file);
+    const char *filename = clang_getCString(cxfilename);
+    LOG("ignoring %s symbol '%s' from %s:%u:%u", kindstr, text, filename, line,
+      column);
+    clang_disposeString(cxfilename);
+  } else {
+    LOG("ignoring %s symbol '%s'", kindstr, text);
+  }
+
+  clang_disposeString(cxkind);
+  clang_disposeString(cxtext);
+}
 
 // Clang visitor. Herein is the core logic of the parser.
 static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
@@ -105,6 +145,8 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
       category = ST_INCLUDE;
       break;
     default:
+      if (log_file != nullptr)
+        log_symbol_ignore(cursor);
       category = ST_RESERVED;
   };
 
