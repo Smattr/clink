@@ -119,6 +119,7 @@ static void parse_options(int argc, char **argv) {
       cerr << "your system appears to have an invalid number of processors\n";
       exit(EXIT_FAILURE);
     }
+    LOG("parallelising with %u threads", cores);
     opts.threads = (unsigned long)cores;
   }
 }
