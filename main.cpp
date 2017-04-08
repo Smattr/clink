@@ -187,12 +187,11 @@ int main(int argc, char **argv) {
       ThreadSafeWorkQueue queue(".", era_start);
 
       // Create and start N - 1 threads.
-      vector<thread*> threads;
+      vector<thread> threads;
       vector<PendingActions*> pending;
       for (unsigned long i = 0; i < opts.threads - 1; i++) {
         PendingActions *pa = new PendingActions();
-        thread *t = new thread(update, ref(*pa), ref(queue));
-        threads.push_back(t);
+        threads.emplace_back(update, ref(*pa), ref(queue));
         pending.push_back(pa);
       }
 
@@ -203,10 +202,8 @@ int main(int argc, char **argv) {
       update(db, queue);
 
       // Clean up all the other threads.
-      for (thread *t : threads) {
-        t->join();
-        delete t;
-      }
+      for (thread &t : threads)
+        t.join();
 
       // Merge their results.
       for (PendingActions *pa : pending) {
