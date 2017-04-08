@@ -110,36 +110,50 @@ void Database::consume(const SymbolCore &s) {
 
   int index = 1;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@name"));
-  if (sql_bind_text(m_symbol_insert, index, s.name()) != SQLITE_OK)
+  if (sql_bind_text(m_symbol_insert, index, s.name()) != SQLITE_OK) {
+    LOG("failed to bind @name = %s", s.name());
     return;
+  }
 
   index = 2;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@path"));
-  if (sql_bind_text(m_symbol_insert, index, s.path()) != SQLITE_OK)
+  if (sql_bind_text(m_symbol_insert, index, s.path()) != SQLITE_OK) {
+    LOG("failed to bind @path = %s", s.path());
     return;
+  }
 
   index = 3;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@category"));
-  if (sqlite3_bind_int(m_symbol_insert, index, s.category()) != SQLITE_OK)
+  if (sqlite3_bind_int(m_symbol_insert, index, s.category()) != SQLITE_OK) {
+    LOG("failed to bind @category = %d", int(s.category()));
     return;
+  }
 
   index = 4;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@line"));
-  if (sqlite3_bind_int(m_symbol_insert, index, s.line()) != SQLITE_OK)
+  if (sqlite3_bind_int(m_symbol_insert, index, s.line()) != SQLITE_OK) {
+    LOG("failed to bind @line = %d", int(s.line()));
     return;
+  }
 
   index = 5;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@col"));
-  if (sqlite3_bind_int(m_symbol_insert, index, s.col()) != SQLITE_OK)
+  if (sqlite3_bind_int(m_symbol_insert, index, s.col()) != SQLITE_OK) {
+    LOG("failed to bind @column = %d", int(s.col()));
     return;
+  }
 
   index = 6;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@parent"));
-  if (sql_bind_text(m_symbol_insert, index, s.parent()) != SQLITE_OK)
+  if (sql_bind_text(m_symbol_insert, index, s.parent()) != SQLITE_OK) {
+    LOG("failed to bind @parent = %s", s.parent());
     return;
+  }
 
-  if (sqlite3_step(m_symbol_insert) != SQLITE_DONE)
+  if (sqlite3_step(m_symbol_insert) != SQLITE_DONE) {
+    LOG("failed to insert row into symbols");
     return;
+  }
 }
 
 void Database::consume(const string &path, unsigned lineno,
