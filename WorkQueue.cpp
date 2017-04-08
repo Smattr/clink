@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <cstring>
 #include <dirent.h>
 #include <mutex>
@@ -31,10 +32,37 @@ bool WorkQueue::push_directory_stack(const string &directory) {
   return true;
 }
 
+static string normalise_path(const string &path) {
+  char resolved[PATH_MAX];
+
+  if (realpath(path.c_str(), resolved) == nullptr) {
+    // failed
+    return path;
+  }
+
+  // Try to turn the absolute path into a relative one.
+  char cwd[PATH_MAX];
+  if (getcwd(cwd, sizeof(cwd)) == nullptr) {
+    // failed
+    return path;
+  }
+
+  const char *relative;
+  if (strncmp(resolved, cwd, strlen(cwd)) == 0 &&
+      resolved[strlen(cwd)] == '/') {
+    relative = &resolved[strlen(cwd) + 1];
+  } else {
+    relative = resolved;
+  }
+
+  LOG("normalised %s to %s", path.c_str(), relative);
+  return relative;
+}
+
 WorkItem *WorkQueue::pop() {
 
   if (!files_to_read.empty()) {
-    const string path = files_to_read.front();
+    const string path = normalise_path(files_to_read.front());;
     files_to_read.pop();
     WorkItem *wi = new ReadFile(path);
     return wi;
@@ -84,9 +112,9 @@ restart2:;
       if (ends_with(entry.d_name, ".c") || ends_with(entry.d_name, ".cpp")
           || ends_with(entry.d_name, ".h") ||
           ends_with(entry.d_name, ".hpp")) {
-        return new ParseCXXFile(path);
+        return new ParseCXXFile(normalise_path(path));
       } else {
-        return new ParseAsmFile(path);
+        return new ParseAsmFile(normalise_path(path));
       }
     }
 
