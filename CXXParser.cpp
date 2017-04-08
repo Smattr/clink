@@ -140,6 +140,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
     case CXCursor_DeclRefExpr:
     case CXCursor_MemberRefExpr:
     case CXCursor_CXXThisExpr:
+    case CXCursor_UnexposedExpr:
       category = ST_REFERENCE;
       break;
     case CXCursor_InclusionDirective:
