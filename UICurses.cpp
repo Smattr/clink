@@ -410,9 +410,19 @@ enter:
        * repainted when Vim exits. By restoring the original handler, we
        * can claw our way back to regular TTY behaviour.
        */
-      struct sigaction curses_act;
-      int read_signal = sigaction(SIGTSTP, &m_original_sigtstp_handler,
-          &curses_act);
+      struct sigaction curses_tstp;
+      int read_tstp = sigaction(SIGTSTP, &m_original_sigtstp_handler,
+        &curses_tstp);
+
+      /* Blasted ncurses does the same thing with the SIGWINCH handler. As a
+       * result, resizing the terminal window while Vim is open causes ncurses
+       * to take incorrect actions. Vim notices the window has resized but that
+       * it is missing a SIGWINCH, realises someone else is driving the boat and
+       * freaks out and quits.
+       */
+      struct sigaction curses_winch;
+      int read_winch = sigaction(SIGWINCH, &m_original_sigwinch_handler,
+        &curses_winch);
 
       int ret = vim_open(m_results->rows[m_select_index].path,
           m_results->rows[m_select_index].line,
@@ -424,9 +434,11 @@ enter:
 
       reset_prog_mode();
 
-      // Restore ncurses' SIGTSTP handler.
-      if (read_signal == 0)
-          (void)sigaction(SIGTSTP, &curses_act, nullptr);
+      // Restore ncurses' handlers.
+      if (read_tstp == 0)
+        (void)sigaction(SIGTSTP, &curses_tstp, nullptr);
+      if (read_winch == 0)
+        (void)sigaction(SIGWINCH, &curses_winch, nullptr);
 
       refresh();
       break;
@@ -506,6 +518,11 @@ UICurses::UICurses() {
    * but future-proof this against us registering handlers elsewhere in Clink.
    */
   (void)sigaction(SIGTSTP, nullptr, &m_original_sigtstp_handler);
+
+  /* We also need to stash the SIGWINCH handler. See earlier in this file where
+   * we open Vim for an explanation of these shenanigans.
+   */
+  (void)sigaction(SIGWINCH, nullptr, &m_original_sigwinch_handler);
 
   (void)initscr();
   m_color = has_colors();

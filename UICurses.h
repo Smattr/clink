@@ -34,6 +34,7 @@ class UICurses : public UI {
   Results *m_results = nullptr;
   unsigned m_from_row = 0;
   struct sigaction m_original_sigtstp_handler;
+  struct sigaction m_original_sigwinch_handler;
   bool m_color;
 
 };
