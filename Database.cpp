@@ -161,6 +161,8 @@ void Database::consume(const SymbolCore &s) {
       sqlite3_errstr(result));
     return;
   }
+  LOG("inserted symbol { %s, %s, %d, %u, %u, %s }", s.name(), s.path(),
+    int(s.category()), s.line(), s.col(), s.parent());
 }
 
 void Database::consume(const string &path, unsigned lineno,
