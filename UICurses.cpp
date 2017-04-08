@@ -455,6 +455,20 @@ enter:
     case '\t':
       m_state = UICS_INPUT;
       break;
+
+    case KEY_RESIZE:
+      endwin();
+      clear();
+      print_menu();
+      move_to_line_no_blank(m_index);
+      assert(m_results != nullptr);
+      print_results(*m_results, m_from_row, m_color);
+      assert(m_select_index >= m_from_row);
+      if (m_select_index - m_from_row + 1 > usable_rows()) {
+        // The selected row was just made offscreen by a window resize.
+        m_select_index = m_from_row;
+      }
+      break;
   }
 }
 
