@@ -23,6 +23,10 @@ static int sql_bind_text(sqlite3_stmt *stmt, int index, const char *value) {
   return sqlite3_bind_text(stmt, index, value, -1, SQLITE_STATIC);
 }
 
+static constexpr bool sql_ok(int error) {
+  return error == SQLITE_DONE || error == SQLITE_OK || error == SQLITE_ROW;
+}
+
 static const char SYMBOLS_SCHEMA[] = "create table if not exists symbols (name "
   "text not null, path text not null, category integer not null, line integer "
   "not null, col integer not null, parent text, "
@@ -132,14 +136,14 @@ void Database::consume(const SymbolCore &s) {
   index = 4;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@line"));
   if (sqlite3_bind_int(m_symbol_insert, index, s.line()) != SQLITE_OK) {
-    LOG("failed to bind @line = %d", int(s.line()));
+    LOG("failed to bind @line = %u", s.line());
     return;
   }
 
   index = 5;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@col"));
   if (sqlite3_bind_int(m_symbol_insert, index, s.col()) != SQLITE_OK) {
-    LOG("failed to bind @column = %d", int(s.col()));
+    LOG("failed to bind @column = %u", s.col());
     return;
   }
 
@@ -150,8 +154,11 @@ void Database::consume(const SymbolCore &s) {
     return;
   }
 
-  if (sqlite3_step(m_symbol_insert) != SQLITE_DONE) {
-    LOG("failed to insert row into symbols");
+  int result = sqlite3_step(m_symbol_insert);
+  if (!sql_ok(result)) {
+    LOG("failed to insert symbol { %s, %s, %d, %u, %u, %s }: %s", s.name(),
+      s.path(), int(s.category()), s.line(), s.col(), s.parent(),
+      sqlite3_errstr(result));
     return;
   }
 }
@@ -188,7 +195,8 @@ void Database::consume(const string &path, unsigned lineno,
   if (sql_bind_text(m_content_insert, index, line.c_str()) != SQLITE_OK)
     return;
 
-  if (sqlite3_step(m_content_insert) != SQLITE_DONE)
+  int result = sqlite3_step(m_content_insert);
+  if (!sql_ok(result))
     return;
 }
 
@@ -211,7 +219,8 @@ bool Database::purge(const string &path) {
   if (sql_bind_text(m_symbols_delete, index, path.c_str()) != SQLITE_OK)
     return false;
 
-  if (sqlite3_step(m_symbols_delete) != SQLITE_DONE)
+  int result = sqlite3_step(m_symbols_delete);
+  if (!sql_ok(result))
     return false;
 
   // Now delete it from the content table.
@@ -231,7 +240,8 @@ bool Database::purge(const string &path) {
   if (sql_bind_text(m_content_delete, index, path.c_str()) != SQLITE_OK)
     return false;
 
-  if (sqlite3_step(m_content_delete) != SQLITE_DONE)
+  result = sqlite3_step(m_content_delete);
+  if (!sql_ok(result))
     return false;
 
   return true;
