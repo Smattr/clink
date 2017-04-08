@@ -354,6 +354,12 @@ void UICurses::handle_select() {
   noecho();
 
   assert(m_select_index >= m_from_row);
+  if (m_select_index - m_from_row + 1 > usable_rows()) {
+    /* The selected row is out of visible range. This can happen if the terminal
+     * window resized while we were not in select mode.
+     */
+    m_select_index = m_from_row;
+  }
   move(m_select_index - m_from_row + 1, 0);
   int c = getch();
 
