@@ -259,7 +259,7 @@ void UICurses::handle_input(Database &db) {
     }
 
     case '\t':
-      if (!m_results->rows.empty())
+      if (m_results != nullptr && !m_results->rows.empty())
         m_state = UICS_ROWSELECT;
       break;
 
