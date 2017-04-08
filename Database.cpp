@@ -1,3 +1,4 @@
+#include <array>
 #include <cassert>
 #include <cstring>
 #include "Database.h"
@@ -36,6 +37,12 @@ static const char CONTENT_SCHEMA[] = "create table if not exists content "
   "(path text not null, line integer not null, body text not null, "
   "unique(path, line));";
 
+static const array<string, 3> PRAGMAS = { {
+  "pragma synchronous=OFF;",
+  "pragma journal_mode=MEMORY;",
+  "pragma temp_store=MEMORY;",
+} };
+
 static int init(sqlite3 *db) {
   assert(db != nullptr);
 
@@ -44,6 +51,10 @@ static int init(sqlite3 *db) {
 
   if (sql_exec(db, CONTENT_SCHEMA) != SQLITE_OK)
     return -1;
+
+  for (const string &pragma : PRAGMAS)
+    if (sql_exec(db, pragma.c_str()) != SQLITE_OK)
+      return -1;
 
   return 0;
 }
