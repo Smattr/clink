@@ -204,11 +204,7 @@ static int print_results(const Results &results, unsigned from_row,
   return 0;
 }
 
-void UICurses::move_to_line(unsigned target) {
-  // Blank the current line.
-  move(m_y, offset_x(m_index));
-  clrtoeol();
-
+void UICurses::move_to_line_no_blank(unsigned target) {
   m_index = target;
   m_x = offset_x(m_index);
   m_y = offset_y(m_index);
@@ -217,6 +213,14 @@ void UICurses::move_to_line(unsigned target) {
   move(m_y, m_x);
   printw("%s%s", m_left.c_str(), m_right.c_str());
   m_x += m_left.size();
+}
+
+void UICurses::move_to_line(unsigned target) {
+  // Blank the current line.
+  move(m_y, offset_x(m_index));
+  clrtoeol();
+
+  move_to_line_no_blank(target);
 }
 
 void UICurses::handle_input(Database &db) {
@@ -324,6 +328,15 @@ void UICurses::handle_input(Database &db) {
         printw("%s", m_right.c_str());
         clrtoeol();
       }
+      break;
+
+    case KEY_RESIZE:
+      endwin();
+      clear();
+      print_menu();
+      if (m_results != nullptr)
+        print_results(*m_results, m_from_row, m_color);
+      move_to_line_no_blank(m_index);
       break;
 
     default:

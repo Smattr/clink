@@ -21,6 +21,7 @@ class UICurses : public UI {
   ~UICurses();
 
  private:
+  void move_to_line_no_blank(unsigned target);
   void move_to_line(unsigned target);
   void handle_input(Database &db);
   void handle_select();
