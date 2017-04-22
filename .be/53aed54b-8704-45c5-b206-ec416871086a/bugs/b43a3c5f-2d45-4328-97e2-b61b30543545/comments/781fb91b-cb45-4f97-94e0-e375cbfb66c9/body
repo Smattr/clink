@@ -1,0 +1,15 @@
+All macro invocations appear in the database with no parent. For example, in
+code like the following:
+
+    int foo() {
+        function_call();
+        macro_call();
+        return 0;
+    }
+
+the invocation of function_call appears with the container foo, but the
+invocation of macro_call appears without a container (as if it were in the
+global scope). This root cause seems to be core to Clang; that it processes
+macros in a separate, initial pass. Hence, even attempts to retrieve foo as a
+lexical parent of macro_call don't work either. This issue requires some further
+thinking on how to solve it.
