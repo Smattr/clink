@@ -10,6 +10,7 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
 #include "CXXParser.h"
 #include <iostream>
 #include "log.h"
+#include "Options.h"
 #include "Symbol.h"
 #include "WorkQueue.h"
 
@@ -24,9 +25,19 @@ bool CXXParser::load(const char *path) {
   // Unload any currently loaded file.
   if (m_tu) unload();
 
+  // Construct command-line arguments
+  int argc = opts.include_dirs.size() * 2;
+  const char **argv = new const char*[argc];
+  for (int i = 0; i < argc; i += 2) {
+    argv[i] = "-I";
+    argv[i + 1] = opts.include_dirs[i / 2].c_str();
+  }
+
   // Load and parse the file.
-  m_tu = clang_parseTranslationUnit(m_index, path, nullptr, 0, nullptr, 0,
+  m_tu = clang_parseTranslationUnit(m_index, path, argv, argc, nullptr, 0,
     CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_KeepGoing);
+
+  delete argv;
 
   return m_tu != nullptr;
 }

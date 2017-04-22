@@ -35,6 +35,7 @@ static void usage(const char *progname) {
           " -d                       don't update the database\n"
           " --debug-log FILE         log operations to the given file\n"
           " --file FILE | -f FILE    database to use (.clink.db by default)\n"
+          " --include DIR | -I DIR   add a directory in which #include files should be sought\n"
           " --line-oriented | -l     open line-oriented UI instead of ncurses\n"
           " --jobs JOBS | -j JOBS    set number of threads to use (0 or "
           "\"auto\" for the default, which is the number of cores)\n";
@@ -46,6 +47,7 @@ Options opts = {
   .update_database = true,
   .ui = UI_CURSES,
   .threads = 0,
+  .include_dirs = vector<string>(),
 };
 
 static void parse_options(int argc, char **argv) {
@@ -56,13 +58,14 @@ static void parse_options(int argc, char **argv) {
     static const struct option options[] = {
       {"debug-log", required_argument, 0, DEBUG_LOG_ID},
       {"file", required_argument, 0, 'f'},
+      {"include", required_argument, 0, 'I'},
       {"jobs", required_argument, 0, 'j'},
       {"line-oriented", no_argument, 0, 'l'},
       {0, 0, 0, 0},
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bdf:j:l", options, &index);
+    int c = getopt_long(argc, argv, "bdf:I:j:l", options, &index);
 
     if (c == -1)
       break;
@@ -78,6 +81,10 @@ static void parse_options(int argc, char **argv) {
 
       case 'f':
         opts.database = optarg;
+        break;
+
+      case 'I':
+        opts.include_dirs.emplace_back(optarg);
         break;
 
       case 'j':
