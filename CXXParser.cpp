@@ -176,11 +176,17 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
         SymbolCore s(text, filename, category, line, column, vs->container);
         vs->consumer->consume(s);
 
-        /* Queue a read of this file, now we know we need its data. Note that
-         * we (or someone else) may have already requested this file's contents
-         * in which case the work queue will dedupe this request.
+        /* Check if we've already queued this file to be read (in which case we
+         * don't need to push it into the work queue).
          */
-        vs->wq->push(filename);
+        if (filename != vs->me->last_seen) {
+          /* Queue a read of this file, now we know we need its data. Note that
+           * someone else may have already requested this file's contents in
+           * which case the work queue will dedupe this request.
+           */
+          vs->wq->push(filename);
+          vs->me->last_seen = filename;
+        }
 
         clang_disposeString(cxfilename);
       }

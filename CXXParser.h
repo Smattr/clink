@@ -2,6 +2,7 @@
 
 #include <clang-c/Index.h>
 #include "Parser.h"
+#include <string>
 #include "Symbol.h"
 #include <vector>
 #include "WorkQueueStub.h"
@@ -36,6 +37,12 @@ class CXXParser : public Parser {
    * file. NULL when no file is currently loaded.
    */
   CXTranslationUnit m_tu = nullptr;
+
+  /* The last file we pushed into the work queue or "" if none. This is used as
+   * an optimisation to avoid taking the work queue lock for an operation that
+   * we know will be a no-op.
+   */
+  std::string last_seen;
 
   friend CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
       CXClientData data);
