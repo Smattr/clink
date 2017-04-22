@@ -1,0 +1,4 @@
+I haven't figured out the pattern here yet, but it seems certain files do not
+have their contents read. My best guess currently is files with no code in them
+(decls only). However, vimcat highlights such files correctly so I'm still
+unsure what's going on here.
