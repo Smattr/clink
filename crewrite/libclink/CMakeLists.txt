@@ -1,3 +1,14 @@
 add_library(clink
   src/asm.c)
-target_include_directories(clink PUBLIC include)
+
+target_include_directories(clink
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:include>)
+
+install(TARGETS clink EXPORT LibclinkConfig
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+export(TARGETS clink FILE LibclinkConfig.cmake)
