@@ -260,22 +260,24 @@ static int print(CLINK_UNUSED void *state, const clink_symbol_t *symbol) {
 
 static int CLINK_UNUSED main_asm(int argc, char **argv) {
 
-  int rc = 0;
-
   if (argc != 2) {
     fprintf(stderr, "usage: %s filename\n", argv[0]);
     return EXIT_FAILURE;
   }
 
+  int rc = 0;
+
   if ((rc = clink_init_asm())) {
-    fprintf(stderr, "clink_init_asm failed: \n");
-    return rc;
+    fprintf(stderr, "clink_init_asm failed: %d\n", rc);
+    return EXIT_FAILURE;
   }
 
-  if ((rc = clink_parse_asm(argv[1], print, NULL)))
+  if ((rc = clink_parse_asm(argv[1], print, NULL))) {
     fprintf(stderr, "parsing failed: %s\n", strerror(rc));
+    return EXIT_FAILURE;
+  }
 
-  return rc;
+  return EXIT_SUCCESS;
 }
 
 #ifdef MAIN_ASM
