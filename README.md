@@ -27,6 +27,20 @@ to be bring the Cscope experience into the twenty first century.
     [other](https://en.wikipedia.org/wiki/Grep)
     [tools](https://en.wikipedia.org/wiki/Sed) and are not included in Clink.
 
+## Building Clink
+
+```sh
+# download Clink
+git clone https://github.com/Smattr/clink
+cd clink
+
+# configure and compile
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
 ## Notes for devs
 
   * The on-disk database format is extremely bloated. As with performance, I
