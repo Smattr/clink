@@ -69,6 +69,5 @@ learned enough to write this thing.
 
 ## Legal
 
-Play nice. If you want to do something big or something commercial with this
-code, please ask. Chances are I'll say yes. If you want to hack on this for fun
-or personal use, go ahead.
+Everything in this repository is in the public domain, under the terms of
+the Unlicense. For the full text, see [LICENSE](./LICENSE).
