@@ -37,7 +37,7 @@ bool CXXParser::load(const char *path) {
   m_tu = clang_parseTranslationUnit(m_index, path, argv, argc, nullptr, 0,
     CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_KeepGoing);
 
-  delete argv;
+  delete[] argv;
 
   return m_tu != nullptr;
 }
