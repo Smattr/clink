@@ -24,18 +24,12 @@ class Resources {
   Resources(const Resources &) = delete;
 
   Resources(Resources &&other) noexcept {
-    CXXParser *cxx_parser = other.cxx_parser;
-    AsmParser *asm_parser = other.asm_parser;
-    SymbolConsumer *consumer = other.consumer;
-    WorkQueue *wq = other.wq;
+    cxx_parser = other.cxx_parser;
+    asm_parser = other.asm_parser;
+    consumer = other.consumer;
+    wq = other.wq;
     other.cxx_parser = nullptr;
     other.asm_parser = nullptr;
-    other.consumer = nullptr;
-    other.wq = nullptr;
-    this->cxx_parser = cxx_parser;
-    this->asm_parser = asm_parser;
-    this->consumer = consumer;
-    this->wq = wq;
   }
 
   ~Resources() {
@@ -47,20 +41,14 @@ class Resources {
   Resources &operator=(const Resources &) = delete;
 
   Resources &operator=(Resources &&other) noexcept {
-    CXXParser *cxx_parser = other.cxx_parser;
-    AsmParser *asm_parser = other.asm_parser;
-    SymbolConsumer *consumer = other.consumer;
-    WorkQueue *wq = other.wq;
+    delete cxx_parser;
+    delete asm_parser;
+    cxx_parser = other.cxx_parser;
+    asm_parser = other.asm_parser;
+    consumer = other.consumer;
+    wq = other.wq;
     other.cxx_parser = nullptr;
     other.asm_parser = nullptr;
-    other.consumer = nullptr;
-    other.wq = nullptr;
-    delete this->cxx_parser;
-    delete this->asm_parser;
-    this->cxx_parser = cxx_parser;
-    this->asm_parser = asm_parser;
-    this->consumer = consumer;
-    this->wq = wq;
     return *this;
   }
 
