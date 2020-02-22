@@ -44,13 +44,15 @@ static int run(const char **argv, bool mask_stdout = false) {
     close(p[0]);
 
     if (mask_stdout) {
-      /* Here we need to create a new PTY, rather than simply duping
-       * /dev/null over the top of std*. If Vim detects stdout is not a
-       * TTY, it throws a warning and its processing somehow slows down. I
-       * haven't investigated, but I suspect this is actually an artefact
-       * of OS interaction, rather than anything specific Vim is doing.
-       */
+#ifdef __APPLE__
+      int fd = open("/dev/null", O_RDWR);
+#else
+      // On non-Apple platforms we can speed up Vim’s execution by giving it a
+      // PTY instead of /dev/null. It is not clear why, but using /dev/null
+      // slows Vim down somehow. It is also not clear why this PTY strategy does
+      // not work on macOS.
       int fd = posix_openpt(O_RDWR);
+#endif
       if (fd < 0)
         goto fail;
       if (dup2(fd, STDIN_FILENO) < 0 ||
