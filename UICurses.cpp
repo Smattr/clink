@@ -313,10 +313,12 @@ void UICurses::handle_input(Database &db) {
       move_to_line(FUNCTIONS_SZ - 1);
       break;
 
+    case 127: // Backspace on macOS
     case KEY_BACKSPACE:
       if (!m_left.empty()) {
         m_left.pop_back();
         m_x--;
+        move(m_y, m_x);
         printw("%s", m_right.c_str());
         clrtoeol();
       }
