@@ -1,5 +1,4 @@
 add_executable(clink
-  src/AsmParser.cc
   src/colours.cc
   src/CXXParser.cc
   src/Database.cc
@@ -8,6 +7,7 @@ add_executable(clink
   src/UICurses.cc
   src/UILine.cc
   src/Vim.cc
+  src/WorkItem.cc
   src/WorkQueue.cc)
 
 target_include_directories(clink PRIVATE src)

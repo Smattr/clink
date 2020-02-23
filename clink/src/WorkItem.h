@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AsmParser.h"
 #include "CXXParser.h"
 #include "log.h"
 #include "Resources.h"
@@ -51,16 +50,7 @@ class ParseAsmFile : public WorkItem {
     : path(path) {
   }
 
-  void run(Resources &resources) final {
-    resources.consumer->purge(path);
-    AsmParser *asm_parser = resources.get_asm_parser();
-    if (!asm_parser->load(path.c_str())) {
-      // failed
-      return;
-    }
-    asm_parser->process(*resources.consumer, resources.wq);
-    asm_parser->unload();
- }
+  void run(Resources &resources) final;
 
  virtual ~ParseAsmFile() {}
 

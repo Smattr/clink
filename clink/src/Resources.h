@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AsmParser.h"
 #include "CXXParser.h"
 #include "Symbol.h"
 #include "WorkQueueStub.h"
@@ -25,16 +24,13 @@ class Resources {
 
   Resources(Resources &&other) noexcept {
     cxx_parser = other.cxx_parser;
-    asm_parser = other.asm_parser;
     consumer = other.consumer;
     wq = other.wq;
     other.cxx_parser = nullptr;
-    other.asm_parser = nullptr;
   }
 
   ~Resources() {
     delete cxx_parser;
-    delete asm_parser;
   }
 
   // As above, it doesn't make sense to copy one of these.
@@ -42,13 +38,10 @@ class Resources {
 
   Resources &operator=(Resources &&other) noexcept {
     delete cxx_parser;
-    delete asm_parser;
     cxx_parser = other.cxx_parser;
-    asm_parser = other.asm_parser;
     consumer = other.consumer;
     wq = other.wq;
     other.cxx_parser = nullptr;
-    other.asm_parser = nullptr;
     return *this;
   }
 
@@ -58,17 +51,10 @@ class Resources {
     return cxx_parser;
   }
 
-  AsmParser *get_asm_parser() {
-    if (asm_parser == nullptr)
-      asm_parser = new AsmParser;
-    return asm_parser;
-  }
-
   SymbolConsumer *consumer;
   WorkQueue *wq;
 
  private:
   CXXParser *cxx_parser = nullptr;
-  AsmParser *asm_parser = nullptr;
 
 };
