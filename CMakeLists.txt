@@ -26,3 +26,4 @@ if(HAS_WARNING_POINTER_ARITH)
 endif()
 
 add_subdirectory(clink)
+add_subdirectory(libclink)
