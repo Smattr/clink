@@ -3,7 +3,8 @@ project(clink LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wwrite-strings -Wmissing-declarations -Wshadow")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wwrite-strings -Wmissing-declarations -Wshadow")
 
 # enable even more warnings if the compiler supports them
 include(CheckCXXCompilerFlag)
