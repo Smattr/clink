@@ -1,8 +1,7 @@
 project(libclink LANGUAGES CXX)
 
 add_library(libclink
-  src/Error.cc
-  src/Re.cc)
+  src/Error.cc)
 
 target_include_directories(libclink
   PUBLIC
