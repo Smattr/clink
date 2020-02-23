@@ -8,6 +8,12 @@
 
 namespace clink {
 
+// result of a regex match
+struct Match {
+  size_t start_offset;
+  size_t end_offset;
+};
+
 // RAII wrapper around POSIX regex
 template<size_t MATCHES, size_t CORE>
 class Re {
@@ -18,12 +24,6 @@ class Re {
     if (rc != 0)
       throw Error("regular expression compilation failed", rc);
   }
-
-  // result of a regex match
-  struct Match {
-    size_t start_offset;
-    size_t end_offset;
-  };
 
   std::optional<Match> match(const std::string &s) const {
 
