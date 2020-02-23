@@ -1,7 +1,6 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
-#include "CXXParser.h"
 #include "Database.h"
 #include <dirent.h>
 #include <errno.h>
