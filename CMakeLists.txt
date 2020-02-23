@@ -27,3 +27,4 @@ endif()
 
 add_subdirectory(clink)
 add_subdirectory(libclink)
+add_subdirectory(parse-asm)
