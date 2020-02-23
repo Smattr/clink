@@ -4,7 +4,6 @@
 #include <optional>
 #include <regex.h>
 #include <string>
-#include <vector>
 
 namespace clink {
 
@@ -20,8 +19,7 @@ class Re {
     size_t end_offset;
   };
 
-  std::optional<std::vector<Match>> match(const std::string &s,
-    unsigned expected = 1) const;
+  std::optional<Match> match(const std::string &s) const;
 
   ~Re();
 
