@@ -7,8 +7,6 @@ typedef enum {
   ST_FUNCTION_CALL,
   ST_REFERENCE,
   ST_INCLUDE,
-
-  ST_RESERVED,
 } symbol_category_t;
 
 class SymbolCore {
