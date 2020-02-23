@@ -160,60 +160,55 @@ static CXChildVisitResult visitor(CXCursor cursor, CXCursor /* ignored */,
     default:
       if (log_file != nullptr)
         log_symbol_ignore(cursor);
-      category = ST_RESERVED;
+      clang_visitChildren(cursor, visitor, data);
+      return CXChildVisit_Continue;
   };
 
-  if (category != ST_RESERVED) {
+  /* Retrieve the name of this entity. */
+  CXString cxtext = clang_getCursorSpelling(cursor);
+  const char *text = clang_getCString(cxtext);
 
-    /* Retrieve the name of this entity. */
-    CXString cxtext = clang_getCursorSpelling(cursor);
-    const char *text = clang_getCString(cxtext);
+  visitor_state_t *vs = (visitor_state_t*)data;
 
-    visitor_state_t *vs = (visitor_state_t*)data;
+  if (strcmp(text, "")) {
 
-    if (strcmp(text, "")) {
+    /* Retrieve its location. */
+    CXSourceLocation loc = clang_getCursorLocation(cursor);
+    unsigned line, column;
+    CXFile file;
+    clang_getSpellingLocation(loc, &file, &line, &column, nullptr);
 
-      /* Retrieve its location. */
-      CXSourceLocation loc = clang_getCursorLocation(cursor);
-      unsigned line, column;
-      CXFile file;
-      clang_getSpellingLocation(loc, &file, &line, &column, nullptr);
+    if (file != nullptr) {
 
-      if (file != nullptr) {
+      CXString cxfilename = clang_getFileName(file);
+      const char *filename = clang_getCString(cxfilename);
 
-        CXString cxfilename = clang_getFileName(file);
-        const char *filename = clang_getCString(cxfilename);
+      SymbolCore s(text, filename, category, line, column, vs->container);
+      vs->consumer->consume(s);
 
-        SymbolCore s(text, filename, category, line, column, vs->container);
-        vs->consumer->consume(s);
-
-        /* Check if we've already queued this file to be read (in which case we
-         * don't need to push it into the work queue).
+      /* Check if we've already queued this file to be read (in which case we
+       * don't need to push it into the work queue).
+       */
+      if (filename != vs->me->last_seen) {
+        /* Queue a read of this file, now we know we need its data. Note that
+         * someone else may have already requested this file's contents in
+         * which case the work queue will dedupe this request.
          */
-        if (filename != vs->me->last_seen) {
-          /* Queue a read of this file, now we know we need its data. Note that
-           * someone else may have already requested this file's contents in
-           * which case the work queue will dedupe this request.
-           */
-          vs->wq->push(filename);
-          vs->me->last_seen = filename;
-        }
-
-        clang_disposeString(cxfilename);
+        vs->wq->push(filename);
+        vs->me->last_seen = filename;
       }
 
+      clang_disposeString(cxfilename);
     }
 
-    visitor_state_t for_child = *vs;
-    if (category == ST_DEFINITION && strcmp(text, ""))
-      for_child.container = text;
-    clang_visitChildren(cursor, visitor, &for_child);
-
-    clang_disposeString(cxtext);
-
-  } else {
-    clang_visitChildren(cursor, visitor, data);
   }
+
+  visitor_state_t for_child = *vs;
+  if (category == ST_DEFINITION && strcmp(text, ""))
+    for_child.container = text;
+  clang_visitChildren(cursor, visitor, &for_child);
+
+  clang_disposeString(cxtext);
 
   return CXChildVisit_Continue;
 }
