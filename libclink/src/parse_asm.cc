@@ -3,6 +3,7 @@
 #include <clink/Symbol.h>
 #include <errno.h>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include "Re.h"
 #include <string>
@@ -72,7 +73,8 @@ static Symbol make_symbol(Symbol::Category category, const std::string &filename
   };
 }
 
-int parse_asm(const std::string &filename, int(*callback)(const Symbol&)) {
+int parse_asm(const std::string &filename,
+    std::function<int(const Symbol&)> const &callback) {
 
   // check the file exists
   struct stat ignored;

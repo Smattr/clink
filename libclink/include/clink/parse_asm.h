@@ -28,6 +28,7 @@
 
 #include <cstddef>
 #include <clink/Symbol.h>
+#include <functional>
 #include <string>
 
 namespace clink {
@@ -36,6 +37,7 @@ namespace clink {
 //
 // Returns 0 on success. If your callback ever returns non-zero, parsing will be
 // terminated and this value will be returned.
-int parse_asm(const std::string &filename, int(*callback)(const Symbol&));
+int parse_asm(const std::string &filename,
+  std::function<int(const Symbol&)> const &callback);
 
 }
