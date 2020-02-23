@@ -13,35 +13,41 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  int rc = parse_asm(argv[1], [](const Symbol &symbol) {
+  int rc;
+  try {
+    rc = parse_asm(argv[1], [](const Symbol &symbol) {
 
-    std::cout << symbol.path << ":" << symbol.lineno << ":" << symbol.colno
-      << ": ";
+      std::cout << symbol.path << ":" << symbol.lineno << ":" << symbol.colno
+        << ": ";
 
-    switch (symbol.category) {
+      switch (symbol.category) {
 
-      case Symbol::DEFINITION:
-        std::cout << "definition";
-        break;
+        case Symbol::DEFINITION:
+          std::cout << "definition";
+          break;
 
-      case Symbol::INCLUDE:
-        std::cout << "include";
-        break;
+        case Symbol::INCLUDE:
+          std::cout << "include";
+          break;
 
-      case Symbol::FUNCTION_CALL:
-        std::cout << "function call";
-        break;
+        case Symbol::FUNCTION_CALL:
+          std::cout << "function call";
+          break;
 
-      case Symbol::REFERENCE:
-        std::cout << "reference";
-        break;
+        case Symbol::REFERENCE:
+          std::cout << "reference";
+          break;
 
-    }
+      }
 
-    std::cout << " of " << symbol.name << "\n";
+      std::cout << " of " << symbol.name << "\n";
 
-    return 0;
-  });
+      return 0;
+    });
+  } catch (Error &e) {
+    std::cerr << e.what() << "\n";
+    return EXIT_FAILURE;
+  }
 
   return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
