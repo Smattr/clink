@@ -318,10 +318,10 @@ void UICurses::handle_input(Database &db) {
       if (!m_left.empty()) {
         m_left.pop_back();
         m_x--;
-        move(m_y, m_x);
-        printw("%s", m_right.c_str());
-        clrtoeol();
       }
+      move(m_y, m_x);
+      printw("%s", m_right.c_str());
+      clrtoeol();
       break;
 
     case KEY_DC:
