@@ -1,9 +1,0 @@
-Moving data in and out of SQLite is fragile because we don't have a
-compiler-enforced calling convention across the boundary. This has
-already bitten me multiple times with, e.g., queries that fail to
-prepare because they don't match the table schema.
-
-I think we have enough leverage to introduce a SQLAlchemy-esque
-abstraction that gives us approximate type safety while also fully
-collapsing at compile-time. Requires more research, but seems eminently
-doable.

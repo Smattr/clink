@@ -1,3 +1,0 @@
-In the curses UI, piping lines through Vim should give us nice
-syntax-highlighted output. Note that this will probably involve
-something like vimcat or popen/fauxterm-style tricks.

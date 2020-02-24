@@ -1,2 +1,0 @@
-Actually this seems to have been a false positive introduced by me twiddling the
-Clang flags during development. Closing as WONTFIX.

@@ -1,6 +1,0 @@
-The current approach in the C++ parser is to throw any included file to the work
-queue. This works, but a side effect is that a modified file results in every
-file it includes being considered modified as well. Most files include at least
-one system header, which results in a lengthy time to re-parse any file as we
-spend time re-highlighting the system headers. We should be able to suppress
-this relatively easily within the work queue.

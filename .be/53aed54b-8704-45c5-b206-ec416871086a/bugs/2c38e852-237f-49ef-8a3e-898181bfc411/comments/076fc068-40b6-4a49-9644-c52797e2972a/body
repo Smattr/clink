@@ -1,2 +1,0 @@
-By storing line contents in the database we can avoid the awkward
-reading we need to do in the UI.
