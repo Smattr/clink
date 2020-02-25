@@ -45,11 +45,9 @@ target_link_libraries(clink ${CURSES_LIBRARIES})
 target_include_directories(vimcat PUBLIC ${CURSES_INCLUDE_DIR})
 target_link_libraries(vimcat ${CURSES_LIBRARIES})
 
-find_package(PkgConfig)
-
-pkg_check_modules(SQLITE3 REQUIRED sqlite3)
-target_include_directories(clink PUBLIC ${SQLITE3_INCLUDE_DIRS})
-target_link_libraries(clink ${SQLITE3_LIBRARIES})
+find_package(SQLite3 REQUIRED)
+target_include_directories(clink PUBLIC ${SQLite3_INCLUDE_DIRS})
+target_link_libraries(clink ${SQLite3_LIBRARIES})
 
 find_path(READLINE_INCDIR NAMES readline/readline.h)
 if (NOT READLINE_INCDIR)
