@@ -26,6 +26,7 @@ matrix:
       - PATH=/usr/local/opt/llvm/bin:${PATH}
 
 before_install:
+  - if [ "$(uname -s)" = "Linux" ]; then sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'; fi
   - if [ "$(uname -s)" = "Linux" ]; then travis_retry sudo apt-get -qq update; fi
 
 script:
