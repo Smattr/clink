@@ -21,9 +21,8 @@ matrix:
       homebrew:
         update: true
         packages:
-          - libclang-dev
-          - libncurses-dev
-          - libsqlite3-dev
+          - ncurses
+          - sqlite3
           - llvm
 
 script:
