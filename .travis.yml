@@ -1,0 +1,30 @@
+language: cpp
+
+matrix:
+  include:
+
+  - name: Ubuntu Linux 18.04
+    os: linux
+    dist: bionic
+    addons:
+      apt:
+        packages:
+          - libclang-dev
+          - libncurses-dev
+          - libsqlite3-dev
+          - llvm
+
+  - name: macOS, XCode 11.3
+    os: osx
+    osx_image: xcode11.3
+    addons:
+      homebrew:
+        update: true
+        packages:
+          - libclang-dev
+          - libncurses-dev
+          - libsqlite3-dev
+          - llvm
+
+script:
+  - uname -sr && mkdir build && cd build && cmake .. && cmake --build . && sudo env "PATH=$PATH" cmake --build . -- install
