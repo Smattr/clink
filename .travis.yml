@@ -11,9 +11,6 @@ matrix:
         packages:
           - cmake
           - libclang-dev
-          - libncurses-dev
-          - libsqlite3-dev
-          - llvm
 
   - name: macOS, XCode 11.3
     os: osx
