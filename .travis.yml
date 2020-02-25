@@ -25,6 +25,8 @@ matrix:
           - ncurses
           - sqlite3
           - llvm
+    env:
+      - PATH=/usr/local/opt/llvm/bin:${PATH}
 
 before_install:
   - if [ "$(uname -s)" = "Linux" ]; then travis_retry sudo apt-get -qq update; fi
