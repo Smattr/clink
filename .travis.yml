@@ -37,7 +37,7 @@ before_install:
 
   # ensure this version of CMake ends up preferenced over the one provided by
   # Travis
-  - if [ "$(uname -s)" = "Linux" ]; then ln -s /usr/local/bin/cmake ${HOME}/cmake; fi
+  - if [ "$(uname -s)" = "Linux" ]; then ln -s /usr/bin/cmake ${HOME}/cmake; fi
 
 script:
   - uname -sr && mkdir build && cd build && cmake .. && cmake --build . && sudo env "PATH=$PATH" cmake --build . -- install
