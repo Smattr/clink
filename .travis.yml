@@ -9,6 +9,7 @@ matrix:
     addons:
       apt:
         packages:
+          - cmake
           - libclang-dev
           - libncurses-dev
           - libsqlite3-dev
@@ -24,6 +25,9 @@ matrix:
           - ncurses
           - sqlite3
           - llvm
+
+before_install:
+  - if [ "$(uname -s)" = "Linux" ]; then travis_retry sudo apt-get -qq update; fi
 
 script:
   - uname -sr && mkdir build && cd build && cmake .. && cmake --build . && sudo env "PATH=$PATH" cmake --build . -- install
