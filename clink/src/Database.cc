@@ -280,12 +280,12 @@ vector<Symbol> Database::find_symbol(const char *name) const {
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    const char *path = (char*)sqlite3_column_text(stmt, 0);
+    const char *path = (const char*)sqlite3_column_text(stmt, 0);
     symbol_category_t cat = symbol_category_t(sqlite3_column_int(stmt, 1));
     unsigned line = unsigned(sqlite3_column_int(stmt, 2));
     unsigned col = unsigned(sqlite3_column_int(stmt, 3));
-    const char *parent = (char*)sqlite3_column_text(stmt, 4);
-    const char *context = (char*)sqlite3_column_text(stmt, 5);
+    const char *parent = (const char*)sqlite3_column_text(stmt, 4);
+    const char *context = (const char*)sqlite3_column_text(stmt, 5);
 
     Symbol s(name, path, cat, line, col, parent, context);
     vs.push_back(s);
@@ -320,11 +320,11 @@ vector<Symbol> Database::find_definition(const char *name) const {
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    const char *path = (char*)sqlite3_column_text(stmt, 0);
+    const char *path = (const char*)sqlite3_column_text(stmt, 0);
     unsigned line = unsigned(sqlite3_column_int(stmt, 1));
     unsigned col = unsigned(sqlite3_column_int(stmt, 2));
-    const char *parent = (char*)sqlite3_column_text(stmt, 3);
-    const char *context = (char*)sqlite3_column_text(stmt, 4);
+    const char *parent = (const char*)sqlite3_column_text(stmt, 3);
+    const char *context = (const char*)sqlite3_column_text(stmt, 4);
 
     Symbol s(name, path, ST_DEFINITION, line, col, parent, context);
     vs.push_back(s);
@@ -359,11 +359,11 @@ vector<Symbol> Database::find_caller(const char *name) const {
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    const char *path = (char*)sqlite3_column_text(stmt, 0);
+    const char *path = (const char*)sqlite3_column_text(stmt, 0);
     unsigned line = unsigned(sqlite3_column_int(stmt, 1));
     unsigned col = unsigned(sqlite3_column_int(stmt, 2));
-    const char *parent = (char*)sqlite3_column_text(stmt, 3);
-    const char *context = (char*)sqlite3_column_text(stmt, 4);
+    const char *parent = (const char*)sqlite3_column_text(stmt, 3);
+    const char *context = (const char*)sqlite3_column_text(stmt, 4);
 
     Symbol s(name, path, ST_FUNCTION_CALL, line, col, parent, context);
     vs.push_back(s);
@@ -398,11 +398,11 @@ vector<Symbol> Database::find_call(const char *name) const {
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    const char *call = (char*)sqlite3_column_text(stmt, 0);
-    const char *path = (char*)sqlite3_column_text(stmt, 1);
+    const char *call = (const char*)sqlite3_column_text(stmt, 0);
+    const char *path = (const char*)sqlite3_column_text(stmt, 1);
     unsigned line = unsigned(sqlite3_column_int(stmt, 2));
     unsigned col = unsigned(sqlite3_column_int(stmt, 3));
-    const char *context = (char*)sqlite3_column_text(stmt, 4);
+    const char *context = (const char*)sqlite3_column_text(stmt, 4);
 
     Symbol s(call, path, ST_FUNCTION_CALL, line, col, name, context);
     vs.push_back(s);
@@ -434,7 +434,7 @@ vector<string> Database::find_file(const char *name) const {
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    const char *path = (char*)sqlite3_column_text(stmt, 0);
+    const char *path = (const char*)sqlite3_column_text(stmt, 0);
     string s(path);
     vs.push_back(s);
   }
@@ -468,11 +468,11 @@ vector<Symbol> Database::find_includer(const char *name) const {
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    const char *path = (char*)sqlite3_column_text(stmt, 0);
+    const char *path = (const char*)sqlite3_column_text(stmt, 0);
     unsigned line = unsigned(sqlite3_column_int(stmt, 1));
     unsigned col = unsigned(sqlite3_column_int(stmt, 2));
-    const char *parent = (char*)sqlite3_column_text(stmt, 3);
-    const char *context = (char*)sqlite3_column_text(stmt, 4);
+    const char *parent = (const char*)sqlite3_column_text(stmt, 3);
+    const char *context = (const char*)sqlite3_column_text(stmt, 4);
 
     Symbol s(name, path, ST_INCLUDE, line, col, parent, context);
     vs.push_back(s);
