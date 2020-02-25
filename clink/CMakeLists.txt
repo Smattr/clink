@@ -42,7 +42,7 @@ endif ()
 target_link_libraries(clink ${CLANG_LIBRARY})
 
 set(CURSES_NEED_NCURSES True)
-find_package(Curses)
+find_package(Curses REQUIRED)
 target_include_directories(clink PUBLIC ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
 target_include_directories(vimcat PUBLIC ${CURSES_INCLUDE_DIR})
