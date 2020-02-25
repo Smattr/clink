@@ -21,6 +21,9 @@ target_include_directories(vimcat PRIVATE src)
 
 target_link_libraries(clink libclink)
 
+find_package(Threads REQUIRED)
+target_link_libraries(clink ${CMAKE_THREAD_LIBS_INIT})
+
 find_program(LLVM_CONFIG llvm-config)
 if (NOT LLVM_CONFIG)
   message(FATAL_ERROR "could not find llvm-config")
