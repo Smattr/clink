@@ -9,8 +9,10 @@ matrix:
     addons:
       apt:
         packages:
-          - cmake
           - libclang-dev
+    env:
+      # we will put a CMake symlink here
+      - PATH=${HOME}:${PATH}
 
   - name: macOS, XCode 11.3
     os: osx
@@ -26,10 +28,16 @@ matrix:
       - PATH=/usr/local/opt/llvm/bin:${PATH}
 
 before_install:
+
+  # install a more recent CMake directly from Kitware
   - if [ "$(uname -s)" = "Linux" ]; then wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -; fi
   - if [ "$(uname -s)" = "Linux" ]; then sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'; fi
   - if [ "$(uname -s)" = "Linux" ]; then travis_retry sudo apt-get -qq update; fi
   - if [ "$(uname -s)" = "Linux" ]; then travis_retry sudo apt-get -y install cmake; fi
+
+  # ensure this version of CMake ends up preferenced over the one provided by
+  # Travis
+  - if [ "$(uname -s)" = "Linux" ]; then ln -s /usr/local/bin/cmake ${HOME}/cmake; fi
 
 script:
   - uname -sr && mkdir build && cd build && cmake .. && cmake --build . && sudo env "PATH=$PATH" cmake --build . -- install
