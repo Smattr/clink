@@ -7,10 +7,10 @@ namespace clink {
 struct Symbol {
 
   enum Category {
-    DEFINITION,
-    FUNCTION_CALL,
-    REFERENCE,
-    INCLUDE,
+    DEFINITION = 0,
+    FUNCTION_CALL = 1,
+    REFERENCE = 2,
+    INCLUDE = 3,
   };
 
   Category category;

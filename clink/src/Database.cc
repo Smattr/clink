@@ -1,5 +1,6 @@
 #include <array>
 #include <cassert>
+#include <clink/clink.h>
 #include <cstring>
 #include "Database.h"
 #include "errno.h"
@@ -106,7 +107,7 @@ bool Database::close_transaction() {
   return sql_exec(m_db, "commit transaction;") == SQLITE_OK;
 }
 
-void Database::consume(const SymbolCore &s) {
+void Database::consume(const clink::Symbol &s) {
   assert(m_db != nullptr);
 
   // Insert into the symbol table.
@@ -125,55 +126,55 @@ void Database::consume(const SymbolCore &s) {
 
   int index = 1;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@name"));
-  if (sql_bind_text(m_symbol_insert, index, s.name()) != SQLITE_OK) {
-    LOG("failed to bind @name = %s", s.name());
+  if (sql_bind_text(m_symbol_insert, index, s.name.c_str()) != SQLITE_OK) {
+    LOG("failed to bind @name = %s", s.name.c_str());
     return;
   }
 
   index = 2;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@path"));
-  if (sql_bind_text(m_symbol_insert, index, s.path()) != SQLITE_OK) {
-    LOG("failed to bind @path = %s", s.path());
+  if (sql_bind_text(m_symbol_insert, index, s.path.c_str()) != SQLITE_OK) {
+    LOG("failed to bind @path = %s", s.path.c_str());
     return;
   }
 
   index = 3;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@category"));
-  if (sqlite3_bind_int(m_symbol_insert, index, s.category()) != SQLITE_OK) {
-    LOG("failed to bind @category = %d", int(s.category()));
+  if (sqlite3_bind_int(m_symbol_insert, index, s.category) != SQLITE_OK) {
+    LOG("failed to bind @category = %d", int(s.category));
     return;
   }
 
   index = 4;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@line"));
-  if (sqlite3_bind_int(m_symbol_insert, index, s.line()) != SQLITE_OK) {
-    LOG("failed to bind @line = %u", s.line());
+  if (sqlite3_bind_int(m_symbol_insert, index, s.lineno) != SQLITE_OK) {
+    LOG("failed to bind @line = %lu", s.lineno);
     return;
   }
 
   index = 5;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@col"));
-  if (sqlite3_bind_int(m_symbol_insert, index, s.col()) != SQLITE_OK) {
-    LOG("failed to bind @column = %u", s.col());
+  if (sqlite3_bind_int(m_symbol_insert, index, s.colno) != SQLITE_OK) {
+    LOG("failed to bind @column = %lu", s.colno);
     return;
   }
 
   index = 6;
   assert(index == sqlite3_bind_parameter_index(m_symbol_insert, "@parent"));
-  if (sql_bind_text(m_symbol_insert, index, s.parent()) != SQLITE_OK) {
-    LOG("failed to bind @parent = %s", s.parent());
+  if (sql_bind_text(m_symbol_insert, index, s.parent.c_str()) != SQLITE_OK) {
+    LOG("failed to bind @parent = %s", s.parent.c_str());
     return;
   }
 
   int result = sqlite3_step(m_symbol_insert);
   if (!sql_ok(result)) {
-    LOG("failed to insert symbol { %s, %s, %d, %u, %u, %s }: %s", s.name(),
-      s.path(), int(s.category()), s.line(), s.col(), s.parent(),
-      sqlite3_errstr(result));
+    LOG("failed to insert symbol { %s, %s, %d, %lu, %lu, %s }: %s",
+      s.name.c_str(), s.path.c_str(), int(s.category), s.lineno, s.colno,
+      s.parent.c_str(), sqlite3_errstr(result));
     return;
   }
-  LOG("inserted symbol { %s, %s, %d, %u, %u, %s }", s.name(), s.path(),
-    int(s.category()), s.line(), s.col(), s.parent());
+  LOG("inserted symbol { %s, %s, %d, %lu, %lu, %s }", s.name.c_str(),
+    s.path.c_str(), int(s.category), s.lineno, s.colno, s.parent.c_str());
 }
 
 void Database::consume(const string &path, unsigned lineno,
