@@ -1,3 +1,4 @@
+#include <clink/clink.h>
 #include <cstdlib>
 #include "Database.h"
 #include <iostream>
@@ -36,41 +37,41 @@ int UILine::run(Database &db) {
     switch (*command) {
 
       case '0': { // find symbol
-        vector<Symbol> vs = db.find_symbol(command + 1);
+        vector<clink::Result> vs = db.find_symbol(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
-          cout << s.path() << " " << s.parent() << " " << s.line() << " " <<
-            lstrip(s.context());
+          cout << s.symbol.path << " " << s.symbol.parent << " "
+            << s.symbol.lineno << " " << lstrip(s.context);
         }
         break;
       }
 
       case '1': { // find definition
-        vector<Symbol> vs = db.find_definition(command + 1);
+        vector<clink::Result> vs = db.find_definition(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
-          cout << s.path() << " " << (command + 1) << " " << s.line() << " " <<
-            lstrip(s.context());
+          cout << s.symbol.path << " " << (command + 1) << " "
+            << s.symbol.lineno << " " << lstrip(s.context);
         }
         break;
       }
 
       case '2': { // find calls
-        vector<Symbol> vs = db.find_call(command + 1);
+        vector<clink::Result> vs = db.find_call(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
-          cout << s.path() << " " << s.name() << " " << s.line() << " " <<
-            lstrip(s.context());
+          cout << s.symbol.path << " " << s.symbol.name << " "
+            << s.symbol.lineno << " " << lstrip(s.context);
         }
         break;
       }
 
       case '3': { // find callers
-        vector<Symbol> vs = db.find_caller(command + 1);
+        vector<clink::Result> vs = db.find_caller(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
-          cout << s.path() << " " << s.parent() << " " << s.line() << " " <<
-            lstrip(s.context());
+          cout << s.symbol.path << " " << s.symbol.parent << " "
+            << s.symbol.lineno << " " << lstrip(s.context);
         }
         break;
       }
@@ -87,11 +88,11 @@ int UILine::run(Database &db) {
       }
 
       case '8': { // find includers
-        vector<Symbol> vs = db.find_includer(command + 1);
+        vector<clink::Result> vs = db.find_includer(command + 1);
         print_leader(vs);
         for (const auto &s : vs)
-          cout << s.path() << " " << s.parent() << " " << s.line() << " " <<
-            lstrip(s.context());
+          cout << s.symbol.path << " " << s.symbol.parent << " "
+            << s.symbol.lineno << " " << lstrip(s.context);
         break;
       }
 

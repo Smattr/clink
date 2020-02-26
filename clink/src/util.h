@@ -3,16 +3,25 @@
 #include <cassert>
 #include <cstring>
 #include <ctype.h>
+#include <string>
 
-static inline const char *lstrip(const char *s) {
-  if (!s)
-    return "\n";
+static inline std::string lstrip(const std::string &s) {
 
-  const char *t = s;
-  while (isspace(*t))
-    t++;
+  std::string t;
 
-  if (*t == '\0')
+  bool dropping = true;
+  for (const char &c : s) {
+    if (dropping) {
+      if (!isspace(c)) {
+        t += c;
+        dropping = false;
+      }
+    } else {
+      t += c;
+    }
+  }
+
+  if (t == "")
     return "\n";
 
   return t;

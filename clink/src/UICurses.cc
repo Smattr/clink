@@ -1,5 +1,6 @@
 #include <array>
 #include <cassert>
+#include <clink/clink.h>
 #include "colours.h"
 #include <cstdlib>
 #include <cstring>
@@ -20,23 +21,24 @@ static const size_t HEADINGS_SZ = 4;
 struct ResultRow {
   array<string, HEADINGS_SZ> text;
   string path;
-  unsigned line;
-  unsigned col;
+  unsigned long line;
+  unsigned long col;
 };
 
 struct Results {
   vector<ResultRow> rows;
 };
 
-static Results *format_results(const vector<Symbol> &vs) {
+static Results *format_results(const vector<clink::Result> &vs) {
   Results *results = new Results;
 
   for (const auto &s : vs) {
     ResultRow row {
-      .text = { s.path(), s.parent(), to_string(s.line()), lstrip(s.context()) },
-      .path = s.path(),
-      .line = s.line(),
-      .col = s.col(),
+      .text = { s.symbol.path, s.symbol.parent, to_string(s.symbol.lineno),
+                lstrip(s.context) },
+      .path = s.symbol.path,
+      .line = s.symbol.lineno,
+      .col = s.symbol.colno,
     };
     results->rows.push_back(row);
   }
@@ -47,27 +49,27 @@ static Results *format_results(const vector<Symbol> &vs) {
 // Wrappers for each database query follow.
 
 static Results *find_symbol(const Database &db, const string &query) {
-  vector<Symbol> vs = db.find_symbol(query);
+  vector<clink::Result> vs = db.find_symbol(query);
   return format_results(vs);
 }
 
 static Results *find_definition(const Database &db, const string &query) {
-  vector<Symbol> vs = db.find_definition(query);
+  vector<clink::Result> vs = db.find_definition(query);
   return format_results(vs);
 }
 
 static Results *find_call(const Database &db, const string &query) {
-  vector<Symbol> vs = db.find_call(query);
+  vector<clink::Result> vs = db.find_call(query);
   return format_results(vs);
 }
 
 static Results *find_caller(const Database &db, const string &query) {
-  vector<Symbol> vs = db.find_caller(query);
+  vector<clink::Result> vs = db.find_caller(query);
   return format_results(vs);
 }
 
 static Results *find_includer(const Database &db, const string &query) {
-  vector<Symbol> vs = db.find_includer(query);
+  vector<clink::Result> vs = db.find_includer(query);
   return format_results(vs);
 }
 

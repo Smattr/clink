@@ -261,10 +261,10 @@ bool Database::purge(const string &path) {
   return true;
 }
 
-vector<Symbol> Database::find_symbol(const char *name) const {
+vector<clink::Result> Database::find_symbol(const char *name) const {
   assert(m_db != nullptr);
 
-  vector<Symbol> vs;
+  vector<clink::Result> vs;
 
   static const char QUERY[] = "select symbols.path, symbols.category, "
     "symbols.line, symbols.col, symbols.parent, content.body from symbols left "
@@ -282,14 +282,14 @@ vector<Symbol> Database::find_symbol(const char *name) const {
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
     const char *path = (const char*)sqlite3_column_text(stmt, 0);
-    symbol_category_t cat = symbol_category_t(sqlite3_column_int(stmt, 1));
+    clink::Symbol::Category cat = (clink::Symbol::Category)sqlite3_column_int(stmt, 1);
     unsigned line = unsigned(sqlite3_column_int(stmt, 2));
     unsigned col = unsigned(sqlite3_column_int(stmt, 3));
     const char *parent = (const char*)sqlite3_column_text(stmt, 4);
     const char *context = (const char*)sqlite3_column_text(stmt, 5);
 
-    Symbol s(name, path, cat, line, col, parent, context);
-    vs.push_back(s);
+    clink::Result r{clink::Symbol{cat, name, path, line, col, parent}, context};
+    vs.push_back(r);
   }
 
 done:
@@ -298,10 +298,10 @@ done:
   return vs;
 }
 
-vector<Symbol> Database::find_definition(const char *name) const {
+vector<clink::Result> Database::find_definition(const char *name) const {
   assert(m_db != nullptr);
 
-  vector<Symbol> vs;
+  vector<clink::Result> vs;
 
   static const char QUERY[] = "select symbols.path, symbols.line, symbols.col, "
     "symbols.parent, content.body from symbols left join content on "
@@ -317,7 +317,7 @@ vector<Symbol> Database::find_definition(const char *name) const {
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;
 
-  if (sqlite3_bind_int(stmt, 2, ST_DEFINITION) != SQLITE_OK)
+  if (sqlite3_bind_int(stmt, 2, clink::Symbol::DEFINITION) != SQLITE_OK)
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -327,8 +327,10 @@ vector<Symbol> Database::find_definition(const char *name) const {
     const char *parent = (const char*)sqlite3_column_text(stmt, 3);
     const char *context = (const char*)sqlite3_column_text(stmt, 4);
 
-    Symbol s(name, path, ST_DEFINITION, line, col, parent, context);
-    vs.push_back(s);
+    clink::Result r{
+      clink::Symbol{clink::Symbol::DEFINITION, name, path, line, col, parent},
+      context};
+    vs.push_back(r);
   }
 
 done:
@@ -337,10 +339,10 @@ done:
   return vs;
 }
 
-vector<Symbol> Database::find_caller(const char *name) const {
+vector<clink::Result> Database::find_caller(const char *name) const {
   assert(m_db != nullptr);
 
-  vector<Symbol> vs;
+  vector<clink::Result> vs;
 
   static const char QUERY[] = "select symbols.path, symbols.line, symbols.col, "
     "symbols.parent, content.body from symbols left join content on "
@@ -356,7 +358,7 @@ vector<Symbol> Database::find_caller(const char *name) const {
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;
 
-  if (sqlite3_bind_int(stmt, 2, ST_FUNCTION_CALL) != SQLITE_OK)
+  if (sqlite3_bind_int(stmt, 2, clink::Symbol::FUNCTION_CALL) != SQLITE_OK)
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -366,8 +368,10 @@ vector<Symbol> Database::find_caller(const char *name) const {
     const char *parent = (const char*)sqlite3_column_text(stmt, 3);
     const char *context = (const char*)sqlite3_column_text(stmt, 4);
 
-    Symbol s(name, path, ST_FUNCTION_CALL, line, col, parent, context);
-    vs.push_back(s);
+    clink::Result r{
+      clink::Symbol{clink::Symbol::FUNCTION_CALL, name, path, line, col, parent},
+      context};
+    vs.push_back(r);
   }
 
 done:
@@ -376,10 +380,10 @@ done:
   return vs;
 }
 
-vector<Symbol> Database::find_call(const char *name) const {
+vector<clink::Result> Database::find_call(const char *name) const {
   assert(m_db != nullptr);
 
-  vector<Symbol> vs;
+  vector<clink::Result> vs;
 
   static const char QUERY[] = "select symbols.name, symbols.path, "
     "symbols.line, symbols.col, content.body from symbols left join content on "
@@ -395,7 +399,7 @@ vector<Symbol> Database::find_call(const char *name) const {
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;
 
-  if (sqlite3_bind_int(stmt, 2, ST_FUNCTION_CALL) != SQLITE_OK)
+  if (sqlite3_bind_int(stmt, 2, clink::Symbol::FUNCTION_CALL) != SQLITE_OK)
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -405,8 +409,10 @@ vector<Symbol> Database::find_call(const char *name) const {
     unsigned col = unsigned(sqlite3_column_int(stmt, 3));
     const char *context = (const char*)sqlite3_column_text(stmt, 4);
 
-    Symbol s(call, path, ST_FUNCTION_CALL, line, col, name, context);
-    vs.push_back(s);
+    clink::Result r{
+      clink::Symbol{clink::Symbol::FUNCTION_CALL, call, path, line, col, name},
+      context};
+    vs.push_back(r);
   }
 
 done:
@@ -446,10 +452,10 @@ done:
   return vs;
 }
 
-vector<Symbol> Database::find_includer(const char *name) const {
+vector<clink::Result> Database::find_includer(const char *name) const {
   assert(m_db != nullptr);
 
-  vector<Symbol> vs;
+  vector<clink::Result> vs;
 
   static const char QUERY[] = "select symbols.path, symbols.line, symbols.col, "
     "symbols.parent, content.body from symbols left join content on "
@@ -465,7 +471,7 @@ vector<Symbol> Database::find_includer(const char *name) const {
   if (sql_bind_text(stmt, 1, name) != SQLITE_OK)
     goto done;
 
-  if (sqlite3_bind_int(stmt, 2, ST_INCLUDE) != SQLITE_OK)
+  if (sqlite3_bind_int(stmt, 2, clink::Symbol::INCLUDE) != SQLITE_OK)
     goto done;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -475,8 +481,10 @@ vector<Symbol> Database::find_includer(const char *name) const {
     const char *parent = (const char*)sqlite3_column_text(stmt, 3);
     const char *context = (const char*)sqlite3_column_text(stmt, 4);
 
-    Symbol s(name, path, ST_INCLUDE, line, col, parent, context);
-    vs.push_back(s);
+    clink::Result r{
+      clink::Symbol{clink::Symbol::INCLUDE, name, path, line, col, parent},
+      context};
+    vs.push_back(r);
   }
 
 done:

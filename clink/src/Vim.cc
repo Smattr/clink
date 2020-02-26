@@ -94,7 +94,7 @@ fail:
   return EXIT_FAILURE;
 }
 
-int vim_open(const string &filename, unsigned line, unsigned col) {
+int vim_open(const string &filename, unsigned long line, unsigned long col) {
   string cursor = "+call cursor(" + to_string(line) + "," + to_string(col) + ")";
   char const *argv[] = { "vim", cursor.c_str(), filename.c_str(), nullptr };
   return run(argv);
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
   }
 
   const string filename = argv[1];
-  unsigned line, col;
+  unsigned long line, col;
 
   try {
     line = stoul(argv[2]);
