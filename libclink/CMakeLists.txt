@@ -1,9 +1,11 @@
-project(libclink LANGUAGES CXX)
+project(libclink LANGUAGES C)
 
 add_library(libclink
-  src/Error.cc
-  src/parse_asm.cc
-  src/parse_c.cc)
+  src/colour.c
+  src/parse_asm.c
+  src/parse_c.c
+  src/run.c
+  src/vim.c)
 
 target_include_directories(libclink
   PUBLIC

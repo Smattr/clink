@@ -21,23 +21,26 @@
 // instructions look like on several relevant platforms. Anything else that
 // falls under (5) just gets ignored.
 //
-// The above sounds like quite a dumb approach, but you would be surprised how
+// The above sounds like quite a stupid approach, but you would be surprised how
 // well it works.
 
 #pragma once
 
-#include <cstddef>
-#include <clink/Symbol.h>
-#include <functional>
-#include <string>
+#include <clink/symbol.h>
 
-namespace clink {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // parse an assembly file
 //
 // Returns 0 on success. If your callback ever returns non-zero, parsing will be
 // terminated and this value will be returned.
-int parse_asm(const std::string &filename,
-  std::function<int(const Symbol&)> const &callback);
+int clink_parse_asm(
+    const char *filename,
+    int (*callback)(const struct clink_symbol *symbol, void *state),
+    void *state);
 
+#ifdef __cplusplus
 }
+#endif
