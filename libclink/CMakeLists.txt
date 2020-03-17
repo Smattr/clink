@@ -3,6 +3,7 @@ project(libclink LANGUAGES C)
 add_library(libclink
   src/colour.c
   src/error.c
+  src/list.c
   src/parse_asm.c
   src/parse_c.c
   src/run.c
