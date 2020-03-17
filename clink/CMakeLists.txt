@@ -14,10 +14,6 @@ find_package(Curses REQUIRED)
 target_include_directories(clink PUBLIC ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
 
-find_package(SQLite3 REQUIRED)
-target_include_directories(clink PUBLIC ${SQLite3_INCLUDE_DIRS})
-target_link_libraries(clink ${SQLite3_LIBRARIES})
-
 find_path(READLINE_INCDIR NAMES readline/readline.h)
 if (NOT READLINE_INCDIR)
   message(FATAL_ERROR "could not find GNU readline")
