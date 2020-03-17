@@ -3,6 +3,7 @@
 #include <clink/parse_c.h>
 #include <clink/symbol.h>
 #include <errno.h>
+#include "error.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -180,7 +181,7 @@ int clink_parse_c(
     CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_KeepGoing,
     &tu);
   if (err != CXError_Success) {
-    rc = err;
+    rc = clang_error(err);
     goto fail1;
   }
 

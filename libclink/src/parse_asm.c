@@ -2,6 +2,7 @@
 #include <clink/parse_asm.h>
 #include <clink/symbol.h>
 #include <errno.h>
+#include "error.h"
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,18 +78,24 @@ int clink_parse_asm(
 
   regex_t include;
   rc = regcomp(&include, INCLUDE, REG_EXTENDED);
-  if (rc != 0)
+  if (rc != 0) {
+    rc = regex_error(rc);
     goto fail2;
+  }
 
   regex_t function;
   rc = regcomp(&function, FUNCTION, REG_EXTENDED);
-  if (rc != 0)
+  if (rc != 0) {
+    rc = regex_error(rc);
     goto fail3;
+  }
 
   regex_t call;
   rc = regcomp(&call, CALL, REG_EXTENDED);
-  if (rc != 0)
+  if (rc != 0) {
+    rc = regex_error(rc);
     goto fail4;
+  }
 
   // an ASM function we may be within;
   char *parent = NULL;

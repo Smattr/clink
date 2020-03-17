@@ -2,6 +2,7 @@
 #include <clink/vim.h>
 #include "colour.h"
 #include <errno.h>
+#include "error.h"
 #include <regex.h>
 #include "run.h"
 #include <stdbool.h>
@@ -17,11 +18,11 @@ int clink_vim_open(const char *filename, unsigned long lineno,
 
   // check line number is valid
   if (lineno == 0)
-    return -1;
+    return ERANGE;
 
   // check column number is valid
   if (colno == 0)
-    return -1;
+    return ERANGE;
 
   // construct a directive telling Vim to jump to the given position
   char cursor[128];
@@ -74,8 +75,10 @@ static int convert_to_html(const char *input, const char *output) {
 
   // construct a directive telling Vim to save to the given output path
   char *save = NULL;
-  if (asprintf(&save, "+w %s", output) < 0)
+  if (asprintf(&save, "+w %s", output) < 0) {
+    rc = ENOMEM;
     goto done;
+  }
 
   // Construct a command line to open the file in Vim, convert it to highlighted
   // HTML, save this to the output and exit. 
@@ -413,8 +416,10 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
     "(font-weight:[[:blank:]]*bold;[[:blank:]]*)?"
     "(font-style:[[:blank:]]*italic;[[:blank:]]*)?"
     "(text-decoration:[[:blank:]]*underline;[[:blank:]]*)?";
-  if ((rc = regcomp(&style, STYLE, REG_EXTENDED)))
+  if ((rc = regcomp(&style, STYLE, REG_EXTENDED))) {
+    rc = regex_error(rc);
     goto done;
+  }
 
   char *line = NULL;
   size_t line_size = 0;
