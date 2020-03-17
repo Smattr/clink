@@ -3,6 +3,7 @@
 #include "colour.h"
 #include <errno.h>
 #include "error.h"
+#include "list.h"
 #include <regex.h>
 #include "run.h"
 #include <stdbool.h>
@@ -314,47 +315,6 @@ static int mktmp(char **temp) {
   return 0;
 }
 
-// representation of an array of strings
-struct str_list {
-  char **data;
-  size_t size;
-  size_t capacity;
-};
-
-static int str_list_add(struct str_list *list, char *s) {
-
-  assert(list != NULL);
-  assert(s != NULL);
-
-  // do we need to first expand the list?
-  if (list->capacity == list->size) {
-    size_t cap = list->capacity == 0 ? 128 : list->capacity * 2;
-    char **d = realloc(list->data, cap * sizeof(d[0]));
-    if (d == NULL)
-      return ENOMEM;
-    list->data = d;
-    list->capacity = cap;
-  }
-
-  assert(list->capacity > list->size);
-  size_t index = list->size;
-
-  list->data[index] = s;
-  list->size++;
-
-  return 0;
-}
-
-static void str_list_clear(struct str_list *list) {
-
-  assert(list != NULL);
-
-  for (size_t i = 0; i < list->size; i++)
-    free(list->data);
-
-  list->size = list->capacity = 0;
-}
-
 int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size) {
 
   assert(filename != NULL);
@@ -362,7 +322,7 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
   assert(lines_size != NULL);
 
   // accrue lines here that we will later assign to lines and lines_size
-  struct str_list sl = { 0 };
+  list_t sl = { 0 };
 
   FILE *html = NULL;
 
@@ -489,7 +449,7 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
       goto done1;
 
     // add the new line
-    if ((rc = str_list_add(&sl, highlighted))) {
+    if ((rc = list_append(&sl, highlighted))) {
       free(highlighted);
       goto done1;
     }
@@ -517,10 +477,10 @@ done:
   }
 
   if (rc == 0) {
-    *lines = sl.data;
+    *lines = (char**)sl.data;
     *lines_size = sl.size;
   } else {
-    str_list_clear(&sl);
+    list_free(&sl, NULL);
   }
 
   return rc;
