@@ -96,87 +96,53 @@ done:
   return rc;
 }
 
-struct style {
+typedef struct {
+  char *name;
   unsigned fg;
   unsigned bg;
   bool bold;
   bool underline;
-};
+} style_t;
 
-struct style_list {
-  char **name;
-  struct style *style;
-  size_t size;
-  size_t capacity;
-};
-
-static int style_list_expand(struct style_list *list) {
-
-  assert(list != NULL);
-
-  size_t cap = list->capacity == 0 ? 1 : list->capacity * 2;
-
-  // expand names
-  char **n = realloc(list->name, cap * sizeof(n[0]));
-  if (n == NULL)
-    return ENOMEM;
-  list->name = n;
-
-  // expand styles
-  struct style *st = realloc(list->style, cap * sizeof(st[0]));
-  if (st == NULL)
-    return ENOMEM;
-  list->style = st;
-
-  // success
-  list->capacity = cap;
-
-  return 0;
+static void style_free(style_t *s) {
+  free(s->name);
+  free(s);
 }
 
-static int style_list_add(struct style_list *list, const char *name,
-    size_t name_len, struct style s) {
+static int style_add(list_t *list, const char *name, size_t name_len, style_t s) {
 
   assert(list != NULL);
   assert(name != NULL);
 
-  // expand styles collection if necessary
-  if (list->size == list->capacity) {
-    int r = style_list_expand(list);
-    if (r != 0)
-      return r;
-  }
+  int rc = 0;
+
+  // heap-allocate a copy of this style
+  style_t *style = malloc(sizeof(*style));
+  if (style == NULL)
+    return ENOMEM;
+  *style = s;
 
   // construct the name of this style
-  char *n = NULL;
-  if (asprintf(&n, "%.*s", (int)name_len, name) < 0)
-    return ENOMEM;
+  char *n = strndup(name, name_len);
+  if (n == NULL) {
+    rc = ENOMEM;
+    goto done;
+  }
+  style->name = n;
 
-  assert(list->size < list->capacity);
-  size_t index = list->size;
+  // add it to our collection
+  rc = list_append(list, style);
 
-  list->name[index] = n;
-  list->style[index] = s;
-  list->size++;
+done:
+  if (rc != 0)
+    style_free(style);
 
-  return 0;
-}
-
-static void style_list_clear(struct style_list *list) {
-
-  assert(list != NULL);
-
-  for (size_t i = 0; i < list->size; i++)
-    free(list->name[i]);
-  free(list->name);
-  free(list->style);
-
-  list->size = list->capacity = 0;
+  return rc;
 }
 
 // Decode a fragment of HTML text produced by Vim’s TOhtml. It is assumed that
 // the input contains no HTML tags.
-static int from_html(const struct style_list *styles, const char *line,
+static int from_html(const list_t *styles, const char *line,
     char **highlighted) {
 
   assert(styles != NULL);
@@ -249,13 +215,14 @@ static int from_html(const struct style_list *styles, const char *line,
           size_t extent = end - &line[start];
           bool found = false;
           for (size_t j = 0; j < styles->size; j++) {
-            if (extent != strlen(styles->name[j]))
+            const style_t *s = styles->data[j];
+            if (extent != strlen(s->name))
               continue;
-            if (strncmp(&line[start], styles->name[j], extent) == 0) {
-              PR("\033[3%u;4%u", styles->style[j].fg, styles->style[j].bg);
-              if (styles->style[j].bold)
+            if (strncmp(&line[start], s->name, extent) == 0) {
+              PR("\033[3%u;4%u", s->fg, s->bg);
+              if (s->bold)
                 PR(";1");
-              if (styles->style[j].underline)
+              if (s->underline)
                 PR(";4");
               PR("m");
               i += strlen(SPAN_OPEN) + extent + 1;
@@ -383,7 +350,7 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
 
   char *line = NULL;
   size_t line_size = 0;
-  struct style_list styles = { 0 };
+  list_t styles = { 0 };
 
   for (;;) {
 
@@ -412,7 +379,7 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
         continue;
 
       // build a style defining these attributes
-      struct style s = { .fg = 9, .bg = 9, .bold = false, .underline = false };
+      style_t s = { .fg = 9, .bg = 9, .bold = false, .underline = false };
       if (match[2].rm_so != -1)
         s.fg = html_colour_to_ansi(&line[match[3].rm_so], 6);
       if (match[4].rm_so != -1)
@@ -425,7 +392,7 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
       // register this style for later highlighting
       const char *name_start = line + match[1].rm_so;
       size_t name_extent = match[1].rm_eo - match[1].rm_so;
-      if ((rc = style_list_add(&styles, name_start, name_extent, s)))
+      if ((rc = style_add(&styles, name_start, name_extent, s)))
         goto done1;
 
     } else if (strcmp(line, "<pre id='vimCodeElement'>\n") == 0) {
@@ -459,7 +426,7 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
 
 done1:
   // clean up
-  style_list_clear(&styles);
+  list_free(&styles, (void(*)(void*))style_free);
   free(line);
   regfree(&style);
 
