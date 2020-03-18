@@ -9,10 +9,7 @@
 
 #pragma once
 
-#include <stddef.h>
-
 // turn a six character string representing an HTML colour into a value 0-7
 // representing an ANSI terminal code to most closely match that colour
 __attribute__((visibility("internal")))
-unsigned html_colour_to_ansi(const char *html,
-  __attribute__((unused)) size_t length);
+unsigned html_colour_to_ansi(const char *html);

@@ -381,9 +381,9 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
       // build a style defining these attributes
       style_t s = { .fg = 9, .bg = 9, .bold = false, .underline = false };
       if (match[2].rm_so != -1)
-        s.fg = html_colour_to_ansi(&line[match[3].rm_so], 6);
+        s.fg = html_colour_to_ansi(&line[match[3].rm_so]);
       if (match[4].rm_so != -1)
-        s.bg = html_colour_to_ansi(&line[match[5].rm_so], 6);
+        s.bg = html_colour_to_ansi(&line[match[5].rm_so]);
       if (match[7].rm_so != -1)
         s.bold = true;
       if (match[9].rm_so != -1)

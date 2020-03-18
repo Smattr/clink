@@ -21,8 +21,7 @@ static unsigned diff(uint8_t a, uint8_t b) {
   return b - a;
 }
 
-unsigned html_colour_to_ansi(const char *html, size_t length) {
-  assert(length == 6);
+unsigned html_colour_to_ansi(const char *html) {
 
   // extract the color as RGB
   uint8_t red = hex_to_int(html[0]) * 16 + hex_to_int(html[1]);
