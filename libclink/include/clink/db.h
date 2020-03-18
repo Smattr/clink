@@ -27,6 +27,17 @@ int clink_db_open(struct clink_db *db, const char *path);
  */
 int clink_db_remove(struct clink_db *db, const char *path);
 
+/** add a line of file content to a Clink symbol database
+ *
+ * @param db Database structure to operate on
+ * @param path Path to the origin file
+ * @param line Text content of the line
+ * @param lineno Line number of the line
+ * @return 0 on success, a Clink error code on failure
+ */
+int clink_db_add_line(struct clink_db *db, const char *path,
+  const char *line, unsigned long lineno);
+
 /** add symbol to Clink symbol database
  *
  * @param db Database to operate on
