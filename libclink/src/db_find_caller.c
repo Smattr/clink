@@ -8,7 +8,8 @@
 #include <string.h>
 
 int clink_db_find_caller(struct clink_db *db, const char *name,
-    int (*callback)(const struct clink_result *result)) {
+    int (*callback)(const struct clink_result *result, void *state),
+    void *callback_state) {
 
   assert(db != NULL);
   assert(name != NULL);
@@ -55,7 +56,7 @@ int clink_db_find_caller(struct clink_db *db, const char *name,
     };
 
     // pass it to the callback
-    if ((rc = callback(&res)))
+    if ((rc = callback(&res, callback_state)))
       goto done;
   }
 

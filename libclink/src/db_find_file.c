@@ -9,7 +9,8 @@
 #include <string.h>
 
 int clink_db_find_file(struct clink_db *db, const char *name,
-    int (*callback)(const char *path)) {
+    int (*callback)(const char *path, void *state),
+    void *callback_state) {
 
   assert(db != NULL);
   assert(name != NULL);
@@ -48,7 +49,7 @@ int clink_db_find_file(struct clink_db *db, const char *name,
     const char *res = (char*)sqlite3_column_text(stmt, 0);
 
     // pass it to the callback
-    if ((rc = callback(res)))
+    if ((rc = callback(res, callback_state)))
       goto done;
   }
 
