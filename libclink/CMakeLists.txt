@@ -7,7 +7,8 @@ add_library(libclink
   src/parse_asm.c
   src/parse_c.c
   src/run.c
-  src/vim.c)
+  src/vim_highlight.c
+  src/vim_open.c)
 
 target_include_directories(libclink
   PUBLIC
