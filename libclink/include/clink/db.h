@@ -142,7 +142,8 @@ int clink_db_find_symbol(struct clink_db *db, const char *name,
  */
 int clink_db_results(struct clink_db *db, const char *name,
   int (*finder)(struct clink_db *db, const char *name,
-    int (*callback)(const struct clink_result *result)),
+    int (*callback)(const struct clink_result *result, void *state),
+    void *callback_state),
   struct clink_result **results, size_t *results_size);
 
 /** close a Clink symbol database
