@@ -17,7 +17,9 @@ add_library(libclink
   src/list.c
   src/parse_asm.c
   src/parse_c.c
+  src/result_copy.c
   src/run.c
+  src/symbol_copy.c
   src/vim_highlight.c
   src/vim_open.c)
 

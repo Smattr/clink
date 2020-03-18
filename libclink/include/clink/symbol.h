@@ -23,10 +23,14 @@ struct clink_symbol {
   char *parent;
 };
 
+int clink_symbol_copy(struct clink_symbol *dst, const struct clink_symbol *src);
+
 struct clink_result {
   struct clink_symbol symbol;
   char *context;
 };
+
+int clink_result_copy(struct clink_result *dst, const struct clink_result *src);
 
 #ifdef __cplusplus
 }
