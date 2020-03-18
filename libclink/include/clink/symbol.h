@@ -25,12 +25,16 @@ struct clink_symbol {
 
 int clink_symbol_copy(struct clink_symbol *dst, const struct clink_symbol *src);
 
+void clink_symbol_clear(struct clink_symbol *s);
+
 struct clink_result {
   struct clink_symbol symbol;
   char *context;
 };
 
 int clink_result_copy(struct clink_result *dst, const struct clink_result *src);
+
+void clink_result_clear(struct clink_result *r);
 
 #ifdef __cplusplus
 }
