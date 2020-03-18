@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <string.h>
 
-int clink_db_find_symbol(struct clink_db *db, const char *name,
+int clink_db_find_definition(struct clink_db *db, const char *name,
     int (*callback)(const struct clink_result *result)) {
 
   assert(db != NULL);

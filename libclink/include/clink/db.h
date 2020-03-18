@@ -36,7 +36,7 @@ int clink_db_remove(struct clink_db *db, const char *path);
  * @return 0 on success, a Clink error code or the returned value from the
  *   caller’s callback on failure
  */
-int clink_db_find_symbol(struct clink_db *db, const char *name,
+int clink_db_find_definition(struct clink_db *db, const char *name,
   int (*callback)(const struct clink_result *result));
 
 /** find occurrences of a symbol in a Clink symbol database
