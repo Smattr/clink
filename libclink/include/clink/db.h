@@ -27,6 +27,30 @@ int clink_db_open(struct clink_db *db, const char *path);
  */
 int clink_db_remove(struct clink_db *db, const char *path);
 
+/** find function calls within another function in a Clink symbol database
+ *
+ * @param db Database to search
+ * @param name Function to look within
+ * @param callback This is invoked for each call found. Return a non-zero value
+ *   to terminate the search.
+ * @return 0 on success, a Clink error code or the returned value from the
+ *   caller’s callback on failure
+ */
+int clink_db_find_call(struct clink_db *db, const char *name,
+  int (*callback)(const struct clink_result *result));
+
+/** find function calls to a symbol in a Clink symbol database
+ *
+ * @param db Database to search
+ * @param name Function symbol to look for
+ * @param callback This is invoked for each call of the symbol found. Return a
+ *   non-zero value to terminate the search.
+ * @return 0 on success, a Clink error code or the returned value from the
+ *   caller’s callback on failure
+ */
+int clink_db_find_caller(struct clink_db *db, const char *name,
+  int (*callback)(const struct clink_result *result));
+
 /** find definitions of a symbol in a Clink symbol database
  *
  * @param db Database to search
