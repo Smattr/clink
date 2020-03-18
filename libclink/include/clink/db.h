@@ -27,6 +27,14 @@ int clink_db_open(struct clink_db *db, const char *path);
  */
 int clink_db_remove(struct clink_db *db, const char *path);
 
+/** add symbol to Clink symbol database
+ *
+ * @param db Database to operate on
+ * @param s Symbol to add
+ * @return 0 on success, a Clink error code on failure
+ */
+int clink_db_add_symbol(struct clink_db *db, const struct clink_symbol *s);
+
 /** find function calls within another function in a Clink symbol database
  *
  * @param db Database to search

@@ -6,6 +6,7 @@
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 static inline int sql_exec(sqlite3 *db, const char *query) {
   return sqlite3_exec(db, query, NULL, NULL, NULL);
@@ -28,14 +29,14 @@ static inline int sql_bind_text(sqlite3_stmt *stmt, const char *param,
 }
 
 static inline int sql_bind_int(sqlite3_stmt *stmt, const char *param,
-    int index, int value) {
+    int index, uint64_t value) {
 
   // sanity check that the index is correct
   assert(index == sqlite3_bind_parameter_index(stmt, param)
     && "incorrect parameter index");
   (void)param;
 
-  return sqlite3_bind_int(stmt, index, value);
+  return sqlite3_bind_int(stmt, index, (sqlite3_int64)value);
 }
 
 static inline bool sql_ok(int error) {
