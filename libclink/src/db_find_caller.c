@@ -27,12 +27,12 @@ int clink_db_find_caller(struct clink_db *db, const char *name,
     goto done;
   }
 
-  if ((rc = sql_bind_text(stmt, 1, name, strlen(name)))) {
+  if ((rc = sql_bind_text(stmt, "@name", 1, name, strlen(name)))) {
     rc = sqlite_error(rc);
     goto done;
   }
 
-  if ((rc = sqlite3_bind_int(stmt, 2, CLINK_FUNCTION_CALL))) {
+  if ((rc = sql_bind_int(stmt, "@category", 2, CLINK_FUNCTION_CALL))) {
     rc = sqlite_error(rc);
     goto done;
   }

@@ -27,12 +27,12 @@ int clink_db_find_definition(struct clink_db *db, const char *name,
     goto done;
   }
 
-  if ((rc = sql_bind_text(stmt, 1, name, strlen(name)))) {
+  if ((rc = sql_bind_text(stmt, "@name", 1, name, strlen(name)))) {
     sqlite_error(rc);
     goto done;
   }
 
-  if ((rc = sqlite3_bind_int(stmt, 2, CLINK_DEFINITION))) {
+  if ((rc = sql_bind_int(stmt, "@category", 2, CLINK_DEFINITION))) {
     rc = sqlite_error(rc);
     goto done;
   }

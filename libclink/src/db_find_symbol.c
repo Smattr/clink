@@ -27,7 +27,7 @@ int clink_db_find_symbol(struct clink_db *db, const char *name,
     goto done;
   }
 
-  if ((rc = sql_bind_text(stmt, 1, name, strlen(name)))) {
+  if ((rc = sql_bind_text(stmt, "@name", 1, name, strlen(name)))) {
     rc = sqlite_error(rc);
     goto done;
   }

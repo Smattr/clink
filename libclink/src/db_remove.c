@@ -24,13 +24,9 @@ int clink_db_remove(struct clink_db *db, const char *path) {
     goto done;
   }
 
-  {
-    int index = sqlite3_bind_parameter_index(symbols_delete, "@path");
-    assert(index != 0);
-    if ((rc = sql_bind_text(symbols_delete, index, path, strlen(path)))) {
-      rc = sqlite_error(rc);
-      goto done;
-    }
+  if ((rc = sql_bind_text(symbols_delete, "@path", 1, path, strlen(path)))) {
+    rc = sqlite_error(rc);
+    goto done;
   }
 
   {
@@ -50,13 +46,9 @@ int clink_db_remove(struct clink_db *db, const char *path) {
     goto done;
   }
 
-  {
-    int index = sqlite3_bind_parameter_index(content_delete, "@path");
-    assert(index != 0);
-    if ((rc = sql_bind_text(content_delete, index, path, strlen(path)))) {
-      rc = sqlite_error(rc);
-      goto done;
-    }
+  if ((rc = sql_bind_text(content_delete, "@path", 1, path, strlen(path)))) {
+    rc = sqlite_error(rc);
+    goto done;
   }
 
   {

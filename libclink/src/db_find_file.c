@@ -32,12 +32,12 @@ int clink_db_find_file(struct clink_db *db, const char *name,
     goto done;
   }
 
-  if ((rc = sql_bind_text(stmt, 1, name, strlen(name)))) {
+  if ((rc = sql_bind_text(stmt, "@path1", 1, name, strlen(name)))) {
     rc = sqlite_error(rc);
     goto done;
   }
 
-  if ((rc = sql_bind_text(stmt, 2, path, strlen(path)))) {
+  if ((rc = sql_bind_text(stmt, "@path2", 2, path, strlen(path)))) {
     rc = sqlite_error(rc);
     goto done;
   }
