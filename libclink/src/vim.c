@@ -282,14 +282,11 @@ static int mktmp(char **temp) {
   return 0;
 }
 
-int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size) {
+int clink_vim_highlight(const char *filename,
+    int (*callback)(const char *line)) {
 
   assert(filename != NULL);
-  assert(lines != NULL);
-  assert(lines_size != NULL);
-
-  // accrue lines here that we will later assign to lines and lines_size
-  list_t sl = { 0 };
+  assert(callback != NULL);
 
   FILE *html = NULL;
 
@@ -415,11 +412,11 @@ int clink_vim_highlight(const char *filename, char ***lines, size_t *lines_size)
     if ((rc = from_html(&styles, line, &highlighted)))
       goto done1;
 
-    // add the new line
-    if ((rc = list_append(&sl, highlighted))) {
-      free(highlighted);
+    // yield the new line
+    rc = callback(highlighted);
+    free(highlighted);
+    if (rc != 0)
       goto done1;
-    }
   }
 
   // success
@@ -441,13 +438,6 @@ done:
   if (temp != NULL) {
     (void)rmdir(temp);
     free(temp);
-  }
-
-  if (rc == 0) {
-    *lines = (char**)sl.data;
-    *lines_size = sl.size;
-  } else {
-    list_free(&sl, NULL);
   }
 
   return rc;

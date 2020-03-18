@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static int print(const char *line) {
+  printf("%s", line);
+  return 0;
+}
+
 int main(int argc, char **argv) {
 
   if (argc != 2) {
@@ -11,19 +16,5 @@ int main(int argc, char **argv) {
 
   const char *filename = argv[1];
 
-  char **lines = NULL;
-  size_t lines_size = 0;
-  int rc = clink_vim_highlight(filename, &lines, &lines_size);
-  if (rc != 0)
-    return rc;
-
-  for (size_t i = 0; i < lines_size; i++)
-    printf("%s", lines[i]);
-
-  // clean up
-  for (size_t i = 0; i < lines_size; i++)
-    free(lines[i]);
-  free(lines);
-
-  return EXIT_SUCCESS;
+  return clink_vim_highlight(filename, &print);
 }
