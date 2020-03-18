@@ -4,6 +4,7 @@ add_library(libclink
   src/colour.c
   src/db_close.c
   src/db_open.c
+  src/db_remove.c
   src/error.c
   src/list.c
   src/parse_asm.c
