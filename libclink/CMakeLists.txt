@@ -2,6 +2,7 @@ project(libclink LANGUAGES C)
 
 add_library(libclink
   src/colour.c
+  src/db_close.c
   src/db_open.c
   src/error.c
   src/list.c

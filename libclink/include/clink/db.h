@@ -13,3 +13,9 @@ struct clink_db {
  * @return 0 on success, a Clink error code on failure
  */
 int clink_db_open(struct clink_db *db, const char *path);
+
+/** close a Clink symbol database
+ *
+ * @param db Database structure to close and deallocate members from
+ */
+void clink_db_close(struct clink_db *db);
