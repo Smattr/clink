@@ -1,5 +1,6 @@
 #pragma once
 
+#if 0
 #include <string>
 #include <vector>
 
@@ -22,3 +23,25 @@ struct Options {
 };
 
 extern Options opts;
+#endif
+
+#include <stdbool.h>
+#include <stddef.h>
+
+struct options {
+
+  // path to the database
+  char *database_filename;
+
+  // how many threads to use (0 == auto)
+  unsigned long jobs;
+
+  // directories to search for #included files
+  char **include_paths;
+  size_t include_paths_size;
+
+  // do not use ANSI terminal colours?
+  bool no_colour;
+};
+
+extern struct options options;
