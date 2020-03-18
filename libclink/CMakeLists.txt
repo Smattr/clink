@@ -3,6 +3,7 @@ project(libclink LANGUAGES C)
 add_library(libclink
   src/colour.c
   src/db_close.c
+  src/db_find_definition.c
   src/db_find_symbol.c
   src/db_open.c
   src/db_remove.c
