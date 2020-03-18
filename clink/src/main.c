@@ -17,6 +17,7 @@ static void parse_args(int argc, char **argv) {
       { "jobs",      required_argument, 0, 'j' },
       { "no-color",  no_argument,       0, 130 },
       { "no-colour", no_argument,       0, 130 },
+      { "threads",   required_argument, 0, 'j' },
       { 0, 0, 0, 0 },
     };
 
