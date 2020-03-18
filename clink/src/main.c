@@ -11,13 +11,14 @@ static void parse_args(int argc, char **argv) {
 
   for (;;) {
     static const struct option opts[] = {
-      { "color",     no_argument,       0, 129 },
-      { "colour",    no_argument,       0, 129 },
-      { "help",      no_argument,       0, 'h' },
-      { "jobs",      required_argument, 0, 'j' },
-      { "no-color",  no_argument,       0, 130 },
-      { "no-colour", no_argument,       0, 130 },
-      { "threads",   required_argument, 0, 'j' },
+      { "color",         no_argument,       0, 129 },
+      { "colour",        no_argument,       0, 129 },
+      { "help",          no_argument,       0, 'h' },
+      { "jobs",          required_argument, 0, 'j' },
+      { "line-oriented", no_argument,       0, 'l' },
+      { "no-color",      no_argument,       0, 130 },
+      { "no-colour",     no_argument,       0, 130 },
+      { "threads",       required_argument, 0, 'j' },
       { 0, 0, 0, 0 },
     };
 
@@ -49,6 +50,10 @@ static void parse_args(int argc, char **argv) {
             exit(EXIT_FAILURE);
           }
         }
+        break;
+
+      case 'l': // --line-oriented
+        options.line_oriented = true;
         break;
 
       case 130: // --no-colour

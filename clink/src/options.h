@@ -42,6 +42,9 @@ struct options {
 
   // do not use ANSI terminal colours?
   bool no_colour;
+
+  // use line-oriented interface instead of Curses?
+  bool line_oriented;
 };
 
 extern struct options options;
