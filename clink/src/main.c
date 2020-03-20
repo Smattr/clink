@@ -1,6 +1,8 @@
+#include <assert.h>
 #include "build.h"
 #include <clink/clink.h>
 #include <errno.h>
+#include "get_db_path.h"
 #include <getopt.h>
 #include <limits.h>
 #include "options.h"
@@ -96,9 +98,27 @@ int main(int argc, char **argv) {
   // parse command line arguments
   parse_args(argc, argv);
 
+  // find and open the symbol database
+  struct clink_db db = { 0 };
+  {
+    char *db_path = NULL;
+    int rc = get_db_path(&db_path);
+    if (rc != 0) {
+      fprintf(stderr, "failed to locate database path: %s\n", strerror(rc));
+      return EXIT_FAILURE;
+    }
+
+    rc = clink_db_open(&db, db_path);
+    free(db_path); // no longer needed
+    if (rc != 0) {
+      fprintf(stderr, "failed to open database: %s\n", clink_strerror(rc));
+      return EXIT_FAILURE;
+    }
+  }
+
   // were we asked to build/update the database?
   if (!options.no_database_update) {
-    int rc = build(NULL);
+    int rc = build(&db);
     if (rc != 0) {
       fprintf(stderr, "error: %s\n", clink_strerror(rc));
       return EXIT_FAILURE;
