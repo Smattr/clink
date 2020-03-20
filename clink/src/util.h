@@ -21,9 +21,6 @@ static inline std::string lstrip(const std::string &s) {
     }
   }
 
-  if (t == "")
-    return "\n";
-
   return t;
 }
 

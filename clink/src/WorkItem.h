@@ -1,9 +1,9 @@
 #pragma once
 
+#include <clink/clink.h>
 #include "log.h"
 #include "Resources.h"
 #include <string>
-#include "Vim.h"
 
 class WorkItem {
 
@@ -59,10 +59,11 @@ class ReadFile : public WorkItem {
   void run(Resources &resources) final {
     unsigned lineno = 1;
     LOG("highlighting %s", path.c_str());
-    for (const std::string &line : vim_highlight(path)) {
+    (void)clink::vim_highlight(path, [&](const std::string &line) {
       resources.consumer->consume(path, lineno, line);
       lineno++;
-    }
+      return 0;
+    });
   }
 
   virtual ~ReadFile() {}

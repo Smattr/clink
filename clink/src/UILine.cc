@@ -41,7 +41,7 @@ int UILine::run(Database &db) {
         print_leader(vs);
         for (const auto &s : vs) {
           cout << s.symbol.path << " " << s.symbol.parent << " "
-            << s.symbol.lineno << " " << lstrip(s.context);
+            << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
@@ -51,7 +51,7 @@ int UILine::run(Database &db) {
         print_leader(vs);
         for (const auto &s : vs) {
           cout << s.symbol.path << " " << (command + 1) << " "
-            << s.symbol.lineno << " " << lstrip(s.context);
+            << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
@@ -61,7 +61,7 @@ int UILine::run(Database &db) {
         print_leader(vs);
         for (const auto &s : vs) {
           cout << s.symbol.path << " " << s.symbol.name << " "
-            << s.symbol.lineno << " " << lstrip(s.context);
+            << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
@@ -71,7 +71,7 @@ int UILine::run(Database &db) {
         print_leader(vs);
         for (const auto &s : vs) {
           cout << s.symbol.path << " " << s.symbol.parent << " "
-            << s.symbol.lineno << " " << lstrip(s.context);
+            << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
@@ -92,7 +92,7 @@ int UILine::run(Database &db) {
         print_leader(vs);
         for (const auto &s : vs)
           cout << s.symbol.path << " " << s.symbol.parent << " "
-            << s.symbol.lineno << " " << lstrip(s.context);
+            << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         break;
       }
 
