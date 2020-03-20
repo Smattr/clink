@@ -94,39 +94,6 @@ fail:
   return EXIT_FAILURE;
 }
 
-int vim_open(const string &filename, unsigned long line, unsigned long col) {
-  string cursor = "+call cursor(" + to_string(line) + "," + to_string(col) + ")";
-  char const *argv[] = { "vim", cursor.c_str(), filename.c_str(), nullptr };
-  return run(argv);
-}
-
-#ifdef TEST_VIM_OPEN
-static void usage(const string &prog) {
-  cerr << "usage: " << prog << " filename line col\n";
-}
-
-int main(int argc, char **argv) {
-  if (argc != 4) {
-    usage(argv[0]);
-    return EXIT_FAILURE;
-  }
-
-  const string filename = argv[1];
-  unsigned long line, col;
-
-  try {
-    line = stoul(argv[2]);
-    col = stoul(argv[3]);
-  } catch (exception &e) {
-    cerr << e.what() << "\n";
-    usage(argv[0]);
-    return EXIT_FAILURE;
-  }
-
-  return vim_open(filename, line, col);
-}
-#endif
-
 /******************************************************************************
  *                                                                            *
  * The remainder of this file is essentially insanity. Don't say I didn't     *

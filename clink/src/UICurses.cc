@@ -428,7 +428,7 @@ enter:
       int read_winch = sigaction(SIGWINCH, &m_original_sigwinch_handler,
         &curses_winch);
 
-      int ret = vim_open(m_results->rows[m_select_index].path,
+      int ret = clink::vim_open(m_results->rows[m_select_index].path,
           m_results->rows[m_select_index].line,
           m_results->rows[m_select_index].col);
       if (ret != EXIT_SUCCESS) {
