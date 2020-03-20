@@ -1,4 +1,5 @@
 add_executable(clink
+  src/build.c
   src/loi.c
   src/main.c
   src/options.c)

@@ -1,32 +1,15 @@
 #pragma once
 
-#if 0
-#include <string>
-#include <vector>
-
-typedef enum {
-  UI_NONE,
-  UI_CURSES,
-  UI_LINE,
-} ui_t;
-
-struct Options {
-  const char *database;
-  bool update_database;
-  ui_t ui;
-
-  // Parallelism (0 == auto).
-  unsigned long threads;
-
-  // Directories to look in for #include files
-  std::vector<std::string> include_dirs;
-};
-
-extern Options opts;
-#endif
-
 #include <stdbool.h>
 #include <stddef.h>
+
+/** a user interface selection
+ */
+enum interface {
+  CURSES = 0, ///< text user interface using Curses
+  LOI = 1,    ///< line-oriented interface
+  NONE = 2,   ///< no interface (exit after database update)
+};
 
 struct options {
 
@@ -43,8 +26,11 @@ struct options {
   // do not use ANSI terminal colours?
   bool no_colour;
 
-  // use line-oriented interface instead of Curses?
-  bool line_oriented;
+  /// which user interface to open
+  enum interface interface;
+
+  // skip updating the database?
+  bool no_database_update;
 };
 
 extern struct options options;
