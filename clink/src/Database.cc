@@ -3,11 +3,10 @@
 #include <clink/clink.h>
 #include <cstring>
 #include "Database.h"
-#include "errno.h"
+#include <errno.h>
 #include "log.h"
 #include <sqlite3.h>
 #include <string>
-#include "Symbol.h"
 #include <unistd.h>
 #include <vector>
 
