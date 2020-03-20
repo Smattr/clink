@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <array>
 #include <clink/Error.h>
 #include <optional>
 #include <regex.h>
@@ -15,7 +16,7 @@ struct Match {
 };
 
 // RAII wrapper around POSIX regex
-template<size_t MATCHES, size_t CORE>
+template<size_t MATCHES, size_t CORE = 1>
 class Re {
 
  public:
@@ -25,22 +26,36 @@ class Re {
       throw Error("regular expression compilation failed", rc);
   }
 
-  std::optional<Match> match(const std::string &s) const {
+  std::optional<std::array<Match, MATCHES>> matches(const std::string &s) const {
 
     // allocate space for the number of matches we anticipate
-    regmatch_t matches[MATCHES];
-    size_t matches_len = sizeof(matches) / sizeof(matches[0]);
+    regmatch_t ms[MATCHES];
+    size_t ms_len = sizeof(ms) / sizeof(ms[0]);
 
     // try to match the input against our regex
-    int rc = regexec(&regex, s.c_str(), matches_len, matches, 0);
+    int rc = regexec(&regex, s.c_str(), ms_len, ms, 0);
 
     // if the input did not match, we are done
     if (rc != 0)
       return {};
 
-    // construct a representation of the match
-    return Match{ static_cast<size_t>(matches[CORE].rm_so),
-                  static_cast<size_t>(matches[CORE].rm_eo) };
+    // otherwise, construct a representation of all the matches
+    std::array<Match, MATCHES> m;
+    for (size_t i = 0; i < ms_len; i++)
+      m[i] = Match{ static_cast<size_t>(ms[i].rm_so),
+                    static_cast<size_t>(ms[i].rm_eo) };
+
+    return m;
+  }
+
+  std::optional<Match> match(const std::string &s) const {
+
+    std::optional<std::array<Match, MATCHES>> ms = matches(s);
+
+    if (ms.has_value())
+      return (*ms)[CORE];
+
+    return {};
   }
 
   ~Re() {
