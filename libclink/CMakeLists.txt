@@ -36,6 +36,10 @@ if (NOT CLANG_LIBRARY)
 endif ()
 target_link_libraries(libclink ${CLANG_LIBRARY})
 
+find_package(SQLite3 REQUIRED)
+target_include_directories(libclink PUBLIC ${SQLite3_INCLUDE_DIRS})
+target_link_libraries(libclink ${SQLite3_LIBRARIES})
+
 install(TARGETS libclink EXPORT LibclinkConfig
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
