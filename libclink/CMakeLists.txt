@@ -4,7 +4,8 @@ add_library(libclink
   src/Error.cc
   src/parse_asm.cc
   src/parse_c.cc
-  src/run.cc)
+  src/run.cc
+  src/vim_open.cc)
 
 target_include_directories(libclink
   PUBLIC
