@@ -6,6 +6,7 @@ add_library(libclink
   src/parse_asm.cc
   src/parse_c.cc
   src/run.cc
+  src/TemporaryDirectory.cc
   src/vim_open.cc)
 
 target_include_directories(libclink
