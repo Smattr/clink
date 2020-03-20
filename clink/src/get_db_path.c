@@ -50,15 +50,12 @@ int get_db_path(char **path) {
       break;
 
     // move one directory up
-    for (size_t i = strlen(cwd) - 1; ; i--) {
-      if (cwd[i] == '/') {
-        if (i == 0) {
-          cwd[1] = '\0';
-        } else {
-          cwd[i] = '\0';
-        }
-        break;
-      }
+    char *slash = strrchr(cwd, '/');
+    if (cwd == slash) {
+      // next directory up is the root directory
+      cwd[1] = '\0';
+    } else {
+      *slash = '\0';
     }
   }
 
