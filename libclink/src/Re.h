@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <array>
+#include <climits>
 #include <clink/Error.h>
 #include <optional>
 #include <regex.h>
@@ -14,6 +15,12 @@ struct Match {
   size_t start_offset;
   size_t end_offset;
 };
+
+static inline size_t off_to_size(off_t offset) {
+  if (offset < 0)
+    return SIZE_MAX;
+  return size_t(offset);
+}
 
 // RAII wrapper around POSIX regex
 template<size_t MATCHES, size_t CORE = 1>
@@ -42,8 +49,7 @@ class Re {
     // otherwise, construct a representation of all the matches
     std::array<Match, MATCHES> m;
     for (size_t i = 0; i < ms_len; i++)
-      m[i] = Match{ static_cast<size_t>(ms[i].rm_so),
-                    static_cast<size_t>(ms[i].rm_eo) };
+      m[i] = Match{ off_to_size(ms[i].rm_so), off_to_size(ms[i].rm_eo) };
 
     return m;
   }
