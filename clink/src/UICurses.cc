@@ -12,7 +12,6 @@
 #include "UICurses.h"
 #include "util.h"
 #include <vector>
-#include "Vim.h"
 
 using namespace std;
 

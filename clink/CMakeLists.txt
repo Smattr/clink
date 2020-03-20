@@ -5,7 +5,6 @@ add_executable(clink
   src/main.cc
   src/UICurses.cc
   src/UILine.cc
-  src/Vim.cc
   src/WorkItem.cc
   src/WorkQueue.cc)
 
