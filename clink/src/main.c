@@ -116,14 +116,19 @@ int main(int argc, char **argv) {
     }
   }
 
+  int rc = 0;
+
   // were we asked to build/update the database?
   if (!options.no_database_update) {
-    int rc = build(&db);
+    rc = build(&db);
     if (rc != 0) {
       fprintf(stderr, "error: %s\n", clink_strerror(rc));
-      return EXIT_FAILURE;
+      goto done;
     }
   }
 
-  return EXIT_SUCCESS;
+done:
+  clink_db_close(&db);
+
+  return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
