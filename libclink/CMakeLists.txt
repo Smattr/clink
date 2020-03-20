@@ -1,6 +1,7 @@
 project(libclink LANGUAGES CXX)
 
 add_library(libclink
+  src/colour.cc
   src/Error.cc
   src/parse_asm.cc
   src/parse_c.cc
