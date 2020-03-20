@@ -3,7 +3,8 @@ project(libclink LANGUAGES CXX)
 add_library(libclink
   src/Error.cc
   src/parse_asm.cc
-  src/parse_c.cc)
+  src/parse_c.cc
+  src/run.cc)
 
 target_include_directories(libclink
   PUBLIC
