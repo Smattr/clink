@@ -52,7 +52,11 @@ int get_db_path(char **path) {
     // move one directory up
     for (size_t i = strlen(cwd) - 1; ; i--) {
       if (cwd[i] == '/') {
-        cwd[i] = '\0';
+        if (i == 0) {
+          cwd[1] = '\0';
+        } else {
+          cwd[i] = '\0';
+        }
         break;
       }
     }
