@@ -11,7 +11,7 @@ class Error : public std::runtime_error {
  public:
   int code;
 
-  explicit Error(const std::string &message, int code = 0);
+  explicit Error(const std::string &message, int code_ = 0);
 };
 
 }

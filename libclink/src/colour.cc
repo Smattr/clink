@@ -2,6 +2,7 @@
 #include <array>
 #include <cassert>
 #include <climits>
+#include "colour.h"
 #include <cstdint>
 #include <ctype.h>
 

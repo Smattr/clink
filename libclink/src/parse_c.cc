@@ -75,7 +75,7 @@ namespace { class ClangString {
   CXString s;
 
  public:
-  explicit ClangString(CXString s): s(s) { }
+  explicit ClangString(CXString s_): s(s_) { }
 
   std::string get_string() const {
     return clang_getCString(s);

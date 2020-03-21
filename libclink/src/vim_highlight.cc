@@ -5,6 +5,7 @@
 #include <clink/vim.h>
 #include "colour.h"
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <functional>
 #include <fstream>

@@ -4,7 +4,7 @@
 
 namespace clink {
 
-Error::Error(const std::string &message, int code):
-  std::runtime_error(message), code(code) { }
+Error::Error(const std::string &message, int code_):
+  std::runtime_error(message), code(code_) { }
 
 }
