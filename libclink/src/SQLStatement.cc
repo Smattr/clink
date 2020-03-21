@@ -1,3 +1,5 @@
+#include <cstddef>
+#include <cassert>
 #include <clink/Error.h>
 #include <sqlite3.h>
 #include "SQLStatement.h"
