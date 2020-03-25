@@ -77,8 +77,8 @@ restart2:;
   tie(prefix, current) = directory_stack.top();
 
   for (;;) {
-    struct dirent entry, *result;
-    if (readdir_r(current, &entry, &result) != 0 || result == nullptr) {
+    struct dirent *entry = readdir(current);
+    if (entry == nullptr) {
       // Exhausted this directory.
       closedir(current);
       current = nullptr;
@@ -87,30 +87,30 @@ restart2:;
     }
 
     // If this is a directory, descend into it.
-    if (entry.d_type == DT_DIR && strcmp(entry.d_name, ".") &&
-          strcmp(entry.d_name, "..")) {
-      string dname = prefix + entry.d_name + "/";
+    if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") &&
+          strcmp(entry->d_name, "..")) {
+      string dname = prefix + entry->d_name + "/";
       push_directory_stack(dname);
       goto restart2;
     }
 
     // If this entry is a C/C++ file, see if it is "new".
-    if (entry.d_type == DT_REG && (ends_with(entry.d_name, ".c") ||
-                                   ends_with(entry.d_name, ".cpp") ||
-                                   ends_with(entry.d_name, ".h") ||
-                                   ends_with(entry.d_name, ".hpp") ||
-                                   ends_with(entry.d_name, ".s") ||
-                                   ends_with(entry.d_name, ".S"))) {
-      string path = prefix + entry.d_name;
+    if (entry->d_type == DT_REG && (ends_with(entry->d_name, ".c") ||
+                                   ends_with(entry->d_name, ".cpp") ||
+                                   ends_with(entry->d_name, ".h") ||
+                                   ends_with(entry->d_name, ".hpp") ||
+                                   ends_with(entry->d_name, ".s") ||
+                                   ends_with(entry->d_name, ".S"))) {
+      string path = prefix + entry->d_name;
       struct stat buf;
       if (stat(path.c_str(), &buf) < 0 || buf.st_mtime <= era_start) {
         // Consider this file "old".
         continue;
       }
 
-      if (ends_with(entry.d_name, ".c") || ends_with(entry.d_name, ".cpp")
-          || ends_with(entry.d_name, ".h") ||
-          ends_with(entry.d_name, ".hpp")) {
+      if (ends_with(entry->d_name, ".c") || ends_with(entry->d_name, ".cpp")
+          || ends_with(entry->d_name, ".h") ||
+          ends_with(entry->d_name, ".hpp")) {
         return new ParseCXXFile(normalise_path(path));
       } else {
         return new ParseAsmFile(normalise_path(path));
