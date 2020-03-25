@@ -8,6 +8,7 @@
 #include "SQLStatement.h"
 #include <string>
 #include <unistd.h>
+#include <vector>
 
 namespace clink {
 
@@ -152,6 +153,15 @@ int Database::find_symbol(const std::string &name,
   return 0;
 }
 
+std::vector<Result> Database::find_symbols(const std::string &name) {
+  std::vector<Result> rs;
+  (void)find_symbol(name, [&](const Result &r) {
+    rs.push_back(r);
+    return 0;
+  });
+  return rs;
+}
+
 int Database::find_definition(const std::string &name,
     std::function<int(const Result&)> const &callback) {
   assert(db != nullptr);
@@ -181,6 +191,15 @@ int Database::find_definition(const std::string &name,
   }
 
   return 0;
+}
+
+std::vector<Result> Database::find_definitions(const std::string &name) {
+  std::vector<Result> rs;
+  (void)find_definition(name, [&](const Result &r) {
+    rs.push_back(r);
+    return 0;
+  });
+  return rs;
 }
 
 int Database::find_caller(const std::string &name,
@@ -214,6 +233,15 @@ int Database::find_caller(const std::string &name,
   return 0;
 }
 
+std::vector<Result> Database::find_callers(const std::string &name) {
+  std::vector<Result> rs;
+  (void)find_caller(name, [&](const Result &r) {
+    rs.push_back(r);
+    return 0;
+  });
+  return rs;
+}
+
 int Database::find_call(const std::string &name,
     std::function<int(const Result&)> const &callback) {
   assert(db != nullptr);
@@ -245,6 +273,15 @@ int Database::find_call(const std::string &name,
   return 0;
 }
 
+std::vector<Result> Database::find_calls(const std::string &name) {
+  std::vector<Result> rs;
+  (void)find_call(name, [&](const Result &r) {
+    rs.push_back(r);
+    return 0;
+  });
+  return rs;
+}
+
 int Database::find_file(const std::string &name,
     std::function<int(const std::string&)> const &callback) {
   assert(db != nullptr);
@@ -267,6 +304,15 @@ int Database::find_file(const std::string &name,
   }
 
   return 0;
+}
+
+std::vector<std::string> Database::find_files(const std::string &name) {
+  std::vector<std::string> rs;
+  (void)find_file(name, [&](const std::string &r) {
+    rs.push_back(r);
+    return 0;
+  });
+  return rs;
 }
 
 int Database::find_includer(const std::string &name,
@@ -298,6 +344,15 @@ int Database::find_includer(const std::string &name,
   }
 
   return 0;
+}
+
+std::vector<Result> Database::find_includers(const std::string &name) {
+  std::vector<Result> rs;
+  (void)find_includer(name, [&](const Result &r) {
+    rs.push_back(r);
+    return 0;
+  });
+  return rs;
 }
 
 Database::~Database() {
