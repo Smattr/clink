@@ -56,7 +56,7 @@ Database::Database(const std::string &path) {
     init(db);
 }
 
-void Database::add(const Symbol &s) {
+int Database::add(const Symbol &s) {
   assert(db != nullptr);
 
   // insert into the symbol table
@@ -76,10 +76,12 @@ void Database::add(const Symbol &s) {
 
   int rc = stmt.run();
   if (!sql_ok(rc))
-    throw Error("symbol insertion failed", rc);
+    return rc;
+
+  return 0;
 }
 
-void Database::add(const std::string &path, unsigned long lineno,
+int Database::add(const std::string &path, unsigned long lineno,
     const std::string &line) {
   assert(db != nullptr);
 
@@ -96,7 +98,9 @@ void Database::add(const std::string &path, unsigned long lineno,
 
   int rc = stmt.run();
   if (!sql_ok(rc))
-    throw Error("content insertion failed", rc);
+    return rc;
+
+  return 0;
 }
 
 void Database::remove(const std::string &path) {
