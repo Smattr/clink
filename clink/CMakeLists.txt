@@ -1,6 +1,5 @@
 add_executable(clink
   src/colours.cc
-  src/log.cc
   src/main.cc
   src/UICurses.cc
   src/UILine.cc

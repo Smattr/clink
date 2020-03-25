@@ -55,7 +55,6 @@ static string normalise_path(const string &path) {
     relative = resolved;
   }
 
-  LOG("normalised %s to %s", path.c_str(), relative);
   return relative;
 }
 

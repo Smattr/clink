@@ -8,7 +8,6 @@
 #include <getopt.h>
 #include <iostream>
 #include <limits.h>
-#include "log.h"
 #include <memory>
 #include "Options.h"
 #include <sys/stat.h>
@@ -30,7 +29,6 @@ static void usage(const char *progname) {
           "\n"
           " -b                       exit after updating the database\n"
           " -d                       don't update the database\n"
-          " --debug-log FILE         log operations to the given file\n"
           " --file FILE | -f FILE    database to use (.clink.db by default)\n"
           " --include DIR | -I DIR   add a directory in which #include files should be sought\n"
           " --line-oriented | -l     open line-oriented UI instead of ncurses\n"
@@ -49,11 +47,8 @@ Options opts = {
 
 static void parse_options(int argc, char **argv) {
 
-  enum { DEBUG_LOG_ID = 1000 };
-
   for (;;) {
     static const struct option options[] = {
-      {"debug-log", required_argument, 0, DEBUG_LOG_ID},
       {"file", required_argument, 0, 'f'},
       {"include", required_argument, 0, 'I'},
       {"jobs", required_argument, 0, 'j'},
@@ -102,14 +97,6 @@ static void parse_options(int argc, char **argv) {
         opts.ui = UI_LINE;
         break;
 
-      case DEBUG_LOG_ID:
-        log_file = fopen(optarg, "w");
-        if (log_file == nullptr) {
-          cerr << "failed to open " << optarg << "\n";
-          exit(EXIT_FAILURE);
-        }
-        break;
-
       default:
         usage(argv[0]);
         exit(EXIT_FAILURE);
@@ -123,7 +110,6 @@ static void parse_options(int argc, char **argv) {
       cerr << "your system appears to have an invalid number of processors\n";
       exit(EXIT_FAILURE);
     }
-    LOG("parallelising with %u threads", cores);
     opts.threads = (unsigned long)cores;
   }
 }

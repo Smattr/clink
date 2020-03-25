@@ -1,7 +1,6 @@
 #pragma once
 
 #include <clink/clink.h>
-#include "log.h"
 #include <string>
 #include "WorkQueueStub.h"
 
@@ -58,7 +57,6 @@ class ReadFile : public WorkItem {
 
   void run(clink::Database &db, WorkQueue&) final {
     unsigned lineno = 1;
-    LOG("highlighting %s", path.c_str());
     (void)clink::vim_highlight(path, [&](const std::string &line) {
       (void)db.add(path, lineno, line);
       lineno++;

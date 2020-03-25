@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <ctype.h>
 #include <limits.h>
-#include "log.h"
 #include <ncurses.h>
 #include <string>
 
@@ -31,9 +30,6 @@ int init_ncurses_colours() {
   // Make the current terminal colour scheme available.
   use_default_colors();
 
-  LOG("COLORS == %d", COLORS);
-  LOG("COLOR_PAIRS == %d", COLOR_PAIRS);
-
   static const array<short, 8> COLOURS = { { COLOR_BLACK, COLOR_RED,
     COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN,
     COLOR_WHITE } };
@@ -45,7 +41,6 @@ int init_ncurses_colours() {
     for (const short &bg : COLOURS) {
       short id = colour_pair_id(fg, bg);
       if (init_pair(id, fg, bg) != 0) {
-        LOG("failed to init colour pair %hd", id);
         return -1;
       }
     }
@@ -112,7 +107,6 @@ void printw_in_colour(const string &text) {
             } else if (code >= 40 && code <= 47) {
               bg = code - 40;
             } else if (code == 0) { // reset
-              LOG("resetting ncurses colours");
               standend();
               state = IDLE;
               continue;
@@ -122,8 +116,6 @@ void printw_in_colour(const string &text) {
         }
 
         if (c == 'm') {
-          LOG("switching to ncurses fg = %hd, bg = %hd, %sbold, %sunderline",
-            fg, bg, bold ? "" : "no ", underline ? "" : "no ");
           attrset((bold ? A_BOLD : 0) | (underline ? A_UNDERLINE : 0) |
             COLOR_PAIR(colour_pair_id(fg, bg)));
           state = IDLE;
