@@ -19,8 +19,8 @@ class WorkItem {
 class ParseCXXFile : public WorkItem {
 
  public:
-  ParseCXXFile(const std::string &path)
-    : path(path) {
+  ParseCXXFile(const std::string &path_)
+    : path(path_) {
   }
 
   void run(clink::Database &db, WorkQueue &wq) final;
@@ -35,8 +35,8 @@ class ParseCXXFile : public WorkItem {
 class ParseAsmFile : public WorkItem {
 
  public:
-  ParseAsmFile(const std::string &path)
-    : path(path) {
+  ParseAsmFile(const std::string &path_)
+    : path(path_) {
   }
 
   void run(clink::Database &db, WorkQueue &wq) final;
@@ -51,8 +51,8 @@ class ParseAsmFile : public WorkItem {
 class ReadFile : public WorkItem {
 
  public:
-  ReadFile(const std::string &path)
-    : path(path) {
+  ReadFile(const std::string &path_)
+    : path(path_) {
   }
 
   void run(clink::Database &db, WorkQueue&) final {

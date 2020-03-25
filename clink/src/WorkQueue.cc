@@ -13,8 +13,8 @@
 
 using namespace std;
 
-WorkQueue::WorkQueue(const string &directory, time_t era_start)
-    : era_start(era_start) {
+WorkQueue::WorkQueue(const string &directory, time_t era_start_)
+    : era_start(era_start_) {
   string prefix = directory + "/";
   DIR *dir = opendir(prefix.c_str());
   if (dir != nullptr)

@@ -14,7 +14,7 @@
 class WorkQueue {
 
  public:
-  WorkQueue(const std::string &directory, time_t era_start);
+  WorkQueue(const std::string &directory, time_t era_start_);
   virtual WorkItem *pop();
   virtual void push(const std::string &path);
 
