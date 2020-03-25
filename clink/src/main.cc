@@ -161,7 +161,9 @@ int main(int argc, char **argv) {
 
   if (opts.update_database) {
 
+#if 0
     if (opts.threads == 1) {
+#endif
 
       /* When running single-threaded, we can create a thread-unsafe file
        * queue and just directly pump results into the database.
@@ -183,6 +185,7 @@ int main(int argc, char **argv) {
 
       db.close_transaction();
 
+#if 0
     } else {
       assert(opts.threads > 1);
 
@@ -216,6 +219,7 @@ int main(int argc, char **argv) {
 
       db.close_transaction();
     }
+#endif
   }
 
   switch (opts.ui) {
