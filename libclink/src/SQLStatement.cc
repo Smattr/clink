@@ -22,7 +22,7 @@ static int sql_bind_int(sqlite3_stmt *stmt, int index, unsigned long value) {
 SQLStatement::SQLStatement(sqlite3 *db, const char *query) {
   if (int rc = sql_prepare(db, query, &stmt))
     throw Error(std::string("failed to prepare SQL statement \"") + query
-      + "\" (error: " + std::to_string(rc) + ")", rc);
+      + "\"", rc);
 }
 
 void SQLStatement::bind(const char *param, int index, const std::string &value) {
