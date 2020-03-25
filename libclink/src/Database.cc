@@ -74,7 +74,8 @@ void Database::add(const Symbol &s) {
   stmt.bind("@col", 5, s.colno);
   stmt.bind("@parent", 6, s.parent);
 
-  if (int rc = stmt.run())
+  int rc = stmt.run();
+  if (!sql_ok(rc))
     throw Error("symbol insertion failed", rc);
 }
 
@@ -93,7 +94,8 @@ void Database::add(const std::string &path, unsigned long lineno,
   stmt.bind("@line", 2, lineno);
   stmt.bind("@body", 3, line);
 
-  if (int rc = stmt.run())
+  int rc = stmt.run();
+  if (!sql_ok(rc))
     throw Error("content insertion failed", rc);
 }
 
