@@ -1,14 +1,14 @@
 #include <clink/clink.h>
 #include "Options.h"
-#include "Resources.h"
 #include <string>
+#include "Symbol.h"
 #include <vector>
 #include "WorkItem.h"
 #include "WorkQueue.h"
 
-void ParseCXXFile::run(Resources &resources) {
+void ParseCXXFile::run(SymbolConsumer &consumer, WorkQueue &wq) {
 
-  resources.consumer->purge(path);
+  consumer.purge(path);
 
   // build up --include args
   std::vector<std::string> includes{opts.include_dirs.size() * 2};
@@ -17,20 +17,20 @@ void ParseCXXFile::run(Resources &resources) {
     includes[i * 2 + 1] = opts.include_dirs[i];
   }
 
-  (void)clink::parse_c(path, includes, [&resources](const clink::Symbol &symbol) {
-    resources.consumer->consume(symbol);
-    resources.wq->push(symbol.path);
+  (void)clink::parse_c(path, includes, [&](const clink::Symbol &symbol) {
+    consumer.consume(symbol);
+    wq.push(symbol.path);
     return 0;
   });
 }
 
-void ParseAsmFile::run(Resources &resources) {
+void ParseAsmFile::run(SymbolConsumer &consumer, WorkQueue &wq) {
 
-  resources.consumer->purge(path);
+  consumer.purge(path);
 
-  (void)clink::parse_asm(path, [&resources](const clink::Symbol &symbol) {
-    resources.consumer->consume(symbol);
-    resources.wq->push(symbol.path);
+  (void)clink::parse_asm(path, [&](const clink::Symbol &symbol) {
+    consumer.consume(symbol);
+    wq.push(symbol.path);
     return 0;
   });
 }

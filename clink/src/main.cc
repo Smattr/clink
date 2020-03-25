@@ -10,7 +10,6 @@
 #include <limits.h>
 #include "log.h"
 #include "Options.h"
-#include "Resources.h"
 #include "Symbol.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -130,14 +129,12 @@ static void parse_options(int argc, char **argv) {
 }
 
 static void update(SymbolConsumer &db, WorkQueue &fq) {
-  Resources r(&db, &fq);
-
   for (;;) {
     WorkItem *item = fq.pop();
     if (item == nullptr)
       break;
 
-    item->run(r);
+    item->run(db, fq);
 
     delete item;
   }
