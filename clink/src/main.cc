@@ -171,19 +171,23 @@ int main(int argc, char **argv) {
 
       WorkQueue queue(".", era_start);
 
+#if 0
       /* Open a transaction before starting to manipulate the database.
        * Repeated insertions without a containing transaction are wrapped in
        * an automatic transaction. Commiting these automatic transactions
        * intolerably slows the database update.
        */
       db.open_transaction();
+#endif
 
       /* Scan the directory for files that have changed since the database
        * was last updated.
        */
       update(db, queue);
 
+#if 0
       db.close_transaction();
+#endif
 
 #if 0
     } else {
