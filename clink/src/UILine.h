@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Database.h"
+#include <cstddef>
+#include <clink/clink.h>
 #include "UI.h"
 
 /* Line-oriented interface. This interface is intended to behave like Cscope's
@@ -10,6 +11,6 @@
 class UILine : public UI {
 
  public:
-  int run(Database &db) final;
+  int run(clink::Database &db) final;
 
 };

@@ -5,10 +5,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <curses.h>
-#include "Database.h"
 #include <signal.h>
 #include <string>
-#include "Symbol.h"
 #include "UICurses.h"
 #include "util.h"
 #include <vector>
@@ -47,34 +45,34 @@ static Results *format_results(const vector<clink::Result> &vs) {
 
 // Wrappers for each database query follow.
 
-static Results *find_symbol(const Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_symbol(query);
+static Results *find_symbol(clink::Database &db, const string &query) {
+  vector<clink::Result> vs = db.find_symbols(query);
   return format_results(vs);
 }
 
-static Results *find_definition(const Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_definition(query);
+static Results *find_definition(clink::Database &db, const string &query) {
+  vector<clink::Result> vs = db.find_definitions(query);
   return format_results(vs);
 }
 
-static Results *find_call(const Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_call(query);
+static Results *find_call(clink::Database &db, const string &query) {
+  vector<clink::Result> vs = db.find_calls(query);
   return format_results(vs);
 }
 
-static Results *find_caller(const Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_caller(query);
+static Results *find_caller(clink::Database &db, const string &query) {
+  vector<clink::Result> vs = db.find_callers(query);
   return format_results(vs);
 }
 
-static Results *find_includer(const Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_includer(query);
+static Results *find_includer(clink::Database &db, const string &query) {
+  vector<clink::Result> vs = db.find_includers(query);
   return format_results(vs);
 }
 
 static struct {
   const char *prompt;
-  Results *(*handler)(const Database &db, const string &query);
+  Results *(*handler)(clink::Database &db, const string &query);
 } functions[] = {
   { "Find this C symbol", find_symbol },
   { "Find this definition", find_definition },
@@ -224,7 +222,7 @@ void UICurses::move_to_line(unsigned target) {
   move_to_line_no_blank(target);
 }
 
-void UICurses::handle_input(Database &db) {
+void UICurses::handle_input(clink::Database &db) {
 
   echo();
 
@@ -487,7 +485,7 @@ enter:
   }
 }
 
-int UICurses::run(Database &db) {
+int UICurses::run(clink::Database &db) {
 
   print_menu();
   refresh();

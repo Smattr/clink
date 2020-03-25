@@ -1,9 +1,7 @@
 #include <clink/clink.h>
 #include <cstdlib>
-#include "Database.h"
 #include <iostream>
 #include <readline/readline.h>
-#include "Symbol.h"
 #include "UILine.h"
 #include <unistd.h>
 #include "util.h"
@@ -16,7 +14,7 @@ static void print_leader(const vector<T> &vs) {
   cout << "cscope: " << vs.size() << " lines\n";
 }
 
-int UILine::run(Database &db) {
+int UILine::run(clink::Database &db) {
 
   int ret = EXIT_SUCCESS;
 
@@ -37,7 +35,7 @@ int UILine::run(Database &db) {
     switch (*command) {
 
       case '0': { // find symbol
-        vector<clink::Result> vs = db.find_symbol(command + 1);
+        vector<clink::Result> vs = db.find_symbols(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
           cout << s.symbol.path << " " << s.symbol.parent << " "
@@ -47,7 +45,7 @@ int UILine::run(Database &db) {
       }
 
       case '1': { // find definition
-        vector<clink::Result> vs = db.find_definition(command + 1);
+        vector<clink::Result> vs = db.find_definitions(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
           cout << s.symbol.path << " " << (command + 1) << " "
@@ -57,7 +55,7 @@ int UILine::run(Database &db) {
       }
 
       case '2': { // find calls
-        vector<clink::Result> vs = db.find_call(command + 1);
+        vector<clink::Result> vs = db.find_calls(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
           cout << s.symbol.path << " " << s.symbol.name << " "
@@ -67,7 +65,7 @@ int UILine::run(Database &db) {
       }
 
       case '3': { // find callers
-        vector<clink::Result> vs = db.find_caller(command + 1);
+        vector<clink::Result> vs = db.find_callers(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
           cout << s.symbol.path << " " << s.symbol.parent << " "
@@ -77,7 +75,7 @@ int UILine::run(Database &db) {
       }
 
       case '7': { // find file
-        vector<string> vs = db.find_file(command + 1);
+        vector<string> vs = db.find_files(command + 1);
         print_leader(vs);
         /* XXX: what kind of nonsense output is this? I don't know what value
          * Cscope is attempting to add with the trailing garbage.
@@ -88,7 +86,7 @@ int UILine::run(Database &db) {
       }
 
       case '8': { // find includers
-        vector<clink::Result> vs = db.find_includer(command + 1);
+        vector<clink::Result> vs = db.find_includers(command + 1);
         print_leader(vs);
         for (const auto &s : vs)
           cout << s.symbol.path << " " << s.symbol.parent << " "

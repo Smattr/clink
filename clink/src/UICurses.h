@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Database.h"
+#include <cstddef>
+#include <clink/clink.h>
 #include <signal.h>
 #include <string>
 #include "UI.h"
@@ -16,14 +17,14 @@ struct Results;
 class UICurses : public UI {
 
  public:
-  int run(Database &db) final;
+  int run(clink::Database &db) final;
   UICurses();
   ~UICurses();
 
  private:
   void move_to_line_no_blank(unsigned target);
   void move_to_line(unsigned target);
-  void handle_input(Database &db);
+  void handle_input(clink::Database &db);
   void handle_select();
 
  private:

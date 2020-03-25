@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Database.h"
+#include <cstddef>
+#include <clink/clink.h>
 
 class UI {
 
  public:
-  virtual int run(Database &db) = 0;
+  virtual int run(clink::Database &db) = 0;
 
 };

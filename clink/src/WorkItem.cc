@@ -1,14 +1,13 @@
 #include <clink/clink.h>
 #include "Options.h"
 #include <string>
-#include "Symbol.h"
 #include <vector>
 #include "WorkItem.h"
 #include "WorkQueue.h"
 
-void ParseCXXFile::run(SymbolConsumer &consumer, WorkQueue &wq) {
+void ParseCXXFile::run(clink::Database &db, WorkQueue &wq) {
 
-  consumer.purge(path);
+  db.remove(path);
 
   // build up --include args
   std::vector<std::string> includes{opts.include_dirs.size() * 2};
@@ -18,18 +17,18 @@ void ParseCXXFile::run(SymbolConsumer &consumer, WorkQueue &wq) {
   }
 
   (void)clink::parse_c(path, includes, [&](const clink::Symbol &symbol) {
-    consumer.consume(symbol);
+    (void)db.add(symbol);
     wq.push(symbol.path);
     return 0;
   });
 }
 
-void ParseAsmFile::run(SymbolConsumer &consumer, WorkQueue &wq) {
+void ParseAsmFile::run(clink::Database &db, WorkQueue &wq) {
 
-  consumer.purge(path);
+  db.remove(path);
 
   (void)clink::parse_asm(path, [&](const clink::Symbol &symbol) {
-    consumer.consume(symbol);
+    (void)db.add(symbol);
     wq.push(symbol.path);
     return 0;
   });

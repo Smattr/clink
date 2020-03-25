@@ -1,7 +1,7 @@
 #include <cassert>
+#include <clink/clink.h>
 #include <cstdio>
 #include <cstring>
-#include "Database.h"
 #include <dirent.h>
 #include <errno.h>
 #include <functional>
@@ -9,8 +9,8 @@
 #include <iostream>
 #include <limits.h>
 #include "log.h"
+#include <memory>
 #include "Options.h"
-#include "Symbol.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <thread>
@@ -128,7 +128,7 @@ static void parse_options(int argc, char **argv) {
   }
 }
 
-static void update(SymbolConsumer &db, WorkQueue &fq) {
+static void update(clink::Database &db, WorkQueue &fq) {
   for (;;) {
     WorkItem *item = fq.pop();
     if (item == nullptr)
@@ -153,9 +153,11 @@ int main(int argc, char **argv) {
     era_start = 0;
   }
 
-  Database db;
-  if (!db.open(opts.database)) {
-    cerr << "failed to open " << opts.database << "\n";
+  std::unique_ptr<clink::Database> db;
+  try {
+    db = std::make_unique<clink::Database>(opts.database);
+  } catch (clink::Error &e) {
+    std::cerr << "failed to open " << opts.database << ": " << e.what() << "\n";
     return EXIT_FAILURE;
   }
 
@@ -183,7 +185,7 @@ int main(int argc, char **argv) {
       /* Scan the directory for files that have changed since the database
        * was last updated.
        */
-      update(db, queue);
+      update(*db, queue);
 
 #if 0
       db.close_transaction();
@@ -229,12 +231,12 @@ int main(int argc, char **argv) {
   switch (opts.ui) {
     case UI_LINE: {
       UILine ui;
-      return ui.run(db);
+      return ui.run(*db);
     }
 
     case UI_CURSES: {
       UICurses ui;
-      return ui.run(db);
+      return ui.run(*db);
     }
 
     case UI_NONE:
