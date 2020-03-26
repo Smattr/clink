@@ -4,7 +4,6 @@
 #include <clink/clink.h>
 #include <signal.h>
 #include <string>
-#include "UI.h"
 
 typedef enum {
   UICS_INPUT,
@@ -14,10 +13,10 @@ typedef enum {
 
 struct Results;
 
-class UICurses : public UI {
+class UICurses {
 
  public:
-  int run(clink::Database &db) final;
+  int run(clink::Database &db);
   UICurses();
   ~UICurses();
 
