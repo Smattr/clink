@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <memory>
 #include "Options.h"
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <thread>
@@ -22,7 +23,7 @@
 
 using namespace std;
 
-static const char default_database[] = ".clink.db";
+static std::string database{".clink.db"};
 
 static void usage(const char *progname) {
   cerr << "usage: " << progname << " [options]\n"
@@ -38,7 +39,6 @@ static void usage(const char *progname) {
 
 /* Default options. */
 Options opts = {
-  .database = default_database,
   .update_database = true,
   .ui = UI_CURSES,
   .threads = 0,
@@ -72,7 +72,7 @@ static void parse_options(int argc, char **argv) {
         break;
 
       case 'f':
-        opts.database = optarg;
+        database = optarg;
         break;
 
       case 'I':
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
   /* Stat the database to figure out when the last update we did was. */
   time_t era_start;
   struct stat buf;
-  if (stat(opts.database, &buf) == 0) {
+  if (stat(database.c_str(), &buf) == 0) {
     era_start = buf.st_mtime;
   } else {
     era_start = 0;
@@ -141,9 +141,9 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<clink::Database> db;
   try {
-    db = std::make_unique<clink::Database>(opts.database);
+    db = std::make_unique<clink::Database>(database);
   } catch (clink::Error &e) {
-    std::cerr << "failed to open " << opts.database << ": " << e.what() << "\n";
+    std::cerr << "failed to open " << database << ": " << e.what() << "\n";
     return EXIT_FAILURE;
   }
 
