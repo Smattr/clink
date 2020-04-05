@@ -20,4 +20,4 @@ struct Options {
   std::vector<std::string> include_dirs;
 };
 
-extern Options opts;
+extern Options options;

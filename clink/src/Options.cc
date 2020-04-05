@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-Options opts = {
+Options options = {
   .update_database = true,
   .ui = UI_CURSES,
   .threads = 0,

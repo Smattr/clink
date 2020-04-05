@@ -43,7 +43,7 @@ static void usage(const char *progname) {
 static void parse_options(int argc, char **argv) {
 
   for (;;) {
-    static const struct option options[] = {
+    static const struct option opts[] = {
       {"file", required_argument, 0, 'f'},
       {"include", required_argument, 0, 'I'},
       {"jobs", required_argument, 0, 'j'},
@@ -52,18 +52,18 @@ static void parse_options(int argc, char **argv) {
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bdf:I:j:l", options, &index);
+    int c = getopt_long(argc, argv, "bdf:I:j:l", opts, &index);
 
     if (c == -1)
       break;
 
     switch (c) {
       case 'b':
-        opts.ui = UI_NONE;
+        options.ui = UI_NONE;
         break;
 
       case 'd':
-        opts.update_database = false;
+        options.update_database = false;
         break;
 
       case 'f':
@@ -71,16 +71,16 @@ static void parse_options(int argc, char **argv) {
         break;
 
       case 'I':
-        opts.include_dirs.emplace_back(optarg);
+        options.include_dirs.emplace_back(optarg);
         break;
 
       case 'j':
         if (strcmp(optarg, "auto") == 0) {
-          opts.threads = 0;
+          options.threads = 0;
         } else {
           char *endptr;
-          opts.threads = strtoul(optarg, &endptr, 0);
-          if (optarg == endptr || (opts.threads == ULONG_MAX &&
+          options.threads = strtoul(optarg, &endptr, 0);
+          if (optarg == endptr || (options.threads == ULONG_MAX &&
                   errno == ERANGE)) {
             cerr << "illegal value to --jobs\n";
             exit(EXIT_FAILURE);
@@ -89,7 +89,7 @@ static void parse_options(int argc, char **argv) {
         break;
 
       case 'l':
-        opts.ui = UI_LINE;
+        options.ui = UI_LINE;
         break;
 
       default:
@@ -99,13 +99,13 @@ static void parse_options(int argc, char **argv) {
   }
 
   // If the user wanted automatic parallelism, give them a thread per core.
-  if (opts.threads == 0) {
+  if (options.threads == 0) {
     unsigned cores = thread::hardware_concurrency();
     if (cores == 0) {
       cerr << "your system appears to have an invalid number of processors\n";
       exit(EXIT_FAILURE);
     }
-    opts.threads = (unsigned long)cores;
+    options.threads = (unsigned long)cores;
   }
 }
 
@@ -136,10 +136,10 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  if (opts.update_database) {
+  if (options.update_database) {
 
 #if 0
-    if (opts.threads == 1) {
+    if (options.threads == 1) {
 #endif
 
       /* When running single-threaded, we can create a thread-unsafe file
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
 
 #if 0
     } else {
-      assert(opts.threads > 1);
+      assert(options.threads > 1);
 
       // Create a single, shared file queue.
       ThreadSafeWorkQueue queue(".", era_start);
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
       // Create and start N - 1 threads.
       vector<thread> threads;
       vector<PendingActions*> pending;
-      for (unsigned long i = 0; i < opts.threads - 1; i++) {
+      for (unsigned long i = 0; i < options.threads - 1; i++) {
         PendingActions *pa = new PendingActions();
         threads.emplace_back(update, ref(*pa), ref(queue));
         pending.push_back(pa);
@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
 #endif
   }
 
-  switch (opts.ui) {
+  switch (options.ui) {
     case UI_LINE: {
       UILine ui;
       return ui.run(*db);
