@@ -40,14 +40,6 @@ static void usage(const char *progname) {
           "\"auto\" for the default, which is the number of cores)\n";
 }
 
-/* Default options. */
-Options opts = {
-  .update_database = true,
-  .ui = UI_CURSES,
-  .threads = 0,
-  .include_dirs = vector<string>(),
-};
-
 static void parse_options(int argc, char **argv) {
 
   for (;;) {
