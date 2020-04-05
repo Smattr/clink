@@ -11,14 +11,12 @@
 #include "util.h"
 #include <vector>
 
-using namespace std;
-
-static std::vector<ResultRow> format_results(const vector<clink::Result> &vs) {
+static std::vector<ResultRow> format_results(const std::vector<clink::Result> &vs) {
   std::vector<ResultRow> results;
 
   for (const auto &s : vs) {
     ResultRow row {
-      .text = { s.symbol.path, s.symbol.parent, to_string(s.symbol.lineno),
+      .text = { s.symbol.path, s.symbol.parent, std::to_string(s.symbol.lineno),
                 lstrip(s.context) },
       .path = s.symbol.path,
       .line = s.symbol.lineno,
@@ -32,34 +30,34 @@ static std::vector<ResultRow> format_results(const vector<clink::Result> &vs) {
 
 // Wrappers for each database query follow.
 
-static std::vector<ResultRow> find_symbol(clink::Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_symbols(query);
+static std::vector<ResultRow> find_symbol(clink::Database &db, const std::string &query) {
+  std::vector<clink::Result> vs = db.find_symbols(query);
   return format_results(vs);
 }
 
-static std::vector<ResultRow> find_definition(clink::Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_definitions(query);
+static std::vector<ResultRow> find_definition(clink::Database &db, const std::string &query) {
+  std::vector<clink::Result> vs = db.find_definitions(query);
   return format_results(vs);
 }
 
-static std::vector<ResultRow> find_call(clink::Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_calls(query);
+static std::vector<ResultRow> find_call(clink::Database &db, const std::string &query) {
+  std::vector<clink::Result> vs = db.find_calls(query);
   return format_results(vs);
 }
 
-static std::vector<ResultRow> find_caller(clink::Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_callers(query);
+static std::vector<ResultRow> find_caller(clink::Database &db, const std::string &query) {
+  std::vector<clink::Result> vs = db.find_callers(query);
   return format_results(vs);
 }
 
-static std::vector<ResultRow> find_includer(clink::Database &db, const string &query) {
-  vector<clink::Result> vs = db.find_includers(query);
+static std::vector<ResultRow> find_includer(clink::Database &db, const std::string &query) {
+  std::vector<clink::Result> vs = db.find_includers(query);
   return format_results(vs);
 }
 
 static struct {
   const char *prompt;
-  std::vector<ResultRow> (*handler)(clink::Database &db, const string &query);
+  std::vector<ResultRow> (*handler)(clink::Database &db, const std::string &query);
 } functions[] = {
   { "Find this C symbol", find_symbol },
   { "Find this definition", find_definition },
@@ -104,7 +102,7 @@ static int print_results(const std::vector<ResultRow> &results,
   assert(from_row == 0 || from_row < results.size());
 
   // The column headings, excluding the initial hotkey column.
-  static const array<string, HEADINGS_SZ> HEADINGS {
+  static const std::array<std::string, HEADINGS_SZ> HEADINGS {
     "File", "Function", "Line", "" };
 
   /* The number of rows we can fit is the number of lines on the screen with
@@ -122,7 +120,7 @@ static int print_results(const std::vector<ResultRow> &results,
   }
 
   /* Figure out column widths. */
-  vector<unsigned> widths;
+  std::vector<unsigned> widths;
   for (unsigned i = 0; i < HEADINGS.size(); i++) {
     /* Find the maximum width of this column's results. */
     unsigned width = HEADINGS[i].size();
@@ -140,7 +138,7 @@ static int print_results(const std::vector<ResultRow> &results,
   printw("  ");
   for (unsigned i = 0; i < HEADINGS.size(); i++) {
     size_t padding = widths[i] - HEADINGS[i].size();
-    string blank(padding, ' ');
+    std::string blank(padding, ' ');
     printw("%s%s", HEADINGS[i].c_str(), blank.c_str());
   }
   clrtoeol();
@@ -154,7 +152,7 @@ static int print_results(const std::vector<ResultRow> &results,
         size_t padding = widths[j] - results[i + from_row].text[j].size();
         // XXX: right-align line numbers
         if (HEADINGS[j] == "Line") {
-          string blank(padding - 1, ' ');
+          std::string blank(padding - 1, ' ');
           printw("%s%s ", blank.c_str(), results[i + from_row].text[j].c_str());
         } else {
           if (colour) {
@@ -162,7 +160,7 @@ static int print_results(const std::vector<ResultRow> &results,
           } else {
             printw("%s", strip_ansi(results[i + from_row].text[j]).c_str());
           }
-          string blank(padding, ' ');
+          std::string blank(padding, ' ');
           printw("%s", blank.c_str());
         }
       }
@@ -224,7 +222,7 @@ void UICurses::handle_input(clink::Database &db) {
 
     case 10: /* enter */
       if (!m_left.empty() || !m_right.empty()) {
-        string query = m_left + m_right;
+        std::string query = m_left + m_right;
         m_results = functions[m_index].handler(db, query);
         print_results(m_results, 0, m_color);
         m_from_row = 0;

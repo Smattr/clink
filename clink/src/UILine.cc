@@ -2,16 +2,15 @@
 #include <cstdlib>
 #include <iostream>
 #include <readline/readline.h>
+#include <string>
 #include "UILine.h"
 #include <unistd.h>
 #include "util.h"
 #include <vector>
 
-using namespace std;
-
 template<typename T>
-static void print_leader(const vector<T> &vs) {
-  cout << "cscope: " << vs.size() << " lines\n";
+static void print_leader(const std::vector<T> &vs) {
+  std::cout << "cscope: " << vs.size() << " lines\n";
 }
 
 int UILine::run(clink::Database &db) {
@@ -35,61 +34,61 @@ int UILine::run(clink::Database &db) {
     switch (*command) {
 
       case '0': { // find symbol
-        vector<clink::Result> vs = db.find_symbols(command + 1);
+        std::vector<clink::Result> vs = db.find_symbols(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
-          cout << s.symbol.path << " " << s.symbol.parent << " "
+          std::cout << s.symbol.path << " " << s.symbol.parent << " "
             << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
 
       case '1': { // find definition
-        vector<clink::Result> vs = db.find_definitions(command + 1);
+        std::vector<clink::Result> vs = db.find_definitions(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
-          cout << s.symbol.path << " " << (command + 1) << " "
+          std::cout << s.symbol.path << " " << (command + 1) << " "
             << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
 
       case '2': { // find calls
-        vector<clink::Result> vs = db.find_calls(command + 1);
+        std::vector<clink::Result> vs = db.find_calls(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
-          cout << s.symbol.path << " " << s.symbol.name << " "
+          std::cout << s.symbol.path << " " << s.symbol.name << " "
             << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
 
       case '3': { // find callers
-        vector<clink::Result> vs = db.find_callers(command + 1);
+        std::vector<clink::Result> vs = db.find_callers(command + 1);
         print_leader(vs);
         for (const auto &s : vs) {
-          cout << s.symbol.path << " " << s.symbol.parent << " "
+          std::cout << s.symbol.path << " " << s.symbol.parent << " "
             << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
 
       case '7': { // find file
-        vector<string> vs = db.find_files(command + 1);
+        std::vector<std::string> vs = db.find_files(command + 1);
         print_leader(vs);
         /* XXX: what kind of nonsense output is this? I don't know what value
          * Cscope is attempting to add with the trailing garbage.
          */
         for (const auto &s : vs)
-          cout << s << " <unknown> 1 <unknown>\n";
+          std::cout << s << " <unknown> 1 <unknown>\n";
         break;
       }
 
       case '8': { // find includers
-        vector<clink::Result> vs = db.find_includers(command + 1);
+        std::vector<clink::Result> vs = db.find_includers(command + 1);
         print_leader(vs);
         for (const auto &s : vs)
-          cout << s.symbol.path << " " << s.symbol.parent << " "
+          std::cout << s.symbol.path << " " << s.symbol.parent << " "
             << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         break;
       }
@@ -99,7 +98,7 @@ int UILine::run(clink::Database &db) {
       case '5': // change text
       case '6': // find pattern
       case '9': // find assignments
-        cout << "cscope: 0 lines\n";
+        std::cout << "cscope: 0 lines\n";
         break;
 
       /* Bail out on any unrecognised command, under the assumption Vim would

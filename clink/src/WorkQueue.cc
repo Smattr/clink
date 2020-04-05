@@ -15,17 +15,15 @@
 #include "util.h"
 #include "WorkQueue.h"
 
-using namespace std;
-
-WorkQueue::WorkQueue(const string &directory, time_t era_start_)
+WorkQueue::WorkQueue(const std::string &directory, time_t era_start_)
     : era_start(era_start_) {
-  string prefix = directory + "/";
+  std::string prefix = directory + "/";
   DIR *dir = opendir(prefix.c_str());
   if (dir != nullptr)
     directory_stack.push(make_tuple(prefix, dir));
 }
 
-bool WorkQueue::push_directory_stack(const string &directory) {
+bool WorkQueue::push_directory_stack(const std::string &directory) {
   DIR *dir = opendir(directory.c_str());
   if (dir == nullptr) {
     // Failed to open the new directory. Just discard it.
@@ -36,7 +34,7 @@ bool WorkQueue::push_directory_stack(const string &directory) {
   return true;
 }
 
-static string normalise_path(const string &path) {
+static std::string normalise_path(const std::string &path) {
   char resolved[PATH_MAX];
 
   if (realpath(path.c_str(), resolved) == nullptr) {
@@ -64,10 +62,10 @@ static string normalise_path(const string &path) {
 
 std::unique_ptr<Task> WorkQueue::pop() {
 
-  lock_guard<mutex> guard(stack_mutex);
+  std::lock_guard<std::mutex> guard(stack_mutex);
 
   if (!files_to_read.empty()) {
-    const string path = normalise_path(files_to_read.front());;
+    const std::string path = normalise_path(files_to_read.front());;
     files_to_read.pop();
     return std::make_unique<ReadFile>(path);
   }
@@ -78,8 +76,8 @@ restart1:
 
 restart2:;
   DIR *current;
-  string prefix;
-  tie(prefix, current) = directory_stack.top();
+  std::string prefix;
+  std::tie(prefix, current) = directory_stack.top();
 
   for (;;) {
     struct dirent *entry = readdir(current);
@@ -94,7 +92,7 @@ restart2:;
     // If this is a directory, descend into it.
     if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") &&
           strcmp(entry->d_name, "..")) {
-      string dname = prefix + entry->d_name + "/";
+      std::string dname = prefix + entry->d_name + "/";
       push_directory_stack(dname);
       goto restart2;
     }
@@ -106,7 +104,7 @@ restart2:;
                                    ends_with(entry->d_name, ".hpp") ||
                                    ends_with(entry->d_name, ".s") ||
                                    ends_with(entry->d_name, ".S"))) {
-      string path = prefix + entry->d_name;
+      std::string path = prefix + entry->d_name;
       struct stat buf;
       if (stat(path.c_str(), &buf) < 0 || buf.st_mtime <= era_start) {
         // Consider this file "old".
@@ -126,9 +124,9 @@ restart2:;
   }
 }
 
-void WorkQueue::push(const string &path) {
+void WorkQueue::push(const std::string &path) {
 
-  lock_guard<mutex> guard(stack_mutex);
+  std::lock_guard<std::mutex> guard(stack_mutex);
 
   auto it = files_seen.insert(path);
   if (it.second) {

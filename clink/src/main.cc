@@ -13,7 +13,6 @@
 #include <limits.h>
 #include <memory>
 #include "Options.h"
-#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "Task.h"
@@ -24,10 +23,8 @@
 #include "util.h"
 #include "WorkQueue.h"
 
-using namespace std;
-
 static void usage(const char *progname) {
-  cerr << "usage: " << progname << " [options]\n"
+  std::cerr << "usage: " << progname << " [options]\n"
           "\n"
           " -b                       exit after updating the database\n"
           " -d                       don't update the database\n"
@@ -80,7 +77,7 @@ static void parse_options(int argc, char **argv) {
           options.threads = strtoul(optarg, &endptr, 0);
           if (optarg == endptr || (options.threads == ULONG_MAX &&
                   errno == ERANGE)) {
-            cerr << "illegal value to --jobs\n";
+            std::cerr << "illegal value to --jobs\n";
             exit(EXIT_FAILURE);
           }
         }
@@ -98,9 +95,9 @@ static void parse_options(int argc, char **argv) {
 
   // If the user wanted automatic parallelism, give them a thread per core.
   if (options.threads == 0) {
-    unsigned cores = thread::hardware_concurrency();
+    unsigned cores = std::thread::hardware_concurrency();
     if (cores == 0) {
-      cerr << "your system appears to have an invalid number of processors\n";
+      std::cerr << "your system appears to have an invalid number of processors\n";
       exit(EXIT_FAILURE);
     }
     options.threads = (unsigned long)cores;

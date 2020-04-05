@@ -7,8 +7,6 @@
 #include <ncurses.h>
 #include <string>
 
-using namespace std;
-
 /* We need to pack a colour combination in this way because the default ncurses
  * implementation only supports 64 colour pairs and hence rejects any colour ID
  * above 64.
@@ -30,7 +28,7 @@ int init_ncurses_colours() {
   // Make the current terminal colour scheme available.
   use_default_colors();
 
-  static const array<short, 8> COLOURS = { { COLOR_BLACK, COLOR_RED,
+  static const std::array<short, 8> COLOURS = { { COLOR_BLACK, COLOR_RED,
     COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN,
     COLOR_WHITE } };
 
@@ -49,7 +47,7 @@ int init_ncurses_colours() {
   return 0;
 }
 
-void printw_in_colour(const string &text) {
+void printw_in_colour(const std::string &text) {
 
   enum {
     IDLE,
@@ -58,7 +56,7 @@ void printw_in_colour(const string &text) {
   } state = IDLE;
 
   // A partial ANSI code we've parsed.
-  string pending_code;
+  std::string pending_code;
 
   // Pending attributes that we've accrued while parsing.
   bool bold;
@@ -135,7 +133,7 @@ void printw_in_colour(const string &text) {
   }
 }
 
-string strip_ansi(const string &s) {
+std::string strip_ansi(const std::string &s) {
 
   enum {
     IDLE,
@@ -143,7 +141,7 @@ string strip_ansi(const string &s) {
     SAW_LSQUARE,
   } state = IDLE;
 
-  string output;
+  std::string output;
 
   for (const char &c : s) {
 
