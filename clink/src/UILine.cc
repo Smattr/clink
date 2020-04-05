@@ -1,7 +1,6 @@
 #include <clink/clink.h>
 #include <cstdlib>
 #include <iostream>
-#include <readline/readline.h>
 #include <string>
 #include "UILine.h"
 #include <unistd.h>
@@ -15,26 +14,28 @@ static void print_leader(const std::vector<T> &vs) {
 
 int UILine::run(clink::Database &db) {
 
-  int ret = EXIT_SUCCESS;
+  for (;;) {
 
-  char *line;
-  while ((line = readline(">> "))) {
+    // print prompt text
+    std::cout << ">> " << std::flush;
+
+    // read user input
+    std::string line;
+    if (!std::getline(std::cin, line))
+      break;
 
     // Skip leading white space
-    char *command = line;
-    while (isspace(*command))
-      command++;
+    while (!line.empty() && isspace(line[0]))
+      line = line.substr(1);
 
     // Ignore blank lines
-    if (strcmp(command, "") == 0) {
-      free(line);
+    if (line == "")
       continue;
-    }
 
-    switch (*command) {
+    switch (line[0]) {
 
       case '0': { // find symbol
-        std::vector<clink::Result> vs = db.find_symbols(command + 1);
+        std::vector<clink::Result> vs = db.find_symbols(line.substr(1));
         print_leader(vs);
         for (const auto &s : vs) {
           std::cout << s.symbol.path << " " << s.symbol.parent << " "
@@ -44,17 +45,17 @@ int UILine::run(clink::Database &db) {
       }
 
       case '1': { // find definition
-        std::vector<clink::Result> vs = db.find_definitions(command + 1);
+        std::vector<clink::Result> vs = db.find_definitions(line.substr(1));
         print_leader(vs);
         for (const auto &s : vs) {
-          std::cout << s.symbol.path << " " << (command + 1) << " "
+          std::cout << s.symbol.path << " " << line.substr(1) << " "
             << s.symbol.lineno << " " << lstrip(s.context) << "\n";
         }
         break;
       }
 
       case '2': { // find calls
-        std::vector<clink::Result> vs = db.find_calls(command + 1);
+        std::vector<clink::Result> vs = db.find_calls(line.substr(1));
         print_leader(vs);
         for (const auto &s : vs) {
           std::cout << s.symbol.path << " " << s.symbol.name << " "
@@ -64,7 +65,7 @@ int UILine::run(clink::Database &db) {
       }
 
       case '3': { // find callers
-        std::vector<clink::Result> vs = db.find_callers(command + 1);
+        std::vector<clink::Result> vs = db.find_callers(line.substr(1));
         print_leader(vs);
         for (const auto &s : vs) {
           std::cout << s.symbol.path << " " << s.symbol.parent << " "
@@ -74,7 +75,7 @@ int UILine::run(clink::Database &db) {
       }
 
       case '7': { // find file
-        std::vector<std::string> vs = db.find_files(command + 1);
+        std::vector<std::string> vs = db.find_files(line.substr(1));
         print_leader(vs);
         /* XXX: what kind of nonsense output is this? I don't know what value
          * Cscope is attempting to add with the trailing garbage.
@@ -85,7 +86,7 @@ int UILine::run(clink::Database &db) {
       }
 
       case '8': { // find includers
-        std::vector<clink::Result> vs = db.find_includers(command + 1);
+        std::vector<clink::Result> vs = db.find_includers(line.substr(1));
         print_leader(vs);
         for (const auto &s : vs)
           std::cout << s.symbol.path << " " << s.symbol.parent << " "
@@ -105,16 +106,9 @@ int UILine::run(clink::Database &db) {
        * never send us a malformed command.
        */
       default:
-        free(line);
-        ret = EXIT_FAILURE;
-        goto break2;
-
+        return EXIT_FAILURE;
     }
-
-    free(line);
   }
 
-break2:
-
-  return ret;
+  return EXIT_SUCCESS;
 }

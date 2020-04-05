@@ -27,16 +27,5 @@ find_package(SQLite3 REQUIRED)
 target_include_directories(clink PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_link_libraries(clink ${SQLite3_LIBRARIES})
 
-find_path(READLINE_INCDIR NAMES readline/readline.h)
-if (NOT READLINE_INCDIR)
-  message(FATAL_ERROR "could not find GNU readline")
-endif ()
-target_include_directories(clink PUBLIC ${READLINE_INCDIR})
-find_library(READLINE_LIBRARY NAMES readline)
-if (NOT READLINE_LIBRARY)
-  message(FATAL_ERROR "could not find GNU readline")
-endif ()
-target_link_libraries(clink ${READLINE_LIBRARY})
-
 install(TARGETS clink
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
