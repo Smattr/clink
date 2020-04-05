@@ -3,6 +3,7 @@
 #include <vector>
 
 Options options = {
+  .database_path = {},
   .update_database = true,
   .ui = UI_CURSES,
   .threads = 0,

@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <filesystem>
 #include <functional>
+#include "get_db_path.h"
 #include "get_mtime.h"
 #include <getopt.h>
 #include <iostream>
@@ -24,9 +25,6 @@
 #include "WorkQueue.h"
 
 using namespace std;
-
-// database file name to open
-static std::filesystem::path database{".clink.db"};
 
 static void usage(const char *progname) {
   cerr << "usage: " << progname << " [options]\n"
@@ -67,7 +65,7 @@ static void parse_options(int argc, char **argv) {
         break;
 
       case 'f':
-        database = optarg;
+        options.database_path = optarg;
         break;
 
       case 'I':
@@ -125,14 +123,16 @@ int main(int argc, char **argv) {
 
   parse_options(argc, argv);
 
+  std::filesystem::path db_path = get_db_path();
+
   /* Stat the database to figure out when the last update we did was. */
-  time_t era_start = get_mtime(database);
+  time_t era_start = get_mtime(db_path);
 
   std::unique_ptr<clink::Database> db;
   try {
-    db = std::make_unique<clink::Database>(database.string());
+    db = std::make_unique<clink::Database>(db_path.string());
   } catch (clink::Error &e) {
-    std::cerr << "failed to open " << database << ": " << e.what() << "\n";
+    std::cerr << "failed to open " << db_path << ": " << e.what() << "\n";
     return EXIT_FAILURE;
   }
 
