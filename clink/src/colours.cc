@@ -1,4 +1,3 @@
-#include <array>
 #include <cassert>
 #include "colours.h"
 #include <cstdint>
@@ -28,9 +27,8 @@ int init_ncurses_colours() {
   // Make the current terminal colour scheme available.
   use_default_colors();
 
-  static const std::array<short, 8> COLOURS = { { COLOR_BLACK, COLOR_RED,
-    COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN,
-    COLOR_WHITE } };
+  static const short COLOURS[] = { COLOR_BLACK, COLOR_RED, COLOR_GREEN,
+    COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE };
 
   /* Use a simple encoding scheme to configure every possible colour
    * combination.
