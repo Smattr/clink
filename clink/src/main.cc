@@ -4,7 +4,9 @@
 #include <cstring>
 #include <dirent.h>
 #include <errno.h>
+#include <filesystem>
 #include <functional>
+#include "get_mtime.h"
 #include <getopt.h>
 #include <iostream>
 #include <limits.h>
@@ -23,7 +25,8 @@
 
 using namespace std;
 
-static std::string database{".clink.db"};
+// database file name to open
+static std::filesystem::path database{".clink.db"};
 
 static void usage(const char *progname) {
   cerr << "usage: " << progname << " [options]\n"
@@ -131,17 +134,11 @@ int main(int argc, char **argv) {
   parse_options(argc, argv);
 
   /* Stat the database to figure out when the last update we did was. */
-  time_t era_start;
-  struct stat buf;
-  if (stat(database.c_str(), &buf) == 0) {
-    era_start = buf.st_mtime;
-  } else {
-    era_start = 0;
-  }
+  time_t era_start = get_mtime(database);
 
   std::unique_ptr<clink::Database> db;
   try {
-    db = std::make_unique<clink::Database>(database);
+    db = std::make_unique<clink::Database>(database.string());
   } catch (clink::Error &e) {
     std::cerr << "failed to open " << database << ": " << e.what() << "\n";
     return EXIT_FAILURE;

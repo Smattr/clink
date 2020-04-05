@@ -1,5 +1,6 @@
 add_executable(clink
   src/colours.cc
+  src/get_mtime.cc
   src/main.cc
   src/UICurses.cc
   src/UILine.cc
