@@ -4,9 +4,11 @@ add_executable(clink
   src/get_mtime.cc
   src/main.cc
   src/Options.cc
+  src/ParseAsm.cc
+  src/ParseC.cc
+  src/ReadFile.cc
   src/UICurses.cc
   src/UILine.cc
-  src/WorkItem.cc
   src/WorkQueue.cc)
 
 target_include_directories(clink PRIVATE src)

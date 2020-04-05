@@ -1,11 +1,15 @@
 #include <clink/clink.h>
+#include <filesystem>
 #include "Options.h"
+#include "ParseC.h"
 #include <string>
-#include <vector>
-#include "WorkItem.h"
+#include "Task.h"
 #include "WorkQueue.h"
+#include <vector>
 
-void ParseCXXFile::run(clink::Database &db, WorkQueue &wq) {
+ParseC::ParseC(const std::filesystem::path &path_): path(path_) { }
+
+void ParseC::run(clink::Database &db, WorkQueue &q) {
 
   db.remove(path);
 
@@ -18,18 +22,7 @@ void ParseCXXFile::run(clink::Database &db, WorkQueue &wq) {
 
   (void)clink::parse_c(path, includes, [&](const clink::Symbol &symbol) {
     (void)db.add(symbol);
-    wq.push(symbol.path);
-    return 0;
-  });
-}
-
-void ParseAsmFile::run(clink::Database &db, WorkQueue &wq) {
-
-  db.remove(path);
-
-  (void)clink::parse_asm(path, [&](const clink::Symbol &symbol) {
-    (void)db.add(symbol);
-    wq.push(symbol.path);
+    q.push(symbol.path);
     return 0;
   });
 }

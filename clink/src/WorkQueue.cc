@@ -2,13 +2,16 @@
 #include <cstring>
 #include <dirent.h>
 #include <mutex>
+#include "ParseAsm.h"
+#include "ParseC.h"
+#include "ReadFile.h"
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "Task.h"
 #include <tuple>
 #include <unistd.h>
 #include "util.h"
-#include "WorkItem.h"
 #include "WorkQueue.h"
 
 using namespace std;
@@ -58,13 +61,13 @@ static string normalise_path(const string &path) {
   return relative;
 }
 
-WorkItem *WorkQueue::pop() {
+Task *WorkQueue::pop() {
 
   if (!files_to_read.empty()) {
     const string path = normalise_path(files_to_read.front());;
     files_to_read.pop();
-    WorkItem *wi = new ReadFile(path);
-    return wi;
+    Task *t = new ReadFile(path);
+    return t;
   }
 
 restart1:
@@ -111,9 +114,9 @@ restart2:;
       if (ends_with(entry->d_name, ".c") || ends_with(entry->d_name, ".cpp")
           || ends_with(entry->d_name, ".h") ||
           ends_with(entry->d_name, ".hpp")) {
-        return new ParseCXXFile(normalise_path(path));
+        return new ParseC(normalise_path(path));
       } else {
-        return new ParseAsmFile(normalise_path(path));
+        return new ParseAsm(normalise_path(path));
       }
     }
 
@@ -133,7 +136,7 @@ void WorkQueue::push(const string &path) {
   }
 }
 
-WorkItem *ThreadSafeWorkQueue::pop() {
+Task *ThreadSafeWorkQueue::pop() {
   lock_guard<mutex> guard(stack_mutex);
   return WorkQueue::pop();
 }

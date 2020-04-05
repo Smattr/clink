@@ -16,12 +16,12 @@
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "Task.h"
 #include <thread>
 #include "UICurses.h"
 #include "UILine.h"
 #include <unistd.h>
 #include "util.h"
-#include "WorkItem.h"
 #include "WorkQueue.h"
 
 using namespace std;
@@ -109,7 +109,7 @@ static void parse_options(int argc, char **argv) {
 
 static void update(clink::Database &db, WorkQueue &fq) {
   for (;;) {
-    WorkItem *item = fq.pop();
+    Task *item = fq.pop();
     if (item == nullptr)
       break;
 

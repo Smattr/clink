@@ -6,16 +6,16 @@
 #include <stack>
 #include <string>
 #include <sys/types.h>
+#include "Task.h"
 #include <tuple>
 #include <unordered_set>
-#include "WorkItem.h"
 #include "WorkQueueStub.h"
 
 class WorkQueue {
 
  public:
   WorkQueue(const std::string &directory, time_t era_start_);
-  virtual WorkItem *pop();
+  virtual Task *pop();
   virtual void push(const std::string &path);
 
  private:
@@ -33,7 +33,7 @@ class ThreadSafeWorkQueue : public WorkQueue {
   ThreadSafeWorkQueue(const std::string &directory, time_t era_start)
     : WorkQueue(directory, era_start) {
   }
-  WorkItem *pop() final;
+  Task *pop() final;
   void push(const std::string &path) final;
 
  private:
