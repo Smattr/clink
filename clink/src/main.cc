@@ -109,13 +109,11 @@ static void parse_options(int argc, char **argv) {
 
 static void update(clink::Database &db, WorkQueue &fq) {
   for (;;) {
-    Task *item = fq.pop();
+    std::unique_ptr<Task> item = fq.pop();
     if (item == nullptr)
       break;
 
     item->run(db, fq);
-
-    delete item;
   }
 }
 

@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
+#include <memory>
 #include <mutex>
 #include "ParseAsm.h"
 #include "ParseC.h"
@@ -61,15 +62,14 @@ static string normalise_path(const string &path) {
   return relative;
 }
 
-Task *WorkQueue::pop() {
+std::unique_ptr<Task> WorkQueue::pop() {
 
   lock_guard<mutex> guard(stack_mutex);
 
   if (!files_to_read.empty()) {
     const string path = normalise_path(files_to_read.front());;
     files_to_read.pop();
-    Task *t = new ReadFile(path);
-    return t;
+    return std::make_unique<ReadFile>(path);
   }
 
 restart1:
@@ -116,9 +116,9 @@ restart2:;
       if (ends_with(entry->d_name, ".c") || ends_with(entry->d_name, ".cpp")
           || ends_with(entry->d_name, ".h") ||
           ends_with(entry->d_name, ".hpp")) {
-        return new ParseC(normalise_path(path));
+        return std::make_unique<ParseC>(normalise_path(path));
       } else {
-        return new ParseAsm(normalise_path(path));
+        return std::make_unique<ParseAsm>(normalise_path(path));
       }
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <dirent.h>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <stack>
@@ -15,7 +16,7 @@ class WorkQueue {
 
  public:
   WorkQueue(const std::string &directory, time_t era_start_);
-  Task *pop();
+  std::unique_ptr<Task> pop();
   void push(const std::string &path);
 
  private:
