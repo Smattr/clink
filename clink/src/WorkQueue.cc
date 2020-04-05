@@ -63,6 +63,8 @@ static string normalise_path(const string &path) {
 
 Task *WorkQueue::pop() {
 
+  lock_guard<mutex> guard(stack_mutex);
+
   if (!files_to_read.empty()) {
     const string path = normalise_path(files_to_read.front());;
     files_to_read.pop();
@@ -125,6 +127,9 @@ restart2:;
 }
 
 void WorkQueue::push(const string &path) {
+
+  lock_guard<mutex> guard(stack_mutex);
+
   auto it = files_seen.insert(path);
   if (it.second) {
     struct stat buf;
@@ -134,14 +139,4 @@ void WorkQueue::push(const string &path) {
     }
     files_to_read.push(path);
   }
-}
-
-Task *ThreadSafeWorkQueue::pop() {
-  lock_guard<mutex> guard(stack_mutex);
-  return WorkQueue::pop();
-}
-
-void ThreadSafeWorkQueue::push(const string &path) {
-  lock_guard<mutex> guard(stack_mutex);
-  WorkQueue::push(path);
 }

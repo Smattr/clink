@@ -15,8 +15,8 @@ class WorkQueue {
 
  public:
   WorkQueue(const std::string &directory, time_t era_start_);
-  virtual Task *pop();
-  virtual void push(const std::string &path);
+  Task *pop();
+  void push(const std::string &path);
 
  private:
   time_t era_start;
@@ -25,18 +25,6 @@ class WorkQueue {
   std::unordered_set<std::string> files_seen;
 
   bool push_directory_stack(const std::string &directory);
-};
 
-class ThreadSafeWorkQueue : public WorkQueue {
-
- public:
-  ThreadSafeWorkQueue(const std::string &directory, time_t era_start)
-    : WorkQueue(directory, era_start) {
-  }
-  Task *pop() final;
-  void push(const std::string &path) final;
-
- private:
   std::mutex stack_mutex;
-
 };

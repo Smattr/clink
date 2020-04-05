@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
       assert(options.threads > 1);
 
       // Create a single, shared file queue.
-      ThreadSafeWorkQueue queue(".", era_start);
+      WorkQueue queue(".", era_start);
 
       // Create and start N - 1 threads.
       vector<thread> threads;
