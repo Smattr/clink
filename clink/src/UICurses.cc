@@ -1,4 +1,3 @@
-#include <array>
 #include <cassert>
 #include <clink/clink.h>
 #include "colours.h"
@@ -102,8 +101,7 @@ static int print_results(const std::vector<ResultRow> &results,
   assert(from_row == 0 || from_row < results.size());
 
   // The column headings, excluding the initial hotkey column.
-  static const std::array<std::string, HEADINGS_SZ> HEADINGS {
-    "File", "Function", "Line", "" };
+  static const std::string HEADINGS[] = { "File", "Function", "Line", "" };
 
   /* The number of rows we can fit is the number of lines on the screen with
    * some room extracted for the column headings, menu and status.
@@ -121,25 +119,33 @@ static int print_results(const std::vector<ResultRow> &results,
 
   /* Figure out column widths. */
   std::vector<unsigned> widths;
-  for (unsigned i = 0; i < HEADINGS.size(); i++) {
-    /* Find the maximum width of this column's results. */
-    unsigned width = HEADINGS[i].size();
-    for (unsigned j = from_row; j < from_row + row_count; j++) {
-      assert(j < results.size());
-      assert(i < results[j].text.size());
-      if (results[j].text[i].size() > width)
-        width = results[j].text[i].size();
+  {
+    size_t i = 0;
+    for (const std::string &heading : HEADINGS) {
+      /* Find the maximum width of this column's results. */
+      unsigned width = heading.size();
+      for (unsigned j = from_row; j < from_row + row_count; j++) {
+        assert(j < results.size());
+        assert(i < results[j].text.size());
+        if (results[j].text[i].size() > width)
+          width = results[j].text[i].size();
+      }
+      widths.push_back(width + 1);
+      ++i;
     }
-    widths.push_back(width + 1);
   }
 
   /* Print column headings. */
   move(0, 0);
   printw("  ");
-  for (unsigned i = 0; i < HEADINGS.size(); i++) {
-    size_t padding = widths[i] - HEADINGS[i].size();
-    std::string blank(padding, ' ');
-    printw("%s%s", HEADINGS[i].c_str(), blank.c_str());
+  {
+    size_t i = 0;
+    for (const std::string &heading : HEADINGS) {
+      size_t padding = widths[i] - heading.size();
+      std::string blank(padding, ' ');
+      printw("%s%s", heading.c_str(), blank.c_str());
+      ++i;
+    }
   }
   clrtoeol();
 

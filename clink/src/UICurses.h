@@ -15,10 +15,8 @@ typedef enum {
 
 struct Results;
 
-#define HEADINGS_SZ 4
-
 struct ResultRow {
-  std::array<std::string, HEADINGS_SZ> text;
+  std::array<std::string, 4> text;
   std::string path;
   unsigned long line;
   unsigned long col;
