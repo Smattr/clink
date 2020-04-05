@@ -13,21 +13,8 @@
 
 using namespace std;
 
-static const size_t HEADINGS_SZ = 4;
-
-struct ResultRow {
-  array<string, HEADINGS_SZ> text;
-  string path;
-  unsigned long line;
-  unsigned long col;
-};
-
-struct Results {
-  vector<ResultRow> rows;
-};
-
-static Results *format_results(const vector<clink::Result> &vs) {
-  Results *results = new Results;
+static std::vector<ResultRow> format_results(const vector<clink::Result> &vs) {
+  std::vector<ResultRow> results;
 
   for (const auto &s : vs) {
     ResultRow row {
@@ -37,7 +24,7 @@ static Results *format_results(const vector<clink::Result> &vs) {
       .line = s.symbol.lineno,
       .col = s.symbol.colno,
     };
-    results->rows.push_back(row);
+    results.push_back(row);
   }
 
   return results;
@@ -45,34 +32,34 @@ static Results *format_results(const vector<clink::Result> &vs) {
 
 // Wrappers for each database query follow.
 
-static Results *find_symbol(clink::Database &db, const string &query) {
+static std::vector<ResultRow> find_symbol(clink::Database &db, const string &query) {
   vector<clink::Result> vs = db.find_symbols(query);
   return format_results(vs);
 }
 
-static Results *find_definition(clink::Database &db, const string &query) {
+static std::vector<ResultRow> find_definition(clink::Database &db, const string &query) {
   vector<clink::Result> vs = db.find_definitions(query);
   return format_results(vs);
 }
 
-static Results *find_call(clink::Database &db, const string &query) {
+static std::vector<ResultRow> find_call(clink::Database &db, const string &query) {
   vector<clink::Result> vs = db.find_calls(query);
   return format_results(vs);
 }
 
-static Results *find_caller(clink::Database &db, const string &query) {
+static std::vector<ResultRow> find_caller(clink::Database &db, const string &query) {
   vector<clink::Result> vs = db.find_callers(query);
   return format_results(vs);
 }
 
-static Results *find_includer(clink::Database &db, const string &query) {
+static std::vector<ResultRow> find_includer(clink::Database &db, const string &query) {
   vector<clink::Result> vs = db.find_includers(query);
   return format_results(vs);
 }
 
 static struct {
   const char *prompt;
-  Results *(*handler)(clink::Database &db, const string &query);
+  std::vector<ResultRow> (*handler)(clink::Database &db, const string &query);
 } functions[] = {
   { "Find this C symbol", find_symbol },
   { "Find this definition", find_definition },
@@ -112,9 +99,9 @@ static unsigned usable_rows() {
   return LINES - FUNCTIONS_SZ - 2 - 1;
 }
 
-static int print_results(const Results &results, unsigned from_row,
-    bool colour) {
-  assert(from_row == 0 || from_row < results.rows.size());
+static int print_results(const std::vector<ResultRow> &results,
+    unsigned from_row, bool colour) {
+  assert(from_row == 0 || from_row < results.size());
 
   // The column headings, excluding the initial hotkey column.
   static const array<string, HEADINGS_SZ> HEADINGS {
@@ -126,9 +113,9 @@ static int print_results(const Results &results, unsigned from_row,
   if ((unsigned)LINES < FUNCTIONS_SZ + 2 + 1 + 1)
     return -1;
   unsigned row_count = usable_rows();
-  if (row_count > results.rows.size() - from_row) {
+  if (row_count > results.size() - from_row) {
     /* Can't show more rows than we have. */
-    row_count = results.rows.size() - from_row;
+    row_count = results.size() - from_row;
   }
   if (row_count > sizeof(HOTKEYS) - 1) {
     row_count = sizeof(HOTKEYS) - 1;
@@ -140,10 +127,10 @@ static int print_results(const Results &results, unsigned from_row,
     /* Find the maximum width of this column's results. */
     unsigned width = HEADINGS[i].size();
     for (unsigned j = from_row; j < from_row + row_count; j++) {
-      assert(j < results.rows.size());
-      assert(i < results.rows[j].text.size());
-      if (results.rows[j].text[i].size() > width)
-        width = results.rows[j].text[i].size();
+      assert(j < results.size());
+      assert(i < results[j].text.size());
+      if (results[j].text[i].size() > width)
+        width = results[j].text[i].size();
     }
     widths.push_back(width + 1);
   }
@@ -164,16 +151,16 @@ static int print_results(const Results &results, unsigned from_row,
     if (i < row_count) {
       printw("%c ", hotkey(i));
       for (unsigned j = 0; j < widths.size(); j++) {
-        size_t padding = widths[j] - results.rows[i + from_row].text[j].size();
+        size_t padding = widths[j] - results[i + from_row].text[j].size();
         // XXX: right-align line numbers
         if (HEADINGS[j] == "Line") {
           string blank(padding - 1, ' ');
-          printw("%s%s ", blank.c_str(), results.rows[i + from_row].text[j].c_str());
+          printw("%s%s ", blank.c_str(), results[i + from_row].text[j].c_str());
         } else {
           if (colour) {
-            printw_in_colour(results.rows[i + from_row].text[j]);
+            printw_in_colour(results[i + from_row].text[j]);
           } else {
-            printw("%s", strip_ansi(results.rows[i + from_row].text[j]).c_str());
+            printw("%s", strip_ansi(results[i + from_row].text[j]).c_str());
           }
           string blank(padding, ' ');
           printw("%s", blank.c_str());
@@ -186,14 +173,14 @@ static int print_results(const Results &results, unsigned from_row,
   /* Print footer. */
   move(LINES - FUNCTIONS_SZ - 1, 0);
   printw("* ");
-  if (results.rows.empty()) {
+  if (results.empty()) {
     printw("No results");
   } else {
     printw("Lines %u-%u of %u", from_row + 1, from_row + row_count,
-      results.rows.size());
-    if (from_row + row_count < results.rows.size())
+      results.size());
+    if (from_row + row_count < results.size())
       printw(", %u more - press the space bar to display more",
-        results.rows.size() - from_row - row_count);
+        results.size() - from_row - row_count);
     else if (from_row > 0)
       printw(", press the space bar to display the first lines again");
   }
@@ -237,13 +224,12 @@ void UICurses::handle_input(clink::Database &db) {
 
     case 10: /* enter */
       if (!m_left.empty() || !m_right.empty()) {
-        delete m_results;
         string query = m_left + m_right;
         m_results = functions[m_index].handler(db, query);
-        print_results(*m_results, 0, m_color);
+        print_results(m_results, 0, m_color);
         m_from_row = 0;
         m_select_index = 0;
-        if (!m_results->rows.empty())
+        if (!m_results.empty())
           m_state = UICS_ROWSELECT;
       }
       break;
@@ -262,7 +248,7 @@ void UICurses::handle_input(clink::Database &db) {
     }
 
     case '\t':
-      if (m_results != nullptr && !m_results->rows.empty())
+      if (!m_results.empty())
         m_state = UICS_ROWSELECT;
       break;
 
@@ -335,8 +321,8 @@ void UICurses::handle_input(clink::Database &db) {
       endwin();
       clear();
       print_menu();
-      if (m_results != nullptr)
-        print_results(*m_results, m_from_row, m_color);
+      if (!m_results.empty())
+        print_results(m_results, m_from_row, m_color);
       move_to_line_no_blank(m_index);
       break;
 
@@ -391,7 +377,7 @@ int base;
       goto hotkey_select;
 
 hotkey_select:
-      if (m_from_row + c - base < m_results->rows.size()) {
+      if (m_from_row + c - base < m_results.size()) {
         m_select_index = m_from_row + c - base;
         goto enter;
       }
@@ -425,9 +411,9 @@ enter:
       int read_winch = sigaction(SIGWINCH, &m_original_sigwinch_handler,
         &curses_winch);
 
-      int ret = clink::vim_open(m_results->rows[m_select_index].path,
-          m_results->rows[m_select_index].line,
-          m_results->rows[m_select_index].col);
+      int ret = clink::vim_open(m_results[m_select_index].path,
+          m_results[m_select_index].line,
+          m_results[m_select_index].col);
       if (ret != EXIT_SUCCESS) {
           m_state = UICS_EXITING;
           m_ret = ret;
@@ -451,18 +437,18 @@ enter:
       break;
 
     case KEY_DOWN:
-      if (m_select_index < m_results->rows.size() - 1 &&
+      if (m_select_index < m_results.size() - 1 &&
             m_select_index - m_from_row + 1 < usable_rows())
         m_select_index++;
       break;
 
     case ' ':
-      if (m_from_row + usable_rows() < m_results->rows.size())
+      if (m_from_row + usable_rows() < m_results.size())
         m_from_row += usable_rows();
       else
         m_from_row = 0;
       m_select_index = m_from_row;
-      print_results(*m_results, m_from_row, m_color);
+      print_results(m_results, m_from_row, m_color);
       break;
 
     case '\t':
@@ -474,8 +460,7 @@ enter:
       clear();
       print_menu();
       move_to_line_no_blank(m_index);
-      assert(m_results != nullptr);
-      print_results(*m_results, m_from_row, m_color);
+      print_results(m_results, m_from_row, m_color);
       assert(m_select_index >= m_from_row);
       if (m_select_index - m_from_row + 1 > usable_rows()) {
         // The selected row was just made offscreen by a window resize.
@@ -541,6 +526,5 @@ UICurses::UICurses() {
 }
 
 UICurses::~UICurses() {
-  delete m_results;
   endwin();
 }

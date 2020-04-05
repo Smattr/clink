@@ -1,9 +1,11 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <clink/clink.h>
 #include <signal.h>
 #include <string>
+#include <vector>
 
 typedef enum {
   UICS_INPUT,
@@ -12,6 +14,15 @@ typedef enum {
 } uicurses_state_t;
 
 struct Results;
+
+#define HEADINGS_SZ 4
+
+struct ResultRow {
+  std::array<std::string, HEADINGS_SZ> text;
+  std::string path;
+  unsigned long line;
+  unsigned long col;
+};
 
 class UICurses {
 
@@ -31,7 +42,7 @@ class UICurses {
   std::string m_left = "", m_right = "";
   unsigned m_index = 0, m_x, m_y, m_select_index = 0;
   int m_ret;
-  Results *m_results = nullptr;
+  std::vector<ResultRow> m_results;
   unsigned m_from_row = 0;
   struct sigaction m_original_sigtstp_handler;
   struct sigaction m_original_sigwinch_handler;
