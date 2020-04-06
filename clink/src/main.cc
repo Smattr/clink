@@ -54,7 +54,8 @@ static void parse_options(int argc, char **argv) {
 
     switch (c) {
       case 'b':
-        options.ui = UI_NONE;
+        options.ncurses_ui = false;
+        options.line_ui = false;
         break;
 
       case 'd':
@@ -84,7 +85,8 @@ static void parse_options(int argc, char **argv) {
         break;
 
       case 'l':
-        options.ui = UI_LINE;
+        options.ncurses_ui = false;
+        options.line_ui = true;
         break;
 
       default:
@@ -102,6 +104,9 @@ static void parse_options(int argc, char **argv) {
     }
     options.threads = (unsigned long)cores;
   }
+
+  // at most one user interface should have been enabled
+  assert(!options.ncurses_ui || !options.line_ui);
 }
 
 static void update(clink::Database &db, WorkQueue &fq) {
@@ -198,20 +203,18 @@ int main(int argc, char **argv) {
 #endif
   }
 
-  switch (options.ui) {
-    case UI_LINE: {
-      UILine ui;
-      return ui.run(*db);
-    }
+  int rc = EXIT_SUCCESS;
 
-    case UI_CURSES: {
-      UICurses ui;
-      return ui.run(*db);
-    }
+  if (options.ncurses_ui) {
+    UICurses ui;
+    if ((rc = ui.run(*db)) != EXIT_SUCCESS)
+      return rc;
+  }
 
-    case UI_NONE:
-      // do nothing
-      break;
+  if (options.line_ui) {
+    UILine ui;
+    if ((rc = ui.run(*db)) != EXIT_SUCCESS)
+      return rc;
   }
 
   return EXIT_SUCCESS;

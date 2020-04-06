@@ -5,24 +5,24 @@
 #include <string>
 #include <vector>
 
-typedef enum {
-  UI_NONE,
-  UI_CURSES,
-  UI_LINE,
-} ui_t;
-
 struct Options {
 
   // path to database if it was set on the command line
   std::optional<std::filesystem::path> database_path;
 
-  bool update_database;
-  ui_t ui;
+  // update the Clink symbol database with latest source file changes?
+  bool update_database = true;
 
-  // Parallelism (0 == auto).
+  // run the NCurses-based interface?
+  bool ncurses_ui = true;
+
+  // run the line-oriented interface?
+  bool line_ui = false;
+
+  // parallelism (0 == auto)
   unsigned long threads;
 
-  // Directories to look in for #include files
+  // directories to look in for #include files
   std::vector<std::string> include_dirs;
 };
 
