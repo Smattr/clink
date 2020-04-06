@@ -69,8 +69,8 @@ static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
 
 static void print_menu() {
   move(LINES - FUNCTIONS_SZ, 0);
-  for (unsigned i = 0; i < FUNCTIONS_SZ; i++)
-    printw("%s: \n", functions[i].prompt);
+  for (auto &f : functions)
+    printw("%s: \n", f.prompt);
 }
 
 static unsigned offset_x(unsigned index) {
