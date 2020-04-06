@@ -54,7 +54,7 @@ static std::vector<ResultRow> find_includer(clink::Database &db, const std::stri
   return format_results(vs);
 }
 
-static struct {
+static const struct {
   const char *prompt;
   std::vector<ResultRow> (*handler)(clink::Database &db, const std::string &query);
 } functions[] = {
