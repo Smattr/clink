@@ -6,33 +6,30 @@
 #include <ncurses.h>
 #include <string>
 
-/* We need to pack a colour combination in this way because the default ncurses
- * implementation only supports 64 colour pairs and hence rejects any colour ID
- * above 64.
- */
+// We need to pack a colour combination in this way because the default ncurses
+// implementation only supports 64 colour pairs and hence rejects any colour ID
+// above 64.
 static constexpr short colour_pair_id(short fg, short bg) {
   return ((fg << 3) | bg) + 1;
 }
 
 int init_ncurses_colours() {
 
-  /* This function is only expected to be called when we know we have colour
-   * support.
-   */
+  // this function is only expected to be called when we know we have colour
+  // support
   assert(has_colors());
 
   if (start_color() != 0)
     return -1;
 
-  // Make the current terminal colour scheme available.
+  // make the current terminal colour scheme available
   use_default_colors();
 
   static const short COLOURS[] = { COLOR_BLACK, COLOR_RED, COLOR_GREEN,
     COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE };
 
-  /* Use a simple encoding scheme to configure every possible colour
-   * combination.
-   */
+  // use a simple encoding scheme to configure every possible colour
+  // combination.
   for (const short &fg : COLOURS) {
     for (const short &bg : COLOURS) {
       short id = colour_pair_id(fg, bg);
@@ -53,10 +50,10 @@ void printw_in_colour(const std::string &text) {
     SAW_LSQUARE,
   } state = IDLE;
 
-  // A partial ANSI code we've parsed.
+  // a partial ANSI code we have parsed
   std::string pending_code;
 
-  // Pending attributes that we've accrued while parsing.
+  // pending attributes that we have accrued while parsing
   bool bold;
   bool underline;
   short fg;

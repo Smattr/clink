@@ -11,10 +11,10 @@
 
 #include <string>
 
-// Configure Ncurses colour pairs for use later.
+// configure Ncurses colour pairs for use later
 int init_ncurses_colours();
 
-// Equivalent of ncurses' printw, but interpret ANSI colour codes.
+// equivalent of ncurses’ printw, but interpret ANSI colour codes
 void printw_in_colour(const std::string &text);
 
 // Strip ANSI colour codes from a string.
