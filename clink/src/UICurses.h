@@ -39,7 +39,7 @@ class UICurses {
   uicurses_state_t state = UICS_INPUT;
   std::string left = "", right = "";
   unsigned m_index = 0, x, y, select_index = 0;
-  int m_ret;
+  int ret;
   std::vector<ResultRow> results;
   unsigned from_row = 0;
   struct sigaction original_sigtstp_handler;

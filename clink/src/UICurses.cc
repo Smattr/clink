@@ -223,7 +223,7 @@ void UICurses::handle_input(clink::Database &db) {
   switch (c) {
     case 4: /* Ctrl-D */
       state = UICS_EXITING;
-      m_ret = EXIT_SUCCESS;
+      ret = EXIT_SUCCESS;
       break;
 
     case 10: /* enter */
@@ -358,7 +358,7 @@ void UICurses::handle_select() {
 
     case 4: /* Ctrl-D */
       state = UICS_EXITING;
-      m_ret = EXIT_SUCCESS;
+      ret = EXIT_SUCCESS;
       break;
 
 /* XXX: egregious abuse of interstice to provide a parameter for function-like
@@ -415,13 +415,11 @@ enter:
       int read_winch = sigaction(SIGWINCH, &original_sigwinch_handler,
         &curses_winch);
 
-      int ret = clink::vim_open(results[select_index].path,
+      ret = clink::vim_open(results[select_index].path,
           results[select_index].line,
           results[select_index].col);
-      if (ret != EXIT_SUCCESS) {
+      if (ret != EXIT_SUCCESS)
           state = UICS_EXITING;
-          m_ret = ret;
-      }
 
       reset_prog_mode();
 
@@ -498,7 +496,7 @@ int UICurses::run(clink::Database &db) {
 
 break2:
 
-  return m_ret;
+  return ret;
 }
 
 UICurses::UICurses() {
