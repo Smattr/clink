@@ -23,9 +23,5 @@ find_package(Curses REQUIRED)
 target_include_directories(clink PUBLIC ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
 
-find_package(SQLite3 REQUIRED)
-target_include_directories(clink PUBLIC ${SQLite3_INCLUDE_DIRS})
-target_link_libraries(clink ${SQLite3_LIBRARIES})
-
 install(TARGETS clink
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
