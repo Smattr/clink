@@ -180,10 +180,10 @@ static int print_results(const std::vector<ResultRow> &results,
   if (results.empty()) {
     printw("No results");
   } else {
-    printw("Lines %u-%u of %u", from_row + 1, from_row + row_count,
+    printw("Lines %u-%u of %zu", from_row + 1, from_row + row_count,
       results.size());
     if (from_row + row_count < results.size())
-      printw(", %u more - press the space bar to display more",
+      printw(", %zu more - press the space bar to display more",
         results.size() - from_row - row_count);
     else if (from_row > 0)
       printw(", press the space bar to display the first lines again");
