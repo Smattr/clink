@@ -239,9 +239,9 @@ void UICurses::handle_input(clink::Database &db) {
       break;
 
     case 23: { /* Ctrl-W */
-      while (!left.empty() && isspace(left[left.size() - 1]))
+      while (!left.empty() && isspace(left.back()))
         left.pop_back();
-      while (!left.empty() && !isspace(left[left.size() - 1]))
+      while (!left.empty() && !isspace(left.back()))
         left.pop_back();
       move(y, offset_x(m_index));
       printw("%s%s", left.c_str(), right.c_str());
@@ -258,7 +258,7 @@ void UICurses::handle_input(clink::Database &db) {
 
     case KEY_LEFT:
       if (!left.empty()) {
-        right = left.substr(left.size() - 1, 1) + right;
+        right = left.back() + right;
         left.pop_back();
         x--;
       }
@@ -267,7 +267,7 @@ void UICurses::handle_input(clink::Database &db) {
     case KEY_RIGHT:
       if (!right.empty()) {
         left.push_back(right[0]);
-        right = right.substr(1, right.size() - 1);
+        right = right.substr(1);
         x++;
       }
       break;
@@ -315,7 +315,7 @@ void UICurses::handle_input(clink::Database &db) {
 
     case KEY_DC:
       if (!right.empty()) {
-        right = right.substr(1, right.size() - 1);
+        right = right.substr(1);
         printw("%s", right.c_str());
         clrtoeol();
       }
