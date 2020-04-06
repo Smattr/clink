@@ -8,9 +8,14 @@ matrix:
     dist: bionic
     addons:
       apt:
+        sources:
+          - sourceline: 'ppa:ubuntu-toolchain-r/test'
         packages:
+          - g++-9
           - libclang-dev
     env:
+      - CC=gcc-9
+      - CXX=g++-9
       # we will put a CMake symlink here
       - PATH=${HOME}:${PATH}
 
