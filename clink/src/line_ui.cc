@@ -1,8 +1,8 @@
 #include <clink/clink.h>
 #include <cstdlib>
 #include <iostream>
+#include "line_ui.h"
 #include <string>
-#include "UILine.h"
 #include <unistd.h>
 #include "util.h"
 #include <vector>
@@ -12,7 +12,7 @@ static void print_leader(const std::vector<T> &vs) {
   std::cout << "cscope: " << vs.size() << " lines\n";
 }
 
-int UILine::run(clink::Database &db) {
+int line_ui(clink::Database &db) {
 
   for (;;) {
 

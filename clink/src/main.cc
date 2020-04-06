@@ -11,6 +11,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <limits.h>
+#include "line_ui.h"
 #include <memory>
 #include "Options.h"
 #include <sys/stat.h>
@@ -18,7 +19,6 @@
 #include "Task.h"
 #include <thread>
 #include "UICurses.h"
-#include "UILine.h"
 #include <unistd.h>
 #include "util.h"
 #include "WorkQueue.h"
@@ -212,8 +212,7 @@ int main(int argc, char **argv) {
   }
 
   if (options.line_ui) {
-    UILine ui;
-    if ((rc = ui.run(*db)) != EXIT_SUCCESS)
+    if ((rc = line_ui(*db)) != EXIT_SUCCESS)
       return rc;
   }
 
