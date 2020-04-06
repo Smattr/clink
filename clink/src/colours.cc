@@ -128,15 +128,13 @@ void printw_in_colour(const std::string &text) {
   }
 }
 
-std::string strip_ansi(const std::string &s) {
+void printw_in_bw(const std::string &s) {
 
   enum {
     IDLE,
     SAW_ESC,
     SAW_LSQUARE,
   } state = IDLE;
-
-  std::string output;
 
   for (const char &c : s) {
 
@@ -146,7 +144,7 @@ std::string strip_ansi(const std::string &s) {
         if (c == 27) {
           state = SAW_ESC;
         } else {
-          output += c;
+          addch(c);
         }
         break;
 
@@ -154,7 +152,7 @@ std::string strip_ansi(const std::string &s) {
         if (c == '[') {
           state = SAW_LSQUARE;
         } else {
-          output += c;
+          addch(c);
           state = IDLE;
         }
         break;
@@ -167,6 +165,4 @@ std::string strip_ansi(const std::string &s) {
     }
 
   }
-
-  return output;
 }

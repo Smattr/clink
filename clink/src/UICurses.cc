@@ -164,7 +164,7 @@ static int print_results(const std::vector<ResultRow> &results,
           if (colour) {
             printw_in_colour(results[i + from_row].text[j]);
           } else {
-            printw("%s", strip_ansi(results[i + from_row].text[j]).c_str());
+            printw_in_bw(results[i + from_row].text[j]);
           }
           std::string blank(padding, ' ');
           printw("%s", blank.c_str());

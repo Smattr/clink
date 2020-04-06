@@ -17,5 +17,5 @@ int init_ncurses_colours();
 // equivalent of ncurses’ printw, but interpret ANSI colour codes
 void printw_in_colour(const std::string &text);
 
-// Strip ANSI colour codes from a string.
-std::string strip_ansi(const std::string &s);
+// equivalent of ncurses’ printw, but strip ANSI colour codes
+void printw_in_bw(const std::string &text);
