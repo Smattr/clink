@@ -196,18 +196,18 @@ static int print_results(const std::vector<ResultRow> &results,
 
 void UICurses::move_to_line_no_blank(unsigned target) {
   m_index = target;
-  m_x = offset_x(m_index);
-  m_y = offset_y(m_index);
+  x = offset_x(m_index);
+  y = offset_y(m_index);
 
   // Paste the previous contents into the new line.
-  move(m_y, m_x);
-  printw("%s%s", m_left.c_str(), m_right.c_str());
-  m_x += m_left.size();
+  move(y, x);
+  printw("%s%s", left.c_str(), right.c_str());
+  x += left.size();
 }
 
 void UICurses::move_to_line(unsigned target) {
   // Blank the current line.
-  move(m_y, offset_x(m_index));
+  move(y, offset_x(m_index));
   clrtoeol();
 
   move_to_line_no_blank(target);
@@ -217,58 +217,58 @@ void UICurses::handle_input(clink::Database &db) {
 
   echo();
 
-  move(m_y, m_x);
+  move(y, x);
   int c = getch();
 
   switch (c) {
     case 4: /* Ctrl-D */
-      m_state = UICS_EXITING;
+      state = UICS_EXITING;
       m_ret = EXIT_SUCCESS;
       break;
 
     case 10: /* enter */
-      if (!m_left.empty() || !m_right.empty()) {
-        std::string query = m_left + m_right;
-        m_results = functions[m_index].handler(db, query);
-        print_results(m_results, 0, m_color);
-        m_from_row = 0;
-        m_select_index = 0;
-        if (!m_results.empty())
-          m_state = UICS_ROWSELECT;
+      if (!left.empty() || !right.empty()) {
+        std::string query = left + right;
+        results = functions[m_index].handler(db, query);
+        print_results(results, 0, color);
+        from_row = 0;
+        select_index = 0;
+        if (!results.empty())
+          state = UICS_ROWSELECT;
       }
       break;
 
     case 23: { /* Ctrl-W */
-      while (!m_left.empty() && isspace(m_left[m_left.size() - 1]))
-        m_left.pop_back();
-      while (!m_left.empty() && !isspace(m_left[m_left.size() - 1]))
-        m_left.pop_back();
-      move(m_y, offset_x(m_index));
-      printw("%s%s", m_left.c_str(), m_right.c_str());
+      while (!left.empty() && isspace(left[left.size() - 1]))
+        left.pop_back();
+      while (!left.empty() && !isspace(left[left.size() - 1]))
+        left.pop_back();
+      move(y, offset_x(m_index));
+      printw("%s%s", left.c_str(), right.c_str());
       clrtoeol();
-      m_x = offset_x(m_index) + m_left.size();
-      move(m_y, m_x);
+      x = offset_x(m_index) + left.size();
+      move(y, x);
       break;
     }
 
     case '\t':
-      if (!m_results.empty())
-        m_state = UICS_ROWSELECT;
+      if (!results.empty())
+        state = UICS_ROWSELECT;
       break;
 
     case KEY_LEFT:
-      if (!m_left.empty()) {
-        m_right = m_left.substr(m_left.size() - 1, 1) + m_right;
-        m_left.pop_back();
-        m_x--;
+      if (!left.empty()) {
+        right = left.substr(left.size() - 1, 1) + right;
+        left.pop_back();
+        x--;
       }
       break;
 
     case KEY_RIGHT:
-      if (!m_right.empty()) {
-        m_left.push_back(m_right[0]);
-        m_right = m_right.substr(1, m_right.size() - 1);
-        m_x++;
+      if (!right.empty()) {
+        left.push_back(right[0]);
+        right = right.substr(1, right.size() - 1);
+        x++;
       }
       break;
 
@@ -283,15 +283,15 @@ void UICurses::handle_input(clink::Database &db) {
       break;
 
     case KEY_HOME:
-      m_right = m_left + m_right;
-      m_left = "";
-      m_x = offset_x(m_index);
+      right = left + right;
+      left = "";
+      x = offset_x(m_index);
       break;
 
     case KEY_END:
-      m_left += m_right;
-      m_right = "";
-      m_x = offset_x(m_index) + m_left.size();
+      left += right;
+      right = "";
+      x = offset_x(m_index) + left.size();
       break;
 
     case KEY_PPAGE:
@@ -304,19 +304,19 @@ void UICurses::handle_input(clink::Database &db) {
 
     case 127: // Backspace on macOS
     case KEY_BACKSPACE:
-      if (!m_left.empty()) {
-        m_left.pop_back();
-        m_x--;
+      if (!left.empty()) {
+        left.pop_back();
+        x--;
       }
-      move(m_y, m_x);
-      printw("%s", m_right.c_str());
+      move(y, x);
+      printw("%s", right.c_str());
       clrtoeol();
       break;
 
     case KEY_DC:
-      if (!m_right.empty()) {
-        m_right = m_right.substr(1, m_right.size() - 1);
-        printw("%s", m_right.c_str());
+      if (!right.empty()) {
+        right = right.substr(1, right.size() - 1);
+        printw("%s", right.c_str());
         clrtoeol();
       }
       break;
@@ -325,39 +325,39 @@ void UICurses::handle_input(clink::Database &db) {
       endwin();
       clear();
       print_menu();
-      if (!m_results.empty())
-        print_results(m_results, m_from_row, m_color);
+      if (!results.empty())
+        print_results(results, from_row, color);
       move_to_line_no_blank(m_index);
       break;
 
     default:
-      m_x++;
-      m_left += c;
-      if (!m_right.empty()) {
-        printw("%s", m_right.c_str());
+      x++;
+      left += c;
+      if (!right.empty()) {
+        printw("%s", right.c_str());
       }
   }
 }
 
 void UICurses::handle_select() {
-  assert(m_state == UICS_ROWSELECT);
+  assert(state == UICS_ROWSELECT);
 
   noecho();
 
-  assert(m_select_index >= m_from_row);
-  if (m_select_index - m_from_row + 1 > usable_rows()) {
+  assert(select_index >= from_row);
+  if (select_index - from_row + 1 > usable_rows()) {
     /* The selected row is out of visible range. This can happen if the terminal
      * window resized while we were not in select mode.
      */
-    m_select_index = m_from_row;
+    select_index = from_row;
   }
-  move(m_select_index - m_from_row + 1, 0);
+  move(select_index - from_row + 1, 0);
   int c = getch();
 
   switch (c) {
 
     case 4: /* Ctrl-D */
-      m_state = UICS_EXITING;
+      state = UICS_EXITING;
       m_ret = EXIT_SUCCESS;
       break;
 
@@ -381,8 +381,8 @@ int base;
       goto hotkey_select;
 
 hotkey_select:
-      if (m_from_row + c - base < m_results.size()) {
-        m_select_index = m_from_row + c - base;
+      if (from_row + c - base < results.size()) {
+        select_index = from_row + c - base;
         goto enter;
       }
       break;
@@ -402,7 +402,7 @@ enter:
        * can claw our way back to regular TTY behaviour.
        */
       struct sigaction curses_tstp;
-      int read_tstp = sigaction(SIGTSTP, &m_original_sigtstp_handler,
+      int read_tstp = sigaction(SIGTSTP, &original_sigtstp_handler,
         &curses_tstp);
 
       /* Blasted ncurses does the same thing with the SIGWINCH handler. As a
@@ -412,14 +412,14 @@ enter:
        * freaks out and quits.
        */
       struct sigaction curses_winch;
-      int read_winch = sigaction(SIGWINCH, &m_original_sigwinch_handler,
+      int read_winch = sigaction(SIGWINCH, &original_sigwinch_handler,
         &curses_winch);
 
-      int ret = clink::vim_open(m_results[m_select_index].path,
-          m_results[m_select_index].line,
-          m_results[m_select_index].col);
+      int ret = clink::vim_open(results[select_index].path,
+          results[select_index].line,
+          results[select_index].col);
       if (ret != EXIT_SUCCESS) {
-          m_state = UICS_EXITING;
+          state = UICS_EXITING;
           m_ret = ret;
       }
 
@@ -436,27 +436,27 @@ enter:
     }
 
     case KEY_UP:
-      if (m_select_index - m_from_row > 0)
-        m_select_index--;
+      if (select_index - from_row > 0)
+        select_index--;
       break;
 
     case KEY_DOWN:
-      if (m_select_index < m_results.size() - 1 &&
-            m_select_index - m_from_row + 1 < usable_rows())
-        m_select_index++;
+      if (select_index < results.size() - 1 &&
+            select_index - from_row + 1 < usable_rows())
+        select_index++;
       break;
 
     case ' ':
-      if (m_from_row + usable_rows() < m_results.size())
-        m_from_row += usable_rows();
+      if (from_row + usable_rows() < results.size())
+        from_row += usable_rows();
       else
-        m_from_row = 0;
-      m_select_index = m_from_row;
-      print_results(m_results, m_from_row, m_color);
+        from_row = 0;
+      select_index = from_row;
+      print_results(results, from_row, color);
       break;
 
     case '\t':
-      m_state = UICS_INPUT;
+      state = UICS_INPUT;
       break;
 
     case KEY_RESIZE:
@@ -464,11 +464,11 @@ enter:
       clear();
       print_menu();
       move_to_line_no_blank(m_index);
-      print_results(m_results, m_from_row, m_color);
-      assert(m_select_index >= m_from_row);
-      if (m_select_index - m_from_row + 1 > usable_rows()) {
+      print_results(results, from_row, color);
+      assert(select_index >= from_row);
+      if (select_index - from_row + 1 > usable_rows()) {
         // The selected row was just made offscreen by a window resize.
-        m_select_index = m_from_row;
+        select_index = from_row;
       }
       break;
   }
@@ -481,7 +481,7 @@ int UICurses::run(clink::Database &db) {
 
   for (;;) {
 
-    switch (m_state) {
+    switch (state) {
 
       case UICS_INPUT:
         handle_input(db);
@@ -507,26 +507,26 @@ UICurses::UICurses() {
    * restore later. There is most likely no handler (SIG_DFL) at this point,
    * but future-proof this against us registering handlers elsewhere in Clink.
    */
-  (void)sigaction(SIGTSTP, nullptr, &m_original_sigtstp_handler);
+  (void)sigaction(SIGTSTP, nullptr, &original_sigtstp_handler);
 
   /* We also need to stash the SIGWINCH handler. See earlier in this file where
    * we open Vim for an explanation of these shenanigans.
    */
-  (void)sigaction(SIGWINCH, nullptr, &m_original_sigwinch_handler);
+  (void)sigaction(SIGWINCH, nullptr, &original_sigwinch_handler);
 
   (void)initscr();
-  m_color = has_colors();
-  if (m_color) {
+  color = has_colors();
+  if (color) {
     if (init_ncurses_colours() != 0)
-      m_color = false;
+      color = false;
   }
 
   keypad(stdscr, TRUE);
   (void)cbreak();
 
   // These need to come after ncurses init.
-  m_x = offset_x(0);
-  m_y = offset_y(0);
+  x = offset_x(0);
+  y = offset_y(0);
 }
 
 UICurses::~UICurses() {

@@ -36,14 +36,14 @@ class UICurses {
   void handle_select();
 
  private:
-  uicurses_state_t m_state = UICS_INPUT;
-  std::string m_left = "", m_right = "";
-  unsigned m_index = 0, m_x, m_y, m_select_index = 0;
+  uicurses_state_t state = UICS_INPUT;
+  std::string left = "", right = "";
+  unsigned m_index = 0, x, y, select_index = 0;
   int m_ret;
-  std::vector<ResultRow> m_results;
-  unsigned m_from_row = 0;
-  struct sigaction m_original_sigtstp_handler;
-  struct sigaction m_original_sigwinch_handler;
-  bool m_color;
+  std::vector<ResultRow> results;
+  unsigned from_row = 0;
+  struct sigaction original_sigtstp_handler;
+  struct sigaction original_sigwinch_handler;
+  bool color;
 
 };
