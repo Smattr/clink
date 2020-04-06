@@ -39,10 +39,12 @@ static void parse_options(int argc, char **argv) {
 
   for (;;) {
     static const struct option opts[] = {
-      {"file", required_argument, 0, 'f'},
-      {"include", required_argument, 0, 'I'},
-      {"jobs", required_argument, 0, 'j'},
-      {"line-oriented", no_argument, 0, 'l'},
+      {"color",         required_argument, 0, 128 },
+      {"colour",        required_argument, 0, 128 },
+      {"file",          required_argument, 0, 'f'},
+      {"include",       required_argument, 0, 'I'},
+      {"jobs",          required_argument, 0, 'j'},
+      {"line-oriented", no_argument,       0, 'l'},
       {0, 0, 0, 0},
     };
 
@@ -89,6 +91,19 @@ static void parse_options(int argc, char **argv) {
         options.line_ui = true;
         break;
 
+      case 128: // --colour
+        if (strcmp(optarg, "auto") == 0) {
+          options.colour = AUTO;
+        } else if (strcmp(optarg, "always") == 0) {
+          options.colour = ALWAYS;
+        } else if (strcmp(optarg, "never") == 0) {
+          options.colour = NEVER;
+        } else {
+          std::cerr << "illegal value to --colour: " << optarg << "\n";
+          exit(EXIT_FAILURE);
+        }
+        break;
+
       default:
         usage(argv[0]);
         exit(EXIT_FAILURE);
@@ -104,6 +119,12 @@ static void parse_options(int argc, char **argv) {
     }
     options.threads = (unsigned long)cores;
   }
+
+  // if the user wanted auto colour, make a decision based on whether stdout is
+  // a TTY
+  if (options.colour == AUTO)
+    options.colour = isatty(STDOUT_FILENO) ? ALWAYS : NEVER;
+  assert(options.colour == ALWAYS || options.colour == NEVER);
 
   // at most one user interface should have been enabled
   assert(!options.ncurses_ui || !options.line_ui);

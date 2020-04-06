@@ -5,6 +5,12 @@
 #include <string>
 #include <vector>
 
+enum Colour {
+  AUTO,
+  ALWAYS,
+  NEVER,
+};
+
 struct Options {
 
   // path to database if it was set on the command line
@@ -21,6 +27,9 @@ struct Options {
 
   // parallelism (0 == auto)
   unsigned long threads;
+
+  // colour terminal output on or off
+  Colour colour = AUTO;
 
   // directories to look in for #include files
   std::vector<std::string> include_dirs;

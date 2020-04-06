@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <curses.h>
+#include "Options.h"
 #include <signal.h>
 #include <string>
 #include "UICurses.h"
@@ -513,7 +514,7 @@ UICurses::UICurses() {
   (void)sigaction(SIGWINCH, nullptr, &original_sigwinch_handler);
 
   (void)initscr();
-  color = has_colors();
+  color = options.colour != NEVER ? has_colors() : false;
   if (color) {
     if (init_ncurses_colours() != 0)
       color = false;
