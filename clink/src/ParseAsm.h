@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <clink/clink.h>
 #include <filesystem>
 #include "Task.h"

@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <string>
 
 // configure Ncurses colour pairs for use later

@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cassert>
 #include <clink/clink.h>
 #include "colours.h"

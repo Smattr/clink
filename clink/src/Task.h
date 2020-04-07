@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <clink/clink.h>
 
 // forward declaration so we can refer to this with a circular #include

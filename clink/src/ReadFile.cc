@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <clink/clink.h>
 #include <filesystem>
 #include "ReadFile.h"

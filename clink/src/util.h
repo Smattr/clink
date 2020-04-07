@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cassert>
 
 #ifdef NDEBUG

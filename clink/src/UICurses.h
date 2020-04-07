@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include <cstddef>
+#include <array>
 #include <clink/clink.h>
 #include <signal.h>
 #include <string>

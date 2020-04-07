@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <dirent.h>
 #include <memory>
 #include <mutex>
