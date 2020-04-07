@@ -6,6 +6,7 @@ include(GNUInstallDirs)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wwrite-strings -Wmissing-prototypes -Wshadow")
+add_definitions(-D_POSIX_C_SOURCE=200809L)
 
 # enable --as-needed, present on GNU ld on Linux, to minimise dependencies
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
