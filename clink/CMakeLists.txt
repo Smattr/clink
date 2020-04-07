@@ -3,6 +3,7 @@ add_executable(clink
   src/get_db_path.cc
   src/get_mtime.cc
   src/line_ui.cc
+  src/lstrip.cc
   src/main.cc
   src/Options.cc
   src/ParseAsm.cc

@@ -2,27 +2,6 @@
 
 #include <cassert>
 #include <cstring>
-#include <ctype.h>
-#include <string>
-
-static inline std::string lstrip(const std::string &s) {
-
-  std::string t;
-
-  bool dropping = true;
-  for (const char &c : s) {
-    if (dropping) {
-      if (!isspace(c)) {
-        t += c;
-        dropping = false;
-      }
-    } else {
-      t += c;
-    }
-  }
-
-  return t;
-}
 
 #ifdef NDEBUG
   #define unreachable() __builtin_unreachable()

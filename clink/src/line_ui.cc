@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "line_ui.h"
+#include "lstrip.h"
 #include <string>
 #include <unistd.h>
 #include "util.h"

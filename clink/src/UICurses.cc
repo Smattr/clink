@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <curses.h>
+#include "lstrip.h"
 #include "Options.h"
 #include <signal.h>
 #include <string>
