@@ -1,5 +1,7 @@
 #include <cstddef>
+#include "build.h"
 #include <cassert>
+#include <climits>
 #include <clink/clink.h>
 #include <cstdio>
 #include <cstring>
@@ -11,17 +13,14 @@
 #include "get_mtime.h"
 #include <getopt.h>
 #include <iostream>
-#include <limits.h>
 #include "line_ui.h"
 #include <memory>
 #include "Options.h"
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "Task.h"
 #include <thread>
 #include "UICurses.h"
 #include <unistd.h>
-#include "WorkQueue.h"
 
 static void usage(const char *progname) {
   std::cerr << "usage: " << progname << " [options]\n"
@@ -130,16 +129,6 @@ static void parse_options(int argc, char **argv) {
   assert(!options.ncurses_ui || !options.line_ui);
 }
 
-static void update(clink::Database &db, WorkQueue &fq) {
-  for (;;) {
-    std::unique_ptr<Task> item = fq.pop();
-    if (item == nullptr)
-      break;
-
-    item->run(db, fq);
-  }
-}
-
 int main(int argc, char **argv) {
 
   parse_options(argc, argv);
@@ -157,74 +146,12 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  if (options.update_database) {
-
-#if 0
-    if (options.threads == 1) {
-#endif
-
-      /* When running single-threaded, we can create a thread-unsafe file
-       * queue and just directly pump results into the database.
-       */
-
-      WorkQueue queue(".", era_start);
-
-#if 0
-      /* Open a transaction before starting to manipulate the database.
-       * Repeated insertions without a containing transaction are wrapped in
-       * an automatic transaction. Commiting these automatic transactions
-       * intolerably slows the database update.
-       */
-      db.open_transaction();
-#endif
-
-      /* Scan the directory for files that have changed since the database
-       * was last updated.
-       */
-      update(*db, queue);
-
-#if 0
-      db.close_transaction();
-#endif
-
-#if 0
-    } else {
-      assert(options.threads > 1);
-
-      // Create a single, shared file queue.
-      WorkQueue queue(".", era_start);
-
-      // Create and start N - 1 threads.
-      vector<thread> threads;
-      vector<PendingActions*> pending;
-      for (unsigned long i = 0; i < options.threads - 1; i++) {
-        PendingActions *pa = new PendingActions();
-        threads.emplace_back(update, ref(*pa), ref(queue));
-        pending.push_back(pa);
-      }
-
-      /* Join in ourselves, but let's operate directly on the database to
-       * save one set of replay actions.
-       */
-      db.open_transaction();
-      update(db, queue);
-
-      // Clean up all the other threads.
-      for (thread &t : threads)
-        t.join();
-
-      // Merge their results.
-      for (PendingActions *pa : pending) {
-        db.replay(*pa);
-        delete pa;
-      }
-
-      db.close_transaction();
-    }
-#endif
-  }
-
   int rc = EXIT_SUCCESS;
+
+  if (options.update_database) {
+    if ((rc = build(*db, era_start)) != EXIT_SUCCESS)
+      return rc;
+  }
 
   if (options.ncurses_ui) {
     UICurses ui;

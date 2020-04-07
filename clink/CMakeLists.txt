@@ -1,4 +1,5 @@
 add_executable(clink
+  src/build.cc
   src/colours.cc
   src/ends_with.cc
   src/get_db_path.cc
