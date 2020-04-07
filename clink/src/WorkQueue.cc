@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
+#include "ends_with.h"
 #include <memory>
 #include <mutex>
 #include "ParseAsm.h"
@@ -12,7 +13,6 @@
 #include "Task.h"
 #include <tuple>
 #include <unistd.h>
-#include "util.h"
 #include "WorkQueue.h"
 
 WorkQueue::WorkQueue(const std::string &directory, time_t era_start_)

@@ -5,7 +5,6 @@
 #include "lstrip.h"
 #include <string>
 #include <unistd.h>
-#include "util.h"
 #include <vector>
 
 template<typename T>

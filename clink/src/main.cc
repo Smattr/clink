@@ -20,7 +20,6 @@
 #include <thread>
 #include "UICurses.h"
 #include <unistd.h>
-#include "util.h"
 #include "WorkQueue.h"
 
 static void usage(const char *progname) {

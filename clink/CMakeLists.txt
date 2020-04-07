@@ -1,5 +1,6 @@
 add_executable(clink
   src/colours.cc
+  src/ends_with.cc
   src/get_db_path.cc
   src/get_mtime.cc
   src/line_ui.cc
