@@ -1,13 +1,15 @@
 #include <filesystem>
 #include "get_mtime.h"
+#include <sys/stat.h>
 
 time_t get_mtime(const std::filesystem::path &p) {
 
   if (!std::filesystem::exists(p))
     return 0;
 
-  using std_time = std::filesystem::file_time_type;
+  struct stat s;
+  if (stat(p.string().c_str(), &s) < 0)
+    return 0;
 
-  std_time t = std::filesystem::last_write_time(p);
-  return std_time::clock::to_time_t(t);
+  return s.st_mtime;
 }
