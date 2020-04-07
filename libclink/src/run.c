@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include "run.h"
 #include <spawn.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -27,7 +28,7 @@ static char **get_environ(void) {
 
 int run(const char **argv, bool mask_stdout) {
 
-  assert(argv != nullptr);
+  assert(argv != NULL);
 
   int rc = 0;
   posix_spawn_file_actions_t fa;
@@ -65,8 +66,8 @@ int run(const char **argv, bool mask_stdout) {
   {
     // spawn the child
     pid_t pid;
-    auto args = const_cast<char*const*>(argv);
-    rc = posix_spawnp(&pid, argv[0], &fa, nullptr, args, get_environ());
+    char *const *args = (char*const*)argv;
+    rc = posix_spawnp(&pid, argv[0], &fa, NULL, args, get_environ());
     if (rc != 0)
       goto done;
 

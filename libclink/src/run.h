@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 /** run a command and return its exit status
  *
  * \param argv Argument list of program to run

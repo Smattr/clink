@@ -1,16 +1,7 @@
-project(libclink LANGUAGES CXX)
+project(libclink LANGUAGES C)
 
 add_library(libclink
-  src/colour.cc
-  src/Database.cc
-  src/Error.cc
-  src/parse_asm.cc
-  src/parse_c.cc
-  src/run.cc
-  src/SQLStatement.cc
-  src/TemporaryDirectory.cc
-  src/vim_highlight.cc
-  src/vim_open.cc)
+  src/run.c)
 
 target_include_directories(libclink
   PUBLIC
@@ -22,7 +13,7 @@ target_include_directories(libclink
 set_target_properties(libclink PROPERTIES PREFIX "")
 
 find_program(LLVM_CONFIG llvm-config)
-if (NOT LLVM_CONFIG)
+if(NOT LLVM_CONFIG)
   message(FATAL_ERROR "could not find llvm-config")
 endif ()
 execute_process(COMMAND ${LLVM_CONFIG} --includedir
@@ -33,7 +24,7 @@ execute_process(COMMAND ${LLVM_CONFIG} --libdir
   OUTPUT_VARIABLE CLANG_LIBDIR
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 find_library(CLANG_LIBRARY NAMES clang HINTS ${CLANG_LIBDIR})
-if (NOT CLANG_LIBRARY)
+if(NOT CLANG_LIBRARY)
   message(FATAL_ERROR "could not find libclang")
 endif ()
 target_link_libraries(libclink ${CLANG_LIBRARY})
