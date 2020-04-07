@@ -1,8 +1,7 @@
 #include <cstddef>
 #include <cstdlib>
-#include <cstring>
-#include <dirent.h>
-#include "ends_with.h"
+#include <ctype.h>
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include "ParseAsm.h"
@@ -12,130 +11,126 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "Task.h"
-#include <tuple>
 #include <unistd.h>
 #include "WorkQueue.h"
 
 WorkQueue::WorkQueue(const std::string &directory, time_t era_start_)
     : era_start(era_start_) {
-  std::string prefix = directory + "/";
-  DIR *dir = opendir(prefix.c_str());
-  if (dir != nullptr)
-    directory_stack.push(make_tuple(prefix, dir));
+  push_dir(directory);
 }
 
-bool WorkQueue::push_directory_stack(const std::string &directory) {
-  DIR *dir = opendir(directory.c_str());
-  if (dir == nullptr) {
-    // Failed to open the new directory. Just discard it.
+void WorkQueue::push_dir(const std::filesystem::path &dir) {
+  dirs.push(std::make_pair(
+    std::filesystem::begin(std::filesystem::directory_iterator(dir)),
+    std::filesystem::end(  std::filesystem::directory_iterator(dir))));
+}
+
+// case insensitive comparison
+static bool eq(const std::string &a, const std::string &b) {
+
+  if (a.size() != b.size())
     return false;
+
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (tolower(a[i]) != tolower(b[i]))
+      return false;
   }
 
-  directory_stack.push(make_tuple(directory, dir));
   return true;
 }
 
-static std::string normalise_path(const std::string &path) {
-  char resolved[PATH_MAX];
+static bool is_asm(const std::filesystem::path &p) {
+  return eq(p.extension().string(), ".s");
+}
 
-  if (realpath(path.c_str(), resolved) == nullptr) {
-    // failed
-    return path;
-  }
-
-  // Try to turn the absolute path into a relative one.
-  char cwd[PATH_MAX];
-  if (getcwd(cwd, sizeof(cwd)) == nullptr) {
-    // failed
-    return path;
-  }
-
-  const char *relative;
-  if (strncmp(resolved, cwd, strlen(cwd)) == 0 &&
-      resolved[strlen(cwd)] == '/') {
-    relative = &resolved[strlen(cwd) + 1];
-  } else {
-    relative = resolved;
-  }
-
-  return relative;
+static bool is_c(const std::filesystem::path &p) {
+  return eq(p.extension().string(), ".c") ||
+         eq(p.extension().string(), ".cc") ||
+         eq(p.extension().string(), ".cxx") ||
+         eq(p.extension().string(), ".cpp") ||
+         eq(p.extension().string(), ".h") ||
+         eq(p.extension().string(), ".hpp");
 }
 
 std::unique_ptr<Task> WorkQueue::pop() {
 
   std::lock_guard<std::mutex> guard(stack_mutex);
 
+  // do we have a pending file to read?
   if (!files_to_read.empty()) {
-    const std::string path = normalise_path(files_to_read.front());;
+
+    // extract the head of the queue
+    std::filesystem::path p = files_to_read.front();
     files_to_read.pop();
-    return std::make_unique<ReadFile>(path);
+
+    // give the caller a task to read this file
+    return std::make_unique<ReadFile>(p);
   }
 
-restart1:
-  if (directory_stack.empty())
-    return nullptr;
+  while (!dirs.empty()) {
 
-restart2:;
-  DIR *current;
-  std::string prefix;
-  std::tie(prefix, current) = directory_stack.top();
-
-  for (;;) {
-    struct dirent *entry = readdir(current);
-    if (entry == nullptr) {
-      // Exhausted this directory.
-      closedir(current);
-      current = nullptr;
-      directory_stack.pop();
-      goto restart1;
+    // if the top of the stack contains an exhausted directory, discard it
+    auto &its = dirs.top();
+    if (its.first == its.second) {
+      dirs.pop();
+      continue;
     }
 
-    // If this is a directory, descend into it.
-    if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") &&
-          strcmp(entry->d_name, "..")) {
-      std::string dname = prefix + entry->d_name + "/";
-      push_directory_stack(dname);
-      goto restart2;
+    // read the next entry
+    std::filesystem::directory_entry entry = *its.first;
+    ++its.first;
+
+    // if it is a directory, descend into it
+    if (entry.is_directory()) {
+      push_dir(entry.path());
+      continue;
     }
 
-    // If this entry is a C/C++ file, see if it is "new".
-    if (entry->d_type == DT_REG && (ends_with(entry->d_name, ".c") ||
-                                   ends_with(entry->d_name, ".cpp") ||
-                                   ends_with(entry->d_name, ".h") ||
-                                   ends_with(entry->d_name, ".hpp") ||
-                                   ends_with(entry->d_name, ".s") ||
-                                   ends_with(entry->d_name, ".S"))) {
-      std::string path = prefix + entry->d_name;
-      struct stat buf;
-      if (stat(path.c_str(), &buf) < 0 || buf.st_mtime <= era_start) {
-        // Consider this file "old".
-        continue;
-      }
+    // if this is not an ordinary file, ignore it
+    // TODO: should we allow symlinks here?
+    if (!entry.is_regular_file())
+      continue;
 
-      if (ends_with(entry->d_name, ".c") || ends_with(entry->d_name, ".cpp")
-          || ends_with(entry->d_name, ".h") ||
-          ends_with(entry->d_name, ".hpp")) {
-        return std::make_unique<ParseC>(normalise_path(path));
-      } else {
-        return std::make_unique<ParseAsm>(normalise_path(path));
-      }
+    // if this is not a ASM/C/C++ file, consider it irrelevant
+    if (!is_c(entry.path()) && !is_asm(entry.path()))
+      continue;
+
+    // check if the file was modified after the last time we saw it
+    struct stat buf;
+    if (stat(entry.path().string().c_str(), &buf) < 0) {
+      // failed; consider it old
+      continue;
     }
+    if (buf.st_mtime <= era_start) // old
+      continue;
 
-    // If we reached here, the directory entry was irrelevant to us.
+    // if it is assembly, pass the caller a task to parse it
+    if (is_asm(entry.path()))
+      return std::make_unique<ParseAsm>(entry.path().lexically_normal());
+
+    // similarly if it is C/C++
+    if (is_c(entry.path()))
+      return std::make_unique<ParseC>(entry.path().lexically_normal());
   }
+
+  // if we reached here, there is no further pending work
+  return nullptr;
 }
 
-void WorkQueue::push(const std::string &path) {
+void WorkQueue::push(const std::filesystem::path &path) {
 
   std::lock_guard<std::mutex> guard(stack_mutex);
 
-  auto it = files_seen.insert(path);
+  // normalise the path
+  std::filesystem::path p = path.lexically_normal();
+
+  auto it = files_seen.insert(p.string());
   if (it.second) {
     struct stat buf;
-    if (stat(path.c_str(), &buf) < 0 || buf.st_mtime <= era_start) {
+    if (stat(p.string().c_str(), &buf) < 0 || buf.st_mtime <= era_start) {
       // Ignore this file as we already know its contents or can't read it.
       return;
     }
-    files_to_read.push(path);
+    files_to_read.push(p);
   }
 }
