@@ -11,7 +11,6 @@
 #include "Task.h"
 #include <tuple>
 #include <unordered_set>
-#include "WorkQueueStub.h"
 
 class WorkQueue {
 
