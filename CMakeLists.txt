@@ -34,3 +34,7 @@ if(HAS_WARNING_POINTER_ARITH)
 endif()
 
 add_subdirectory(libclink)
+add_subdirectory(test/run-touch)
+
+enable_testing()
+add_test(run-touch test/run-touch/run-touch)
