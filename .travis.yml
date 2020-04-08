@@ -11,6 +11,7 @@ matrix:
         packages:
           - libclang-dev
     env:
+      - CTEST_OUTPUT_ON_FAILURE=1
       # we will put a CMake symlink here
       - PATH=${HOME}:${PATH}
 
@@ -25,6 +26,7 @@ matrix:
           - sqlite3
           - llvm
     env:
+      - CTEST_OUTPUT_ON_FAILURE=1
       - PATH=/usr/local/opt/llvm/bin:${PATH}
 
 before_install:
@@ -40,4 +42,4 @@ before_install:
   - if [ "$(uname -s)" = "Linux" ]; then ln -s /usr/bin/cmake ${HOME}/cmake; fi
 
 script:
-  - uname -sr && mkdir build && cd build && cmake .. && cmake --build . && sudo env "PATH=$PATH" cmake --build . -- install
+  - uname -sr && mkdir build && cd build && cmake .. && cmake --build . && cmake --build . -- test && sudo env "PATH=$PATH" cmake --build . -- install
