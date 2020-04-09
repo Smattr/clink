@@ -14,7 +14,8 @@ matrix:
       - CTEST_OUTPUT_ON_FAILURE=1
       # we will put a CMake symlink here
       - PATH=${HOME}:${PATH}
-      - CFLAGS="-Werror -g -fno-omit-frame-pointer"
+      - CFLAGS="-Werror -g -fno-omit-frame-pointer -fsanitize=undefined -fno-sanitize-recover=undefined -fuse-ld=gold"
+      - UBSAN_OPTIONS=print_stacktrace=1
 
   - name: macOS, XCode 11.3
     os: osx
@@ -29,7 +30,7 @@ matrix:
     env:
       - CTEST_OUTPUT_ON_FAILURE=1
       - PATH=/usr/local/opt/llvm/bin:${PATH}
-      - CFLAGS="-Werror -g -fno-omit-frame-pointer"
+      - CFLAGS="-Werror -g -fno-omit-frame-pointer -fsanitize=address"
 
 before_install:
 
