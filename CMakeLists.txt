@@ -37,6 +37,7 @@ add_subdirectory(libclink)
 add_subdirectory(test/run-echo)
 add_subdirectory(test/run-echo-mask)
 add_subdirectory(test/run-touch)
+add_subdirectory(test/vim-open)
 
 enable_testing()
 add_test(run-echo test/run-echo/run-echo)
