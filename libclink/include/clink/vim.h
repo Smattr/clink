@@ -1,10 +1,8 @@
 #pragma once
 
-#include <cstddef>
-#include <functional>
-#include <string>
-
-namespace clink {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** open Vim at the given position in the given file
  *
@@ -13,9 +11,10 @@ namespace clink {
  * \param colno Column number to position cursor at within the file
  * \returns Vim’s exit status
  */
-int vim_open(const std::string &filename, unsigned long lineno,
+int clink_vim_open(const char *filename, unsigned long lineno,
   unsigned long colno);
 
+#if 0
 /** yield syntax highlighted lines from a file, as if displayed by Vim
  *
  * \param filename Source file to read
@@ -24,5 +23,8 @@ int vim_open(const std::string &filename, unsigned long lineno,
  */
 int vim_highlight(const std::string &filename,
   std::function<int(const std::string&)> const &callback);
+#endif
 
+#ifdef __cplusplus
 }
+#endif

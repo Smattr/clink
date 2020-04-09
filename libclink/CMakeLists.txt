@@ -1,7 +1,8 @@
 project(libclink LANGUAGES C)
 
 add_library(libclink
-  src/run.c)
+  src/run.c
+  src/vim_open.c)
 
 target_include_directories(libclink
   PUBLIC
