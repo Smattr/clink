@@ -1,9 +1,5 @@
 #pragma once
 
-#include <cstddef>
-
-namespace clink {
-
 /** convert a 6-character HTML hex colour into its ANSI code equivalent
  *
  * \param html String of at least 6 hex characters representing an HTML colour
@@ -11,5 +7,3 @@ namespace clink {
  */
 __attribute__((visibility("internal")))
 unsigned html_colour_to_ansi(const char *html);
-
-}

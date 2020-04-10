@@ -1,6 +1,7 @@
 project(libclink LANGUAGES C)
 
 add_library(libclink
+  src/colour.c
   src/run.c
   src/vim_open.c)
 
