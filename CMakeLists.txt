@@ -34,12 +34,15 @@ if(HAS_WARNING_POINTER_ARITH)
 endif()
 
 add_subdirectory(libclink)
+
+add_subdirectory(test/html_colour_to_ansi)
 add_subdirectory(test/run-echo)
 add_subdirectory(test/run-echo-mask)
 add_subdirectory(test/run-touch)
 add_subdirectory(test/vim-open)
 
 enable_testing()
+add_test(html_colour_to_ansi test/html_colour_to_ansi/html_colour_to_ansi)
 add_test(run-echo test/run-echo/run-echo)
 add_test(run-echo-mask test/run-echo-mask/run-echo-mask)
 add_test(run-touch test/run-touch/run-touch)
