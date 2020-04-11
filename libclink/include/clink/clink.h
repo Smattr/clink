@@ -6,4 +6,5 @@
 #include <clink/parse_asm.h>
 #include <clink/parse_c.h>
 #endif
+#include <clink/iter.h>
 #include <clink/vim.h>
