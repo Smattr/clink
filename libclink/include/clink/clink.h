@@ -7,4 +7,5 @@
 #include <clink/parse_c.h>
 #endif
 #include <clink/iter.h>
+#include <clink/symbol.h>
 #include <clink/vim.h>
