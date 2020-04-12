@@ -10,6 +10,10 @@ struct clink_iter {
   /// only be set for iterators that yield strings.
   int (*next_str)(clink_iter_t *self, const char **yielded);
 
+  /// Iterator-specific implementation of clink_iter_next_symbol(). This should
+  /// only be set for iterators that yield symbols.
+  int (*next_symbol)(clink_iter_t *self, const clink_symbol_t **yielded);
+
   /// optional state that an iterator may need to track its progress
   void *state;
 

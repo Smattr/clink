@@ -1,4 +1,5 @@
 #include <clink/iter.h>
+#include <clink/symbol.h>
 #include <errno.h>
 #include "iter.h"
 #include <stdbool.h>
@@ -27,6 +28,20 @@ int clink_iter_next_str(clink_iter_t *it, const char **yielded) {
     return EINVAL;
 
   return it->next_str(it, yielded);
+}
+
+int clink_iter_next_symbol(clink_iter_t *it, const clink_symbol_t **yielded) {
+
+  if (it == NULL)
+    return EINVAL;
+
+  if (yielded == NULL)
+    return EINVAL;
+
+  if (it->next_symbol == NULL)
+    return EINVAL;
+
+  return it->next_symbol(it, yielded);
 }
 
 void clink_iter_free(clink_iter_t **it) {

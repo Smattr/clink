@@ -1,5 +1,6 @@
 #pragma once
 
+#include <clink/symbol.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -26,6 +27,17 @@ bool clink_iter_has_next(const clink_iter_t *it);
  * \returns 0 on success or an errno on failure
  */
 int clink_iter_next_str(clink_iter_t *it, const char **yielded);
+
+/** yield the next symbol from an iterator
+ *
+ * The iterator passed to this function should be one that yields symbols,
+ * otherwise it will fail.
+ *
+ * \param it The iterator structure to operate on
+ * \param yielded [out] The next symbol in the iterator on success
+ * \returns 0 on success or an errno on failure
+ */
+int clink_iter_next_symbol(clink_iter_t *it, const clink_symbol_t **yielded);
 
 /** clean up and deallocate an iterator
  *
