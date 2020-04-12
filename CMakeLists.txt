@@ -34,6 +34,7 @@ if(HAS_WARNING_POINTER_ARITH)
 endif()
 
 add_subdirectory(libclink)
+add_subdirectory(vim-cat)
 
 add_subdirectory(test/html_colour_to_ansi)
 add_subdirectory(test/run-echo)

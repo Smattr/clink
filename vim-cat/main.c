@@ -1,23 +1,36 @@
 #include <clink/clink.h>
-#include <cstdlib>
-#include <iostream>
-#include <string>
-
-using namespace clink;
-
-static int print(const std::string &line) {
-  std::cout << line << "\n";
-  return 0;
-}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char **argv) {
 
   if (argc != 2) {
-    std::cerr << "usage: " << argv[0] << " filename\n";
+    fprintf(stderr, "usage: %s filename\n", argv[0]);
     return EXIT_FAILURE;
   }
 
-  const char *filename = argv[1];
+  int rc = 0;
 
-  return vim_highlight(filename, print);
+  clink_iter_t *it = NULL;
+  if ((rc = clink_vim_highlight_iter(&it, argv[1]))) {
+    fprintf(stderr, "failed to create iterator: %s\n", strerror(rc));
+    return EXIT_FAILURE;
+  }
+
+  while (clink_iter_has_next(it)) {
+
+    const char *line = NULL;
+    if ((rc = clink_iter_next_str(it, &line))) {
+      fprintf(stderr, "failed to retrieve line: %s\n", strerror(rc));
+      goto done;
+    }
+
+    printf("%s", line);
+  }
+
+done:
+  clink_iter_free(&it);
+
+  return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
