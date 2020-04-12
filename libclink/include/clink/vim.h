@@ -18,6 +18,7 @@ int clink_vim_open(const char *filename, unsigned long lineno,
 
 /** create a string iterator for the Vim-highlighted lines of the given file
  *
+ * \param it [out] Created iterator on success
  * \param filename Source file to read
  * \returns 0 on success, an errno on failure
  */
