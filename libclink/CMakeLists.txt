@@ -5,6 +5,7 @@ add_library(libclink
   src/iter.c
   src/run.c
   src/temp_dir.c
+  src/vim_highlight.c
   src/vim_open.c)
 
 target_include_directories(libclink

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <clink/iter.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,16 +16,12 @@ extern "C" {
 int clink_vim_open(const char *filename, unsigned long lineno,
   unsigned long colno);
 
-#if 0
-/** yield syntax highlighted lines from a file, as if displayed by Vim
+/** create a string iterator for the Vim-highlighted lines of the given file
  *
  * \param filename Source file to read
- * \param callback Caller function to receive syntax highlighted lines
  * \returns 0 on success, an errno on failure
  */
-int vim_highlight(const std::string &filename,
-  std::function<int(const std::string&)> const &callback);
-#endif
+int clink_vim_highlight_iter(clink_iter_t **it, const char *filename);
 
 #ifdef __cplusplus
 }
