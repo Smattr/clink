@@ -1,19 +1,23 @@
 #pragma once
 
-#include <cstddef>
-#include <clink/Symbol.h>
-#include <functional>
-#include <string>
-#include <vector>
+#include <clink/iter.h>
+#include <stddef.h>
 
-namespace clink {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// parse a C/C++ file
-//
-// Returns 0 on success. If your callback ever returns non-zero, parsing will be
-// terminated and this value will be returned.
-int parse_c(const std::string &filename,
-  const std::vector<std::string> &clang_args,
-  std::function<int(const Symbol&)> const &callback);
+/** create an iterator for parsing the given C/C++ file
+ *
+ * \param it [out] Created iterator on success
+ * \param filename Path to source file to parse
+ * \param argc Number of elements in argv
+ * \param argv Arguments to pass to Clang
+ * \returns 0 on success or an errno on failure
+ */
+int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
+  const char **argv);
 
+#ifdef __cplusplus
 }
+#endif

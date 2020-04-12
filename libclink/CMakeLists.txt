@@ -3,6 +3,7 @@ project(libclink LANGUAGES C)
 add_library(libclink
   src/colour.c
   src/iter.c
+  src/parse_c.c
   src/run.c
   src/symbol.c
   src/temp_dir.c
