@@ -332,7 +332,7 @@ static void my_free(clink_iter_t *it) {
   state_free((state_t**)&it->state);
 }
 
-int clink_vim_highlight_iter(clink_iter_t **it, const char *filename) {
+int clink_vim_highlight(clink_iter_t **it, const char *filename) {
 
   if (it == NULL)
     return EINVAL;

@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
   int rc = 0;
 
   clink_iter_t *it = NULL;
-  if ((rc = clink_vim_highlight_iter(&it, argv[1]))) {
+  if ((rc = clink_vim_highlight(&it, argv[1]))) {
     fprintf(stderr, "failed to create iterator: %s\n", strerror(rc));
     return EXIT_FAILURE;
   }

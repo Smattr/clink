@@ -22,7 +22,7 @@ int clink_vim_open(const char *filename, unsigned long lineno,
  * \param filename Source file to read
  * \returns 0 on success, an errno on failure
  */
-int clink_vim_highlight_iter(clink_iter_t **it, const char *filename);
+int clink_vim_highlight(clink_iter_t **it, const char *filename);
 
 #ifdef __cplusplus
 }
