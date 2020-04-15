@@ -5,7 +5,7 @@
 #include <clink/Error.h>
 #include <clink/parse_asm.h>
 #endif
+#include <clink/c.h>
 #include <clink/iter.h>
-#include <clink/parse_c.h>
 #include <clink/symbol.h>
 #include <clink/vim.h>

@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <clang-c/Index.h>
+#include <clink/c.h>
 #include <clink/iter.h>
-#include <clink/parse_c.h>
 #include <clink/symbol.h>
 #include <errno.h>
 #include "iter.h"
