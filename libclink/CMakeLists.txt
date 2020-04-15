@@ -2,6 +2,7 @@ project(libclink LANGUAGES C)
 
 add_library(libclink
   src/colour.c
+  src/compiler_includes.c
   src/get_environ.c
   src/iter.c
   src/parse_c.c
