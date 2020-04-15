@@ -37,6 +37,7 @@ add_subdirectory(libclink)
 add_subdirectory(vim-cat)
 
 add_subdirectory(test/html_colour_to_ansi)
+add_subdirectory(test/ls-includes)
 add_subdirectory(test/parse-c)
 add_subdirectory(test/run-echo)
 add_subdirectory(test/run-echo-mask)
