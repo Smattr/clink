@@ -73,6 +73,14 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
     }
     --extent;
 
+    // macOS annotates some paths
+    {
+      static const char annotation[] = " (framework directory)";
+      size_t len = strlen(annotation);
+      if (extent >= len && strncmp(start + extent - len, annotation, len) == 0)
+        extent -= len;
+    }
+
     // record this include
     char **new_l = realloc(l, (l_len + 1) * sizeof(l[0]));
     if (new_l == NULL) {
