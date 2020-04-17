@@ -3,10 +3,12 @@ project(libclink LANGUAGES C)
 add_library(libclink
   src/colour.c
   src/compiler_includes.c
+  src/db_open.c
   src/get_environ.c
   src/iter.c
   src/parse_c.c
   src/run.c
+  src/sql.c
   src/symbol.c
   src/temp_dir.c
   src/vim_highlight.c

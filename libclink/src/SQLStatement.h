@@ -59,12 +59,4 @@ class __attribute__((visibility("internal"))) SQLStatement {
   sqlite3_stmt *stmt = nullptr;
 };
 
-static inline int sql_exec(sqlite3 *db, const char *query) {
-  return sqlite3_exec(db, query, nullptr, nullptr, nullptr);
-}
-
-static inline bool sql_ok(int error) {
-  return error == SQLITE_DONE || error == SQLITE_OK || error == SQLITE_ROW;
-}
-
 }

@@ -12,50 +12,6 @@
 
 namespace clink {
 
-static const char SYMBOLS_SCHEMA[] = "create table if not exists symbols (name "
-  "text not null, path text not null, category integer not null, line integer "
-  "not null, col integer not null, parent text, "
-  "unique(name, path, category, line, col));";
-
-static const char CONTENT_SCHEMA[] = "create table if not exists content "
-  "(path text not null, line integer not null, body text not null, "
-  "unique(path, line));";
-
-static const char *PRAGMAS[] = {
-  "pragma synchronous=OFF;",
-  "pragma journal_mode=MEMORY;",
-  "pragma temp_store=MEMORY;",
-};
-
-static void init(sqlite3 *db) {
-  assert(db != nullptr);
-
-  if (int rc = sql_exec(db, SYMBOLS_SCHEMA))
-    throw Error("failed to create database symbol table", rc);
-
-  if (int rc = sql_exec(db, CONTENT_SCHEMA))
-    throw Error("failed to create database content table", rc);
-
-  for (const char *pragma : PRAGMAS)
-    if (int rc = sql_exec(db, pragma))
-      throw Error("failed to run database pragma", rc);
-}
-
-
-Database::Database(const std::string &path) {
-
-  // check if the database file already exists, so we know whether to create the
-  // database structure
-  bool exists = !(access(path.c_str(), R_OK|W_OK) == -1 && errno == ENOENT);
-
-  int rc = sqlite3_open(path.c_str(), &db);
-  if (rc != SQLITE_OK)
-    throw Error("failed to open database", rc);
-
-  if (!exists)
-    init(db);
-}
-
 int Database::add(const Symbol &s) {
   assert(db != nullptr);
 
