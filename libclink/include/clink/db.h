@@ -14,6 +14,12 @@ typedef struct clink_db clink_db_t;
  */
 int clink_db_open(clink_db_t **db, const char *path);
 
+/** close a Clink symbol database
+ *
+ * \param db Database to close
+ */
+void clink_db_close(clink_db_t **db);
+
 #ifdef __cplusplus
 }
 #endif
