@@ -1,17 +1,6 @@
 add_executable(clink
-  src/build.cc
-  src/colours.cc
-  src/get_db_path.cc
-  src/get_mtime.cc
-  src/line_ui.cc
-  src/lstrip.cc
-  src/main.cc
-  src/Options.cc
-  src/ParseAsm.cc
-  src/ParseC.cc
-  src/ReadFile.cc
-  src/UICurses.cc
-  src/WorkQueue.cc)
+  src/main.c
+  src/option.c)
 
 target_include_directories(clink PRIVATE src)
 

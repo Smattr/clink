@@ -33,6 +33,7 @@ if(HAS_WARNING_POINTER_ARITH)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wpointer-arith")
 endif()
 
+add_subdirectory(clink)
 add_subdirectory(libclink)
 add_subdirectory(vim-cat)
 
