@@ -178,8 +178,14 @@ int main(int argc, char **argv) {
   // parse command line arguments
   parse_args(argc, argv);
 
-  int rc = 0;
+  int rc = set_db_path();
+  if (rc) {
+    fprintf(stderr, "failed to configure path to database: %s\n", strerror(rc));
+    goto done;
+  }
+  assert(option.database_path != NULL);
 
+done:
   clean_up_options();
 
   return rc ? EXIT_FAILURE : EXIT_SUCCESS;
