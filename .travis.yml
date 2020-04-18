@@ -25,7 +25,6 @@ matrix:
         update: true
         packages:
           - ncurses
-          - sqlite3
           - llvm
     env:
       - CTEST_OUTPUT_ON_FAILURE=1
