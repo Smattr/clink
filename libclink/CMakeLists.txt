@@ -3,8 +3,10 @@ project(libclink LANGUAGES C)
 add_library(libclink
   src/colour.c
   src/compiler_includes.c
+  src/db_add_symbol.c
   src/db_close.c
   src/db_open.c
+  src/db_remove.c
   src/get_environ.c
   src/iter.c
   src/parse_asm.c

@@ -12,31 +12,6 @@
 
 namespace clink {
 
-int Database::add(const Symbol &s) {
-  assert(db != nullptr);
-
-  // insert into the symbol table
-
-  static const char SYMBOL_INSERT[] = "insert into symbols (name, path, "
-    "category, line, col, parent) values (@name, @path, @category, @line, "
-    "@col, @parent);";
-
-  SQLStatement stmt(db, SYMBOL_INSERT);
-
-  stmt.bind("@name", 1, s.name);
-  stmt.bind("@path", 2, s.path);
-  stmt.bind("@category", 3, s.category);
-  stmt.bind("@line", 4, s.lineno);
-  stmt.bind("@col", 5, s.colno);
-  stmt.bind("@parent", 6, s.parent);
-
-  int rc = stmt.run();
-  if (!sql_ok(rc))
-    return rc;
-
-  return 0;
-}
-
 int Database::add(const std::string &path, unsigned long lineno,
     const std::string &line) {
   assert(db != nullptr);
@@ -57,33 +32,6 @@ int Database::add(const std::string &path, unsigned long lineno,
     return rc;
 
   return 0;
-}
-
-void Database::remove(const std::string &path) {
-
-  // first delete it from the symbols table
-  {
-    static const char SYMBOLS_DELETE[] = "delete from symbols where path = @path";
-    SQLStatement stmt(db, SYMBOLS_DELETE);
-
-    stmt.bind("@path", 1, path);
-
-    int rc = stmt.run();
-    if (!sql_ok(rc))
-      throw Error("failed to delete path from symbols table", rc);
-  }
-
-  // now delete it from the content table.
-  {
-    static const char CONTENT_DELETE[] = "delete from content where path = @path";
-    SQLStatement stmt(db, CONTENT_DELETE);
-
-    stmt.bind("@path", 1, path);
-
-    int rc = stmt.run();
-    if (!sql_ok(rc))
-      throw Error("failed to delete path from content table", rc);
-  }
 }
 
 int Database::find_symbol(const std::string &name,

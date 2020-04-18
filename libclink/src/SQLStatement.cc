@@ -7,18 +7,6 @@
 
 namespace clink {
 
-static int sql_prepare(sqlite3 *db, const char *query, sqlite3_stmt **stmt) {
-  return sqlite3_prepare_v2(db, query, -1, stmt, nullptr);
-}
-
-static int sql_bind_text(sqlite3_stmt *stmt, int index, const char *value) {
-  return sqlite3_bind_text(stmt, index, value, -1, SQLITE_STATIC);
-}
-
-static int sql_bind_int(sqlite3_stmt *stmt, int index, unsigned long value) {
-  return sqlite3_bind_int64(stmt, index, sqlite3_int64(value));
-}
-
 SQLStatement::SQLStatement(sqlite3 *db, const char *query) {
   if (int rc = sql_prepare(db, query, &stmt))
     throw Error(std::string("failed to prepare SQL statement \"") + query
