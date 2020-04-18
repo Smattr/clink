@@ -38,6 +38,7 @@ add_subdirectory(libclink)
 add_subdirectory(vim-cat)
 
 add_subdirectory(test/db_add_symbol)
+add_subdirectory(test/db_add_symbol_no_parent)
 add_subdirectory(test/db_open)
 add_subdirectory(test/db_remove)
 add_subdirectory(test/db_remove_empty)
@@ -52,6 +53,8 @@ add_subdirectory(test/vim-open)
 
 enable_testing()
 add_test(db_add_symbol test/db_add_symbol/db_add_symbol)
+add_test(db_add_symbol_no_parent
+  test/db_add_symbol_no_parent/db_add_symbol_no_parent)
 add_test(db_open test/db_open/db_open)
 add_test(db_remove test/db_remove/db_remove)
 add_test(db_remove_empty test/db_remove_empty/db_remove_empty)

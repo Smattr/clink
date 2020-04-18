@@ -1,0 +1,2 @@
+add_executable(db_add_symbol_no_parent main.c)
+target_link_libraries(db_add_symbol_no_parent libclink)
