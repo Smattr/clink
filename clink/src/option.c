@@ -45,11 +45,8 @@ int set_db_path(void) {
 
     // create a path to a database at this level
     char *candidate = NULL;
-    if (asprintf(&candidate, "%s%s.clink.db", branch,
-          is_root(branch) ? "" : "/") < 0) {
-      rc = ENOMEM;
+    if ((rc = join(branch, ".clink.db", &candidate)))
       goto done;
-    }
 
     // if this exists, we are done
     if (access(candidate, F_OK) == 0) {
@@ -73,10 +70,8 @@ int set_db_path(void) {
   }
 
   // if we still did not find a database, default to the current directory
-  if (asprintf(&option.database_path, "%s/.clink.db", wd) < 0) {
-    rc = ENOMEM;
+  if ((rc = join(wd, ".clink.db", &option.database_path)))
     goto done;
-  }
 
 done:
   free(branch);

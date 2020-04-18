@@ -35,3 +35,12 @@ int dirname(const char *path, char **dir);
  * \returns True if this is the file system root
  */
 bool is_root(const char *path);
+
+/** concatenate two paths
+ *
+ * \param branch Start of the new path
+ * \param stem End of the new path
+ * \param path [out] Resulting concatenation on success
+ * \returns 0 on success or an errno on failure
+ */
+int join(const char *branch, const char *stem, char **path);
