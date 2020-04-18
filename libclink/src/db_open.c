@@ -27,25 +27,20 @@ static int init(sqlite3 *db) {
 
   assert(db != NULL);
 
-  {
-    int err = sql_exec(db, SYMBOLS_SCHEMA);
-    if (err != SQLITE_OK)
-      return sql_err_to_errno(err);
-  }
+  int rc = 0;
 
-  {
-    int err = sql_exec(db, CONTENT_SCHEMA);
-    if (err != SQLITE_OK)
-      return sql_err_to_errno(err);
-  }
+  if ((rc = sql_exec(db, SYMBOLS_SCHEMA)))
+    return rc;
+
+  if ((rc = sql_exec(db, CONTENT_SCHEMA)))
+    return rc;
 
   for (size_t i = 0; i < sizeof(PRAGMAS) / sizeof(PRAGMAS[0]); ++i) {
-    int err = sql_exec(db, PRAGMAS[i]);
-    if (err != SQLITE_OK)
-      return sql_err_to_errno(err);
+    if ((rc = sql_exec(db, PRAGMAS[i])))
+      return rc;
   }
 
-  return 0;
+  return rc;
 }
 
 
