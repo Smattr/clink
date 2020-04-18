@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include "option.h"
+#include "path.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,15 +27,15 @@ int set_db_path(void) {
   if (option.database_path != NULL)
     return 0;
 
-  // get our current directory
-  char *cwd = getcwd(NULL, 0);
-  if (cwd == NULL)
-    return errno;
-
   int rc = 0;
 
+  // get our current directory
+  char *wd = NULL;
+  if ((rc = cwd(&wd)))
+    return rc;
+
   // start at this current directory
-  char *branch = strdup(cwd);
+  char *branch = strdup(wd);
   if (branch == NULL) {
     rc = ENOMEM;
     goto done;
@@ -70,14 +71,14 @@ int set_db_path(void) {
   }
 
   // if we still did not find a database, default to the current directory
-  if (asprintf(&option.database_path, "%s/.clink.db", cwd) < 0) {
+  if (asprintf(&option.database_path, "%s/.clink.db", wd) < 0) {
     rc = ENOMEM;
     goto done;
   }
 
 done:
   free(branch);
-  free(cwd);
+  free(wd);
 
   return rc;
 }

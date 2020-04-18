@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include <limits.h>
 #include "option.h"
+#include "path.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,13 +81,18 @@ static void parse_args(int argc, char **argv) {
         free(option.database_path);
         // if this is a relative path, make it absolute
         if (optarg[0] != '/') {
-          char *cwd = getcwd(NULL, 0);
-          if (cwd == NULL ||
-              asprintf(&option.database_path, "%s/%s", cwd, optarg) < 0) {
+          char *wd = NULL;
+          int rc = cwd(&wd);
+          if (rc) {
+            fprintf(stderr, "failed to get current working directory: %s\n",
+              strerror(rc));
+            exit(EXIT_FAILURE);
+          }
+          if (asprintf(&option.database_path, "%s/%s", wd, optarg) < 0) {
             fprintf(stderr, "out of memory\n");
             exit(EXIT_FAILURE);
           }
-          free(cwd);
+          free(wd);
         } else {
           option.database_path = xstrdup(optarg);
         }

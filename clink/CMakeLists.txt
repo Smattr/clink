@@ -1,6 +1,7 @@
 add_executable(clink
   src/main.c
-  src/option.c)
+  src/option.c
+  src/path.c)
 
 target_include_directories(clink PRIVATE src)
 
