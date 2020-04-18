@@ -79,22 +79,12 @@ static void parse_args(int argc, char **argv) {
 
       case 'f': // --database
         free(option.database_path);
-        // if this is a relative path, make it absolute
-        if (optarg[0] != '/') {
-          char *wd = NULL;
-          int rc = cwd(&wd);
+        {
+          int rc = abspath(optarg, &option.database_path);
           if (rc) {
-            fprintf(stderr, "failed to get current working directory: %s\n",
-              strerror(rc));
+            fprintf(stderr, "failed to set database path: %s\n", strerror(rc));
             exit(EXIT_FAILURE);
           }
-          if (asprintf(&option.database_path, "%s/%s", wd, optarg) < 0) {
-            fprintf(stderr, "out of memory\n");
-            exit(EXIT_FAILURE);
-          }
-          free(wd);
-        } else {
-          option.database_path = xstrdup(optarg);
         }
         break;
 
