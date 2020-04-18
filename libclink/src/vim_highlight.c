@@ -4,6 +4,7 @@
 #include "colour.h"
 #include <errno.h>
 #include "iter.h"
+#include "reg.h"
 #include <regex.h>
 #include "run.h"
 #include <stdbool.h>
@@ -400,8 +401,8 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
     "(font-style:[[:blank:]]*italic;[[:blank:]]*)?"
     "(text-decoration:[[:blank:]]*underline;[[:blank:]]*)?";
   regex_t style_re;
-  if (regcomp(&style_re, STYLE, REG_EXTENDED) != 0) {
-    rc = ENOTRECOVERABLE;
+  if ((rc = regcomp(&style_re, STYLE, REG_EXTENDED))) {
+    rc = re_err_to_errno(rc);
     goto done;
   }
 
@@ -439,7 +440,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       if (r == REG_NOMATCH) {
         continue;
       } else if (r != 0) {
-        rc = ENOTRECOVERABLE;
+        rc = re_err_to_errno(r);
         free(line);
         goto done1;
       }
