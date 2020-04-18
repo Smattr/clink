@@ -45,7 +45,8 @@ int set_db_path(void) {
 
     // create a path to a database at this level
     char *candidate = NULL;
-    if (asprintf(&candidate, "%s/.clink.db", branch) < 0) {
+    if (asprintf(&candidate, "%s%s.clink.db", branch,
+          strcmp(branch, "/") == 0 ? "" : "/") < 0) {
       rc = ENOMEM;
       goto done;
     }
@@ -59,17 +60,16 @@ int set_db_path(void) {
     free(candidate);
 
     // if we just checked the file system root, give up
-    if (strcmp(branch, "") == 0)
+    if (strcmp(branch, "/") == 0)
       break;
 
     // otherwise move one directory up and try again
-    for (size_t i = strlen(branch) - 1; ; --i) {
-      if (branch[i] == '/') {
-        branch[i] = '\0';
-        break;
-      }
-      assert(i != 0);
-    }
+    char *next = NULL;
+    rc = dirname(branch, &next);
+    free(branch);
+    branch = next;
+    if (rc)
+      goto done;
   }
 
   // if we still did not find a database, default to the current directory
@@ -100,26 +100,10 @@ int set_src(void) {
     return ENOMEM;
   option.src_len = 1;
 
-  // find the directory the database lives in
+  // use the directory the database lives in as a source
   assert(option.database_path != NULL && "no database set");
-  size_t slash = strlen(option.database_path) - 1;
-  assert(slash > 0 && "database path is empty");
-  while (option.database_path[slash] != '/') {
-    --slash;
-    assert(slash > 0 && "no slashes in database path");
-  }
-
-  // use this as a source directory to scan
-  if (slash == 0) {
-    // root of the file system
-    option.src[0] = strdup("/");
-  } else {
-    option.src[0] = strndup(option.database_path, slash);
-  }
-  if (option.src[0] == NULL) {
-    rc = ENOMEM;
+  if ((rc = dirname(option.database_path, &option.src[0])))
     goto done;
-  }
 
 done:
   if (rc) {

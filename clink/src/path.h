@@ -16,3 +16,13 @@ int abspath(const char *path, char **result);
  * \returns 0 on success or an errno on failure
  */
 int cwd(char **wd);
+
+/** get the directory name of a given path
+ *
+ * The input path is assumed to be absolute.
+ *
+ * \param path Path to a file or directory
+ * \param dir [out] The containing directory on success
+ * \returns 0 on success or an errno on failure
+ */
+int dirname(const char *path, char **dir);
