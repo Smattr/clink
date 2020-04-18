@@ -56,6 +56,8 @@ int set_db_path(void) {
       goto done;
     }
 
+    free(candidate);
+
     // if we just checked the file system root, give up
     if (strcmp(branch, "") == 0)
       break;
