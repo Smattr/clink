@@ -77,6 +77,7 @@ static void parse_args(int argc, char **argv) {
         exit(EXIT_FAILURE);
 
       case 'f': // --database
+        free(option.database_path);
         option.database_path = xstrdup(optarg);
         break;
 
