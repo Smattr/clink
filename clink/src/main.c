@@ -191,6 +191,17 @@ int main(int argc, char **argv) {
   }
   assert(option.src != NULL && option.src_len > 0);
 
+  // check all source paths exist, to avoid later complications
+  if (option.update_database) {
+    for (size_t i = 0; i < option.src_len; ++i) {
+      if (access(option.src[i], R_OK) < 0) {
+        rc = errno;
+        fprintf(stderr, "%s not accessible: %s\n", option.src[i], strerror(rc));
+        goto done;
+      }
+    }
+  }
+
 done:
   clean_up_options();
 
