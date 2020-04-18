@@ -82,6 +82,52 @@ done:
   return rc;
 }
 
+int set_src(void) {
+
+  // if we were given some explicit sources, we need nothing further
+  if (option.src_len > 0)
+    return 0;
+
+  int rc = 0;
+
+  // otherwise, prepare to add a single directory
+  assert(option.src == NULL && "logic bug in set_src()");
+  option.src = calloc(1, sizeof(option.src[0]));
+  if (option.src == NULL)
+    return ENOMEM;
+  option.src_len = 1;
+
+  // find the directory the database lives in
+  assert(option.database_path != NULL && "no database set");
+  size_t slash = strlen(option.database_path) - 1;
+  assert(slash > 0 && "database path is empty");
+  while (option.database_path[slash] != '/') {
+    --slash;
+    assert(slash > 0 && "no slashes in database path");
+  }
+
+  // use this as a source directory to scan
+  if (slash == 0) {
+    // root of the file system
+    option.src[0] = strdup("/");
+  } else {
+    option.src[0] = strndup(option.database_path, slash);
+  }
+  if (option.src[0] == NULL) {
+    rc = ENOMEM;
+    goto done;
+  }
+
+done:
+  if (rc) {
+    free(option.src);
+    option.src = NULL;
+    option.src_len = 0;
+  }
+
+  return rc;
+}
+
 void clean_up_options(void) {
 
   free(option.database_path);

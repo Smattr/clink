@@ -44,5 +44,8 @@ extern option_t option;
 // setup option.database_path after option parsing
 int set_db_path(void);
 
+// setup option.src after option parsing
+int set_src(void);
+
 // deallocate members of option
 void clean_up_options(void);

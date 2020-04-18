@@ -154,17 +154,6 @@ static void parse_args(int argc, char **argv) {
   for (size_t i = optind; i < (size_t)argc; ++i)
     xappend(&option.src, &option.src_len, argv[i]);
 
-  // if we did not receive any sources, use the current directory
-  if (option.src_len == 0) {
-    char *cwd = getcwd(NULL, 0);
-    if (cwd == NULL) {
-      perror("getcwd");
-      exit(EXIT_FAILURE);
-    }
-    xappend(&option.src, &option.src_len, cwd);
-    free(cwd);
-  }
-
   // if the user wanted automatic parallelism, give them a thread per core
   if (option.threads == 0) {
     long r = sysconf(_SC_NPROCESSORS_ONLN);
@@ -197,6 +186,14 @@ int main(int argc, char **argv) {
     goto done;
   }
   assert(option.database_path != NULL);
+
+  // figure out what source paths we should scan
+  if ((rc = set_src())) {
+    fprintf(stderr, "failed to set source files/directories to scan: %s\n",
+      strerror(rc));
+    goto done;
+  }
+  assert(option.src != NULL && option.src_len > 0);
 
 done:
   clean_up_options();
