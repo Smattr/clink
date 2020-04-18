@@ -4,7 +4,7 @@
 #include "colour.h"
 #include <errno.h>
 #include "iter.h"
-#include "reg.h"
+#include "re.h"
 #include <regex.h>
 #include "run.h"
 #include <stdbool.h>

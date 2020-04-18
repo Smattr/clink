@@ -4,7 +4,7 @@
 #include <clink/symbol.h>
 #include <errno.h>
 #include "iter.h"
-#include "reg.h"
+#include "re.h"
 #include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>

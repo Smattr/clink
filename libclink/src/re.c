@@ -1,5 +1,5 @@
 #include <errno.h>
-#include "reg.h"
+#include "re.h"
 #include <regex.h>
 
 int re_err_to_errno(int err) {
