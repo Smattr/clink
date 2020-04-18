@@ -78,7 +78,18 @@ static void parse_args(int argc, char **argv) {
 
       case 'f': // --database
         free(option.database_path);
-        option.database_path = xstrdup(optarg);
+        // if this is a relative path, make it absolute
+        if (optarg[0] != '/') {
+          char *cwd = getcwd(NULL, 0);
+          if (cwd == NULL ||
+              asprintf(&option.database_path, "%s/%s", cwd, optarg) < 0) {
+            fprintf(stderr, "out of memory\n");
+            exit(EXIT_FAILURE);
+          }
+          free(cwd);
+        } else {
+          option.database_path = xstrdup(optarg);
+        }
         break;
 
       case 'I': // --include
@@ -179,6 +190,7 @@ int main(int argc, char **argv) {
   // parse command line arguments
   parse_args(argc, argv);
 
+  // figure out where to create (or re-open) .clink.db
   int rc = set_db_path();
   if (rc) {
     fprintf(stderr, "failed to configure path to database: %s\n", strerror(rc));
