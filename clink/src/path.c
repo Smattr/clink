@@ -1,5 +1,6 @@
 #include <errno.h>
 #include "path.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +63,7 @@ int dirname(const char *path, char **dir) {
     return EINVAL;
 
   // if we are at the root, it simply has itself as a dir name
-  if (strcmp(path, "/") == 0) {
+  if (is_root(path)) {
     *dir = strdup("/");
     if (*dir == NULL)
       return ENOMEM;
@@ -85,4 +86,12 @@ int dirname(const char *path, char **dir) {
     return ENOMEM;
 
   return 0;
+}
+
+bool is_root(const char *path) {
+
+  if (path == NULL)
+    return false;
+
+  return strcmp(path, "/") == 0;
 }

@@ -46,7 +46,7 @@ int set_db_path(void) {
     // create a path to a database at this level
     char *candidate = NULL;
     if (asprintf(&candidate, "%s%s.clink.db", branch,
-          strcmp(branch, "/") == 0 ? "" : "/") < 0) {
+          is_root(branch) ? "" : "/") < 0) {
       rc = ENOMEM;
       goto done;
     }
@@ -60,7 +60,7 @@ int set_db_path(void) {
     free(candidate);
 
     // if we just checked the file system root, give up
-    if (strcmp(branch, "/") == 0)
+    if (is_root(branch))
       break;
 
     // otherwise move one directory up and try again

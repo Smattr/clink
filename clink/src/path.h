@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 /** make a given (possibly relative) path absolute
  *
  * \param path Path to make absolute
@@ -26,3 +28,10 @@ int cwd(char **wd);
  * \returns 0 on success or an errno on failure
  */
 int dirname(const char *path, char **dir);
+
+/** is this the root directory of the file system?
+ *
+ * \param path Path to a file or directory
+ * \returns True if this is the file system root
+ */
+bool is_root(const char *path);
