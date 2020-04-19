@@ -36,7 +36,7 @@ int str_queue_new(str_queue_t **sq) {
 
 done:
   if (rc) {
-    free(q);
+    str_queue_free(&q);
   } else {
     *sq = q;
   }
