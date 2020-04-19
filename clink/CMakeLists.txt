@@ -2,7 +2,8 @@ add_executable(clink
   src/main.c
   src/option.c
   src/path.c
-  src/set.c)
+  src/set.c
+  src/str_queue.c)
 
 target_include_directories(clink PRIVATE src)
 
