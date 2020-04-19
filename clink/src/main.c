@@ -1,9 +1,11 @@
 #include <assert.h>
+#include <clink/clink.h>
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
 #include "option.h"
 #include "path.h"
+#include "sigterm.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -202,6 +204,24 @@ int main(int argc, char **argv) {
     }
   }
 
+  // block SIGTERM while we open (and possibly construct) the database, so we do
+  // not end up corrupting the file if we are interrupted
+  if ((rc = sigterm_block())) {
+    fprintf(stderr, "failed to block SIGTERM: %s\n", strerror(rc));
+    goto done;
+  }
+
+  // open the database
+  clink_db_t *db = NULL;
+  if ((rc = clink_db_open(&db, option.database_path))) {
+    fprintf(stderr, "failed to open database: %s\n", strerror(rc));
+    goto done;
+  }
+
+  // we can now be safely interrupted
+  (void)sigterm_unblock();
+
+  clink_db_close(&db);
 done:
   clean_up_options();
 
