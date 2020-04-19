@@ -44,7 +44,6 @@ if(NOT CLANG_LIBRARY)
   message(FATAL_ERROR "could not find libclang")
 endif ()
 target_link_libraries(libclink ${CLANG_LIBRARY})
-target_link_options(libclink PUBLIC "-Wl,-rpath,${CLANG_LIBDIR}")
 
 find_package(SQLite3 REQUIRED)
 target_include_directories(libclink PUBLIC ${SQLite3_INCLUDE_DIRS})
