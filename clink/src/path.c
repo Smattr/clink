@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <errno.h>
 #include "path.h"
 #include <stdbool.h>
@@ -86,6 +87,42 @@ int dirname(const char *path, char **dir) {
     return ENOMEM;
 
   return 0;
+}
+
+/// does this path have the given file extension?
+static bool has_ext(const char *path, const char *ext) {
+
+  if (path == NULL || ext == NULL)
+    return false;
+
+  if (strlen(path) < strlen(ext) + sizeof("."))
+    return false;
+
+  // does the extension begin where we expect?
+  if (path[strlen(path) - strlen(ext) - sizeof(".")] != '.')
+    return false;
+
+  // case-insensitive comparison of the extension
+  for (size_t i = 0; i < strlen(ext); ++i) {
+    if (tolower(path[strlen(path) - strlen(ext) + i]) != tolower(ext[i]))
+      return false;
+  }
+
+  return true;
+}
+
+bool is_asm(const char *path) {
+  return has_ext(path, "s");
+}
+
+bool is_c(const char *path) {
+  return has_ext(path, "c")
+      || has_ext(path, "c++")
+      || has_ext(path, "cpp")
+      || has_ext(path, "cxx")
+      || has_ext(path, "cc")
+      || has_ext(path, "h")
+      || has_ext(path, "hpp");
 }
 
 bool is_root(const char *path) {

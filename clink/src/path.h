@@ -29,6 +29,20 @@ int cwd(char **wd);
  */
 int dirname(const char *path, char **dir);
 
+/** is this a path to an assembly file?
+ *
+ * \param path Path to assess
+ * \returns True if this is an assembly file
+ */
+bool is_asm(const char *path);
+
+/** is this a path to a C/C++ file?
+ *
+ * \param path Path to assess
+ * \returns True if this is an C/C++ file
+ */
+bool is_c(const char *path);
+
 /** is this the root directory of the file system?
  *
  * \param path Path to a file or directory
