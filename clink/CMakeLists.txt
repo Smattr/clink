@@ -1,4 +1,5 @@
 add_executable(clink
+  src/file_queue.c
   src/main.c
   src/option.c
   src/path.c
