@@ -193,14 +193,25 @@ int main(int argc, char **argv) {
   }
   assert(option.src != NULL && option.src_len > 0);
 
-  // check all source paths exist, to avoid later complications
   if (option.update_database) {
     for (size_t i = 0; i < option.src_len; ++i) {
+
+      // check the source path exists, to avoid later complications
       if (access(option.src[i], R_OK) < 0) {
         rc = errno;
         fprintf(stderr, "%s not accessible: %s\n", option.src[i], strerror(rc));
         goto done;
       }
+
+      // make the path absolute to ease later work
+      char *absolute = NULL;
+      if ((rc = abspath(option.src[i], &absolute))) {
+        fprintf(stderr, "failed to make %s absolute: %s\n", option.src[i],
+          strerror(rc));
+        goto done;
+      }
+      free(option.src[i]);
+      option.src[i] = absolute;
     }
   }
 
