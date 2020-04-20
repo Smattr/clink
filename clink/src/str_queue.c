@@ -86,10 +86,8 @@ int str_queue_pop(str_queue_t *sq, char **str) {
     return EINVAL;
 
   // is the queue empty?
-  if (sq->head == NULL) {
-    *str = NULL;
-    return 0;
-  }
+  if (sq->head == NULL)
+    return ENOMSG;
 
   *str = sq->head->value;
 

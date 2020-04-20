@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 #include <dirent.h>
 #include "file_queue.h"
@@ -132,12 +133,7 @@ int file_queue_pop(file_queue_t *fq, char **path) {
     char *next = NULL;
     if ((rc = str_queue_pop(fq->pending, &next)))
       break;
-
-    // if we had nothing in the pending queue, we are done
-    if (next == NULL) {
-      *path = NULL;
-      break;
-    }
+    assert(next != NULL);
 
     // if this is a file, just return it
     if (is_file(next)) {

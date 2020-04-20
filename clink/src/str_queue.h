@@ -24,8 +24,9 @@ int str_queue_push(str_queue_t *sq, const char *str);
 /** remove a string from the head of the queue
  *
  * \param sq Queue to operate on
- * \param str [out] String that was popped, or NULL if the queue was empty
- * \returns 0 on success or an errno on failure
+ * \param str [out] String that was popped
+ * \returns 0 if a string was popped, ENOMSG if the queue was empty, or an errno
+ *   on failure
  */
 int str_queue_pop(str_queue_t *sq, char **str);
 
