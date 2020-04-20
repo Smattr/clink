@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 int abspath(const char *path, char **result) {
@@ -123,6 +124,30 @@ bool is_c(const char *path) {
       || has_ext(path, "cc")
       || has_ext(path, "h")
       || has_ext(path, "hpp");
+}
+
+bool is_dir(const char *path) {
+
+  if (path == NULL)
+    return false;
+
+  struct stat buf;
+  if (stat(path, &buf) < 0)
+    return false;
+
+  return S_ISDIR(buf.st_mode);
+}
+
+bool is_file(const char *path) {
+
+  if (path == NULL)
+    return false;
+
+  struct stat buf;
+  if (stat(path, &buf) < 0)
+    return false;
+
+  return S_ISREG(buf.st_mode);
 }
 
 bool is_root(const char *path) {

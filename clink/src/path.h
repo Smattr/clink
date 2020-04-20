@@ -43,6 +43,20 @@ bool is_asm(const char *path);
  */
 bool is_c(const char *path);
 
+/** is this a directory?
+ *
+ * \param path Path to assess
+ * \returns True if this is a directory
+ */
+bool is_dir(const char *path);
+
+/** is this a regular file?
+ *
+ * \param path Path to assess
+ * \returns True if this is a regular file
+ */
+bool is_file(const char *path);
+
 /** is this the root directory of the file system?
  *
  * \param path Path to a file or directory
