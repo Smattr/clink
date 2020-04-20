@@ -5,7 +5,8 @@ add_executable(clink
   src/path.c
   src/set.c
   src/sigterm.c
-  src/str_queue.c)
+  src/str_queue.c
+  src/work_queue.c)
 
 target_include_directories(clink PRIVATE src)
 
