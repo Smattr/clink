@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "build.h"
 #include <clink/clink.h>
 #include <errno.h>
 #include <getopt.h>
@@ -232,6 +233,13 @@ int main(int argc, char **argv) {
   // we can now be safely interrupted
   (void)sigterm_unblock();
 
+  // build/update the database, if requested
+  if (option.update_database) {
+    if ((rc = build(db)))
+      goto done1;
+  }
+
+done1:
   clink_db_close(&db);
 done:
   clean_up_options();

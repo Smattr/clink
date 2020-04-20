@@ -1,8 +1,10 @@
 #pragma once
 
-#include <cstddef>
 #include <clink/clink.h>
-#include <sys/types.h>
 
-// build or update a Clink symbol database
-int build(clink::Database &db, time_t era_start);
+/** build or update a Clink database
+ *
+ * \param db Database to operate on
+ * \returns 0 on success or an errno on failure
+ */
+int build(clink_db_t *db);
