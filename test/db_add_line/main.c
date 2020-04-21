@@ -48,11 +48,11 @@ int main(void) {
   // add a new symbol
   if (rc == 0) {
 
-    static const char path[] = "foo";
+    static const char p[] = "foo";
     unsigned long lineno = 42;
     static const char line[] = "bar\n";
 
-    rc = clink_db_add_line(db, path, lineno, line);
+    rc = clink_db_add_line(db, p, lineno, line);
     if (rc)
       fprintf(stderr, "clink_db_add_line: %s\n", strerror(rc));
   }
