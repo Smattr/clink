@@ -4,12 +4,30 @@
 #include <errno.h>
 #include "option.h"
 #include "path.h"
+#include <pthread.h>
 #include "sigterm.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "work_queue.h"
+
+/// mutual exclusion mechanism for writing to the database
+pthread_mutex_t db_lock;
+
+/// add a symbol to the Clink database
+static int add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
+
+  int rc = pthread_mutex_lock(&db_lock);
+  if (rc)
+    return rc;
+
+  rc = clink_db_add_symbol(db, symbol);
+
+  (void)pthread_mutex_unlock(&db_lock);
+
+  return rc;
+}
 
 /// print progress indication
 __attribute__((format(printf, 1, 2)))
@@ -64,26 +82,35 @@ static int process(clink_db_t *db, work_queue_t *wq) {
       // a file to be parsed
       case PARSE: {
 
+        // remove anything related to the file we are about to parse
+        clink_db_remove(db, t.path);
+
         clink_iter_t *it = NULL;
 
-        if (is_asm(t.path)) { // assembly
+        // assembly
+        if (is_asm(t.path)) {
           progress("parsing asm file %s", t.path);
-
           rc = clink_parse_asm(&it, t.path);
 
-        } else { // otherwise it should be C/C++
+        // C/C++
+        } else {
           assert(is_c(t.path));
           progress("parsing C/C++ file %s", t.path);
-
           const char **argv = (const char**)option.cxx_argv;
           rc = clink_parse_c(&it, t.path, option.cxx_argc, argv);
 
         }
 
         if (rc == 0) {
+          // parse all symbols and add them to the database
           while (clink_iter_has_next(it)) {
+
             const clink_symbol_t *symbol = NULL;
             if ((rc = clink_iter_next_symbol(it, &symbol)))
+              break;
+            assert(symbol != NULL);
+
+            if ((rc = add_symbol(db, symbol)))
               break;
           }
         }
@@ -99,7 +126,6 @@ static int process(clink_db_t *db, work_queue_t *wq) {
       // a file to be read and syntax highlighted
       case READ: {
         progress("syntax highlighting %s", t.path);
-
         clink_iter_t *it = NULL;
         rc = clink_vim_highlight(&it, t.path);
 
@@ -142,6 +168,12 @@ int build(clink_db_t *db) {
 
   int rc = 0;
 
+  // create a mutex for protecting database accesses
+  if ((rc = pthread_mutex_init(&db_lock, NULL))) {
+    fprintf(stderr, "failed to create mutex: %s\n", strerror(rc));
+    return rc;
+  }
+
   // setup a work queue to manage our tasks
   work_queue_t *wq = NULL;
   if ((rc = work_queue_new(&wq))) {
@@ -177,6 +209,7 @@ int build(clink_db_t *db) {
 done:
   (void)sigterm_unblock();
   work_queue_free(&wq);
+  (void)pthread_mutex_destroy(&db_lock);
 
   return rc;
 }
