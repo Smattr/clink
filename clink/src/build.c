@@ -39,7 +39,7 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
   int rc = 0;
 
-  for (size_t i = 1; ; ++i) {
+  for (;;) {
 
     // get an item from the work queue
     task_t t;
@@ -126,12 +126,10 @@ static int process(clink_db_t *db, work_queue_t *wq) {
     if (rc)
       break;
 
-    // periodically check if we have been SIGTERMed and should finish up
-    if (i % 128 == 0) {
-      if (sigterm_pending()) {
-        progress("saw SIGTERM; exiting...");
-        break;
-      }
+    // check if we have been SIGTERMed and should finish up
+    if (sigterm_pending()) {
+      progress("saw SIGTERM; exiting...");
+      break;
     }
   }
 
