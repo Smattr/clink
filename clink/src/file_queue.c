@@ -85,6 +85,7 @@ int file_queue_pop(file_queue_t *fq, char **path) {
 
     // first try to get a new entry from the active directory
     if (fq->active != NULL) {
+      errno = 0;
       struct dirent *entry = readdir(fq->active);
 
       // end of directory?
