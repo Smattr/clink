@@ -5,6 +5,7 @@
 #include "path.h"
 #include "set.h"
 #include "str_queue.h"
+#include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -100,6 +101,10 @@ int file_queue_pop(file_queue_t *fq, char **path) {
         rc = errno;
         break;
       }
+
+      // skip special entries
+      if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        continue;
 
       // form an absolute path to this
       char *next = NULL;
