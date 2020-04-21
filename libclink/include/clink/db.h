@@ -24,6 +24,17 @@ int clink_db_open(clink_db_t **db, const char *path);
  */
 int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol);
 
+/** add a line of source content to the database
+ *
+ * \param db Database to operate on
+ * \param path Path of the file this line came from
+ * \param lineno Line number within the file this came from
+ * \param line Content of the line itself
+ * \returns 0 on success or a SQLite error code on failure
+ */
+int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
+  const char *line);
+
 /** remove all symbols and content related to a given file
  *
  * \param db Clink database to operate on

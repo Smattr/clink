@@ -15,29 +15,6 @@ class Database {
  public:
   explicit Database(const std::string &path);
 
-  /** add a symbol to the database
-   *
-   * \param s Symbol to add
-   * \returns 0 on success or a SQLite error code on failure
-   */
-  int add(const Symbol &s);
-
-  /** add a line of source content to the database
-   *
-   * \param path Path of the file this line came from
-   * \param lineno Line number within the file this came from
-   * \param line Content of the line itself
-   * \returns 0 on success or a SQLite error code on failure
-   */
-  int add(const std::string &path, unsigned long lineno,
-    const std::string &line);
-
-  /** remove all symbols and content related to a given file
-   *
-   * \param path Path of the file to remove information for
-   */
-  void remove(const std::string &path);
-
   /** find a symbol in the database
    *
    * \param name Name of the symbol to lookup

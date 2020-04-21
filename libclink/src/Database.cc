@@ -12,28 +12,6 @@
 
 namespace clink {
 
-int Database::add(const std::string &path, unsigned long lineno,
-    const std::string &line) {
-  assert(db != nullptr);
-
-  // insert into the content table
-
-  static const char CONTENT_INSERT[] = "insert into content (path, line, body) "
-    "values (@path, @line, @body);";
-
-  SQLStatement stmt(db, CONTENT_INSERT);
-
-  stmt.bind("@path", 1, path);
-  stmt.bind("@line", 2, lineno);
-  stmt.bind("@body", 3, line);
-
-  int rc = stmt.run();
-  if (!sql_ok(rc))
-    return rc;
-
-  return 0;
-}
-
 int Database::find_symbol(const std::string &name,
     std::function<int(const Result&)> const &callback) {
 
