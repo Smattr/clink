@@ -96,11 +96,11 @@ static bool has_ext(const char *path, const char *ext) {
   if (path == NULL || ext == NULL)
     return false;
 
-  if (strlen(path) < strlen(ext) + sizeof("."))
+  if (strlen(path) < strlen(ext) + strlen("."))
     return false;
 
   // does the extension begin where we expect?
-  if (path[strlen(path) - strlen(ext) - sizeof(".")] != '.')
+  if (path[strlen(path) - strlen(ext) - strlen(".")] != '.')
     return false;
 
   // case-insensitive comparison of the extension
