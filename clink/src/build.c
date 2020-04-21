@@ -21,6 +21,16 @@ static void progress(const char *fmt, ...) {
   printf("\n");
 }
 
+/// print an error message
+__attribute__((format(printf, 1, 2)))
+static void error(const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  va_end(ap);
+  printf("\n");
+}
+
 /// drain a work queue, processing its entries into the database
 static int process(clink_db_t *db, work_queue_t *wq) {
 
@@ -54,30 +64,67 @@ static int process(clink_db_t *db, work_queue_t *wq) {
       // a file to be parsed
       case PARSE: {
 
+        clink_iter_t *it = NULL;
+
         if (is_asm(t.path)) { // assembly
           progress("parsing asm file %s", t.path);
 
-          // TODO
+          rc = clink_parse_asm(&it, t.path);
 
         } else { // otherwise it should be C/C++
           assert(is_c(t.path));
           progress("parsing C/C++ file %s", t.path);
 
-          //TODO
-        }
-        break;
+          const char **argv = (const char**)option.cxx_argv;
+          rc = clink_parse_c(&it, t.path, option.cxx_argc, argv);
 
+        }
+
+        if (rc == 0) {
+          while (clink_iter_has_next(it)) {
+            const clink_symbol_t *symbol = NULL;
+            if ((rc = clink_iter_next_symbol(it, &symbol)))
+              break;
+          }
+        }
+
+        clink_iter_free(&it);
+
+        if (rc)
+          error("failed to parse %s: %s\n", t.path, strerror(rc));
+
+        break;
       }
 
       // a file to be read and syntax highlighted
-      case READ:
+      case READ: {
         progress("syntax highlighting %s", t.path);
-        //TODO
+
+        clink_iter_t *it = NULL;
+        rc = clink_vim_highlight(&it, t.path);
+
+        if (rc == 0) {
+          while (clink_iter_has_next(it)) {
+            const char *line = NULL;
+            if ((rc = clink_iter_next_str(it, &line)))
+              break;
+          }
+        }
+
+        clink_iter_free(&it);
+
+        if (rc)
+          error("failed to read %s: %s\n", t.path, strerror(rc));
+
         break;
+      }
 
     }
 
     free(t.path);
+
+    if (rc)
+      break;
 
     // periodically check if we have been SIGTERMed and should finish up
     if (i % 128 == 0) {
