@@ -52,6 +52,14 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 
   {
     int r = sqlite3_step(s);
+
+    // if we could not insert this row because it duplicated an existing row,
+    // consider this success
+    if (r == SQLITE_CONSTRAINT) {
+      if (sqlite3_extended_errcode(db->db) == SQLITE_CONSTRAINT_UNIQUE)
+        r = 0;
+    }
+
     if (r != SQLITE_DONE) {
       rc = sql_err_to_errno(r);
       goto done;
