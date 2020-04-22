@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int clink_symbol_copy(clink_symbol_t *dst, const clink_symbol_t *src) {
+int clink_symbol_copy(clink_symbol_t *restrict dst,
+    const clink_symbol_t *restrict src) {
 
   if (dst == NULL)
     return EINVAL;

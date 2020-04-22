@@ -40,7 +40,8 @@ typedef struct {
  * \param src Input symbol to copy
  * \returns 0 on success or an errno on failure
  */
-int clink_symbol_copy(clink_symbol_t *dst, const clink_symbol_t *src);
+int clink_symbol_copy(clink_symbol_t *restrict dst,
+  const clink_symbol_t *restrict src);
 
 /** clean up and deallocate the contents of a symbol structure
  *
