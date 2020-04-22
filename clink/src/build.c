@@ -168,8 +168,18 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
         clink_iter_free(&it);
 
-        if (rc)
-          error("failed to read %s: %s\n", t.path, strerror(rc));
+        if (rc) {
+
+          // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
+          // cryptically. If it looks like this happened, give the user a less
+          // confusing message.
+          if (sigint_pending()) {
+            error("failed to read %s: received SIGINT\n", t.path);
+
+          } else {
+            error("failed to read %s: %s\n", t.path, strerror(rc));
+          }
+        }
 
         break;
       }
