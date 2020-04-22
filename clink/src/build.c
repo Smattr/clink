@@ -29,6 +29,21 @@ static int add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   return rc;
 }
 
+/// add a content line to the Clink database
+static int add_line(clink_db_t *db, const char *path, unsigned long lineno,
+    const char *line) {
+
+  int rc = pthread_mutex_lock(&db_lock);
+  if (rc)
+    return rc;
+
+  rc = clink_db_add_line(db, path, lineno, line);
+
+  (void)pthread_mutex_unlock(&db_lock);
+
+  return rc;
+}
+
 /// print progress indication
 __attribute__((format(printf, 1, 2)))
 static void progress(const char *fmt, ...) {
@@ -85,6 +100,12 @@ static int process(clink_db_t *db, work_queue_t *wq) {
         // remove anything related to the file we are about to parse
         clink_db_remove(db, t.path);
 
+        // enqueue this file for reading, as we know we will need its contents
+        if ((rc = work_queue_push_for_read(wq, t.path))) {
+          error("failed to queue %s for reading: %s\n", t.path, strerror(rc));
+          break;
+        }
+
         clink_iter_t *it = NULL;
 
         // assembly
@@ -130,10 +151,18 @@ static int process(clink_db_t *db, work_queue_t *wq) {
         rc = clink_vim_highlight(&it, t.path);
 
         if (rc == 0) {
+          // retrieve all lines and add them to the database
+          unsigned long lineno = 1;
           while (clink_iter_has_next(it)) {
+
             const char *line = NULL;
             if ((rc = clink_iter_next_str(it, &line)))
               break;
+
+            if ((rc = add_line(db, t.path, lineno, line)))
+              break;
+
+            ++lineno;
           }
         }
 
