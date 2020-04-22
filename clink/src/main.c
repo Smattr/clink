@@ -6,7 +6,7 @@
 #include <limits.h>
 #include "option.h"
 #include "path.h"
-#include "sigterm.h"
+#include "sigint.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -216,10 +216,10 @@ int main(int argc, char **argv) {
     }
   }
 
-  // block SIGTERM while we open (and possibly construct) the database, so we do
+  // block SIGINT while we open (and possibly construct) the database, so we do
   // not end up corrupting the file if we are interrupted
-  if ((rc = sigterm_block())) {
-    fprintf(stderr, "failed to block SIGTERM: %s\n", strerror(rc));
+  if ((rc = sigint_block())) {
+    fprintf(stderr, "failed to block SIGINT: %s\n", strerror(rc));
     goto done;
   }
 
@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
   }
 
   // we can now be safely interrupted
-  (void)sigterm_unblock();
+  (void)sigint_unblock();
 
   // build/update the database, if requested
   if (option.update_database) {

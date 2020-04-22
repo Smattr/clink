@@ -8,7 +8,7 @@ add_executable(clink
   src/option.c
   src/path.c
   src/set.c
-  src/sigterm.c
+  src/sigint.c
   src/str_queue.c
   src/work_queue.c)
 

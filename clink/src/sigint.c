@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <signal.h>
-#include "sigterm.h"
+#include "sigint.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -11,8 +11,8 @@ static int change(bool block) {
   if (sigemptyset(&set) < 0)
     return errno;
 
-  // add SIGTERM to it
-  if (sigaddset(&set, SIGTERM) < 0)
+  // add SIGINT to it
+  if (sigaddset(&set, SIGINT) < 0)
     return errno;
 
   // manipulate its handling
@@ -23,21 +23,21 @@ static int change(bool block) {
   return 0;
 }
 
-int sigterm_block(void) {
+int sigint_block(void) {
   return change(true);
 }
 
-bool sigterm_pending(void) {
+bool sigint_pending(void) {
 
   // retrieve pending signals
   sigset_t set;
   if (sigpending(&set))
     return false;
 
-  // is SIGTERM in the set?
-  return sigismember(&set, SIGTERM) == 1;
+  // is SIGINT in the set?
+  return sigismember(&set, SIGINT) == 1;
 }
 
-int sigterm_unblock(void) {
+int sigint_unblock(void) {
   return change(false);
 }

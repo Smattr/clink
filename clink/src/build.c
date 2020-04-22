@@ -5,7 +5,7 @@
 #include "option.h"
 #include "path.h"
 #include <pthread.h>
-#include "sigterm.h"
+#include "sigint.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -181,9 +181,9 @@ static int process(clink_db_t *db, work_queue_t *wq) {
     if (rc)
       break;
 
-    // check if we have been SIGTERMed and should finish up
-    if (sigterm_pending()) {
-      progress("saw SIGTERM; exiting...");
+    // check if we have been SIGINTed and should finish up
+    if (sigint_pending()) {
+      progress("saw SIGINT; exiting...");
       break;
     }
   }
@@ -225,10 +225,10 @@ int build(clink_db_t *db) {
     }
   }
 
-  // suppress SIGTERM, so that we do not get interrupted midway through a
+  // suppress SIGINT, so that we do not get interrupted midway through a
   // database write and corrupt it
-  if ((rc = sigterm_block())) {
-    fprintf(stderr, "failed to block SIGTERM: %s\n", strerror(rc));
+  if ((rc = sigint_block())) {
+    fprintf(stderr, "failed to block SIGINT: %s\n", strerror(rc));
     goto done;
   }
 
@@ -236,7 +236,7 @@ int build(clink_db_t *db) {
     goto done;
 
 done:
-  (void)sigterm_unblock();
+  (void)sigint_unblock();
   work_queue_free(&wq);
   (void)pthread_mutex_destroy(&db_lock);
 
