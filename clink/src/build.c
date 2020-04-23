@@ -92,6 +92,14 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
     assert(t.path != NULL);
 
+    // generate a friendlier name for the source path
+    char *display = NULL;
+    if ((rc = disppath(t.path, &display))) {
+      free(t.path);
+      error("failed to make %s relative: %s", t.path, strerror(rc));
+      break;
+    }
+
     switch (t.type) {
 
       // a file to be parsed
@@ -102,7 +110,7 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
         // enqueue this file for reading, as we know we will need its contents
         if ((rc = work_queue_push_for_read(wq, t.path))) {
-          error("failed to queue %s for reading: %s\n", t.path, strerror(rc));
+          error("failed to queue %s for reading: %s\n", display, strerror(rc));
           break;
         }
 
@@ -110,13 +118,13 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
         // assembly
         if (is_asm(t.path)) {
-          progress("parsing asm file %s", t.path);
+          progress("parsing asm file %s", display);
           rc = clink_parse_asm(&it, t.path);
 
         // C/C++
         } else {
           assert(is_c(t.path));
-          progress("parsing C/C++ file %s", t.path);
+          progress("parsing C/C++ file %s", display);
           const char **argv = (const char**)option.cxx_argv;
           rc = clink_parse_c(&it, t.path, option.cxx_argc, argv);
 
@@ -139,14 +147,14 @@ static int process(clink_db_t *db, work_queue_t *wq) {
         clink_iter_free(&it);
 
         if (rc)
-          error("failed to parse %s: %s\n", t.path, strerror(rc));
+          error("failed to parse %s: %s\n", display, strerror(rc));
 
         break;
       }
 
       // a file to be read and syntax highlighted
       case READ: {
-        progress("syntax highlighting %s", t.path);
+        progress("syntax highlighting %s", display);
         clink_iter_t *it = NULL;
         rc = clink_vim_highlight(&it, t.path);
 
@@ -174,10 +182,10 @@ static int process(clink_db_t *db, work_queue_t *wq) {
           // cryptically. If it looks like this happened, give the user a less
           // confusing message.
           if (sigint_pending()) {
-            error("failed to read %s: received SIGINT\n", t.path);
+            error("failed to read %s: received SIGINT\n", display);
 
           } else {
-            error("failed to read %s: %s\n", t.path, strerror(rc));
+            error("failed to read %s: %s\n", display, strerror(rc));
           }
         }
 
@@ -186,6 +194,7 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
     }
 
+    free(display);
     free(t.path);
 
     if (rc)
