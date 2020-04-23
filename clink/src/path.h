@@ -29,6 +29,15 @@ int cwd(char **wd);
  */
 int dirname(const char *path, char **dir);
 
+/** get a friendly-for-display path relative to the current directory
+ *
+ * \param path Path to a file or directory
+ * \param display [out] Path relative to the current directory, or a copy of the
+ *   original path if this is not possible
+ * \returns 0 on success or an errno on failure
+ */
+int disppath(const char *path, char **display);
+
 /** is this a path to an assembly file?
  *
  * \param path Path to assess
