@@ -110,7 +110,7 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
         // enqueue this file for reading, as we know we will need its contents
         if ((rc = work_queue_push_for_read(wq, t.path))) {
-          error("failed to queue %s for reading: %s\n", display, strerror(rc));
+          error("failed to queue %s for reading: %s", display, strerror(rc));
           break;
         }
 
@@ -147,7 +147,7 @@ static int process(clink_db_t *db, work_queue_t *wq) {
         clink_iter_free(&it);
 
         if (rc)
-          error("failed to parse %s: %s\n", display, strerror(rc));
+          error("failed to parse %s: %s", display, strerror(rc));
 
         break;
       }
@@ -182,10 +182,10 @@ static int process(clink_db_t *db, work_queue_t *wq) {
           // cryptically. If it looks like this happened, give the user a less
           // confusing message.
           if (sigint_pending()) {
-            error("failed to read %s: received SIGINT\n", display);
+            error("failed to read %s: received SIGINT", display);
 
           } else {
-            error("failed to read %s: %s\n", display, strerror(rc));
+            error("failed to read %s: %s", display, strerror(rc));
           }
         }
 
