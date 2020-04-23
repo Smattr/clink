@@ -86,7 +86,7 @@ static int process(clink_db_t *db, work_queue_t *wq) {
     }
 
     if (rc) {
-      progress("failed to pop work queue: %s", strerror(rc));
+      error("failed to pop work queue: %s", strerror(rc));
       break;
     }
 
