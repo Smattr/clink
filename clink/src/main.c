@@ -82,13 +82,7 @@ static void parse_args(int argc, char **argv) {
 
       case 'f': // --database
         free(option.database_path);
-        {
-          int rc = abspath(optarg, &option.database_path);
-          if (rc) {
-            fprintf(stderr, "failed to set database path: %s\n", strerror(rc));
-            exit(EXIT_FAILURE);
-          }
-        }
+        option.database_path = xstrdup(optarg);
         break;
 
       case 'I': // --include
@@ -228,6 +222,20 @@ int main(int argc, char **argv) {
   if ((rc = clink_db_open(&db, option.database_path))) {
     fprintf(stderr, "failed to open database: %s\n", strerror(rc));
     goto done;
+  }
+
+  // now that the database exists, we can use realpath() on its path to make
+  // sure it is absolute to simplify some later operation
+  {
+    char *a = realpath(option.database_path, NULL);
+    if (a == NULL) {
+      rc = errno;
+      fprintf(stderr, "failed to make %s absolute: %s\n", option.database_path,
+        strerror(rc));
+      goto done1;
+    }
+    free(option.database_path);
+    option.database_path = a;
   }
 
   // we can now be safely interrupted
