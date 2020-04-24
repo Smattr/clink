@@ -199,8 +199,9 @@ int main(int argc, char **argv) {
       }
 
       // make the path absolute to ease later work
-      char *absolute = NULL;
-      if ((rc = abspath(option.src[i], &absolute))) {
+      char *absolute = realpath(option.src[i], NULL);
+      if (absolute == NULL) {
+        rc = errno;
         fprintf(stderr, "failed to make %s absolute: %s\n", option.src[i],
           strerror(rc));
         goto done;
