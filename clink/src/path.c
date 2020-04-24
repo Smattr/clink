@@ -150,14 +150,6 @@ bool is_file(const char *path) {
   return S_ISREG(buf.st_mode);
 }
 
-bool is_root(const char *path) {
-
-  if (path == NULL)
-    return false;
-
-  return strcmp(path, "/") == 0;
-}
-
 int join(const char *branch, const char *stem, char **path) {
 
   if (branch == NULL)
