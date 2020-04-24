@@ -1,5 +1,6 @@
 add_executable(clink
   src/build.c
+  src/dirname.c
   src/file_queue.c
   src/is_root.c
   src/join.c
