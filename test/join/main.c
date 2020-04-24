@@ -103,5 +103,31 @@ int main(void) {
     free(result);
   }
 
+  // some root directory cases
+  {
+    const char branch[] = "/";
+    const char stem[] = "hello";
+    char *result = NULL;
+    assert(join(branch, stem, &result) == 0);
+    assert(strcmp(result, "/hello") == 0);
+    free(result);
+  }
+  {
+    const char branch[] = "/";
+    const char stem[] = "hello/world";
+    char *result = NULL;
+    assert(join(branch, stem, &result) == 0);
+    assert(strcmp(result, "/hello/world") == 0);
+    free(result);
+  }
+  {
+    const char branch[] = "/";
+    const char stem[] = "/hello";
+    char *result = NULL;
+    assert(join(branch, stem, &result) == 0);
+    assert(strcmp(result, "/hello") == 0);
+    free(result);
+  }
+
   return EXIT_SUCCESS;
 }
