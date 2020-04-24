@@ -21,7 +21,7 @@ int cwd(char **wd);
 
 /** get the directory name of a given path
  *
- * The input path is assumed to be absolute.
+ * This is a more sane version of POSIX dirname().
  *
  * \param path Path to a file or directory
  * \param dir [out] The containing directory on success
