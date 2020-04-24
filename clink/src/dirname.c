@@ -11,10 +11,6 @@ int dirname(const char *path, char **dir) {
   if (dir == NULL)
     return EINVAL;
 
-  // we assume the path we have been given is absolute
-  if (path[0] != '/')
-    return EINVAL;
-
   // if we are at the root, it simply has itself as a dir name
   if (is_root(path)) {
     *dir = strdup("/");
@@ -23,18 +19,37 @@ int dirname(const char *path, char **dir) {
     return 0;
   }
 
-  // otherwise, search backwards for a slash
-  size_t slash = strlen(path) - 1;
-  while (path[slash] == '/' && slash > 0)
-    --slash;
-  while (path[slash] != '/' && slash > 0)
+  // treat dir of the empty string as the current directory
+  if (strcmp(path, "") == 0) {
+    *dir = strdup(".");
+    if (*dir == NULL)
+      return ENOMEM;
+    return 0;
+  }
+
+  // ignore trailing slashes
+  size_t extent = strlen(path);
+  while (extent > 0 && path[extent - 1] == '/')
+    --extent;
+
+  // search backwards from there to find the next /
+  size_t slash = extent == 0 ? 0 : extent - 1;
+  while (slash > 0 && path[slash] != '/')
     --slash;
 
   if (slash == 0) {
-    *dir = strdup("/");
+    if (path[0] != '/') {
+      // if there were no slashes, use the current directory
+      *dir = strdup(".");
+    } else {
+      // otherwise, we are at the root
+      *dir = strdup("/");
+    }
+
   } else {
     *dir = strndup(path, slash);
   }
+
   if (*dir == NULL)
     return ENOMEM;
 
