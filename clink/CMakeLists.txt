@@ -2,6 +2,7 @@ add_executable(clink
   src/build.c
   src/file_queue.c
   src/is_root.c
+  src/join.c
   src/main.c
   src/option.c
   src/path.c
