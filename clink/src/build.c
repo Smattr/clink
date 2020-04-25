@@ -91,7 +91,8 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
   } while (0)
 
 /// drain a work queue, processing its entries into the database
-static int process(unsigned long thread_id, clink_db_t *db, work_queue_t *wq) {
+static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
+    work_queue_t *wq) {
 
   assert(db != NULL);
   assert(wq != NULL);
@@ -236,12 +237,22 @@ static int process(unsigned long thread_id, clink_db_t *db, work_queue_t *wq) {
     }
   }
 
+  // Signals are delivered to one arbitrary thread in a multithreaded process.
+  // So if we saw a SIGINT, signal the thread before us so that it cascades and
+  // is eventually propagated to all threads.
+  if (sigint_pending()) {
+    unsigned long previous = (thread_id == 0 ? option.threads : thread_id) - 1;
+    if (previous != thread_id)
+      (void)pthread_kill(threads[previous], SIGINT);
+  }
+
   return rc;
 }
 
 // a vehicle for passing data to process()
 typedef struct {
   unsigned long thread_id;
+  pthread_t *threads;
   clink_db_t *db;
   work_queue_t *wq;
 } process_args_t;
@@ -252,10 +263,11 @@ static void *process_entry(void *args) {
   // unpack our arguments
   const process_args_t *a = args;
   unsigned long thread_id = a->thread_id;
+  pthread_t *threads = a->threads;
   clink_db_t *db = a->db;
   work_queue_t *wq = a->wq;
 
-  int rc = process(thread_id, db, wq);
+  int rc = process(thread_id, threads, db, wq);
 
   return (void*)(intptr_t)rc;
 }
@@ -279,13 +291,17 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
     return ENOMEM;
   }
 
+  // set up data for all threads
+  for (size_t i = 1; i < option.threads; ++i)
+    args[i - 1] = (process_args_t){
+      .thread_id = i, .threads = threads, .db = db, .wq = wq };
+
   // start all threads
   size_t started = 0;
   for (size_t i = 0; i < option.threads; ++i) {
     if (i == 0) {
       threads[i] = pthread_self();
     } else {
-      args[i - 1] = (process_args_t){ .thread_id = i, .db = db, .wq = wq };
       if (pthread_create(&threads[i], NULL, process_entry, &args[i - 1]) != 0)
         break;
     }
@@ -293,7 +309,7 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
   }
 
   // join in helping with the rest
-  int rc = process(0, db, wq);
+  int rc = process(0, threads, db, wq);
 
   // collect other threads
   for (size_t i = 0; i < started; ++i) {
@@ -368,7 +384,7 @@ int build(clink_db_t *db) {
     goto done;
   }
 
-  if ((rc = option.threads > 1 ? mt_process(db, wq) : process(0, db, wq)))
+  if ((rc = option.threads > 1 ? mt_process(db, wq) : process(0, NULL, db, wq)))
     goto done;
 
 done:
