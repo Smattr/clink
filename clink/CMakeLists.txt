@@ -25,5 +25,16 @@ find_package(Curses REQUIRED)
 target_include_directories(clink PUBLIC ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
 
+add_custom_target(man-clink
+  ALL
+  DEPENDS clink.1.gz)
+add_custom_command(OUTPUT clink.1.gz
+  COMMAND gzip -9 --no-name --to-stdout src/clink.1 >"${CMAKE_CURRENT_BINARY_DIR}/clink.1.gz"
+  MAIN_DEPENDENCY src/clink.1
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 install(TARGETS clink
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/clink.1.gz
+  DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
