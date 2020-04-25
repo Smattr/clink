@@ -234,6 +234,78 @@ static int process(clink_db_t *db, work_queue_t *wq) {
   return rc;
 }
 
+// a vehicle for passing data to process()
+typedef struct {
+  unsigned long thread_id;
+  clink_db_t *db;
+  work_queue_t *wq;
+} process_args_t;
+
+// trampoline for unpacking the calling convention used by pthreads
+static void *process_entry(void *args) {
+
+  // unpack our arguments
+  const process_args_t *a = args;
+  clink_db_t *db = a->db;
+  work_queue_t *wq = a->wq;
+
+  int rc = process(db, wq);
+
+  return (void*)(intptr_t)rc;
+}
+
+// call process() multi-threaded
+static int mt_process(clink_db_t *db, work_queue_t *wq) {
+
+  // the total threads is ourselves plus all the others
+  assert(option.threads >= 1);
+  size_t bg_threads = option.threads - 1;
+
+  // create threads
+  pthread_t *threads = calloc(bg_threads, sizeof(threads[0]));
+  if (threads == NULL)
+    return ENOMEM;
+
+  // create state for them
+  process_args_t *args = calloc(bg_threads, sizeof(args[0]));
+  if (args == NULL) {
+    free(threads);
+    return ENOMEM;
+  }
+
+  // start all threads
+  size_t started = 0;
+  for (size_t i = 0; i < bg_threads; ++i) {
+    args[i] = (process_args_t){ .thread_id = i + 1, .db = db, .wq = wq };
+    if (pthread_create(&threads[i], NULL, process_entry, &args[i]) != 0)
+      break;
+    started = i + 1;
+  }
+
+  // join in helping with the rest
+  int rc = process(db, wq);
+
+  // collect other threads
+  for (size_t i = 0; i < started; ++i) {
+
+    void *ret;
+    int r = pthread_join(threads[i], &ret);
+
+    // none of the pthread failure reasons should be possible
+    assert(r == 0);
+    (void)r;
+
+    if (ret != NULL && rc == 0)
+      rc = (int)(intptr_t)ret;
+  }
+
+  // clean up memory
+  free(args);
+  free(threads);
+
+  return rc;
+}
+
 int build(clink_db_t *db) {
 
   assert(db != NULL);
@@ -282,7 +354,7 @@ int build(clink_db_t *db) {
     goto done;
   }
 
-  if ((rc = process(db, wq)))
+  if ((rc = option.threads > 1 ? mt_process(db, wq) : process(db, wq)))
     goto done;
 
 done:
