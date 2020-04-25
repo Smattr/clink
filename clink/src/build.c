@@ -72,7 +72,7 @@ static void error(const char *fmt, ...) {
     vfprintf(stderr, fmt, ap);
   va_end(ap);
   if (r == 0) {
-    printf("\n");
+    fprintf(stderr, "\n");
     (void)pthread_mutex_unlock(&print_lock);
   }
 }
