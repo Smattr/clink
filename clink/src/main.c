@@ -3,6 +3,7 @@
 #include <clink/clink.h>
 #include <errno.h>
 #include <getopt.h>
+#include "help.h"
 #include <limits.h>
 #include "option.h"
 #include "path.h"
@@ -44,6 +45,7 @@ static void parse_args(int argc, char **argv) {
       {"color",         required_argument, 0, 128 },
       {"colour",        required_argument, 0, 128 },
       {"database",      required_argument, 0, 'f'},
+      {"help",          no_argument,       0, 'h'},
       {"include",       required_argument, 0, 'I'},
       {"jobs",          required_argument, 0, 'j'},
       {"line-oriented", no_argument,       0, 'l'},
@@ -52,7 +54,7 @@ static void parse_args(int argc, char **argv) {
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bCcdef:I:j:lqRs:T", opts, &index);
+    int c = getopt_long(argc, argv, "bCcdef:hI:j:lqRs:T", opts, &index);
 
     if (c == -1)
       break;
@@ -84,6 +86,10 @@ static void parse_args(int argc, char **argv) {
         free(option.database_path);
         option.database_path = xstrdup(optarg);
         break;
+
+      case 'h': // --help
+        help();
+        exit(EXIT_SUCCESS);
 
       case 'I': // --include
         xappend(&option.cxx_argv, &option.cxx_argc, "-I");

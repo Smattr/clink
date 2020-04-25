@@ -3,6 +3,7 @@ add_executable(clink
   src/dirname.c
   src/disppath.c
   src/file_queue.c
+  src/help.c
   src/is_root.c
   src/join.c
   src/main.c
@@ -11,7 +12,8 @@ add_executable(clink
   src/set.c
   src/sigint.c
   src/str_queue.c
-  src/work_queue.c)
+  src/work_queue.c
+  ${CMAKE_CURRENT_BINARY_DIR}/manpage.c)
 
 target_include_directories(clink PRIVATE src)
 
@@ -24,6 +26,12 @@ set(CURSES_NEED_NCURSES True)
 find_package(Curses REQUIRED)
 target_include_directories(clink PUBLIC ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
+
+find_program(XXD xxd)
+add_custom_command(OUTPUT manpage.c
+  COMMAND ${XXD} -include clink.1 ${CMAKE_CURRENT_BINARY_DIR}/manpage.c
+  MAIN_DEPENDENCY src/clink.1
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_custom_target(man-clink
   ALL
