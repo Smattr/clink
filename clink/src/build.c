@@ -268,7 +268,7 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
   size_t bg_threads = option.threads - 1;
 
   // create threads
-  pthread_t *threads = calloc(bg_threads, sizeof(threads[0]));
+  pthread_t *threads = calloc(option.threads, sizeof(threads[0]));
   if (threads == NULL)
     return ENOMEM;
 
@@ -281,10 +281,14 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
 
   // start all threads
   size_t started = 0;
-  for (size_t i = 0; i < bg_threads; ++i) {
-    args[i] = (process_args_t){ .thread_id = i + 1, .db = db, .wq = wq };
-    if (pthread_create(&threads[i], NULL, process_entry, &args[i]) != 0)
-      break;
+  for (size_t i = 0; i < option.threads; ++i) {
+    if (i == 0) {
+      threads[i] = pthread_self();
+    } else {
+      args[i - 1] = (process_args_t){ .thread_id = i, .db = db, .wq = wq };
+      if (pthread_create(&threads[i], NULL, process_entry, &args[i - 1]) != 0)
+        break;
+    }
     started = i + 1;
   }
 
@@ -293,6 +297,10 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
 
   // collect other threads
   for (size_t i = 0; i < started; ++i) {
+
+    // skip ourselves
+    if (i == 0)
+      continue;
 
     void *ret;
     int r = pthread_join(threads[i], &ret);
