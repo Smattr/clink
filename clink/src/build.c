@@ -6,8 +6,10 @@
 #include "path.h"
 #include <pthread.h>
 #include "sigint.h"
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "work_queue.h"
