@@ -37,6 +37,9 @@ typedef struct {
   char **cxx_argv;
   size_t cxx_argc;
 
+  // debug mode
+  bool debug;
+
 } option_t;
 
 extern option_t option;

@@ -45,6 +45,7 @@ static void parse_args(int argc, char **argv) {
       {"color",         required_argument, 0, 128 },
       {"colour",        required_argument, 0, 128 },
       {"database",      required_argument, 0, 'f'},
+      {"debug",         no_argument,       0, 129 },
       {"help",          no_argument,       0, 'h'},
       {"include",       required_argument, 0, 'I'},
       {"jobs",          required_argument, 0, 'j'},
@@ -142,6 +143,10 @@ static void parse_args(int argc, char **argv) {
           fprintf(stderr, "illegal value to --colour: %s\n", optarg);;
           exit(EXIT_FAILURE);
         }
+        break;
+
+      case 129: // --debug
+        option.debug = true;
         break;
 
       default:

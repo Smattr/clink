@@ -19,6 +19,7 @@ option_t option = {
   .colour = AUTO,
   .cxx_argv = NULL,
   .cxx_argc = 0,
+  .debug = false,
 };
 
 int set_db_path(void) {
