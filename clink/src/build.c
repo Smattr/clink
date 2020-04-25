@@ -44,14 +44,22 @@ static int add_line(clink_db_t *db, const char *path, unsigned long lineno,
   return rc;
 }
 
+/// mutual exclusion mechanism for using stdout/stderr
+pthread_mutex_t print_lock;
+
 /// print progress indication
 __attribute__((format(printf, 1, 2)))
 static void progress(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  vprintf(fmt, ap);
+  int r = pthread_mutex_lock(&print_lock);
+  if (r == 0)
+    vprintf(fmt, ap);
   va_end(ap);
-  printf("\n");
+  if (r == 0) {
+    printf("\n");
+    (void)pthread_mutex_unlock(&print_lock);
+  }
 }
 
 /// print an error message
@@ -59,9 +67,14 @@ __attribute__((format(printf, 1, 2)))
 static void error(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
+  int r = pthread_mutex_lock(&print_lock);
+  if (r == 0)
+    vfprintf(stderr, fmt, ap);
   va_end(ap);
-  printf("\n");
+  if (r == 0) {
+    printf("\n");
+    (void)pthread_mutex_unlock(&print_lock);
+  }
 }
 
 /// Debug printf. This is implemented as a macro to avoid expensive varargs
@@ -233,6 +246,13 @@ int build(clink_db_t *db) {
     return rc;
   }
 
+  // create a mutex for protecting printf and friends
+  if ((rc = pthread_mutex_init(&print_lock, NULL))) {
+    fprintf(stderr, "failed to create mutex: %s\n", strerror(rc));
+    (void)pthread_mutex_destroy(&db_lock);
+    return rc;
+  }
+
   // setup a work queue to manage our tasks
   work_queue_t *wq = NULL;
   if ((rc = work_queue_new(&wq))) {
@@ -269,6 +289,7 @@ done:
   (void)sigint_unblock();
   work_queue_free(&wq);
   (void)pthread_mutex_destroy(&db_lock);
+  (void)pthread_mutex_destroy(&print_lock);
 
   return rc;
 }
