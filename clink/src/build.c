@@ -64,6 +64,15 @@ static void error(const char *fmt, ...) {
   printf("\n");
 }
 
+/// Debug printf. This is implemented as a macro to avoid expensive varargs
+/// handling when we are not in debug mode.
+#define DEBUG(args...) \
+  do { \
+    if (option.debug) { \
+      progress(args); \
+    } \
+  } while (0)
+
 /// drain a work queue, processing its entries into the database
 static int process(clink_db_t *db, work_queue_t *wq) {
 
@@ -139,6 +148,8 @@ static int process(clink_db_t *db, work_queue_t *wq) {
               break;
             assert(symbol != NULL);
 
+            DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
+              symbol->colno, symbol->name);
             if ((rc = add_symbol(db, symbol)))
               break;
           }
