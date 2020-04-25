@@ -70,7 +70,7 @@ int help(void) {
   {
     const char *argv[] = { "man",
 #ifdef __linux__
-      "--local-file ";
+      "--local-file ",
 #endif
       path, NULL };
     char *const *args = (char*const*)argv;
