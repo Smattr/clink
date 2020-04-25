@@ -48,13 +48,15 @@ static int add_line(clink_db_t *db, const char *path, unsigned long lineno,
 pthread_mutex_t print_lock;
 
 /// print progress indication
-__attribute__((format(printf, 1, 2)))
-static void progress(const char *fmt, ...) {
+__attribute__((format(printf, 2, 3)))
+static void progress(unsigned long thread_id, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   int r = pthread_mutex_lock(&print_lock);
-  if (r == 0)
+  if (r == 0) {
+    printf("%lu: ", thread_id);
     vprintf(fmt, ap);
+  }
   va_end(ap);
   if (r == 0) {
     printf("\n");
@@ -63,13 +65,15 @@ static void progress(const char *fmt, ...) {
 }
 
 /// print an error message
-__attribute__((format(printf, 1, 2)))
-static void error(const char *fmt, ...) {
+__attribute__((format(printf, 2, 3)))
+static void error(unsigned long thread_id, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   int r = pthread_mutex_lock(&print_lock);
-  if (r == 0)
+  if (r == 0) {
+    fprintf(stderr, "%lu: ", thread_id);
     vfprintf(stderr, fmt, ap);
+  }
   va_end(ap);
   if (r == 0) {
     fprintf(stderr, "\n");
@@ -82,12 +86,12 @@ static void error(const char *fmt, ...) {
 #define DEBUG(args...) \
   do { \
     if (option.debug) { \
-      progress(args); \
+      progress(thread_id, args); \
     } \
   } while (0)
 
 /// drain a work queue, processing its entries into the database
-static int process(clink_db_t *db, work_queue_t *wq) {
+static int process(unsigned long thread_id, clink_db_t *db, work_queue_t *wq) {
 
   assert(db != NULL);
   assert(wq != NULL);
@@ -102,13 +106,13 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
     // if we have exhausted the work queue, we are done
     if (rc == ENOMSG) {
-      progress("exiting...");
+      progress(thread_id, "exiting...");
       rc = 0;
       break;
     }
 
     if (rc) {
-      error("failed to pop work queue: %s", strerror(rc));
+      error(thread_id, "failed to pop work queue: %s", strerror(rc));
       break;
     }
 
@@ -118,7 +122,7 @@ static int process(clink_db_t *db, work_queue_t *wq) {
     char *display = NULL;
     if ((rc = disppath(t.path, &display))) {
       free(t.path);
-      error("failed to make %s relative: %s", t.path, strerror(rc));
+      error(thread_id, "failed to make %s relative: %s", t.path, strerror(rc));
       break;
     }
 
@@ -132,7 +136,8 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
         // enqueue this file for reading, as we know we will need its contents
         if ((rc = work_queue_push_for_read(wq, t.path))) {
-          error("failed to queue %s for reading: %s", display, strerror(rc));
+          error(thread_id, "failed to queue %s for reading: %s", display,
+            strerror(rc));
           break;
         }
 
@@ -140,13 +145,13 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
         // assembly
         if (is_asm(t.path)) {
-          progress("parsing asm file %s", display);
+          progress(thread_id, "parsing asm file %s", display);
           rc = clink_parse_asm(&it, t.path);
 
         // C/C++
         } else {
           assert(is_c(t.path));
-          progress("parsing C/C++ file %s", display);
+          progress(thread_id, "parsing C/C++ file %s", display);
           const char **argv = (const char**)option.cxx_argv;
           rc = clink_parse_c(&it, t.path, option.cxx_argc, argv);
 
@@ -171,14 +176,14 @@ static int process(clink_db_t *db, work_queue_t *wq) {
         clink_iter_free(&it);
 
         if (rc)
-          error("failed to parse %s: %s", display, strerror(rc));
+          error(thread_id, "failed to parse %s: %s", display, strerror(rc));
 
         break;
       }
 
       // a file to be read and syntax highlighted
       case READ: {
-        progress("syntax highlighting %s", display);
+        progress(thread_id, "syntax highlighting %s", display);
         clink_iter_t *it = NULL;
         rc = clink_vim_highlight(&it, t.path);
 
@@ -206,10 +211,10 @@ static int process(clink_db_t *db, work_queue_t *wq) {
           // cryptically. If it looks like this happened, give the user a less
           // confusing message.
           if (sigint_pending()) {
-            error("failed to read %s: received SIGINT", display);
+            error(thread_id, "failed to read %s: received SIGINT", display);
 
           } else {
-            error("failed to read %s: %s", display, strerror(rc));
+            error(thread_id, "failed to read %s: %s", display, strerror(rc));
           }
         }
 
@@ -226,7 +231,7 @@ static int process(clink_db_t *db, work_queue_t *wq) {
 
     // check if we have been SIGINTed and should finish up
     if (sigint_pending()) {
-      progress("saw SIGINT; exiting...");
+      progress(thread_id, "saw SIGINT; exiting...");
       break;
     }
   }
@@ -246,10 +251,11 @@ static void *process_entry(void *args) {
 
   // unpack our arguments
   const process_args_t *a = args;
+  unsigned long thread_id = a->thread_id;
   clink_db_t *db = a->db;
   work_queue_t *wq = a->wq;
 
-  int rc = process(db, wq);
+  int rc = process(thread_id, db, wq);
 
   return (void*)(intptr_t)rc;
 }
@@ -283,7 +289,7 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
   }
 
   // join in helping with the rest
-  int rc = process(db, wq);
+  int rc = process(0, db, wq);
 
   // collect other threads
   for (size_t i = 0; i < started; ++i) {
@@ -354,7 +360,7 @@ int build(clink_db_t *db) {
     goto done;
   }
 
-  if ((rc = option.threads > 1 ? mt_process(db, wq) : process(db, wq)))
+  if ((rc = option.threads > 1 ? mt_process(db, wq) : process(0, db, wq)))
     goto done;
 
 done:
