@@ -15,16 +15,6 @@ class Database {
  public:
   explicit Database(const std::string &path);
 
-  /** find a symbol in the database
-   *
-   * \param name Name of the symbol to lookup
-   * \param callback Function to invoke for each found symbol
-   * \returns 0 if run to completion, or the first non-zero returned by the
-   *   callback if any
-   */
-  int find_symbol(const std::string &name,
-    std::function<int(const Result&)> const &callback);
-
   /** equivalent of find_symbol, but returning all results in a collection
    *
    * \param name Name of the symbol to lookup

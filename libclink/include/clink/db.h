@@ -1,5 +1,6 @@
 #pragma once
 
+#include <clink/iter.h>
 #include <clink/symbol.h>
 
 #ifdef __cplusplus
@@ -41,6 +42,15 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
  * \param path Path of the file to remove information for
  */
 void clink_db_remove(clink_db_t *db, const char *path);
+
+/** find a symbol in the database
+ *
+ * \param db Database to search
+ * \param name Name of the symbol to lookup
+ * \param it [out] Created symbol iterator on success
+ * \returns 0 on success or an errno on failure
+ */
+int clink_db_find_symbol(clink_db_t *db, const char *name, clink_iter_t **it);
 
 /** close a Clink symbol database
  *

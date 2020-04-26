@@ -12,35 +12,6 @@
 
 namespace clink {
 
-int Database::find_symbol(const std::string &name,
-    std::function<int(const Result&)> const &callback) {
-
-  static const char QUERY[] = "select symbols.path, symbols.category, "
-    "symbols.line, symbols.col, symbols.parent, content.body from symbols left "
-    "join content on symbols.path = content.path and symbols.line = "
-    "content.line where symbols.name = @name;";
-
-  SQLStatement stmt(db, QUERY);
-
-  stmt.bind("@name", 1, name);
-
-  while (stmt.step() == SQLITE_ROW) {
-
-    const std::string path    = stmt.column_text(0);
-    Symbol::Category cat      = static_cast<Symbol::Category>(stmt.column_int(1));
-    unsigned long lineno      = stmt.column_int(2);
-    unsigned long colno       = stmt.column_int(3);
-    const std::string parent  = stmt.column_text(4);
-    const std::string context = stmt.column_text(5);
-
-    Result r{Symbol{cat, name, path, lineno, colno, parent}, context};
-    if (int rc = callback(r))
-      return rc;
-  }
-
-  return 0;
-}
-
 std::vector<Result> Database::find_symbols(const std::string &name) {
   std::vector<Result> rs;
   (void)find_symbol(name, [&](const Result &r) {
