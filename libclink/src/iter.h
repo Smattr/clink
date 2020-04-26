@@ -43,3 +43,21 @@ struct no_lookahead_iter {
   void (*free)(no_lookahead_iter_t *self);
 
 };
+
+/** create a new 1-lookahead iterator from a no-lookahead iterator
+ *
+ * \param it [out] Created 1-lookahead iterator on success
+ * \param impl No-lookahead iterator to wrap
+ * \returns 0 on success or an errno on failure
+ */
+__attribute__((visibility("internal")))
+int iter_new(clink_iter_t **it, no_lookahead_iter_t *impl);
+
+/** create a new 1-lookahead string iterator from a no-lookahead string iterator
+ *
+ * \param it [out] Created 1-lookahead string iterator on success
+ * \param impl No-lookahead string iterator to wrap
+ * \returns 0 on success or an errno on failure
+ */
+__attribute__((visibility("internal")))
+int iter_str_new(clink_iter_t *it, no_lookahead_iter_t *impl);
