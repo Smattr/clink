@@ -88,8 +88,8 @@ typedef struct {
   // read handle to output
   FILE *highlighted;
 
-  // last content line we read (next to yield)
-  char *line;
+  // last content line we yielded
+  char *last;
 
   // styles that we have detected
   style_t *styles;
@@ -113,8 +113,8 @@ static void state_free(state_t **st) {
   s->styles = NULL;
   s->styles_size = 0;
 
-  free(s->line);
-  s->line = NULL;
+  free(s->last);
+  s->last = NULL;
 
   if (s->highlighted != NULL)
     (void)fclose(s->highlighted);
@@ -242,38 +242,33 @@ static int from_html(const state_t *s, const char *line, char **output) {
   return 0;
 }
 
-// advance a vim highlight iterator to the next content line
-static int move_next(clink_iter_t *it) {
+// advance to the next content line
+static int move_next(state_t *s) {
 
-  if (it == NULL)
-    return EINVAL;
-
-  state_t *s = it->state;
-
-  if (s == NULL)
-    return EINVAL;
+  assert(s != NULL);
 
   if (s->highlighted == NULL)
     return EINVAL;
 
   // clear the previous line
-  free(s->line);
-  s->line = NULL;
+  free(s->last);
+  s->last = NULL;
 
   int rc = 0;
 
   char *line = NULL;
   size_t line_size = 0;
+  errno = 0;
   if (getline(&line, &line_size, s->highlighted) < 0) {
     rc = errno;
 
   // is this the end of the content?
   } else if (strcmp(line, "</pre>\n") == 0) {
-    // leave it->line = NULL indicating iterator exhaustion
+    // leave it->last = NULL indicating iterator exhaustion
 
   } else {
     // turn this line into ANSI highlighting
-    rc = from_html(s, line, &s->line);
+    rc = from_html(s, line, &s->last);
   }
 
   free(line);
@@ -281,21 +276,7 @@ static int move_next(clink_iter_t *it) {
   return rc;
 }
 
-static bool has_next(const clink_iter_t *it) {
-
-  if (it == NULL)
-    return false;
-
-  const state_t *s = it->state;
-
-  if (s == NULL)
-    return false;
-
-  // do we have a next line to yield?
-  return s->line != NULL;
-}
-
-static int next(clink_iter_t *it, const char **yielded) {
+static int next(no_lookahead_iter_t *it, const char **yielded) {
 
   if (it == NULL)
     return EINVAL;
@@ -308,24 +289,22 @@ static int next(clink_iter_t *it, const char **yielded) {
   if (s == NULL)
     return EINVAL;
 
-  if (!has_next(it))
-    return EINVAL;
+  // find the next-to-yield line
+  int rc = move_next(s);
+  if (rc)
+    return rc;
+
+  // is the iterator exhausted?
+  if (s->last == NULL)
+    return ENOMSG;
 
   // extract the next-to-yield line
-  *yielded = s->line;
-  s->line = NULL;
-
-  // advance to the next line for next time
-  int rc = move_next(it);
-  if (rc) {
-    // restore prior state
-    s->line = (char*)*yielded;
-  }
+  *yielded = s->last;
 
   return rc;
 }
 
-static void my_free(clink_iter_t *it) {
+static void my_free(no_lookahead_iter_t *it) {
 
   if (it == NULL)
     return;
@@ -350,6 +329,8 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   if (s == NULL)
     return ENOMEM;
 
+  no_lookahead_iter_t *i = NULL;
+  clink_iter_t *wrapper = NULL;
   int rc = 0;
 
   // create a temporary directory to use for scratch space
@@ -489,32 +470,31 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
 
   // if we reached here, we successfully parsed the style list and are into the
   // content, so now create an iterator for the caller
-  clink_iter_t *i = calloc(1, sizeof(*i));
+  i = calloc(1, sizeof(*i));
   if (i == NULL) {
     rc = ENOMEM;
     goto done1;
   }
 
-  i->has_next = has_next;
   i->next_str = next;
   i->state = s;
+  s = NULL;
   i->free = my_free;
 
-  // advance to the first content line, if we are not already at EOF
-  if (!feof(s->highlighted) && (rc = move_next(i))) {
-    free(i);
+  // wrap our no-lookahead iterator in a 1-lookahead iterator
+  if ((rc = iter_new(&wrapper, i)))
     goto done1;
-  }
 
-  // success
-  *it = i;
-
-  // clean up
 done1:
   regfree(&style_re);
 done:
-  if (rc != 0)
+  if (rc) {
+    clink_iter_free(&wrapper);
+    no_lookahead_iter_free(&i);
     state_free(&s);
+  } else {
+    *it = wrapper;
+  }
 
   return rc;
 }
