@@ -56,14 +56,24 @@ static void progress(unsigned long thread_id, const char *fmt, ...) {
   va_start(ap, fmt);
   int r = pthread_mutex_lock(&print_lock);
   if (r == 0) {
+
+    // move up to this thread’s progress line
+    if (!option.debug)
+      printf("\033[%luA\033[K", option.threads - thread_id);
+
     printf("%lu: ", thread_id);
     vprintf(fmt, ap);
-  }
-  va_end(ap);
-  if (r == 0) {
     printf("\n");
+
+    // move back to the bottom
+    if (!option.debug) {
+      printf("\033[%luB", option.threads - thread_id - 1);
+      fflush(stdout);
+    }
+
     (void)pthread_mutex_unlock(&print_lock);
   }
+  va_end(ap);
 }
 
 /// print an error message
@@ -73,14 +83,22 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
   va_start(ap, fmt);
   int r = pthread_mutex_lock(&print_lock);
   if (r == 0) {
-    fprintf(stderr, "%lu: ", thread_id);
-    vfprintf(stderr, fmt, ap);
-  }
-  va_end(ap);
-  if (r == 0) {
-    fprintf(stderr, "\n");
+    if (!option.debug)
+      printf("\033[%luA\033[K", option.threads - thread_id);
+    printf("%lu: ", thread_id);
+    if (option.colour == ALWAYS)
+      printf("\033[31m"); // red
+    vprintf(fmt, ap);
+    if (option.colour == ALWAYS)
+      printf("\033[0m"); // reset
+    printf("\n");
+    if (!option.debug) {
+      printf("\033[%luB", option.threads - thread_id - 1);
+      fflush(stdout);
+    }
     (void)pthread_mutex_unlock(&print_lock);
   }
+  va_end(ap);
 }
 
 /// Debug printf. This is implemented as a macro to avoid expensive varargs
@@ -384,6 +402,12 @@ int build(clink_db_t *db) {
   if ((rc = sigint_block())) {
     fprintf(stderr, "failed to block SIGINT: %s\n", strerror(rc));
     goto done;
+  }
+
+  // set up progress output table
+  if (!option.debug) {
+    for (unsigned long i = 0; i < option.threads; ++i)
+      printf("%lu:\n", i);
   }
 
   if ((rc = option.threads > 1 ? mt_process(db, wq) : process(0, NULL, db, wq)))
