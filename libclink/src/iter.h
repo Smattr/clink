@@ -44,6 +44,13 @@ struct no_lookahead_iter {
 
 };
 
+/** clean up and deallocate a no-lookahead iterator
+ *
+ * \param it Iterator to clean up
+ */
+__attribute__((visibility("internal")))
+void no_lookahead_iter_free(no_lookahead_iter_t **it);
+
 /** create a new 1-lookahead iterator from a no-lookahead iterator
  *
  * \param it [out] Created 1-lookahead iterator on success
