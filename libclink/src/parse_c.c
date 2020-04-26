@@ -239,11 +239,8 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
   ++s->next_size;
 
 done:
-  if (rc) {
-    free(sym.parent);
-    free(sym.path);
-    free(sym.name);
-  }
+  if (rc)
+    clink_symbol_clear(&sym);
 
   return rc;
 }
