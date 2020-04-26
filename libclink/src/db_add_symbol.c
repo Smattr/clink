@@ -20,9 +20,9 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 
   // insert into the symbol table
 
-  static const char SYMBOL_INSERT[] = "insert into symbols (name, path, "
-    "category, line, col, parent) values (@name, @path, @category, @line, "
-    "@col, @parent);";
+  static const char SYMBOL_INSERT[] = "insert or replace into symbols (name, "
+    "path, category, line, col, parent) values (@name, @path, @category, "
+    "@line, @col, @parent);";
 
   int rc = 0;
 
@@ -52,14 +52,6 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 
   {
     int r = sqlite3_step(s);
-
-    // if we could not insert this row because it duplicated an existing row,
-    // consider this success
-    if (r == SQLITE_CONSTRAINT) {
-      if (sqlite3_extended_errcode(db->db) == SQLITE_CONSTRAINT_UNIQUE)
-        r = 0;
-    }
-
     if (r != SQLITE_DONE) {
       rc = sql_err_to_errno(r);
       goto done;
