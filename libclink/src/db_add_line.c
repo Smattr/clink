@@ -25,8 +25,8 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
 
   // insert into the content table
 
-  static const char CONTENT_INSERT[] = "insert into content (path, line, body) "
-    "values (@path, @line, @body);";
+  static const char CONTENT_INSERT[] = "insert or replace into content (path, "
+    "line, body) values (@path, @line, @body);";
 
   int rc = 0;
 
@@ -45,14 +45,6 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
 
   {
     int r = sqlite3_step(s);
-
-    // if we could not insert this row because it duplicated an existing row,
-    // consider this success
-    if (r == SQLITE_CONSTRAINT) {
-      if (sqlite3_extended_errcode(db->db) == SQLITE_CONSTRAINT_UNIQUE)
-        r = 0;
-    }
-
     if (r != SQLITE_DONE) {
       rc = sql_err_to_errno(r);
       goto done;
