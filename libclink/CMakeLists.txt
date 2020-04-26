@@ -12,6 +12,7 @@ add_library(libclink
   src/iter.c
   src/iter_new.c
   src/iter_str_new.c
+  src/iter_symbol_new.c
   src/parse_asm.c
   src/parse_c.c
   src/re.c

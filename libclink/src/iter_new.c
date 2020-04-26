@@ -25,5 +25,15 @@ int iter_new(clink_iter_t **it, no_lookahead_iter_t *impl) {
     return rc;
   }
 
+  if (impl->next_symbol != NULL) {
+    int rc = iter_symbol_new(i, impl);
+    if (rc) {
+      free(i);
+    } else {
+      *it = i;
+    }
+    return rc;
+  }
+
   return ENOTSUP;
 }
