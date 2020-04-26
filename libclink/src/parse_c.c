@@ -35,9 +35,6 @@ typedef struct {
   size_t next_size;
   size_t next_capacity;
 
-  /// was the head of the next queue the last thing we yielded?
-  bool using_next_head;
-
   /// named parent of the current context during traversal
   char *current_parent;
 
@@ -367,67 +364,30 @@ done:
   return s->rc ? CXChildVisit_Break : CXChildVisit_Continue;
 }
 
-static bool has_next(const clink_iter_t *it) {
+/// expand a pending cursor and add more entries to the next queue
+static int expand(state_t *s) {
 
-  if (it == NULL)
-    return false;
+  assert(s != NULL);
+  assert(s->pending_size > 0);
 
-  const state_t *s = it->state;
+  // take the head of the pending cursors
+  node_t n = pop_cursor(s);
 
-  if (s == NULL)
-    return false;
+  // update the current parent to mark that we are descending beneath this
+  // cursor
+  s->current_parent = n.parent;
 
-  // do we have a next symbol to yield, beyond the previous one (if any) in use?
-  return s->using_next_head ? s->next_size > 1 : s->next_size > 0;
+  // expand this node, discovering its children
+  (void)clang_visitChildren(n.cursor, visit, s);
+
+  // clear the current parent and discard this node
+  s->current_parent = NULL;
+  free(n.parent);
+
+  return s->rc;
 }
 
-static int move_next(clink_iter_t *it) {
-
-  if (it == NULL)
-    return EINVAL;
-
-  state_t *s = it->state;
-
-  if (s == NULL)
-    return EINVAL;
-
-  // discard the previous symbol if there was one
-  if (s->using_next_head) {
-    pop_symbol(s);
-    s->using_next_head = false;
-  }
-
-  // expand pending cursors until we have at least two pending items in the
-  // queue to yield
-  while (s->next_size <= 1) {
-
-    // if we have no more cursors to walk, we have exhausted the iterator
-    if (s->pending_size == 0)
-      break;
-
-    // take the head of the pending cursors
-    node_t n = pop_cursor(s);
-
-    // update the current parent to mark that we are descending beneath this
-    // cursor
-    s->current_parent = n.parent;
-
-    // expand this node, discovering its children
-    (void)clang_visitChildren(n.cursor, visit, s);
-
-    // clear the current parent and discard this node
-    s->current_parent = NULL;
-    free(n.parent);
-
-    // if we encountered an error during the expansion, bail out
-    if (s->rc)
-      return s->rc;
-  }
-
-  return 0;
-}
-
-static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
+static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
 
   if (it == NULL)
     return EINVAL;
@@ -440,27 +400,28 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
   if (s == NULL)
     return EINVAL;
 
-  if (!has_next(it))
-    return EINVAL;
-
   int rc = 0;
 
-  // if we were using the head of the next queue, discard it and advance
-  if (s->using_next_head) {
-    if ((rc = move_next(it)))
+  // discard the (last yielded) head of the next queue, if it exists
+  pop_symbol(s);
+
+  // refill the queue until we have an available symbol
+  while (s->next_size == 0 && s->pending_size > 0) {
+    if ((rc = expand(s)))
       return rc;
   }
 
-  assert(!s->using_next_head);
+  // have we exhausted this iterator?
+  if (s->next_size == 0)
+    return ENOMSG;
 
-  // mark the head as in use
-  s->using_next_head = true;
+  // otherwise we have something to return
   *yielded = &s->next[0];
 
   return rc;
 }
 
-static void my_free(clink_iter_t *it) {
+static void my_free(no_lookahead_iter_t *it) {
 
   if (it == NULL)
     return;
@@ -503,6 +464,8 @@ int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
   if (s == NULL)
     return ENOMEM;
 
+  no_lookahead_iter_t *i = NULL;
+  clink_iter_t *wrapper = NULL;
   int rc = 0;
 
   // create a Clang index
@@ -527,34 +490,31 @@ int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
   if ((rc = push_cursor(s, root)))
     goto done;
 
-  // create a Clink iterator
-  clink_iter_t *i = calloc(1, sizeof(*i));
+  // create a no-lookahead iterator
+  i = calloc(1, sizeof(*i));
   if (i == NULL) {
     rc = ENOMEM;
     goto done;
   }
 
   // configure it to iterate over symbols of this translation unit
-  i->has_next = has_next;
   i->next_symbol = next;
   i->state = s;
   s = NULL;
   i->free = my_free;
 
-  // advance the iterator to the first symbol to be yielded
-  if ((rc = move_next(i)))
-    goto done1;
-
-  // success
-  *it = i;
-
-done1:
-  if (rc)
-    clink_iter_free(&i);
+  // create a 1-lookahead iterator to wrap it
+  if ((rc = iter_new(&wrapper, i)))
+    goto done;
 
 done:
-  if (rc)
+  if (rc) {
+    clink_iter_free(&wrapper);
+    no_lookahead_iter_free(&i);
     state_free(&s);
+  } else {
+    *it = wrapper;
+  }
 
   return rc;
 }
