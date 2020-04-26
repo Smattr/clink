@@ -248,7 +248,10 @@ done:
 static void pop_symbol(state_t *s) {
 
   assert(s != NULL);
-  assert(s->next_size > 0);
+
+  // is the queue empty?
+  if (s->next_size == 0)
+    return;
 
   // free strings allocated within the queue head
   clink_symbol_clear(&s->next[0]);
