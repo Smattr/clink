@@ -15,13 +15,6 @@ class Database {
  public:
   explicit Database(const std::string &path);
 
-  /** equivalent of find_symbol, but returning all results in a collection
-   *
-   * \param name Name of the symbol to lookup
-   * \returns all symbols found
-   */
-  std::vector<Result> find_symbols(const std::string &name);
-
   /** find a definition in the database
    *
    * \param name Symbol name of the definition to lookup

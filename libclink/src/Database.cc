@@ -12,15 +12,6 @@
 
 namespace clink {
 
-std::vector<Result> Database::find_symbols(const std::string &name) {
-  std::vector<Result> rs;
-  (void)find_symbol(name, [&](const Result &r) {
-    rs.push_back(r);
-    return 0;
-  });
-  return rs;
-}
-
 int Database::find_definition(const std::string &name,
     std::function<int(const Result&)> const &callback) {
   assert(db != nullptr);
