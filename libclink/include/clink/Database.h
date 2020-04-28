@@ -15,23 +15,6 @@ class Database {
  public:
   explicit Database(const std::string &path);
 
-  /** find a definition in the database
-   *
-   * \param name Symbol name of the definition to lookup
-   * \param callback Function to invoke for each found definition
-   * \returns 0 if run to completion, or the first non-zero returned by the
-   *   callback if any
-   */
-  int find_definition(const std::string &name,
-    std::function<int(const Result&)> const &callback);
-
-  /** equivalent of find_definition, but returning all results in a collection
-   *
-   * \param name Symbol name of the definition to lookup
-   * \returns all definitions found
-   */
-  std::vector<Result> find_definitions(const std::string &name);
-
   /** find a functions that call a given function in the database
    *
    * \param name Symbol name of the function being called to lookup

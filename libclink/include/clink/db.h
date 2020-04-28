@@ -43,6 +43,16 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
  */
 void clink_db_remove(clink_db_t *db, const char *path);
 
+/** find a definition in the database
+ *
+ * \param db Database to search
+ * \param name Symbol name of the definition to lookup
+ * \param it [out] Created symbol iterator on success
+ * \returns 0 on success or an errno on failure
+ */
+int clink_db_find_definition(clink_db_t *db, const char *name,
+  clink_iter_t **it);
+
 /** find a symbol in the database
  *
  * \param db Database to search
