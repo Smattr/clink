@@ -116,31 +116,27 @@ int clink_db_find_symbol(clink_db_t *db, const char *name, clink_iter_t **it) {
   int rc = 0;
   no_lookahead_iter_t *i = NULL;
   clink_iter_t *wrapper = NULL;
-  state_t *s = NULL;
-
-  // create a query to lookup the symbol in the database
-  sqlite3_stmt *stmt = NULL;
-  if ((rc = sql_prepare(db->db, QUERY, &stmt)))
-    goto done;
-
-  if ((rc = sql_bind_text(stmt, 1, name)))
-    goto done;
 
   // allocate state for our iterator
-  s = calloc(1, sizeof(*s));
+  state_t *s = calloc(1, sizeof(*s));
   if (s == NULL) {
     rc = ENOMEM;
     goto done;
   }
 
+  // save the name for later symbol construction
   s->name = strdup(name);
   if (s->name == NULL) {
     rc = ENOMEM;
     goto done;
   }
 
-  s->stmt = stmt;
-  stmt = NULL;
+  // create a query to lookup the symbol in the database
+  if ((rc = sql_prepare(db->db, QUERY, &s->stmt)))
+    goto done;
+
+  if ((rc = sql_bind_text(s->stmt, 1, name)))
+    goto done;
 
   // create a no-lookahead iterator for stepping through this query
   i = calloc(1, sizeof(*i));
@@ -158,6 +154,7 @@ int clink_db_find_symbol(clink_db_t *db, const char *name, clink_iter_t **it) {
   // create a 1-lookahead iterator to wrap it
   if ((rc = iter_new(&wrapper, i)))
     goto done;
+  i = NULL;
 
 
 done:
@@ -165,8 +162,6 @@ done:
     clink_iter_free(&wrapper);
     no_lookahead_iter_free(&i);
     state_free(&s);
-    if (stmt != NULL)
-      sqlite3_finalize(stmt);
   } else {
     *it = wrapper;
   }
