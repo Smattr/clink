@@ -1,4 +1,4 @@
-// basic test of clink_db_find_call()
+// basic test of clink_db_find_caller()
 
 // force assertions on
 #ifdef NDEBUG
@@ -90,8 +90,8 @@ int main(void) {
 
     // lookup a call that does not exist
     clink_iter_t *it = NULL;
-    if ((r1 = clink_db_find_call(db, "foobar", &it))) {
-      fprintf(stderr, "clink_db_find_call: %s\n", strerror(r1));
+    if ((r1 = clink_db_find_caller(db, "foobar", &it))) {
+      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r1));
       break;
     }
 
@@ -110,8 +110,8 @@ int main(void) {
 
     // lookup a call that exists
     clink_iter_t *it = NULL;
-    if ((r2 = clink_db_find_call(db, "sym-name", &it))) {
-      fprintf(stderr, "clink_db_find_call: %s\n", strerror(r2));
+    if ((r2 = clink_db_find_caller(db, "sym-name", &it))) {
+      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r2));
       break;
     }
 
@@ -179,8 +179,8 @@ int main(void) {
 
     // lookup something that exists but is not a call
     clink_iter_t *it = NULL;
-    if ((r3 = clink_db_find_call(db, "sym-name2", &it))) {
-      fprintf(stderr, "clink_db_find_call: %s\n", strerror(r1));
+    if ((r3 = clink_db_find_caller(db, "sym-name2", &it))) {
+      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r1));
       break;
     }
 

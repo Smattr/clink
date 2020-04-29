@@ -50,7 +50,7 @@ void clink_db_remove(clink_db_t *db, const char *path);
  * \param it [out] Created symbol iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_db_find_call(clink_db_t *db, const char *name, clink_iter_t **it);
+int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it);
 
 /** find a definition in the database
  *

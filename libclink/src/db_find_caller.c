@@ -94,7 +94,7 @@ static void my_free(no_lookahead_iter_t *it) {
   state_free((state_t**)&it->state);
 }
 
-int clink_db_find_call(clink_db_t *db, const char *name, clink_iter_t **it) {
+int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
 
   if (db == NULL)
     return EINVAL;
