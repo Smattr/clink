@@ -6,6 +6,7 @@ add_library(libclink
   src/db_add_line.c
   src/db_add_symbol.c
   src/db_close.c
+  src/db_find_call.c
   src/db_find_definition.c
   src/db_find_symbol.c
   src/db_open.c

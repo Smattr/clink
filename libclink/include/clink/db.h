@@ -43,6 +43,15 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
  */
 void clink_db_remove(clink_db_t *db, const char *path);
 
+/** find calls to a given function in the database
+ *
+ * \param db Database to search
+ * \param name Symbol name of the function being called to lookup
+ * \param it [out] Created symbol iterator on success
+ * \returns 0 on success or an errno on failure
+ */
+int clink_db_find_call(clink_db_t *db, const char *name, clink_iter_t **it);
+
 /** find a definition in the database
  *
  * \param db Database to search

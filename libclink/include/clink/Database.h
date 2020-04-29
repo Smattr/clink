@@ -15,23 +15,6 @@ class Database {
  public:
   explicit Database(const std::string &path);
 
-  /** find a functions that call a given function in the database
-   *
-   * \param name Symbol name of the function being called to lookup
-   * \param callback Function to invoke for each found caller
-   * \returns 0 if run to completion, or the first non-zero returned by the
-   *   callback if any
-   */
-  int find_caller(const std::string &name,
-    std::function<int(const Result&)> const &callback);
-
-  /** equivalent of find_caller, but returning all results in a collection
-   *
-   * \param name Symbol name of the function being called to lookup
-   * \returns all callers found
-   */
-  std::vector<Result> find_callers(const std::string &name);
-
   /** find a function calls within a given function in the database
    *
    * \param name Symbol name of the containing function to lookup
