@@ -110,18 +110,20 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
     goto done;
 
   // bind the where clause to our given function
-  if ((rc = sql_bind_text(s->stmt, 1, name)))
+  if ((rc = sqlite3_bind_text(s->stmt, 1, name, -1, SQLITE_TRANSIENT))) {
+    rc = sql_err_to_errno(rc);
     goto done;
+  }
   {
     char *name2 = NULL;
     if (asprintf(&name2, "%%/%s", name) < 0) {
       rc = errno;
       goto done;
     }
-    rc = sql_bind_text(s->stmt, 2, name2);
-    free(name2);
-    if (rc)
+    if ((rc = sqlite3_bind_text(s->stmt, 2, name2, -1, free))) {
+      rc = sql_err_to_errno(rc);
       goto done;
+    }
   }
 
   // create a no-lookahead iterator for stepping through our query
