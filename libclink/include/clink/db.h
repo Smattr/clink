@@ -80,6 +80,15 @@ int clink_db_find_definition(clink_db_t *db, const char *name,
  */
 int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it);
 
+/** find #includes or a given file in the database
+ *
+ * \param db Database to search
+ * \param name Filename of the function being #included
+ * \param it [out] Created symbol iterator on success
+ * \returns 0 on success or an errno on failure
+ */
+int clink_db_find_includer(clink_db_t *db, const char *name, clink_iter_t **it);
+
 /** find a symbol in the database
  *
  * \param db Database to search
