@@ -136,7 +136,7 @@ int clink_db_find_call(clink_db_t *db, const char *name, clink_iter_t **it) {
     goto done;
 
   // bind the where clause to our given function
-  if ((rc = sql_bind_text(s->stmt, 1, name)))
+  if ((rc = sql_bind_text(s->stmt, 1, s->name)))
     goto done;
   if ((rc = sql_bind_int(s->stmt, 2, CLINK_FUNCTION_CALL)))
     goto done;

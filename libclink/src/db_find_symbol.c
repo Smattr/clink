@@ -135,7 +135,7 @@ int clink_db_find_symbol(clink_db_t *db, const char *name, clink_iter_t **it) {
   if ((rc = sql_prepare(db->db, QUERY, &s->stmt)))
     goto done;
 
-  if ((rc = sql_bind_text(s->stmt, 1, name)))
+  if ((rc = sql_bind_text(s->stmt, 1, s->name)))
     goto done;
 
   // create a no-lookahead iterator for stepping through this query

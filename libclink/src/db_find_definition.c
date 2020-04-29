@@ -137,7 +137,7 @@ int clink_db_find_definition(clink_db_t *db, const char *name,
     goto done;
 
   // bind the where clause to our given definition
-  if ((rc = sql_bind_text(s->stmt, 1, name)))
+  if ((rc = sql_bind_text(s->stmt, 1, s->name)))
     goto done;
   if ((rc = sql_bind_int(s->stmt, 2, CLINK_DEFINITION)))
     goto done;
