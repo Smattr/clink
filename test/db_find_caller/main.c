@@ -180,7 +180,7 @@ int main(void) {
     // lookup something that exists but is not a call
     clink_iter_t *it = NULL;
     if ((r3 = clink_db_find_caller(db, "sym-name2", &it))) {
-      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r1));
+      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r3));
       break;
     }
 

@@ -180,7 +180,7 @@ int main(void) {
     // lookup something that exists but is not a definition
     clink_iter_t *it = NULL;
     if ((r3 = clink_db_find_definition(db, "sym-name2", &it))) {
-      fprintf(stderr, "clink_db_find_definition: %s\n", strerror(r1));
+      fprintf(stderr, "clink_db_find_definition: %s\n", strerror(r3));
       break;
     }
 
