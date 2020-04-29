@@ -110,7 +110,7 @@ int main(void) {
 
     // lookup a definition that exists
     clink_iter_t *it = NULL;
-    if ((r2 = clink_db_find_symbol(db, "sym-name", &it))) {
+    if ((r2 = clink_db_find_definition(db, "sym-name", &it))) {
       fprintf(stderr, "clink_db_find_definition: %s\n", strerror(r2));
       break;
     }
