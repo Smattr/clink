@@ -12,46 +12,6 @@
 
 namespace clink {
 
-int Database::find_call(const std::string &name,
-    std::function<int(const Result&)> const &callback) {
-  assert(db != nullptr);
-
-  static const char QUERY[] = "select symbols.name, symbols.path, "
-    "symbols.line, symbols.col, content.body from symbols left join content on "
-    "symbols.path = content.path and symbols.line = content.line where "
-    "symbols.parent = @parent and symbols.category = @category;";
-
-  SQLStatement stmt(db, QUERY);
-
-  stmt.bind("@parent", 1, name);
-  stmt.bind("@category", 2, Symbol::FUNCTION_CALL);
-
-  while (stmt.step() == SQLITE_ROW) {
-
-    const std::string call    = stmt.column_text(0);
-    const std::string path    = stmt.column_text(1);
-    Symbol::Category cat      = Symbol::FUNCTION_CALL;
-    unsigned long lineno      = stmt.column_int(2);
-    unsigned long colno       = stmt.column_int(3);
-    const std::string context = stmt.column_text(4);
-
-    Result r{Symbol{cat, call, path, lineno, colno, name}, context};
-    if (int rc = callback(r))
-      return rc;
-  }
-
-  return 0;
-}
-
-std::vector<Result> Database::find_calls(const std::string &name) {
-  std::vector<Result> rs;
-  (void)find_call(name, [&](const Result &r) {
-    rs.push_back(r);
-    return 0;
-  });
-  return rs;
-}
-
 int Database::find_file(const std::string &name,
     std::function<int(const std::string&)> const &callback) {
   assert(db != nullptr);
