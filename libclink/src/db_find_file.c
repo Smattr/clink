@@ -27,9 +27,6 @@ static void state_free(state_t **ss) {
 
   state_t *s = *ss;
 
-  free(s->last);
-  s->last = NULL;
-
   if (s->stmt != NULL)
     sqlite3_finalize(s->stmt);
   s->stmt = NULL;
@@ -47,10 +44,6 @@ static int next(no_lookahead_iter_t *it, const char **yielded) {
     return EINVAL;
 
   state_t *s = it->state;
-
-  // discard any previous symbol we had
-  free(s->last);
-  s->last = NULL;
 
   // is the iterator exhausted?
   if (s->stmt == NULL)
