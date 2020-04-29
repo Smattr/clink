@@ -12,39 +12,6 @@
 
 namespace clink {
 
-int Database::find_file(const std::string &name,
-    std::function<int(const std::string&)> const &callback) {
-  assert(db != nullptr);
-
-  std::string path2("%/");
-  path2 += name;
-
-  static const char QUERY[] = "select distinct path from symbols where path = "
-    "@path1 or path like @path2;";
-
-  SQLStatement stmt(db, QUERY);
-
-  stmt.bind("@path1", 1, name);
-  stmt.bind("@path2", 2, path2);
-
-  while (stmt.step() == SQLITE_ROW) {
-    const std::string path = stmt.column_text(0);
-    if (int rc = callback(path))
-      return rc;
-  }
-
-  return 0;
-}
-
-std::vector<std::string> Database::find_files(const std::string &name) {
-  std::vector<std::string> rs;
-  (void)find_file(name, [&](const std::string &r) {
-    rs.push_back(r);
-    return 0;
-  });
-  return rs;
-}
-
 int Database::find_includer(const std::string &name,
     std::function<int(const Result&)> const &callback) {
   assert(db != nullptr);

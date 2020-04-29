@@ -15,23 +15,6 @@ class Database {
  public:
   explicit Database(const std::string &path);
 
-  /** find a given file in the database
-   *
-   * \param name Filename to lookup
-   * \param callback Function to invoke for each found file
-   * \returns 0 if run to completion, or the first non-zero returned by the
-   *   callback if any
-   */
-  int find_file(const std::string &name,
-    std::function<int(const std::string&)> const &callback);
-
-  /** equivalent of find_file, but returning all results in a collection
-   *
-   * \param name Filename to lookup
-   * \returns all files found
-   */
-  std::vector<std::string> find_files(const std::string &name);
-
   /** find #includes or a given file in the database
    *
    * \param name Filename of the function being #included
