@@ -63,7 +63,7 @@ static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
   // extract the next result
   int rc = sqlite3_step(s->stmt);
   if (rc != SQLITE_ROW && rc != SQLITE_DONE)
-    return rc;
+    return sql_err_to_errno(rc);
 
   // did we just exhaust this iterator?
   if (rc == SQLITE_DONE) {
