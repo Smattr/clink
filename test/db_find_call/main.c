@@ -231,7 +231,8 @@ int main(void) {
   // confirm that lookup of a call that does exist works as expected
   assert(r2 == 0);
 
-  // confirm that looking calls in a function without calls worked as expected
+  // confirm that looking up calls in a function without calls worked as
+  // expected
   assert(r3 == 0);
 
   return 0;
