@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include "help.h"
 #include <limits.h>
+#include "line_ui.h"
 #include "option.h"
 #include "path.h"
 #include "sigint.h"
@@ -256,6 +257,12 @@ int main(int argc, char **argv) {
   // build/update the database, if requested
   if (option.update_database) {
     if ((rc = build(db)))
+      goto done1;
+  }
+
+  // run line-oriented interface, if requested
+  if (option.line_ui) {
+    if ((rc = line_ui(db)))
       goto done1;
   }
 
