@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <clink/clink.h>
+#include "colour.h"
 #include <ctype.h>
 #include <errno.h>
 #include "line_ui.h"
@@ -41,12 +42,15 @@ static int drain_iter(clink_iter_t *it, bool use_parent) {
       ++context;
 
     // buffer the symbol’s details
-    if (fprintf(buf, "%s %s %lu %s", symbol->path,
-        use_parent ? symbol->parent : symbol->name, symbol->lineno, context)
-        < 0) {
+    if (fprintf(buf, "%s %s %lu ", symbol->path,
+        use_parent ? symbol->parent : symbol->name, symbol->lineno) < 0) {
       rc = errno;
       goto done;
     }
+
+    // print context, stripping ANSI codes because Vim will not like them
+    if ((rc = print_bw(context, fputc, buf)))
+      goto done;
 
     ++count;
   }
