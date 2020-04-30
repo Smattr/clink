@@ -37,8 +37,9 @@ static int drain_iter(clink_iter_t *it, bool use_parent) {
 
     // strip leading white space from the context field
     const char *context = symbol->context;
-    assert(context != NULL);
-    while (isspace(context[0]))
+    if (context == NULL)
+      context = "\n";
+    while (isspace(context[0]) && context[0] != '\n')
       ++context;
 
     // buffer the symbol’s details
