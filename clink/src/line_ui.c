@@ -36,11 +36,12 @@ static int drain_iter(clink_iter_t *it, bool use_parent) {
 
     // strip leading white space from the context field
     const char *context = symbol->context;
+    assert(context != NULL);
     while (isspace(context[0]))
       ++context;
 
     // buffer the symbol’s details
-    if (fprintf(buf, "%s %s %lu %s\n", symbol->path,
+    if (fprintf(buf, "%s %s %lu %s", symbol->path,
         use_parent ? symbol->parent : symbol->name, symbol->lineno, context)
         < 0) {
       rc = errno;
