@@ -2,6 +2,7 @@
 
 #include <clink/iter.h>
 #include <clink/symbol.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,6 +17,23 @@ typedef struct clink_db clink_db_t;
  * \returns 0 on success or an errno on failure
  */
 int clink_db_open(clink_db_t **db, const char *path);
+
+/** add a file record to the database
+ *
+ * Nothing in the symbol or content functionality assumes a corresponding file
+ * record exists. I.e. it is fine to add and lookup symbols and content without
+ * having a record installed in the database for the containing file. Both the
+ * hash and the timestamp are uninterpreted internally, so the caller can choose
+ * any representation they desire.
+ *
+ * \param db Database to operate on
+ * \param path Path of the subject to store information about
+ * \param hash Some hash digest of the subject
+ * \param timestamp Last modification time of the subject
+ * \returns 0 on success or an errno on failure
+ */
+int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
+  uint64_t timestamp);
 
 /** add a symbol to the database
  *

@@ -4,6 +4,7 @@ add_library(libclink
   src/colour.c
   src/compiler_includes.c
   src/db_add_line.c
+  src/db_add_record.c
   src/db_add_symbol.c
   src/db_close.c
   src/db_find_call.c
