@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "work_queue.h"
 
 /// mutual exclusion mechanism for writing to the database
@@ -139,6 +140,24 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     assert(t.path != NULL);
 
+    // see if we know of this file
+    {
+      uint64_t timestamp = 0;
+      int r = clink_db_find_record(db, t.path, NULL, &timestamp);
+      if (r == 0) {
+        // stat the file to see if it has changed
+        struct stat buf;
+        if (stat(t.path, &buf) == 0) {
+          // if it has not changed since last update, skip it
+          if ((uint64_t)buf.st_mtime == timestamp) {
+            DEBUG("skipping unmodified file %s", t.path);
+            free(t.path);
+            continue;
+          }
+        }
+      }
+    }
+
     // generate a friendlier name for the source path
     char *display = NULL;
     if ((rc = disppath(t.path, &display))) {
@@ -237,6 +256,14 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
           } else {
             error(thread_id, "failed to read %s: %s", display, strerror(rc));
           }
+        }
+
+        // now we can insert a record for the file
+        if (rc == 0) {
+          uint64_t hash = 0; // TODO
+          struct stat buf;
+          if (stat(t.path, &buf) == 0)
+            (void)clink_db_add_record(db, t.path, hash, (uint64_t)buf.st_mtime);
         }
 
         break;
