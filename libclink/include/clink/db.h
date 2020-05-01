@@ -107,6 +107,21 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it);
  */
 int clink_db_find_includer(clink_db_t *db, const char *name, clink_iter_t **it);
 
+/** find a record in the given database
+ *
+ * The hash and timestamp parameters can be NULL if the caller does not need
+ * this information.
+ *
+ * \param db Database to search
+ * \param path Path to subject to lookup
+ * \param hash [out] Hash digest of the subject if a record was found
+ * \param timestamp [out] Modification time of the subject if a record was found
+ * \returns 0 if a record was found, ENOENT if no record was found, or another
+ *   errno on failure
+ */
+int clink_db_find_record(clink_db_t *db, const char *path, uint64_t *hash,
+  uint64_t *timestamp);
+
 /** find a symbol in the database
  *
  * \param db Database to search

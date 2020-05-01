@@ -12,6 +12,7 @@ add_library(libclink
   src/db_find_definition.c
   src/db_find_file.c
   src/db_find_includer.c
+  src/db_find_record.c
   src/db_find_symbol.c
   src/db_open.c
   src/db_remove.c
