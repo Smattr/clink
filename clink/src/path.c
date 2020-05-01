@@ -35,12 +35,7 @@ static bool has_ext(const char *path, const char *ext) {
     return false;
 
   // case-insensitive comparison of the extension
-  for (size_t i = 0; i < strlen(ext); ++i) {
-    if (tolower(path[strlen(path) - strlen(ext) + i]) != tolower(ext[i]))
-      return false;
-  }
-
-  return true;
+  return strcasecmp(path + strlen(path) - strlen(ext), ext) == 0;
 }
 
 bool is_asm(const char *path) {
