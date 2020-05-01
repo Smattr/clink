@@ -17,6 +17,10 @@ static const char CONTENT_SCHEMA[] = "create table if not exists content "
   "(path text not null, line integer not null, body text not null, "
   "unique(path, line));";
 
+static const char RECORDS_SCHEMA[] = "create table if not exists records "
+  "(path text not null unique, hash integer not null, timestamp integer not "
+  "null);";
+
 static const char *PRAGMAS[] = {
   "pragma synchronous=OFF;",
   "pragma journal_mode=MEMORY;",
@@ -33,6 +37,9 @@ static int init(sqlite3 *db) {
     return rc;
 
   if ((rc = sql_exec(db, CONTENT_SCHEMA)))
+    return rc;
+
+  if ((rc = sql_exec(db, RECORDS_SCHEMA)))
     return rc;
 
   for (size_t i = 0; i < sizeof(PRAGMAS) / sizeof(PRAGMAS[0]); ++i) {
