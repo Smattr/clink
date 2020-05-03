@@ -1,5 +1,6 @@
 #include "colour.h"
 #include <curses.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 
@@ -98,4 +99,87 @@ static int addch_wrapper(int c, FILE *ignored) {
 
 void printw_bw(const char *s) {
   (void)print_bw(s, addch_wrapper, NULL);
+}
+
+void printw_colour(const char *s) {
+
+  enum {
+    IDLE,
+    SAW_ESC,
+    SAW_LSQUARE,
+  } state = IDLE;
+
+  // a partial ANSI code we have parsed
+  unsigned code;
+
+  // pending attributes that we have accrued while parsing
+  bool bold;
+  bool underline;
+  short fg;
+  short bg;
+
+  for (; *s != '\0'; ++s) {
+
+    switch (state) {
+
+      case IDLE:
+        if (*s == 27) {
+          state = SAW_ESC;
+        } else {
+          addch(*s);
+        }
+        break;
+
+      case SAW_ESC:
+        if (*s == '[') {
+          bold = false;
+          underline = false;
+          fg = COLOR_WHITE;
+          bg = COLOR_BLACK;
+          code = 0;
+          state = SAW_LSQUARE;
+        } else {
+          addch(*s);
+          state = IDLE;
+        }
+        break;
+
+      case SAW_LSQUARE:
+
+        if (*s == ';' || *s == 'm') {
+          if (code == 1) {
+            bold = true;
+          } else if (code == 4) {
+            underline = true;
+          } else if (code >= 30 && code <= 37) {
+            fg = code - 30;
+          } else if (code >= 40 && code <= 47) {
+            bg = code - 40;
+          } else if (code == 0) { // reset
+            standend();
+            state = IDLE;
+            continue;
+          }
+          // otherwise, ignore
+        }
+
+        if (*s == 'm') {
+          attrset((bold ? A_BOLD : 0) | (underline ? A_UNDERLINE : 0) |
+            COLOR_PAIR(colour_pair_id(fg, bg)));
+          state = IDLE;
+        } else if (*s >= '0' && *s <= '9') {
+          code = code * 10 + (unsigned)(*s - '0');
+        } else if (*s == ';') {
+          // reset to parse another code
+          code = 0;
+        } else {
+          // something unrecognised
+          addch(*s);
+          state = IDLE;
+        }
+
+        break;
+
+    }
+  }
 }

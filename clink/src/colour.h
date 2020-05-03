@@ -1,3 +1,11 @@
+// Support for converting between different formats for describing the colour
+// and other attributes of terminal text.
+//
+// There are two different formats dealt with below:
+//
+//   1. ANSI terminal codes (e.g. "ESC[32;1m")
+//   2. Ncurses colour pairs
+
 #pragma once
 
 #include <stdio.h>
@@ -22,3 +30,10 @@ int printf_bw(const char *s, FILE *stream);
  * \returns 0 on success
  */
 void printw_bw(const char *s);
+
+/** output a string using Ncurses, translating ANSI codes to Ncurses colours
+ *
+ * \param s String to output
+ * \returns 0 on success
+ */
+void printw_colour(const char *s);
