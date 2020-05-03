@@ -42,7 +42,8 @@ int init_ncurses_colours(void) {
   return 0;
 }
 
-int printf_bw(const char *s, int (*put)(int c, FILE *stream), FILE *stream) {
+static int print_bw(const char *s, int (*put)(int c, FILE *stream),
+  FILE *stream) {
 
   enum {
     IDLE,
@@ -83,4 +84,8 @@ int printf_bw(const char *s, int (*put)(int c, FILE *stream), FILE *stream) {
   }
 
   return 0;
+}
+
+int printf_bw(const char *s, int (*put)(int c, FILE *stream), FILE *stream) {
+  return print_bw(s, put, stream);
 }
