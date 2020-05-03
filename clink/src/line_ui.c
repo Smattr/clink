@@ -50,7 +50,7 @@ static int drain_iter(clink_iter_t *it, bool use_parent) {
     }
 
     // print context, stripping ANSI codes because Vim will not like them
-    if ((rc = print_bw(context, fputc, buf)))
+    if ((rc = printf_bw(context, fputc, buf)))
       goto done;
 
     ++count;
