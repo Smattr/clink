@@ -8,11 +8,13 @@
 #include "sigint.h"
 #include <signal.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include "work_queue.h"
 
 /// mutual exclusion mechanism for writing to the database
@@ -50,6 +52,29 @@ static int add_line(clink_db_t *db, const char *path, unsigned long lineno,
 /// mutual exclusion mechanism for using stdout/stderr
 pthread_mutex_t print_lock;
 
+/// Is stdout a tty? Initialised in build().
+static bool tty;
+
+/// use ANSI codes to move the cursor around to generate smoother progress
+/// output?
+static bool smart_progress(void) {
+
+  // do not play ANSI tricks if we are debugging
+  if (option.debug)
+    return false;
+
+  // also do not do it if we are piped into something else
+  if (!tty)
+    return false;
+
+  // also not if we are using the line-oriented interface because we assume we
+  // are being called by Vim that does not expect this progress output
+  if (option.line_ui)
+    return false;
+
+  return true;
+}
+
 /// print progress indication
 __attribute__((format(printf, 2, 3)))
 static void progress(unsigned long thread_id, const char *fmt, ...) {
@@ -59,7 +84,7 @@ static void progress(unsigned long thread_id, const char *fmt, ...) {
   if (r == 0) {
 
     // move up to this thread’s progress line
-    if (!option.debug)
+    if (smart_progress())
       printf("\033[%luA\033[K", option.threads - thread_id);
 
     printf("%lu: ", thread_id);
@@ -67,7 +92,7 @@ static void progress(unsigned long thread_id, const char *fmt, ...) {
     printf("\n");
 
     // move back to the bottom
-    if (!option.debug) {
+    if (smart_progress()) {
       printf("\033[%luB", option.threads - thread_id - 1);
       fflush(stdout);
     }
@@ -84,7 +109,7 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
   va_start(ap, fmt);
   int r = pthread_mutex_lock(&print_lock);
   if (r == 0) {
-    if (!option.debug)
+    if (smart_progress())
       printf("\033[%luA\033[K", option.threads - thread_id);
     printf("%lu: ", thread_id);
     if (option.colour == ALWAYS)
@@ -93,7 +118,7 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
     if (option.colour == ALWAYS)
       printf("\033[0m"); // reset
     printf("\n");
-    if (!option.debug) {
+    if (smart_progress()) {
       printf("\033[%luB", option.threads - thread_id - 1);
       fflush(stdout);
     }
@@ -386,6 +411,8 @@ int build(clink_db_t *db) {
 
   assert(db != NULL);
 
+  tty = isatty(STDOUT_FILENO);
+
   int rc = 0;
 
   // create a mutex for protecting database accesses
@@ -431,7 +458,7 @@ int build(clink_db_t *db) {
   }
 
   // set up progress output table
-  if (!option.debug) {
+  if (smart_progress()) {
     for (unsigned long i = 0; i < option.threads; ++i)
       printf("%lu:\n", i);
   }
