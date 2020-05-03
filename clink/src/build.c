@@ -146,14 +146,13 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       int r = clink_db_find_record(db, t.path, NULL, &timestamp);
       if (r == 0) {
         // stat the file to see if it has changed
-        struct stat buf;
-        if (stat(t.path, &buf) == 0) {
-          // if it has not changed since last update, skip it
-          if ((uint64_t)buf.st_mtime == timestamp) {
-            DEBUG("skipping unmodified file %s", t.path);
-            free(t.path);
-            continue;
-          }
+        uint64_t timestamp2;
+        r = mtime(t.path, &timestamp2);
+        // if it has not changed since last update, skip it
+        if (r == 0 && timestamp == timestamp2) {
+          DEBUG("skipping unmodified file %s", t.path);
+          free(t.path);
+          continue;
         }
       }
     }
@@ -261,9 +260,9 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         // now we can insert a record for the file
         if (rc == 0) {
           uint64_t hash = 0; // TODO
-          struct stat buf;
-          if (stat(t.path, &buf) == 0)
-            (void)clink_db_add_record(db, t.path, hash, (uint64_t)buf.st_mtime);
+          uint64_t timestamp;
+          if (mtime(t.path, &timestamp) == 0)
+            (void)clink_db_add_record(db, t.path, hash, timestamp);
         }
 
         break;
