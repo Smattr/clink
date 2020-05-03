@@ -89,3 +89,13 @@ static int print_bw(const char *s, int (*put)(int c, FILE *stream),
 int printf_bw(const char *s, FILE *stream) {
   return print_bw(s, fputc, stream);
 }
+
+static int addch_wrapper(int c, FILE *ignored) {
+  (void)ignored;
+  addch(c);
+  return 0;
+}
+
+void printw_bw(const char *s) {
+  (void)print_bw(s, addch_wrapper, NULL);
+}

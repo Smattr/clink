@@ -14,6 +14,3 @@
 
 // equivalent of ncurses’ printw, but interpret ANSI colour codes
 void printw_in_colour(const std::string &text);
-
-// equivalent of ncurses’ printw, but strip ANSI colour codes
-void printw_in_bw(const std::string &text);

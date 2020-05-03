@@ -15,3 +15,10 @@ int init_ncurses_colours(void);
  * \returns 0 on success
  */
 int printf_bw(const char *s, FILE *stream);
+
+/** output a string using Ncurses, stripping ANSI codes
+ *
+ * \param s String to output
+ * \returns 0 on success
+ */
+void printw_bw(const char *s);
