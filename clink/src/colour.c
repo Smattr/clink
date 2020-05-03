@@ -86,6 +86,6 @@ static int print_bw(const char *s, int (*put)(int c, FILE *stream),
   return 0;
 }
 
-int printf_bw(const char *s, int (*put)(int c, FILE *stream), FILE *stream) {
-  return print_bw(s, put, stream);
+int printf_bw(const char *s, FILE *stream) {
+  return print_bw(s, fputc, stream);
 }

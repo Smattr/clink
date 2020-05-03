@@ -11,8 +11,7 @@ int init_ncurses_colours(void);
 /** output a string, stripping ANSI codes
  *
  * \param s String to output
- * \param put putc-style primitive for outputting characters
  * \param stream Stream to print to
- * \returns 0 on success or -1 if put() ever returns EOF
+ * \returns 0 on success
  */
-int printf_bw(const char *s, int (*put)(int c, FILE *stream), FILE *stream);
+int printf_bw(const char *s, FILE *stream);
