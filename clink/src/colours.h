@@ -12,9 +12,6 @@
 #include <cstddef>
 #include <string>
 
-// configure Ncurses colour pairs for use later
-int init_ncurses_colours();
-
 // equivalent of ncurses’ printw, but interpret ANSI colour codes
 void printw_in_colour(const std::string &text);
 

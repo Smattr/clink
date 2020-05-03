@@ -7,42 +7,6 @@
 #include <ncurses.h>
 #include <string>
 
-// We need to pack a colour combination in this way because the default ncurses
-// implementation only supports 64 colour pairs and hence rejects any colour ID
-// above 64.
-static constexpr short colour_pair_id(short fg, short bg) {
-  return ((fg << 3) | bg) + 1;
-}
-
-int init_ncurses_colours() {
-
-  // this function is only expected to be called when we know we have colour
-  // support
-  assert(has_colors());
-
-  if (start_color() != 0)
-    return -1;
-
-  // make the current terminal colour scheme available
-  use_default_colors();
-
-  static const short COLOURS[] = { COLOR_BLACK, COLOR_RED, COLOR_GREEN,
-    COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE };
-
-  // use a simple encoding scheme to configure every possible colour
-  // combination.
-  for (const short &fg : COLOURS) {
-    for (const short &bg : COLOURS) {
-      short id = colour_pair_id(fg, bg);
-      if (init_pair(id, fg, bg) != 0) {
-        return -1;
-      }
-    }
-  }
-
-  return 0;
-}
-
 void printw_in_colour(const std::string &text) {
 
   enum {
