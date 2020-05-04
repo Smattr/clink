@@ -10,6 +10,7 @@ add_executable(clink
   src/line_ui.c
   src/main.c
   src/mtime.c
+  src/ncurses_ui.c
   src/option.c
   src/path.c
   src/set.c
