@@ -153,7 +153,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     // if we have exhausted the work queue, we are done
     if (rc == ENOMSG) {
-      progress(thread_id, "exiting...");
+      progress(thread_id, "finishing...");
       rc = 0;
       break;
     }
