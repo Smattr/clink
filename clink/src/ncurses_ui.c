@@ -97,7 +97,7 @@ static int format_results(clink_iter_t *it) {
     ++results.count;
 
     // strip leading white space from the context for neater output
-    if (target->context == NULL) {
+    if (target->context != NULL) {
       while (isspace(target->context[0]))
         memmove(target->context, target->context + 1, strlen(target->context));
     }
