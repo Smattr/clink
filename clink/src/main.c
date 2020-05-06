@@ -6,6 +6,7 @@
 #include "help.h"
 #include <limits.h>
 #include "line_ui.h"
+#include "ncurses_ui.h"
 #include "option.h"
 #include "path.h"
 #include "sigint.h"
@@ -264,6 +265,12 @@ int main(int argc, char **argv) {
   if (option.line_ui) {
     if ((rc = line_ui(db)))
       goto done1;
+  }
+
+  // Ncurses interface, if requested
+  if (option.ncurses_ui) {
+    if ((rc = ncurses_ui(db)))
+      goto done;
   }
 
 done1:
