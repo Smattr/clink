@@ -711,7 +711,7 @@ int ncurses_ui(clink_db_t *db) {
 
   // initialise Ncurses
   (void)initscr();
-  if (option.colour) {
+  if (option.colour == ALWAYS) {
     if (has_colors())
       colour = init_ncurses_colours() == 0;
   }
