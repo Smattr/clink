@@ -261,7 +261,7 @@ static int print_results(void) {
   move(0, 0);
   printw("  ");
   for (size_t i = 0; i < COLUMN_COUNT; ++i) {
-    printw("%s", HEADINGS[i]);
+    printw("%s ", HEADINGS[i]);
     size_t padding = widths[i] - strlen(HEADINGS[i]);
     pad(padding);
   }
@@ -274,7 +274,7 @@ static int print_results(void) {
       printw("%c ", hotkey(i));
       for (size_t j = 0; j < COLUMN_COUNT; ++j) {
         const clink_symbol_t *sym = &results.rows[i + from_row];
-        size_t padding = widths[j];
+        size_t padding = widths[j] + 1;
         switch (j) {
           case 0: // file
             padding -= strlen(sym->path);
@@ -284,11 +284,11 @@ static int print_results(void) {
           case 1: // function
             padding -= sym->parent == NULL ? 0 : strlen(sym->parent);
             if (sym->parent != NULL)
-              printw(sym->parent);
+              printw("%s", sym->parent);
             pad(padding);
             break;
           case 2: // line
-            padding -= digit_count(sym->lineno) - 1;
+            padding -= digit_count(sym->lineno) + 1;
             pad(padding);
             printw("%lu ", sym->lineno);
             break;
