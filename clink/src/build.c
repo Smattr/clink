@@ -92,7 +92,7 @@ static void progress(unsigned long thread_id, const char *fmt, ...) {
     printf("\n");
 
     // move back to the bottom
-    if (smart_progress()) {
+    if (smart_progress() && thread_id != option.threads - 1) {
       printf("\033[%luB", option.threads - thread_id - 1);
       fflush(stdout);
     }
@@ -118,7 +118,7 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
     if (option.colour == ALWAYS)
       printf("\033[0m"); // reset
     printf("\n");
-    if (smart_progress()) {
+    if (smart_progress() && thread_id != option.threads - 1) {
       printf("\033[%luB", option.threads - thread_id - 1);
       fflush(stdout);
     }
