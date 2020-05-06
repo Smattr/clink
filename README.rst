@@ -76,9 +76,9 @@ Everything in this repository is in the public domain, under the terms of
 the Unlicense. For the full text, see LICENSE_.
 
 .. _Cscope: http://cscope.sourceforge.net/
-.. __ http://blog.burntsushi.net/ripgrep/
-.. __ http://geoff.greer.fm/ag/
-.. __ http://beyondgrep.com/
-.. __ https://en.wikipedia.org/wiki/Grep
-.. __ https://en.wikipedia.org/wiki/Sed
+__ http://blog.burntsushi.net/ripgrep/
+__ http://geoff.greer.fm/ag/
+__ http://beyondgrep.com/
+__ https://en.wikipedia.org/wiki/Grep
+__ https://en.wikipedia.org/wiki/Sed
 .. _LICENSE: ./LICENSE
