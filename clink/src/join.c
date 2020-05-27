@@ -26,7 +26,7 @@ int join(const char *branch, const char *stem, char **path) {
   while (prefix_len > 0 && branch[prefix_len - 1] == '/')
     --prefix_len;
 
-  // determing the suffix, stripping any leading /s
+  // determining the suffix, stripping any leading /s
   const char *suffix = stem;
   while (*suffix == '/')
     ++suffix;
