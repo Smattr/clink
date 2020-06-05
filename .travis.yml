@@ -12,8 +12,6 @@ matrix:
           - libclang-dev
     env:
       - CTEST_OUTPUT_ON_FAILURE=1
-      # we will put a CMake symlink here
-      - PATH=${HOME}:${PATH}
       - CFLAGS="-Werror -g -fno-omit-frame-pointer -fsanitize=undefined -fno-sanitize-recover=undefined -fuse-ld=gold"
       - UBSAN_OPTIONS=print_stacktrace=1
 
@@ -30,18 +28,6 @@ matrix:
       - CTEST_OUTPUT_ON_FAILURE=1
       - PATH=/usr/local/opt/llvm/bin:${PATH}
       - CFLAGS="-Werror -g -fno-omit-frame-pointer -fsanitize=address"
-
-before_install:
-
-  # install a more recent CMake directly from Kitware
-  - if [ "$(uname -s)" = "Linux" ]; then wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -; fi
-  - if [ "$(uname -s)" = "Linux" ]; then sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'; fi
-  - if [ "$(uname -s)" = "Linux" ]; then travis_retry sudo apt-get -qq update; fi
-  - if [ "$(uname -s)" = "Linux" ]; then travis_retry sudo apt-get -y install cmake; fi
-
-  # ensure this version of CMake ends up preferenced over the one provided by
-  # Travis
-  - if [ "$(uname -s)" = "Linux" ]; then ln -s /usr/bin/cmake ${HOME}/cmake; fi
 
 script:
   - uname -sr && mkdir build && cd build && cmake .. && cmake --build . && cmake --build . -- test && sudo env "PATH=$PATH" cmake --build . -- install
