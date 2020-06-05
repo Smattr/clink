@@ -13,6 +13,8 @@ matrix:
           - libclang-dev
     env:
       - CTEST_OUTPUT_ON_FAILURE=1
+      # we will put a CMake symlink here
+      - PATH=${HOME}:${PATH}
       - CFLAGS="-Werror -g -fno-omit-frame-pointer -fsanitize=undefined -fno-sanitize-recover=undefined -fuse-ld=gold"
       - UBSAN_OPTIONS=print_stacktrace=1
 
@@ -29,6 +31,12 @@ matrix:
       - CTEST_OUTPUT_ON_FAILURE=1
       - PATH=/usr/local/opt/llvm/bin:${PATH}
       - CFLAGS="-Werror -g -fno-omit-frame-pointer -fsanitize=address"
+
+before_install:
+
+  # ensure the system version of CMake ends up preferenced over the one provided
+  # by Travis
+  - if [ "$(uname -s)" = "Linux" ]; then ln -s /usr/bin/cmake ${HOME}/cmake; fi
 
 script:
   - uname -sr && mkdir build && cd build && cmake .. && cmake --build . && cmake --build . -- test && sudo env "PATH=$PATH" cmake --build . -- install
