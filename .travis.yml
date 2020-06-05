@@ -9,6 +9,7 @@ matrix:
     addons:
       apt:
         packages:
+          - cmake
           - libclang-dev
     env:
       - CTEST_OUTPUT_ON_FAILURE=1
