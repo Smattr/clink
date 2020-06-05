@@ -3,9 +3,9 @@ language: c
 matrix:
   include:
 
-  - name: Ubuntu Linux 18.04
+  - name: Ubuntu Linux 20.04
     os: linux
-    dist: bionic
+    dist: focal
     addons:
       apt:
         packages:
