@@ -22,7 +22,7 @@ What does that mean?
   syntax highlighting, so Clink can ask Vim to highlight the snippets it shows
   you.
 * **Exact jumps** Clink opens Vim not only at the right line, but at the right
-  column for the entry youve asked for.
+  column for the entry you’ve asked for.
 * **Fewer features** Cscope’s options to find files and regex text are now
   better served by any__ number__ of__ other__ tools__ and are not included in
   Clink.
