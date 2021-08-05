@@ -32,6 +32,9 @@ target_include_directories(clink PUBLIC ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
 
 find_program(XXD xxd)
+if(${XXD} STREQUAL "XXD-NOTFOUND")
+  message(FATAL_ERROR "xxd not found")
+endif()
 add_custom_command(OUTPUT manpage.c
   COMMAND ${XXD} -include clink.1 ${CMAKE_CURRENT_BINARY_DIR}/manpage.c
   MAIN_DEPENDENCY src/clink.1
