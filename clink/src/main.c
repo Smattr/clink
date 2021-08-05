@@ -57,7 +57,7 @@ static void parse_args(int argc, char **argv) {
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bCcdef:hI:j:lqRs:T", opts, &index);
+    int c = getopt_long(argc, argv, "bdf:hI:j:l", opts, &index);
 
     if (c == -1)
       break;
@@ -69,21 +69,9 @@ static void parse_args(int argc, char **argv) {
         option.line_ui = false;
         break;
 
-      case 'C':
-        fprintf(stderr, "Clink has no equivalent of Cscope's -C option\n");
-        exit(EXIT_FAILURE);
-
-      case 'c':
-        // -c (use only ASCII in cross-ref) has no relevance for Clink
-        break;
-
       case 'd': // --no-build
         option.update_database = false;
         break;
-
-      case 'e':
-        fprintf(stderr, "Clink has no equivalent of Cscope's -e option\n");
-        exit(EXIT_FAILURE);
 
       case 'f': // --database
         free(option.database_path);
@@ -117,22 +105,6 @@ static void parse_args(int argc, char **argv) {
         option.ncurses_ui = false;
         option.line_ui = true;
         break;
-
-      case 'q':
-        // -q (build inverted index) has no relevance for Clink
-        break;
-
-      case 'R':
-        // -R is irrelevant because Clink always recurses into subdirectories
-        break;
-
-      case 's':
-        xappend(&option.src, &option.src_len, optarg);
-        break;
-
-      case 'T':
-        fprintf(stderr, "Clink has no equivalent of Cscope's -T option\n");
-        exit(EXIT_FAILURE);
 
       case 128: // --colour
         if (strcmp(optarg, "auto") == 0) {
