@@ -20,9 +20,10 @@ task:
       osx_instance:
         image: catalina-xcode-12.1
       environment:
-        CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address
+        CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         CTEST_OUTPUT_ON_FAILURE: 1
         PATH: /usr/local/opt/llvm/bin:${PATH}
+        UBSAN_OPTIONS: print_stacktrace=1
       install_script: brew update && brew install llvm
 
   test_script: uname -sr && mkdir build && cd build && cmake .. && cmake --build . && cmake --build . -- test && cmake --build . -- install
