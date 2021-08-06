@@ -61,6 +61,7 @@ int main(void) {
   int r1 = disppath(target, &out1);
   bool claim1_a = r1 == 0;
   bool claim1_b = strcmp(out1, "target") == 0;
+  free(out1);
 
   // the same if we provide a absolute path
   char *in2 = NULL;
@@ -72,18 +73,23 @@ int main(void) {
   int r2 = disppath(in2, &out2);
   bool claim2_a = r2 == 0;
   bool claim2_b = strcmp(out2, "target") == 0;
+  free(out2);
+  free(in2);
 
   // we should get an absolute path for something with a smaller common prefix
   char *out3 = NULL;
   int r3 = disppath("/", &out3);
   bool claim3_a = r3 == 0;
   bool claim3_b = strcmp(out3, "/") == 0;
+  free(out3);
 
   // and we should get an absolute path for something with a different root
   char *out4 = NULL;
   int r4 = disppath("/usr", &out4);
   bool claim4_a = access("/usr", R_OK) != 0 || r4 == 0;
   bool claim4_b = access("/usr", R_OK) != 0 || strcmp(out4, "/usr") == 0;
+  if (r4 == 0)
+    free(out4);
 
   // clean up temporary file
   (void)unlink(target);
@@ -94,6 +100,7 @@ int main(void) {
     assert(r == 0);
   }
   (void)rmdir(path);
+  free(path);
 
   // assert all our claims
   assert(claim1_a);
