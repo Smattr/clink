@@ -158,7 +158,9 @@ int main(void) {
 
   // clean up
   (void)unlink(target);
+  free(target);
   (void)rmdir(path);
+  free(path);
 
   // confirm everything went correctly
   assert(rc == 0);

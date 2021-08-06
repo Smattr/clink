@@ -238,7 +238,9 @@ int main(void) {
 
   // clean up
   (void)unlink(target);
+  free(target);
   (void)rmdir(path);
+  free(path);
 
   // confirm that the database was opened correctly
   assert(rc == 0);
