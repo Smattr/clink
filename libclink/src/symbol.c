@@ -67,6 +67,9 @@ void clink_symbol_clear(clink_symbol_t *s) {
   free(s->name);
   s->name = NULL;
 
+  free(s->path);
+  s->path = NULL;
+
   free(s->parent);
   s->parent = NULL;
 
