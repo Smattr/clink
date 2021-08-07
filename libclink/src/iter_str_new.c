@@ -39,9 +39,7 @@ static void state_free(state_t *s) {
   if (s == NULL)
     return;
 
-  if (s->impl != NULL)
-    s->impl->free(s->impl);
-  s->impl = NULL;
+  no_lookahead_iter_free(&s->impl);
 
   for (size_t i = 0; i < sizeof(s->next) / sizeof(s->next[0]); ++i)
     clear(s, i);

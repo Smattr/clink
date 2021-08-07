@@ -54,7 +54,9 @@ int main(void) {
 
   // clean up
   (void)unlink(target);
+  free(target);
   (void)rmdir(path);
+  free(path);
 
   // confirm the target did exist and was created empty
   assert(r == 0);

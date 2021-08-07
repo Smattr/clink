@@ -51,14 +51,9 @@ int main(void) {
     clink_symbol_t symbol
       = { .category = CLINK_DEFINITION, .lineno = 42, .colno = 10 };
 
-    symbol.name = strdup("sym-name");
-    assert(symbol.name != NULL);
-
-    symbol.path = strdup("/foo/bar");
-    assert(symbol.path != NULL);
-
-    symbol.parent = strdup("sym-parent");
-    assert(symbol.parent != NULL);
+    symbol.name = (char*)"sym-name";
+    symbol.path = (char*)"/foo/bar";
+    symbol.parent = (char*)"sym-parent";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)
@@ -71,7 +66,9 @@ int main(void) {
 
   // clean up
   (void)unlink(target);
+  free(target);
   (void)rmdir(path);
+  free(path);
 
   // confirm that the database was opened correctly
   assert(rc == 0);
