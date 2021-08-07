@@ -11,19 +11,19 @@ experience into the twenty first century.
 What does that mean?
 --------------------
 
-* **Full C/C++ semantic support** Clink uses libclang, which means it
+* **Full C/C++ semantic support** – Clink uses libclang, which means it
   understands your code (including macros) as well as your compiler does.
-* **Multicore support** Parsing multiple, independent files trivially
+* **Multicore support** – Parsing multiple, independent files trivially
   parallelises, so why be limited by one core?
-* **Assembly support** Systems code often calls into assembly, at which point
+* **Assembly support** – Systems code often calls into assembly, at which point
   Cscope gets lost. Clink parses assembly fuzzily and can maintain a call
   graph across this boundary.
-* **Syntax highlighting** You’re probably used to looking at code in Vim with
+* **Syntax highlighting** – You’re probably used to looking at code in Vim with
   syntax highlighting, so Clink can ask Vim to highlight the snippets it shows
   you.
-* **Exact jumps** Clink opens Vim not only at the right line, but at the right
+* **Exact jumps** – Clink opens Vim not only at the right line, but at the right
   column for the entry you’ve asked for.
-* **Fewer features** Cscope’s options to find files and regex text are now
+* **Fewer features** – Cscope’s options to find files and regex text are now
   better served by any__ number__ of__ other__ tools__ and are not included in
   Clink.
 
