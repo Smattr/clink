@@ -1,5 +1,5 @@
 // a test that running `echo hello world` via libclink’s run() function with
-// input masked generates no input
+// output masked generates no output
 
 // force assertions on
 #ifdef NDEBUG
