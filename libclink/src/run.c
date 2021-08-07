@@ -54,6 +54,10 @@ int run(const char **argv, bool mask_stdout) {
       }
       sub_devnull = open(sub_name, O_RDWR|O_NOCTTY);
     }
+    if (sub_devnull < 0) {
+      rc = errno;
+      goto done;
+    }
 
     // dup /dev/null over the controlling end of the PTY to discard any output
     // the child emits
@@ -64,11 +68,6 @@ int run(const char **argv, bool mask_stdout) {
         goto done;
       }
       ctrl_devnull = devnull;
-    }
-
-    if (sub_devnull < 0) {
-      rc = errno;
-      goto done;
     }
 
     // dup /dev/null over standard streams
