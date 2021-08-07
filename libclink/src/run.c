@@ -31,7 +31,7 @@ int run(const char **argv, bool mask_stdout) {
     // instead of /dev/null. It is not clear why, but using /dev/null slows Vim
     // down somehow. It is also not clear why this PTY strategy does not work on
     // macOS.
-    devnull = posix_openpt(O_RDWR);
+    devnull = posix_openpt(O_RDWR|O_NOCTTY);
 #endif
 
     if (devnull < 0) {
