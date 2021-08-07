@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static struct sigaction original_sigtstp_handler;
 static struct sigaction original_sigwinch_handler;
@@ -77,6 +78,11 @@ static int format_results(clink_iter_t *it) {
     const clink_symbol_t *symbol = NULL;
     if ((rc = clink_iter_next_symbol(it, &symbol)))
       break;
+
+    // skip if the containing file has been deleted or moved
+    assert(symbol->path != NULL);
+    if (access(symbol->path, F_OK) < 0)
+      continue;
 
     // expand results collection if necessary
     if (results.size == results.count) {
