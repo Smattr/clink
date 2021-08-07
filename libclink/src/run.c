@@ -32,6 +32,12 @@ int run(const char **argv, bool mask_stdout) {
     // down somehow. It is also not clear why this PTY strategy does not work on
     // macOS.
     devnull = posix_openpt(O_RDWR|O_NOCTTY);
+
+    // make the PTY usable
+    if (grantpt(devnull) < 0 || unlockpt(devnull) < 0) {
+      rc = errno;
+      goto done;
+    }
 #endif
 
     if (devnull < 0) {
