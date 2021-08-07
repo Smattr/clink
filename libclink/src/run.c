@@ -29,13 +29,10 @@ int run(const char **argv, bool mask_stdout) {
 
   if (mask_stdout) {
 
-#ifdef __APPLE__
-    sub_devnull = open("/dev/null", O_RDWR);
-#else
-    // On non-Apple platforms we can speed up Vim’s execution by giving it a PTY
-    // instead of /dev/null. It is not clear why, but using /dev/null slows Vim
-    // down somehow. It is also not clear why this PTY strategy does not work on
-    // macOS.
+    // We can speed up Vim’s execution by giving it a PTY instead of /dev/null.
+    // It is not clear why, but using /dev/null slows Vim down somehow.
+
+    // create a new PTY
     ctrl_devnull = posix_openpt(O_RDWR|O_NOCTTY);
     if (ctrl_devnull == -1) {
       rc = errno;
@@ -68,7 +65,6 @@ int run(const char **argv, bool mask_stdout) {
       }
       ctrl_devnull = devnull;
     }
-#endif
 
     if (sub_devnull < 0) {
       rc = errno;
