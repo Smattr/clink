@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include "run.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
@@ -38,6 +39,9 @@ int main(void) {
     {
       const char *args[] = { "echo", "hello", "world", NULL };
       int r = run(args, true);
+      if (r != EXIT_SUCCESS) {
+        fprintf(stderr, "failed: %d: %s\n", r, strerror(r));
+      }
       assert(r == EXIT_SUCCESS);
     }
 
