@@ -56,9 +56,17 @@ int run(const char **argv, bool mask_stdout) {
       goto done;
 
     // wait for it to finish executing
-    if (waitpid(pid, &rc, 0) < 0) {
-      rc = errno;
-      goto done;
+    {
+      int status;
+      if (waitpid(pid, &status, 0) < 0) {
+        rc = errno;
+        goto done;
+      }
+      if (!WIFEXITED(status)) {
+        rc = status;
+        goto done;
+      }
+      rc = WEXITSTATUS(status);
     }
   }
 
