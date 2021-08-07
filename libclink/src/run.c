@@ -57,6 +57,17 @@ int run(const char **argv, bool mask_stdout) {
       }
       sub_devnull = open(sub_name, O_RDWR|O_NOCTTY);
     }
+
+    // dup /dev/null over the controlling end of the PTY to discard any output
+    // the child emits
+    {
+      int devnull = open("/dev/null", O_RDWR);
+      if (devnull < 0 || dup2(devnull, ctrl_devnull) < 0) {
+        rc = errno;
+        goto done;
+      }
+      ctrl_devnull = devnull;
+    }
 #endif
 
     if (sub_devnull < 0) {
