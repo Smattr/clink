@@ -1,5 +1,5 @@
-// a test that running `echo hello world` via libclink’s run() function does
-// what we expect
+// a test that running `printf "hello world\\n"` via libclink’s run() function
+// does what we expect
 
 // force assertions on
 #ifdef NDEBUG
@@ -36,7 +36,7 @@ int main(void) {
 
     // use run() to echo some text
     {
-      const char *args[] = { "echo", "hello", "world", NULL };
+      const char *args[] = { "printf", "hello world\\n", NULL };
       int r = run(args, false);
       assert(r == EXIT_SUCCESS);
     }

@@ -1,5 +1,5 @@
-// a test that running `echo hello world` via libclink’s run() function with
-// output masked generates no output
+// a test that running `printf "hello world\\n"` via libclink’s run() function
+// with output masked generates no output
 
 // force assertions on
 #ifdef NDEBUG
@@ -37,7 +37,7 @@ int main(void) {
 
     // use run() to echo some text
     {
-      const char *args[] = { "echo", "hello", "world", NULL };
+      const char *args[] = { "printf", "hello world\\n", NULL };
       int r = run(args, true);
       if (r != EXIT_SUCCESS) {
         fprintf(stderr, "failed: %d: %s\n", r, strerror(r));
