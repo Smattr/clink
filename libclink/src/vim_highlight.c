@@ -59,8 +59,8 @@ static int convert_to_html(const char *input, const char *output) {
   // HTML, save this to the output and exit. 
   // FIXME wrap it in timeout
   // in case the user has a weird ~/.vimrc and we end up hanging.
-  char const *argv[] = { "vim", "-n", "+set nonumber", "+TOhtml", save_command,
-    "+qa!", input, NULL };
+  char const *argv[] = { "vim", "-n", "-X", "+set nonumber", "+TOhtml",
+    save_command, "+qa!", input, NULL };
 
   int rc = run(argv, true);
 
