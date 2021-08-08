@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <clink/clink.h>
 #include "colour.h"
+#include "../../common/compiler.h"
 #include <ctype.h>
 #include <curses.h>
 #include <errno.h>
@@ -583,7 +584,7 @@ static int handle_select(void) {
  * label hotkey_select below. At least we can use scoping to contain the damage.
  */
 {
-__builtin_unreachable();
+UNREACHABLE();
 int base;
 
     case '0' ... '9':
