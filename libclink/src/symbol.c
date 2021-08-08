@@ -1,4 +1,5 @@
 #include <clink/symbol.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,10 +7,10 @@
 int clink_symbol_copy(clink_symbol_t *restrict dst,
     const clink_symbol_t *restrict src) {
 
-  if (dst == NULL)
+  if (UNLIKELY(dst == NULL))
     return EINVAL;
 
-  if (src == NULL)
+  if (UNLIKELY(src == NULL))
     return EINVAL;
 
   memset(dst, 0, sizeof(*dst));
@@ -19,7 +20,7 @@ int clink_symbol_copy(clink_symbol_t *restrict dst,
 
   if (src->name != NULL) {
     dst->name = strdup(src->name);
-    if (dst->name == NULL) {
+    if (UNLIKELY(dst->name == NULL)) {
       rc = ENOMEM;
       goto done;
     }
@@ -27,7 +28,7 @@ int clink_symbol_copy(clink_symbol_t *restrict dst,
 
   if (src->path != NULL) {
     dst->path = strdup(src->path);
-    if (dst->path == NULL) {
+    if (UNLIKELY(dst->path == NULL)) {
       rc = ENOMEM;
       goto done;
     }
@@ -38,7 +39,7 @@ int clink_symbol_copy(clink_symbol_t *restrict dst,
 
   if (src->parent != NULL) {
     dst->parent = strdup(src->parent);
-    if (dst->parent == NULL) {
+    if (UNLIKELY(dst->parent == NULL)) {
       rc = ENOMEM;
       goto done;
     }
@@ -46,7 +47,7 @@ int clink_symbol_copy(clink_symbol_t *restrict dst,
 
   if (src->context != NULL) {
     dst->context = strdup(src->context);
-    if (dst->context == NULL) {
+    if (UNLIKELY(dst->context == NULL)) {
       rc = ENOMEM;
       goto done;
     }

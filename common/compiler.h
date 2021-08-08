@@ -4,6 +4,9 @@
 
 #include <assert.h>
 
+#define LIKELY(expr) __builtin_expect(!!(expr), 1)
+#define UNLIKELY(expr) __builtin_expect((expr), 0)
+
 #define UNREACHABLE()                                                          \
   do {                                                                         \
     assert(0 && "unreachable");                                                \

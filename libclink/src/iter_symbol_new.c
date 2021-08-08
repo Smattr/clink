@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <clink/iter.h>
 #include <clink/symbol.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include "iter.h"
 #include <stdbool.h>
@@ -66,10 +67,10 @@ static bool has_next(const clink_iter_t *it) {
 
 static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (yielded == NULL)
+  if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
   state_t *s = it->state;
@@ -116,14 +117,14 @@ static void my_free(clink_iter_t *it) {
 
 int iter_symbol_new(clink_iter_t *it, no_lookahead_iter_t *impl) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (impl == NULL)
+  if (UNLIKELY(impl == NULL))
     return EINVAL;
 
   // is this a non-symbol iterator?
-  if (impl->next_symbol == NULL)
+  if (UNLIKELY(impl->next_symbol == NULL))
     return EINVAL;
 
   clink_iter_t i
@@ -131,7 +132,7 @@ int iter_symbol_new(clink_iter_t *it, no_lookahead_iter_t *impl) {
 
   // allocate state for this iterator
   state_t *s = calloc(1, sizeof(*s));
-  if (s == NULL)
+  if (UNLIKELY(s == NULL))
     return ENOMEM;
 
   // populate one of its next slots from the backing iterator

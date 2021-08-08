@@ -1,5 +1,6 @@
 #include <clink/db.h>
 #include <clink/iter.h>
+#include "../../common/compiler.h"
 #include "db.h"
 #include <errno.h>
 #include "iter.h"
@@ -37,10 +38,10 @@ static void state_free(state_t **ss) {
 
 static int next(no_lookahead_iter_t *it, const char **yielded) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (yielded == NULL)
+  if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
   state_t *s = it->state;
@@ -51,7 +52,7 @@ static int next(no_lookahead_iter_t *it, const char **yielded) {
 
   // extract the next result
   int rc = sqlite3_step(s->stmt);
-  if (rc != SQLITE_ROW && rc != SQLITE_DONE)
+  if (UNLIKELY(rc != SQLITE_ROW && rc != SQLITE_DONE))
     return sql_err_to_errno(rc);
 
   // did we just exhaust this iterator?
@@ -79,16 +80,16 @@ static void my_free(no_lookahead_iter_t *it) {
 
 int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
 
-  if (db == NULL)
+  if (UNLIKELY(db == NULL))
     return EINVAL;
 
-  if (name == NULL)
+  if (UNLIKELY(name == NULL))
     return EINVAL;
 
-  if (strcmp(name, "") == 0)
+  if (UNLIKELY(strcmp(name, "") == 0))
     return EINVAL;
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
   static const char QUERY[] = "select distinct path from symbols where path = "
@@ -100,27 +101,28 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
 
   // allocate state for our iterator
   state_t *s = calloc(1, sizeof(*s));
-  if (s == NULL) {
+  if (UNLIKELY(s == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   // create a query to lookup calls in the database
-  if ((rc = sql_prepare(db->db, QUERY, &s->stmt)))
+  if (UNLIKELY((rc = sql_prepare(db->db, QUERY, &s->stmt))))
     goto done;
 
   // bind the where clause to our given function
-  if ((rc = sqlite3_bind_text(s->stmt, 1, name, -1, SQLITE_TRANSIENT))) {
+  if (UNLIKELY((rc = sqlite3_bind_text(s->stmt, 1, name, -1,
+                                       SQLITE_TRANSIENT)))) {
     rc = sql_err_to_errno(rc);
     goto done;
   }
   {
     char *name2 = NULL;
-    if (asprintf(&name2, "%%/%s", name) < 0) {
+    if (UNLIKELY(asprintf(&name2, "%%/%s", name) < 0)) {
       rc = errno;
       goto done;
     }
-    if ((rc = sqlite3_bind_text(s->stmt, 2, name2, -1, free))) {
+    if (UNLIKELY((rc = sqlite3_bind_text(s->stmt, 2, name2, -1, free)))) {
       rc = sql_err_to_errno(rc);
       goto done;
     }
@@ -128,7 +130,7 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
 
   // create a no-lookahead iterator for stepping through our query
   i = calloc(1, sizeof(*i));
-  if (i == NULL) {
+  if (UNLIKELY(i == NULL)) {
     rc = ENOMEM;
     goto done;
   }
@@ -140,7 +142,7 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
   i->free = my_free;
 
   // create a 1-lookahead iterator to wrap it
-  if ((rc = iter_new(&wrapper, i)))
+  if (UNLIKELY((rc = iter_new(&wrapper, i))))
     goto done;
   i = NULL;
 

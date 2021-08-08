@@ -3,6 +3,7 @@
 #include <clink/c.h>
 #include <clink/iter.h>
 #include <clink/symbol.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include "iter.h"
 #include <stdbool.h>
@@ -82,7 +83,7 @@ static int push_cursor(state_t *s, CXCursor cursor) {
   if (s->pending_size == s->pending_capacity) {
     size_t c = s->pending_capacity == 0 ? 1 : s->pending_capacity * 2;
     node_t *p = realloc(s->pending, c * sizeof(p[0]));
-    if (p == NULL)
+    if (UNLIKELY(p == NULL))
       return ENOMEM;
     s->pending_capacity = c;
     s->pending = p;
@@ -143,14 +144,14 @@ static int push_cursor(state_t *s, CXCursor cursor) {
     // clean up
     clang_disposeString(text);
 
-    if (ok_parent && parent == NULL)
+    if (UNLIKELY(ok_parent && parent == NULL))
       return ENOMEM;
 
   // otherwise, default to the parent of the current context
   } else if (s->current_parent != NULL) {
 
     parent = strdup(s->current_parent);
-    if (parent == NULL)
+    if (UNLIKELY(parent == NULL))
       return ENOMEM;
   }
 
@@ -190,7 +191,7 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
   if (s->next_size == s->next_capacity) {
     size_t c = s->next_capacity == 0 ? 1 : s->next_capacity * 2;
     clink_symbol_t *n = realloc(s->next, c * sizeof(n[0]));
-    if (n == NULL)
+    if (UNLIKELY(n == NULL))
       return ENOMEM;
     s->next_capacity = c;
     s->next = n;
@@ -205,14 +206,14 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
 
   assert(name != NULL);
   sym.name = strdup(name);
-  if (sym.name == NULL) {
+  if (UNLIKELY(sym.name == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   if (path != NULL) {
     sym.path = strdup(path);
-    if (sym.path == NULL) {
+    if (UNLIKELY(sym.path == NULL)) {
       rc = ENOMEM;
       goto done;
     }
@@ -223,7 +224,7 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
 
   if (s->current_parent != NULL) {
     sym.parent = strdup(s->current_parent);
-    if (sym.parent == NULL) {
+    if (UNLIKELY(sym.parent == NULL)) {
       rc = ENOMEM;
       goto done;
     }
@@ -389,15 +390,15 @@ static int expand(state_t *s) {
 
 static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (yielded == NULL)
+  if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
   state_t *s = it->state;
 
-  if (s == NULL)
+  if (UNLIKELY(s == NULL))
     return EINVAL;
 
   int rc = 0;
@@ -446,13 +447,13 @@ static int clang_err_to_errno(int err) {
 int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
     const char **argv) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (filename == NULL)
+  if (UNLIKELY(filename == NULL))
     return EINVAL;
 
-  if (argc > 0 && argv == NULL)
+  if (UNLIKELY(argc > 0 && argv == NULL))
     return EINVAL;
 
   // check the file is readable
@@ -461,7 +462,7 @@ int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
 
   // allocate iterator state
   state_t *s = calloc(1, sizeof(*s));
-  if (s == NULL)
+  if (UNLIKELY(s == NULL))
     return ENOMEM;
 
   no_lookahead_iter_t *i = NULL;
@@ -487,12 +488,12 @@ int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
   CXCursor root = clang_getTranslationUnitCursor(s->tu);
 
   // setup the initial iterator queue
-  if ((rc = push_cursor(s, root)))
+  if (UNLIKELY((rc = push_cursor(s, root))))
     goto done;
 
   // create a no-lookahead iterator
   i = calloc(1, sizeof(*i));
-  if (i == NULL) {
+  if (UNLIKELY(i == NULL)) {
     rc = ENOMEM;
     goto done;
   }
@@ -504,7 +505,7 @@ int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
   i->free = my_free;
 
   // create a 1-lookahead iterator to wrap it
-  if ((rc = iter_new(&wrapper, i)))
+  if (UNLIKELY((rc = iter_new(&wrapper, i))))
     goto done;
 
 done:

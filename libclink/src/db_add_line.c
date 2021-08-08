@@ -1,4 +1,5 @@
 #include <clink/db.h>
+#include "../../common/compiler.h"
 #include "db.h"
 #include <errno.h>
 #include "sql.h"
@@ -8,19 +9,19 @@
 int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
     const char *line) {
 
-  if (db == NULL)
+  if (UNLIKELY(db == NULL))
     return EINVAL;
 
-  if (db->db == NULL)
+  if (UNLIKELY(db->db == NULL))
     return EINVAL;
 
-  if (path == NULL)
+  if (UNLIKELY(path == NULL))
     return EINVAL;
 
-  if (lineno == 0)
+  if (UNLIKELY(lineno == 0))
     return EINVAL;
 
-  if (line == NULL)
+  if (UNLIKELY(line == NULL))
     return EINVAL;
 
   // insert into the content table
@@ -31,21 +32,21 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
   int rc = 0;
 
   sqlite3_stmt *s = NULL;
-  if ((rc = sql_prepare(db->db, CONTENT_INSERT, &s)))
+  if (UNLIKELY((rc = sql_prepare(db->db, CONTENT_INSERT, &s))))
     goto done;
 
-  if ((rc = sql_bind_text(s, 1, path)))
+  if (UNLIKELY((rc = sql_bind_text(s, 1, path))))
     goto done;
 
-  if ((rc = sql_bind_int(s, 2, lineno)))
+  if (UNLIKELY((rc = sql_bind_int(s, 2, lineno))))
     goto done;
 
-  if ((rc = sql_bind_text(s, 3, line)))
+  if (UNLIKELY((rc = sql_bind_text(s, 3, line))))
     goto done;
 
   {
     int r = sqlite3_step(s);
-    if (r != SQLITE_DONE) {
+    if (UNLIKELY(r != SQLITE_DONE)) {
       rc = sql_err_to_errno(r);
       goto done;
     }

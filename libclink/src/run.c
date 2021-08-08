@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include <fcntl.h>
 #include "get_environ.h"
@@ -19,14 +20,14 @@ int run(const char **argv, bool mask_stdout) {
   int devnull = -1;
 
   rc = posix_spawn_file_actions_init(&fa);
-  if (rc != 0)
+  if (UNLIKELY(rc != 0))
     return rc;
 
   if (mask_stdout) {
 
     devnull = open("/dev/null", O_RDWR);
 
-    if (devnull < 0) {
+    if (UNLIKELY(devnull < 0)) {
       rc = errno;
       goto done;
     }
@@ -35,7 +36,7 @@ int run(const char **argv, bool mask_stdout) {
     rc = posix_spawn_file_actions_adddup2(&fa, devnull, STDIN_FILENO) ||
          posix_spawn_file_actions_adddup2(&fa, devnull, STDOUT_FILENO) ||
          posix_spawn_file_actions_adddup2(&fa, devnull, STDERR_FILENO);
-    if (rc != 0)
+    if (UNLIKELY(rc != 0))
       goto done;
   }
 
@@ -50,7 +51,7 @@ int run(const char **argv, bool mask_stdout) {
     // wait for it to finish executing
     {
       int status;
-      if (waitpid(pid, &status, 0) < 0) {
+      if (UNLIKELY(waitpid(pid, &status, 0) < 0)) {
         rc = errno;
         goto done;
       }

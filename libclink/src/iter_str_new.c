@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <clink/iter.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include "iter.h"
 #include <stdbool.h>
@@ -66,10 +67,10 @@ static bool has_next(const clink_iter_t *it) {
 
 static int next(clink_iter_t *it, const char **yielded) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (yielded == NULL)
+  if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
   state_t *s = it->state;
@@ -91,7 +92,7 @@ static int next(clink_iter_t *it, const char **yielded) {
     assert(n != NULL);
     size_t i = inactive(s);
     s->next[i] = strdup(n);
-    if (s->next[i] == NULL)
+    if (UNLIKELY(s->next[i] == NULL))
       return ENOMEM;
   }
 
@@ -117,33 +118,33 @@ static void my_free(clink_iter_t *it) {
 
 int iter_str_new(clink_iter_t *it, no_lookahead_iter_t *impl) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (impl == NULL)
+  if (UNLIKELY(impl == NULL))
     return EINVAL;
 
   // is this a non-string iterator?
-  if (impl->next_str == NULL)
+  if (UNLIKELY(impl->next_str == NULL))
     return EINVAL;
 
   clink_iter_t i = { .has_next = has_next, .next_str = next, .free = my_free };
 
   // allocate state for this iterator
   state_t *s = calloc(1, sizeof(*s));
-  if (s == NULL)
+  if (UNLIKELY(s == NULL))
     return ENOMEM;
 
   // populate one of its next slots from the backing iterator
   const char *n = NULL;
   int rc = impl->next_str(impl, &n);
-  if (rc && rc != ENOMSG)
+  if (UNLIKELY(rc && rc != ENOMSG))
     goto done;
 
   // save the retrieved string to be yielded later
   if (rc != ENOMSG) {
     s->next[s->active] = strdup(n);
-    if (s->next[s->active] == NULL) {
+    if (UNLIKELY(s->next[s->active] == NULL)) {
       rc = ENOMEM;
       goto done;
     }

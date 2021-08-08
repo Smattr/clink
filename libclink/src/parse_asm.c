@@ -2,6 +2,7 @@
 #include <clink/asm.h>
 #include <clink/iter.h>
 #include <clink/symbol.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include "iter.h"
 #include "re.h"
@@ -107,13 +108,13 @@ static int add_symbol(state_t *s, clink_category_t cat, const char *line,
   s->last.category = cat;
 
   s->last.name = strndup(line + m->rm_so, m->rm_eo - m->rm_so);
-  if (s->last.name == NULL) {
+  if (UNLIKELY(s->last.name == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   s->last.path = strdup(s->filename);
-  if (s->last.path == NULL) {
+  if (UNLIKELY(s->last.path == NULL)) {
     rc = ENOMEM;
     goto done;
   }
@@ -124,7 +125,7 @@ static int add_symbol(state_t *s, clink_category_t cat, const char *line,
 
   if (parent != NULL) {
     s->last.parent = strdup(parent);
-    if (s->last.parent == NULL) {
+    if (UNLIKELY(s->last.parent == NULL)) {
       rc = ENOMEM;
       goto done;
     }
@@ -243,14 +244,14 @@ static int refill_last(state_t *s) {
 
 static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (yielded == NULL)
+  if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
   state_t *s = it->state;
-  if (s == NULL)
+  if (UNLIKELY(s == NULL))
     return EINVAL;
 
   // acquire a new next symbol
@@ -306,17 +307,17 @@ static void my_free(no_lookahead_iter_t *it) {
 
 int clink_parse_asm(clink_iter_t **it, const char *filename) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (filename == NULL)
+  if (UNLIKELY(filename == NULL))
     return EINVAL;
 
   clink_iter_t *wrapper = NULL;
 
   // allocate a new no-lookahead iterator
   no_lookahead_iter_t *i = calloc(1, sizeof(*i));
-  if (i == NULL)
+  if (UNLIKELY(i == NULL))
     return ENOMEM;
 
   // setup our member functions
@@ -327,7 +328,7 @@ int clink_parse_asm(clink_iter_t **it, const char *filename) {
 
   // allocate state for our iterator
   state_t *s = calloc(1, sizeof(*s));
-  if (s == NULL) {
+  if (UNLIKELY(s == NULL)) {
     rc = ENOMEM;
     goto done;
   }
@@ -335,7 +336,7 @@ int clink_parse_asm(clink_iter_t **it, const char *filename) {
 
   // save the filename for later use in symbol construction
   s->filename = strdup(filename);
-  if (s->filename == NULL) {
+  if (UNLIKELY(s->filename == NULL)) {
     rc = ENOMEM;
     goto done;
   }
@@ -348,35 +349,35 @@ int clink_parse_asm(clink_iter_t **it, const char *filename) {
   }
 
   // construct regex for recognising a #define
-  if ((rc = regcomp(&s->define, DEFINE, REG_EXTENDED))) {
+  if (UNLIKELY((rc = regcomp(&s->define, DEFINE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
   s->define_valid = true;
 
   // construct regex for recognising a #include
-  if ((rc = regcomp(&s->include, INCLUDE, REG_EXTENDED))) {
+  if (UNLIKELY((rc = regcomp(&s->include, INCLUDE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
   s->include_valid = true;
 
   // construct regex for recognising a function definition
-  if ((rc = regcomp(&s->function, FUNCTION, REG_EXTENDED))) {
+  if (UNLIKELY((rc = regcomp(&s->function, FUNCTION, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
   s->function_valid = true;
 
   // construct regex for recognising a branch
-  if ((rc = regcomp(&s->call, CALL, REG_EXTENDED))) {
+  if (UNLIKELY((rc = regcomp(&s->call, CALL, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
   s->call_valid = true;
 
   // create a 1-lookahead adapter to wrap this
-  if ((rc = iter_new(&wrapper, i)))
+  if (UNLIKELY((rc = iter_new(&wrapper, i))))
     goto done;
 
 done:

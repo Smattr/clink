@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <clink/db.h>
 #include <clink/symbol.h>
+#include "../../common/compiler.h"
 #include "db.h"
 #include <errno.h>
 #include "sql.h"
@@ -9,13 +10,13 @@
 
 int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 
-  if (db == NULL)
+  if (UNLIKELY(db == NULL))
     return EINVAL;
 
-  if (db->db == NULL)
+  if (UNLIKELY(db->db == NULL))
     return EINVAL;
 
-  if (symbol == NULL)
+  if (UNLIKELY(symbol == NULL))
     return EINVAL;
 
   // insert into the symbol table
@@ -27,32 +28,35 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   int rc = 0;
 
   sqlite3_stmt *s = NULL;
-  if ((rc = sql_prepare(db->db, SYMBOL_INSERT, &s)))
+  if (UNLIKELY((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
     goto done;
 
   assert(symbol->name != NULL);
-  if ((rc = sql_bind_text(s, 1, symbol->name)))
+  if (UNLIKELY((rc = sql_bind_text(s, 1, symbol->name))))
     goto done;
 
   assert(symbol->path != NULL);
-  if ((rc = sql_bind_text(s, 2, symbol->path)))
+  if (UNLIKELY((rc = sql_bind_text(s, 2, symbol->path))))
     goto done;
 
-  if ((rc = sql_bind_int(s, 3, symbol->category)))
+  if (UNLIKELY((rc = sql_bind_int(s, 3, symbol->category))))
     goto done;
 
-  if ((rc = sql_bind_int(s, 4, symbol->lineno)))
+  if (UNLIKELY((rc = sql_bind_int(s, 4, symbol->lineno))))
     goto done;
 
-  if ((rc = sql_bind_int(s, 5, symbol->colno)))
-    goto done;
-
-  if ((rc = sql_bind_text(s, 6, symbol->parent == NULL ? "" : symbol->parent)))
+  if (UNLIKELY((rc = sql_bind_int(s, 5, symbol->colno))))
     goto done;
 
   {
+    const char *parent = symbol->parent == NULL ? "" : symbol->parent;
+    if (UNLIKELY((rc = sql_bind_text(s, 6, parent))))
+      goto done;
+  }
+
+  {
     int r = sqlite3_step(s);
-    if (r != SQLITE_DONE) {
+    if (UNLIKELY(r != SQLITE_DONE)) {
       rc = sql_err_to_errno(r);
       goto done;
     }

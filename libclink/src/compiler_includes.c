@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <clink/c.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include "get_environ.h"
 #include <fcntl.h>
@@ -58,7 +59,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
       break;
 
     // we expect all #include lines to begin with a space
-    if (line[0] != ' ') {
+    if (UNLIKELY(line[0] != ' ')) {
       rc = ENOTSUP;
       goto done;
     }
@@ -67,7 +68,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
     size_t extent = strlen(start);
 
     // and we expect it to end with a newline
-    if (extent == 0 || start[extent - 1] != '\n') {
+    if (UNLIKELY(extent == 0 || start[extent - 1] != '\n')) {
       rc = ENOTSUP;
       goto done;
     }
@@ -83,14 +84,14 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
 
     // record this include
     char **new_l = realloc(l, (l_len + 1) * sizeof(l[0]));
-    if (new_l == NULL) {
+    if (UNLIKELY(new_l == NULL)) {
       rc = ENOMEM;
       goto done;
     }
     l = new_l;
     ++l_len;
     l[l_len - 1] = strndup(start, extent);
-    if (l[l_len - 1] == NULL) {
+    if (UNLIKELY(l[l_len - 1] == NULL)) {
       rc = ENOMEM;
       goto done;
     }

@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <clink/db.h>
+#include "../../common/compiler.h"
 #include "db.h"
 #include <errno.h>
 #include "sql.h"
@@ -33,17 +34,17 @@ static int init(sqlite3 *db) {
 
   int rc = 0;
 
-  if ((rc = sql_exec(db, SYMBOLS_SCHEMA)))
+  if (UNLIKELY((rc = sql_exec(db, SYMBOLS_SCHEMA))))
     return rc;
 
-  if ((rc = sql_exec(db, CONTENT_SCHEMA)))
+  if (UNLIKELY((rc = sql_exec(db, CONTENT_SCHEMA))))
     return rc;
 
-  if ((rc = sql_exec(db, RECORDS_SCHEMA)))
+  if (UNLIKELY((rc = sql_exec(db, RECORDS_SCHEMA))))
     return rc;
 
   for (size_t i = 0; i < sizeof(PRAGMAS) / sizeof(PRAGMAS[0]); ++i) {
-    if ((rc = sql_exec(db, PRAGMAS[i])))
+    if (UNLIKELY((rc = sql_exec(db, PRAGMAS[i]))))
       return rc;
   }
 
@@ -53,14 +54,14 @@ static int init(sqlite3 *db) {
 
 int clink_db_open(clink_db_t **db, const char *path) {
 
-  if (db == NULL)
+  if (UNLIKELY(db == NULL))
     return EINVAL;
 
-  if (path == NULL)
+  if (UNLIKELY(path == NULL))
     return EINVAL;
 
   clink_db_t *d = calloc(1, sizeof(*d));
-  if (d == NULL)
+  if (UNLIKELY(d == NULL))
     return ENOMEM;
 
   int rc = 0;

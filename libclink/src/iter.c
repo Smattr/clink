@@ -1,5 +1,6 @@
 #include <clink/iter.h>
 #include <clink/symbol.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include "iter.h"
 #include <stdbool.h>
@@ -18,13 +19,13 @@ bool clink_iter_has_next(const clink_iter_t *it) {
 
 int clink_iter_next_str(clink_iter_t *it, const char **yielded) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (yielded == NULL)
+  if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
-  if (it->next_str == NULL)
+  if (UNLIKELY(it->next_str == NULL))
     return EINVAL;
 
   return it->next_str(it, yielded);
@@ -32,13 +33,13 @@ int clink_iter_next_str(clink_iter_t *it, const char **yielded) {
 
 int clink_iter_next_symbol(clink_iter_t *it, const clink_symbol_t **yielded) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (yielded == NULL)
+  if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
-  if (it->next_symbol == NULL)
+  if (UNLIKELY(it->next_symbol == NULL))
     return EINVAL;
 
   return it->next_symbol(it, yielded);

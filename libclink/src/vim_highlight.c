@@ -2,6 +2,7 @@
 #include <clink/iter.h>
 #include <clink/vim.h>
 #include "colour.h"
+#include "../../common/compiler.h"
 #include <errno.h>
 #include "iter.h"
 #include "re.h"
@@ -52,7 +53,7 @@ static int convert_to_html(const char *input, const char *output) {
 
   // construct a directive telling Vim to save to the given output path
   char *save_command = NULL;
-  if (asprintf(&save_command, "+w %s", output) < 0)
+  if (UNLIKELY(asprintf(&save_command, "+w %s", output) < 0))
     return errno;
 
   // Construct a command line to open the file in Vim, convert it to highlighted
@@ -161,7 +162,7 @@ static int from_html(const state_t *s, const char *line, char **output) {
   char *out = NULL;
   size_t out_size = 0;
   FILE *buf = open_memstream(&out, &out_size);
-  if (buf == NULL)
+  if (UNLIKELY(buf == NULL))
     return errno;
 
 #define PR(args...) \
@@ -247,7 +248,7 @@ static int move_next(state_t *s) {
 
   assert(s != NULL);
 
-  if (s->highlighted == NULL)
+  if (UNLIKELY(s->highlighted == NULL))
     return EINVAL;
 
   // clear the previous line
@@ -259,7 +260,7 @@ static int move_next(state_t *s) {
   char *line = NULL;
   size_t line_size = 0;
   errno = 0;
-  if (getline(&line, &line_size, s->highlighted) < 0) {
+  if (UNLIKELY(getline(&line, &line_size, s->highlighted) < 0)) {
     rc = errno;
 
   // is this the end of the content?
@@ -278,15 +279,15 @@ static int move_next(state_t *s) {
 
 static int next(no_lookahead_iter_t *it, const char **yielded) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (yielded == NULL)
+  if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
   state_t *s = it->state;
 
-  if (s == NULL)
+  if (UNLIKELY(s == NULL))
     return EINVAL;
 
   // find the next-to-yield line
@@ -314,10 +315,10 @@ static void my_free(no_lookahead_iter_t *it) {
 
 int clink_vim_highlight(clink_iter_t **it, const char *filename) {
 
-  if (it == NULL)
+  if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  if (filename == NULL)
+  if (UNLIKELY(filename == NULL))
     return EINVAL;
 
   // validate that the file exists and is readable
@@ -326,7 +327,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
 
   // create state that we will maintain within the iterator
   state_t *s = calloc(1, sizeof(*s));
-  if (s == NULL)
+  if (UNLIKELY(s == NULL))
     return ENOMEM;
 
   no_lookahead_iter_t *i = NULL;
@@ -334,17 +335,17 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   int rc = 0;
 
   // create a temporary directory to use for scratch space
-  if ((rc = temp_dir(&s->dir)))
+  if (UNLIKELY((rc = temp_dir(&s->dir))))
     goto done;
 
   // construct a path to a temporary file to use for output
-  if (asprintf(&s->output, "%s/temp.html", s->dir) < 0) {
+  if (UNLIKELY(asprintf(&s->output, "%s/temp.html", s->dir) < 0)) {
     rc = errno;
     goto done;
   }
 
   // convert the input to highlighted HTML
-  if ((rc = convert_to_html(filename, s->output)))
+  if (UNLIKELY((rc = convert_to_html(filename, s->output))))
     goto done;
 
   // open the generated HTML
@@ -382,7 +383,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
     "(font-style:[[:blank:]]*italic;[[:blank:]]*)?"
     "(text-decoration:[[:blank:]]*underline;[[:blank:]]*)?";
   regex_t style_re;
-  if ((rc = regcomp(&style_re, STYLE, REG_EXTENDED))) {
+  if (UNLIKELY((rc = regcomp(&style_re, STYLE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
@@ -420,7 +421,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       int r = regexec(&style_re, line, m_size, m, 0);
       if (r == REG_NOMATCH) {
         continue;
-      } else if (r != 0) {
+      } else if (UNLIKELY(r != 0)) {
         rc = re_err_to_errno(r);
         free(line);
         goto done1;
@@ -440,7 +441,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       // extract the name of this style
       size_t extent = m[1].rm_eo - m[1].rm_so;
       style.name = strndup(line + m[1].rm_so, extent);
-      if (style.name == NULL) {
+      if (UNLIKELY(style.name == NULL)) {
         rc = errno;
         free(line);
         goto done1;
@@ -449,7 +450,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       // expand the styles collection to make room for this new entry
       style_t *styles
         = realloc(s->styles, sizeof(styles[0]) * (s->styles_size + 1));
-      if (styles == NULL) {
+      if (UNLIKELY(styles == NULL)) {
         rc = ENOMEM;
         free(style.name);
         free(line);
@@ -471,7 +472,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   // if we reached here, we successfully parsed the style list and are into the
   // content, so now create an iterator for the caller
   i = calloc(1, sizeof(*i));
-  if (i == NULL) {
+  if (UNLIKELY(i == NULL)) {
     rc = ENOMEM;
     goto done1;
   }
@@ -482,7 +483,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   i->free = my_free;
 
   // wrap our no-lookahead iterator in a 1-lookahead iterator
-  if ((rc = iter_new(&wrapper, i)))
+  if (UNLIKELY((rc = iter_new(&wrapper, i))))
     goto done1;
 
 done1:

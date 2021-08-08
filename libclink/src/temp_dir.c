@@ -1,3 +1,4 @@
+#include "../../common/compiler.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +7,7 @@
 
 int temp_dir(char **dir) {
 
-  if (dir == NULL)
+  if (UNLIKELY(dir == NULL))
     return EINVAL;
 
   // check where the environment wants temporary files to go
@@ -15,10 +16,10 @@ int temp_dir(char **dir) {
     TMPDIR = "/tmp";
 
   char *temp;
-  if (asprintf(&temp, "%s/tmp.XXXXXX", TMPDIR) < 0)
+  if (UNLIKELY(asprintf(&temp, "%s/tmp.XXXXXX", TMPDIR) < 0))
     return errno;
 
-  if (mkdtemp(temp) == NULL) {
+  if (UNLIKELY(mkdtemp(temp) == NULL)) {
     int rc = errno;
     free(temp);
     return rc;
