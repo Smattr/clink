@@ -26,6 +26,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
   size_t line_size = 0;
 
   // read lines looking for the start of relative includes
+  errno = 0;
   for (;;) {
 
     if (getline(&line, &line_size, in) < 0) {
