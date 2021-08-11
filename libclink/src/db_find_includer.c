@@ -13,9 +13,6 @@
 /// state for our iterator
 typedef struct {
 
-  /// the name of the file we are searching for #includes of
-  char *name;
-
   /// SQL query we are executing
   sqlite3_stmt *stmt;
 
@@ -36,9 +33,6 @@ static void state_free(state_t **ss) {
   if (s->stmt != NULL)
     sqlite3_finalize(s->stmt);
   s->stmt = NULL;
-
-  free(s->name);
-  s->name = NULL;
 
   free(s);
   *ss = NULL;
@@ -75,12 +69,12 @@ static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
 
   // construct a symbol from the result
   s->last.category = CLINK_INCLUDE;
-  s->last.name = s->name;
-  s->last.path = (char*)sqlite3_column_text(s->stmt, 0);
-  s->last.lineno = sqlite3_column_int64(s->stmt, 1);
-  s->last.colno = sqlite3_column_int64(s->stmt, 2);
-  s->last.parent = (char*)sqlite3_column_text(s->stmt, 3);
-  s->last.context = (char*)sqlite3_column_text(s->stmt, 4);
+  s->last.name = (char*)sqlite3_column_text(s->stmt, 0);
+  s->last.path = (char*)sqlite3_column_text(s->stmt, 1);
+  s->last.lineno = sqlite3_column_int64(s->stmt, 2);
+  s->last.colno = sqlite3_column_int64(s->stmt, 3);
+  s->last.parent = (char*)sqlite3_column_text(s->stmt, 4);
+  s->last.context = (char*)sqlite3_column_text(s->stmt, 5);
 
   // yield it
   *yielded = &s->last;
@@ -110,10 +104,10 @@ int clink_db_find_includer(clink_db_t *db, const char *name,
   if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  static const char QUERY[] = "select symbols.path, symbols.line, symbols.col, "
-    "symbols.parent, content.body from symbols left join content on "
-    "symbols.path = content.path and symbols.line = content.line where "
-    "symbols.name = @name and symbols.category = @category;";
+  static const char QUERY[] = "select symbols.name, symbols.path, symbols.line,"
+    "symbols.col, symbols.parent, content.body from symbols left join content "
+    "on symbols.path = content.path and symbols.line = content.line where "
+    "symbols.name like ('%' || @name) and symbols.category = @category;";
 
   int rc = 0;
   no_lookahead_iter_t *i = NULL;
@@ -126,19 +120,12 @@ int clink_db_find_includer(clink_db_t *db, const char *name,
     goto done;
   }
 
-  // save the name of the #include file for later symbol construction
-  s->name = strdup(name);
-  if (UNLIKELY(s->name == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-
   // create a query to lookup #includes in the database
   if (UNLIKELY((rc = sql_prepare(db->db, QUERY, &s->stmt))))
     goto done;
 
   // bind the where clause to our given function
-  if (UNLIKELY((rc = sql_bind_text(s->stmt, 1, s->name))))
+  if (UNLIKELY((rc = sql_bind_text(s->stmt, 1, name))))
     goto done;
   if (UNLIKELY((rc = sql_bind_int(s->stmt, 2, CLINK_INCLUDE))))
     goto done;
