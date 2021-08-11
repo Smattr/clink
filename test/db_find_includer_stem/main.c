@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <clink/clink.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,11 +29,7 @@ static int find(clink_db_t *db, const char *path) {
   }
 
   // confirm this iterator finds the expected record
-  if (!clink_iter_has_next(it)) {
-    fprintf(stderr, "iterator unexpectedly is empty\n");
-    return -1;
-
-  } else {
+  {
     const clink_symbol_t *sym = NULL;
     if ((rc = clink_iter_next_symbol(it, &sym))) {
       fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(rc));
@@ -74,13 +71,19 @@ static int find(clink_db_t *db, const char *path) {
         sym->parent);
       return -1;
     }
-
   }
 
   // confirm that the iterator is now empty
-  if (clink_iter_has_next(it)) {
-    fprintf(stderr, "iterator unexpectedly not empty\n");
-    return -1;
+  {
+    const clink_symbol_t *sym = NULL;
+    int r = clink_iter_next_symbol(it, &sym);
+    if (r == 0) {
+      fprintf(stderr, "iterator unexpectedly is non-empty\n");
+      return -1;
+    } else if (r != ENOMSG) {
+      fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
+      return -1;
+    }
   }
 
   clink_iter_free(&it);
