@@ -4,6 +4,10 @@
 extern "C" {
 #endif
 
+#ifndef CLINK_API
+#define CLINK_API __attribute__((visibility("default")))
+#endif
+
 typedef enum {
   CLINK_DEFINITION = 0,
   CLINK_FUNCTION_CALL = 1,
@@ -40,14 +44,14 @@ typedef struct {
  * \param src Input symbol to copy
  * \returns 0 on success or an errno on failure
  */
-int clink_symbol_copy(clink_symbol_t *restrict dst,
+CLINK_API int clink_symbol_copy(clink_symbol_t *restrict dst,
   const clink_symbol_t *restrict src);
 
 /** clean up and deallocate the contents of a symbol structure
  *
  * \param s Symbol to clear
  */
-void clink_symbol_clear(clink_symbol_t *s);
+CLINK_API void clink_symbol_clear(clink_symbol_t *s);
 
 #ifdef __cplusplus
 }

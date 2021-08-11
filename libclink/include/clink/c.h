@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+#ifndef CLINK_API
+#define CLINK_API __attribute__((visibility("default")))
+#endif
+
 /** create an iterator for parsing the given C/C++ file
  *
  * \param it [out] Created iterator on success
@@ -15,8 +19,8 @@ extern "C" {
  * \param argv Arguments to pass to Clang
  * \returns 0 on success or an errno on failure
  */
-int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
-  const char **argv);
+CLINK_API int clink_parse_c(clink_iter_t **it, const char *filename,
+                            size_t argc, const char **argv);
 
 /** get the built-in list of #include paths the compiler knows
  *
@@ -28,7 +32,7 @@ int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
  * \param includes_len [out] Number of elements stored to includes
  * \returns 0 on success or an errno on failure
  */
-int clink_compiler_includes(const char *compiler, char ***includes,
+CLINK_API int clink_compiler_includes(const char *compiler, char ***includes,
   size_t *includes_len);
 
 #ifdef __cplusplus

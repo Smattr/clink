@@ -4,6 +4,10 @@
 extern "C" {
 #endif
 
+#ifndef CLINK_API
+#define CLINK_API __attribute__((visibility("default")))
+#endif
+
 /** retrieve version of this library
  *
  * For now, the version of Clink is an opaque string. You cannot use it to
@@ -12,7 +16,7 @@ extern "C" {
  *
  * \return A version string
  */
-const char *clink_version(void);
+CLINK_API const char *clink_version(void);
 
 #ifdef __cplusplus
 }

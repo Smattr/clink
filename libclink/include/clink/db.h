@@ -8,6 +8,10 @@
 extern "C" {
 #endif
 
+#ifndef CLINK_API
+#define CLINK_API __attribute__((visibility("default")))
+#endif
+
 typedef struct clink_db clink_db_t;
 
 /** open a Clink symbol database, creating it if it does not exist
@@ -16,7 +20,7 @@ typedef struct clink_db clink_db_t;
  * \param path Path to the database file to open
  * \returns 0 on success or an errno on failure
  */
-int clink_db_open(clink_db_t **db, const char *path);
+CLINK_API int clink_db_open(clink_db_t **db, const char *path);
 
 /** add a file record to the database
  *
@@ -32,8 +36,8 @@ int clink_db_open(clink_db_t **db, const char *path);
  * \param timestamp Last modification time of the subject
  * \returns 0 on success or an errno on failure
  */
-int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
-  uint64_t timestamp);
+CLINK_API int clink_db_add_record(clink_db_t *db, const char *path,
+                                  uint64_t hash, uint64_t timestamp);
 
 /** add a symbol to the database
  *
@@ -41,7 +45,7 @@ int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
  * \param symbol Symbol to add
  * \returns 0 on success or a SQLite error code on failure
  */
-int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol);
+CLINK_API int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol);
 
 /** add a line of source content to the database
  *
@@ -51,15 +55,15 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol);
  * \param line Content of the line itself
  * \returns 0 on success or a SQLite error code on failure
  */
-int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
-  const char *line);
+CLINK_API int clink_db_add_line(clink_db_t *db, const char *path,
+                                unsigned long lineno, const char *line);
 
 /** remove all symbols and content related to a given file
  *
  * \param db Clink database to operate on
  * \param path Path of the file to remove information for
  */
-void clink_db_remove(clink_db_t *db, const char *path);
+CLINK_API void clink_db_remove(clink_db_t *db, const char *path);
 
 /** find function calls within a given function in the database
  *
@@ -68,7 +72,8 @@ void clink_db_remove(clink_db_t *db, const char *path);
  * \param it [out] Created symbol iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_db_find_call(clink_db_t *db, const char *name, clink_iter_t **it);
+CLINK_API int clink_db_find_call(clink_db_t *db, const char *name,
+                                 clink_iter_t **it);
 
 /** find calls to a given function in the database
  *
@@ -77,7 +82,8 @@ int clink_db_find_call(clink_db_t *db, const char *name, clink_iter_t **it);
  * \param it [out] Created symbol iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it);
+CLINK_API int clink_db_find_caller(clink_db_t *db, const char *name,
+                                   clink_iter_t **it);
 
 /** find a definition in the database
  *
@@ -86,7 +92,7 @@ int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it);
  * \param it [out] Created symbol iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_db_find_definition(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_definition(clink_db_t *db, const char *name,
   clink_iter_t **it);
 
 /** find a given file in the database
@@ -96,7 +102,8 @@ int clink_db_find_definition(clink_db_t *db, const char *name,
  * \param it [out] Created string iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it);
+CLINK_API int clink_db_find_file(clink_db_t *db, const char *name,
+                                 clink_iter_t **it);
 
 /** find #includes or a given file in the database
  *
@@ -105,7 +112,8 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it);
  * \param it [out] Created symbol iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_db_find_includer(clink_db_t *db, const char *name, clink_iter_t **it);
+CLINK_API int clink_db_find_includer(clink_db_t *db, const char *name,
+                                     clink_iter_t **it);
 
 /** find a record in the given database
  *
@@ -119,8 +127,8 @@ int clink_db_find_includer(clink_db_t *db, const char *name, clink_iter_t **it);
  * \returns 0 if a record was found, ENOENT if no record was found, or another
  *   errno on failure
  */
-int clink_db_find_record(clink_db_t *db, const char *path, uint64_t *hash,
-  uint64_t *timestamp);
+CLINK_API int clink_db_find_record(clink_db_t *db, const char *path,
+                                   uint64_t *hash, uint64_t *timestamp);
 
 /** find a symbol in the database
  *
@@ -129,13 +137,14 @@ int clink_db_find_record(clink_db_t *db, const char *path, uint64_t *hash,
  * \param it [out] Created symbol iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_db_find_symbol(clink_db_t *db, const char *name, clink_iter_t **it);
+CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *name,
+                                   clink_iter_t **it);
 
 /** close a Clink symbol database
  *
  * \param db Database to close
  */
-void clink_db_close(clink_db_t **db);
+CLINK_API void clink_db_close(clink_db_t **db);
 
 #ifdef __cplusplus
 }

@@ -6,6 +6,10 @@
 extern "C" {
 #endif
 
+#ifndef CLINK_API
+#define CLINK_API __attribute__((visibility("default")))
+#endif
+
 /** open Vim at the given position in the given file
  *
  * \param filename File to open with Vim
@@ -13,7 +17,7 @@ extern "C" {
  * \param colno Column number to position cursor at within the file
  * \returns Vim’s exit status
  */
-int clink_vim_open(const char *filename, unsigned long lineno,
+CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
   unsigned long colno);
 
 /** create a string iterator for the Vim-highlighted lines of the given file
@@ -22,7 +26,7 @@ int clink_vim_open(const char *filename, unsigned long lineno,
  * \param filename Source file to read
  * \returns 0 on success, an errno on failure
  */
-int clink_vim_highlight(clink_iter_t **it, const char *filename);
+CLINK_API int clink_vim_highlight(clink_iter_t **it, const char *filename);
 
 #ifdef __cplusplus
 }

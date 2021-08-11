@@ -32,13 +32,17 @@
 extern "C" {
 #endif
 
+#ifndef CLINK_API
+#define CLINK_API __attribute__((visibility("default")))
+#endif
+
 /** create an iterator for parsing the given assembly file
  *
  * \param it [out] Created iterator on success
  * \param filename Path to source file to parse
  * \returns 0 on success or an errno on failure
  */
-int clink_parse_asm(clink_iter_t **it, const char *filename);
+CLINK_API int clink_parse_asm(clink_iter_t **it, const char *filename);
 
 #ifdef __cplusplus
 }

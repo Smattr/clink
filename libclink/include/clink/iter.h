@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+#ifndef CLINK_API
+#define CLINK_API __attribute__((visibility("default")))
+#endif
+
 /// opaque type of an iterator
 typedef struct clink_iter clink_iter_t;
 
@@ -15,7 +19,7 @@ typedef struct clink_iter clink_iter_t;
  * \param it The iterator to examine
  * \returns true if the iterator is non-empty
  */
-bool clink_iter_has_next(const clink_iter_t *it);
+CLINK_API bool clink_iter_has_next(const clink_iter_t *it);
 
 /** yield the next string from an iterator
  *
@@ -26,7 +30,7 @@ bool clink_iter_has_next(const clink_iter_t *it);
  * \param yielded [out] The next string in the iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_iter_next_str(clink_iter_t *it, const char **yielded);
+CLINK_API int clink_iter_next_str(clink_iter_t *it, const char **yielded);
 
 /** yield the next symbol from an iterator
  *
@@ -37,7 +41,8 @@ int clink_iter_next_str(clink_iter_t *it, const char **yielded);
  * \param yielded [out] The next symbol in the iterator on success
  * \returns 0 on success or an errno on failure
  */
-int clink_iter_next_symbol(clink_iter_t *it, const clink_symbol_t **yielded);
+CLINK_API int clink_iter_next_symbol(clink_iter_t *it,
+                                     const clink_symbol_t **yielded);
 
 /** clean up and deallocate an iterator
  *
@@ -45,7 +50,7 @@ int clink_iter_next_symbol(clink_iter_t *it, const clink_symbol_t **yielded);
  *
  * \param it Iterator to clean up
  */
-void clink_iter_free(clink_iter_t **it);
+CLINK_API void clink_iter_free(clink_iter_t **it);
 
 #ifdef __cplusplus
 }
