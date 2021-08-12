@@ -143,7 +143,7 @@ int line_ui(clink_db_t *db) {
   char *line = NULL;
   size_t line_size = 0;
 
-  for (;;) {
+  while (true) {
 
     // print prompt text
     printf(">> ");

@@ -145,7 +145,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
   int rc = 0;
 
-  for (;;) {
+  while (true) {
 
     // get an item from the work queue
     task_t t;

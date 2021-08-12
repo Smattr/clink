@@ -5,6 +5,7 @@
 #include "get_environ.h"
 #include <fcntl.h>
 #include <spawn.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +28,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
 
   // read lines looking for the start of relative includes
   errno = 0;
-  for (;;) {
+  while (true) {
 
     if (getline(&line, &line_size, in) < 0) {
       rc = errno;
@@ -42,7 +43,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
   }
 
   // read includes
-  for (;;) {
+  while (true) {
 
     if (getline(&line, &line_size, in) < 0) {
       rc = errno;

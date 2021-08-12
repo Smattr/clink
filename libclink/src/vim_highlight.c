@@ -390,7 +390,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
 
   char *line = NULL;
   size_t line_size = 0;
-  for (;;) {
+  while (true) {
 
     errno = 0;
     if (getline(&line, &line_size, s->highlighted) < 0) {

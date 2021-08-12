@@ -42,7 +42,7 @@ int set_db_path(void) {
     goto done;
   }
 
-  for (;;) {
+  while (true) {
 
     // create a path to a database at this level
     char *candidate = NULL;

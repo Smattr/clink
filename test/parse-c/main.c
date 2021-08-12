@@ -33,7 +33,7 @@ static char *xstrdup(const char *s) {
 
 static void parse_args(int argc, char **argv) {
 
-  for (;;) {
+  while (true) {
 
     static struct option opts[] = {
       { "include", required_argument, 0, 'I' },

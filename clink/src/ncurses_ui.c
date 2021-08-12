@@ -737,7 +737,7 @@ int ncurses_ui(clink_db_t *db) {
 
   int rc = 0;
 
-  for (;;) {
+  while (true) {
 
     switch (state) {
 

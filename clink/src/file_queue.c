@@ -4,6 +4,7 @@
 #include "file_queue.h"
 #include "path.h"
 #include "set.h"
+#include <stdbool.h>
 #include "str_queue.h"
 #include <string.h>
 #include <stdlib.h>
@@ -81,7 +82,7 @@ int file_queue_pop(file_queue_t *fq, char **path) {
 
   int rc = 0;
 
-  for (;;) {
+  while (true) {
 
     // first try to get a new entry from the active directory
     if (fq->active != NULL) {

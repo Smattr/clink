@@ -152,7 +152,7 @@ static int refill_last(state_t *s) {
 
   char *line = NULL;
   size_t line_size = 0;
-  for (;;) {
+  while (true) {
 
     // update position in file
     ++s->lineno;
