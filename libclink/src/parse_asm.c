@@ -242,7 +242,7 @@ static int refill_last(state_t *s) {
   return rc;
 }
 
-static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
+static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
 
   if (UNLIKELY(it == NULL))
     return EINVAL;
@@ -264,7 +264,7 @@ static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
   return 0;
 }
 
-static void my_free(no_lookahead_iter_t *it) {
+static void my_free(clink_iter_t *it) {
 
   if (it == NULL)
     return;
@@ -313,10 +313,8 @@ int clink_parse_asm(clink_iter_t **it, const char *filename) {
   if (UNLIKELY(filename == NULL))
     return EINVAL;
 
-  clink_iter_t *wrapper = NULL;
-
-  // allocate a new no-lookahead iterator
-  no_lookahead_iter_t *i = calloc(1, sizeof(*i));
+  // allocate a new iterator
+  clink_iter_t *i = calloc(1, sizeof(*i));
   if (UNLIKELY(i == NULL))
     return ENOMEM;
 
@@ -376,16 +374,11 @@ int clink_parse_asm(clink_iter_t **it, const char *filename) {
   }
   s->call_valid = true;
 
-  // create a 1-lookahead adapter to wrap this
-  if (UNLIKELY((rc = iter_new(&wrapper, i))))
-    goto done;
-
 done:
   if (rc) {
-    no_lookahead_iter_free(&i);
-    clink_iter_free(&wrapper);
+    clink_iter_free(&i);
   } else {
-    *it = wrapper;
+    *it = i;
   }
 
   return rc;
