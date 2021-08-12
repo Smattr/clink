@@ -39,10 +39,3 @@ struct no_lookahead_iter {
   void (*free)(no_lookahead_iter_t *self);
 
 };
-
-/** clean up and deallocate a no-lookahead iterator
- *
- * \param it Iterator to clean up
- */
-__attribute__((visibility("internal")))
-void no_lookahead_iter_free(no_lookahead_iter_t **it);

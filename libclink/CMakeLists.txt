@@ -18,7 +18,6 @@ add_library(libclink
   src/db_remove.c
   src/get_environ.c
   src/iter.c
-  src/no_lookahead_iter_free.c
   src/parse_asm.c
   src/parse_c.c
   src/re.c
