@@ -1,7 +1,6 @@
 #pragma once
 
 #include <clink/symbol.h>
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,13 +12,6 @@ extern "C" {
 
 /// opaque type of an iterator
 typedef struct clink_iter clink_iter_t;
-
-/** check if the iterator is not exhausted
- *
- * \param it The iterator to examine
- * \returns true if the iterator is non-empty
- */
-CLINK_API bool clink_iter_has_next(const clink_iter_t *it);
 
 /** yield the next string from an iterator
  *

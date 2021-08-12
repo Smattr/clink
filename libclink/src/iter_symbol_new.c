@@ -55,16 +55,6 @@ static size_t inactive(const state_t *s) {
   return 1 - s->active;
 }
 
-static bool has_next(const clink_iter_t *it) {
-
-  if (it == NULL)
-    return false;
-
-  const state_t *s = it->state;
-
-  return valid(s, s->active);
-}
-
 static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
 
   if (UNLIKELY(it == NULL))
@@ -127,8 +117,7 @@ int iter_symbol_new(clink_iter_t *it, no_lookahead_iter_t *impl) {
   if (UNLIKELY(impl->next_symbol == NULL))
     return EINVAL;
 
-  clink_iter_t i
-    = { .has_next = has_next, .next_symbol = next, .free = my_free };
+  clink_iter_t i = { .next_symbol = next, .free = my_free };
 
   // allocate state for this iterator
   state_t *s = calloc(1, sizeof(*s));
