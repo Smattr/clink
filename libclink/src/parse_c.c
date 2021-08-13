@@ -37,7 +37,7 @@ typedef struct {
   size_t next_capacity;
 
   /// named parent of the current context during traversal
-  char *current_parent;
+  const char *current_parent;
 
   /// status of our Clang traversal (0 OK, non-zero on error)
   int rc;
