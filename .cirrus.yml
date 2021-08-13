@@ -5,6 +5,15 @@ task:
 
   matrix:
 
+    - name: FreeBSD 13.0
+      freebsd_instance:
+        image_family: freebsd-13-0-snap
+      environment:
+        CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
+        CTEST_OUTPUT_ON_FAILURE: 1
+        UBSAN_OPTIONS: print_stacktrace=1
+      install_script: pkg upgrade -y && pkg install -y cmake llvm vim
+
     - name: Linux
       container:
         image: gcc:10.3
