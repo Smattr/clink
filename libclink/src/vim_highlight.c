@@ -277,7 +277,7 @@ static int move_next(state_t *s) {
   return rc;
 }
 
-static int next(no_lookahead_iter_t *it, const char **yielded) {
+static int next(clink_iter_t *it, const char **yielded) {
 
   if (UNLIKELY(it == NULL))
     return EINVAL;
@@ -305,7 +305,7 @@ static int next(no_lookahead_iter_t *it, const char **yielded) {
   return rc;
 }
 
-static void my_free(no_lookahead_iter_t *it) {
+static void my_free(clink_iter_t *it) {
 
   if (it == NULL)
     return;
@@ -330,8 +330,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   if (UNLIKELY(s == NULL))
     return ENOMEM;
 
-  no_lookahead_iter_t *i = NULL;
-  clink_iter_t *wrapper = NULL;
+  clink_iter_t *i = NULL;
   int rc = 0;
 
   // create a temporary directory to use for scratch space
@@ -390,7 +389,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
 
   char *line = NULL;
   size_t line_size = 0;
-  for (;;) {
+  while (true) {
 
     errno = 0;
     if (getline(&line, &line_size, s->highlighted) < 0) {
@@ -483,19 +482,14 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   s = NULL;
   i->free = my_free;
 
-  // wrap our no-lookahead iterator in a 1-lookahead iterator
-  if (UNLIKELY((rc = iter_new(&wrapper, i))))
-    goto done1;
-
 done1:
   regfree(&style_re);
 done:
   if (rc) {
-    clink_iter_free(&wrapper);
-    no_lookahead_iter_free(&i);
+    clink_iter_free(&i);
     state_free(&s);
   } else {
-    *it = wrapper;
+    *it = i;
   }
 
   return rc;

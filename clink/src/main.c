@@ -41,7 +41,7 @@ static void xappend(char ***list, size_t *len, const char *item) {
 
 static void parse_args(int argc, char **argv) {
 
-  for (;;) {
+  while (true) {
     static const struct option opts[] = {
       {"build-only",    no_argument,       0, 'b'},
       {"color",         required_argument, 0, 128 },

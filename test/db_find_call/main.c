@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <clink/db.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,9 +102,16 @@ int main(void) {
     }
 
     // confirm this iterator finds nothing
-    if (clink_iter_has_next(it)) {
-      r1 = -1;
-      fprintf(stderr, "iterator unexpectedly is non-empty\n");
+    {
+      const clink_symbol_t *sym = NULL;
+      int r = clink_iter_next_symbol(it, &sym);
+      if (r == 0) {
+        fprintf(stderr, "iterator unexpectedly is non-empty\n");
+        r1 = -1;
+      } else if (r != ENOMSG) {
+        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
+        r1 = -1;
+      }
     }
 
     clink_iter_free(&it);
@@ -121,11 +129,7 @@ int main(void) {
     }
 
     // confirm this iterator finds something
-    if (!clink_iter_has_next(it)) {
-      fprintf(stderr, "iterator unexpectedly is empty\n");
-      r2 = -1;
-
-    } else {
+    {
       const clink_symbol_t *sym = NULL;
       if ((r2 = clink_iter_next_symbol(it, &sym))) {
         fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r2));
@@ -167,13 +171,19 @@ int main(void) {
           sym->parent);
         r2 = -1;
       }
-
     }
 
     // confirm that the iterator is now empty
-    if (clink_iter_has_next(it)) {
-      fprintf(stderr, "iterator unexpectedly not empty\n");
-      r2 = -1;
+    {
+      const clink_symbol_t *sym = NULL;
+      int r = clink_iter_next_symbol(it, &sym);
+      if (r == 0) {
+        fprintf(stderr, "iterator unexpectedly is non-empty\n");
+        r2 = -1;
+      } else if (r != ENOMSG) {
+        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
+        r2 = -1;
+      }
     }
 
     clink_iter_free(&it);
@@ -190,9 +200,16 @@ int main(void) {
     }
 
     // confirm this iterator finds nothing
-    if (clink_iter_has_next(it)) {
-      r3 = -1;
-      fprintf(stderr, "iterator unexpectedly is non-empty\n");
+    {
+      const clink_symbol_t *sym = NULL;
+      int r = clink_iter_next_symbol(it, &sym);
+      if (r == 0) {
+        fprintf(stderr, "iterator unexpectedly is non-empty\n");
+        r3 = -1;
+      } else if (r != ENOMSG) {
+        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
+        r3 = -1;
+      }
     }
 
     clink_iter_free(&it);

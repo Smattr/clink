@@ -73,12 +73,15 @@ static int format_results(clink_iter_t *it) {
 
   int rc = 0;
 
-  while (clink_iter_has_next(it)) {
+  while (true) {
 
     // retrieve the next symbol
     const clink_symbol_t *symbol = NULL;
-    if ((rc = clink_iter_next_symbol(it, &symbol)))
+    if ((rc = clink_iter_next_symbol(it, &symbol))) {
+      if (rc == ENOMSG) // exhausted iterator
+        rc = 0;
       break;
+    }
 
     // skip if the containing file has been deleted or moved
     assert(symbol->path != NULL);
@@ -734,7 +737,7 @@ int ncurses_ui(clink_db_t *db) {
 
   int rc = 0;
 
-  for (;;) {
+  while (true) {
 
     switch (state) {
 

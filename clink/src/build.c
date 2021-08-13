@@ -145,7 +145,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
   int rc = 0;
 
-  for (;;) {
+  while (true) {
 
     // get an item from the work queue
     task_t t;
@@ -223,11 +223,14 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
         if (rc == 0) {
           // parse all symbols and add them to the database
-          while (clink_iter_has_next(it)) {
+          while (true) {
 
             const clink_symbol_t *symbol = NULL;
-            if ((rc = clink_iter_next_symbol(it, &symbol)))
+            if ((rc = clink_iter_next_symbol(it, &symbol))) {
+              if (rc == ENOMSG) // exhausted iterator
+                rc = 0;
               break;
+            }
             assert(symbol != NULL);
 
             DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
@@ -254,11 +257,14 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         if (rc == 0) {
           // retrieve all lines and add them to the database
           unsigned long lineno = 1;
-          while (clink_iter_has_next(it)) {
+          while (true) {
 
             const char *line = NULL;
-            if ((rc = clink_iter_next_str(it, &line)))
+            if ((rc = clink_iter_next_str(it, &line))) {
+              if (rc == ENOMSG) // exhausted iterator
+                rc = 0;
               break;
+            }
 
             if ((rc = add_line(db, t.path, lineno, line)))
               break;

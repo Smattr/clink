@@ -1,4 +1,6 @@
 #include <clink/clink.h>
+#include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,10 +20,14 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  while (clink_iter_has_next(it)) {
+  while (true) {
 
     const char *line = NULL;
     if ((rc = clink_iter_next_str(it, &line))) {
+      if (rc == ENOMSG) { // exhausted iterator
+        rc = 0;
+        break;
+      }
       fprintf(stderr, "failed to retrieve line: %s\n", strerror(rc));
       goto done;
     }

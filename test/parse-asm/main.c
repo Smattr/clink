@@ -1,4 +1,6 @@
 #include <clink/clink.h>
+#include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,10 +21,14 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  while (clink_iter_has_next(it)) {
+  while (true) {
 
     const clink_symbol_t *s = NULL;
     if ((rc = clink_iter_next_symbol(it, &s))) {
+      if (rc == ENOMSG) {
+        rc = 0;
+        break;
+      }
       fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(rc));
       goto done;
     }

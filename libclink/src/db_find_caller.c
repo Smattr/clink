@@ -44,7 +44,7 @@ static void state_free(state_t **ss) {
   *ss = NULL;
 }
 
-static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
+static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
 
   if (UNLIKELY(it == NULL))
     return EINVAL;
@@ -87,7 +87,7 @@ static int next(no_lookahead_iter_t *it, const clink_symbol_t **yielded) {
   return 0;
 }
 
-static void my_free(no_lookahead_iter_t *it) {
+static void my_free(clink_iter_t *it) {
 
   if (it == NULL)
     return;
@@ -115,8 +115,7 @@ int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
     "symbols.name = @name and symbols.category = @category;";
 
   int rc = 0;
-  no_lookahead_iter_t *i = NULL;
-  clink_iter_t *wrapper = NULL;
+  clink_iter_t *i = NULL;
 
   // allocate state for our iterator
   state_t *s = calloc(1, sizeof(*s));
@@ -142,7 +141,7 @@ int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
   if (UNLIKELY((rc = sql_bind_int(s->stmt, 2, CLINK_FUNCTION_CALL))))
     goto done;
 
-  // create a no-lookahead iterator for stepping through our query
+  // create an iterator for stepping through our query
   i = calloc(1, sizeof(*i));
   if (UNLIKELY(i == NULL)) {
     rc = ENOMEM;
@@ -155,18 +154,12 @@ int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
   s = NULL;
   i->free = my_free;
 
-  // create a 1-lookahead iterator to wrap it
-  if (UNLIKELY((rc = iter_new(&wrapper, i))))
-    goto done;
-  i = NULL;
-
 done:
   if (rc) {
-    clink_iter_free(&wrapper);
-    no_lookahead_iter_free(&i);
+    clink_iter_free(&i);
     state_free(&s);
   } else {
-    *it = wrapper;
+    *it = i;
   }
 
   return rc;

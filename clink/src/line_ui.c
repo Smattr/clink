@@ -28,12 +28,17 @@ static int drain_iter(clink_iter_t *it, bool use_parent) {
   // total of how many symbols we have seen
   size_t count = 0;
 
-  while (clink_iter_has_next(it)) {
+  while (true) {
 
     // retrieve the next symbol
     const clink_symbol_t *symbol = NULL;
-    if ((rc = clink_iter_next_symbol(it, &symbol)))
+    if ((rc = clink_iter_next_symbol(it, &symbol))) {
+      if (rc == ENOMSG) { // exhausted iterator
+        rc = 0;
+        break;
+      }
       goto done;
+    }
 
     // strip leading white space from the context field
     const char *context = symbol->context;
@@ -91,12 +96,17 @@ static int drain_str_iter(clink_iter_t *it) {
   // total of how many strings we have seen
   size_t count = 0;
 
-  while (clink_iter_has_next(it)) {
+  while (true) {
 
     // retrieve the next string
     const char *s = NULL;
-    if ((rc = clink_iter_next_str(it, &s)))
+    if ((rc = clink_iter_next_str(it, &s))) {
+      if (rc == ENOMSG) { // exhausted iterator
+        rc = 0;
+        break;
+      }
       goto done;
+    }
 
     /* XXX: what kind of nonsense output is this? I do not know what value
      * Cscope is attempting to add with the trailing garbage.
@@ -133,7 +143,7 @@ int line_ui(clink_db_t *db) {
   char *line = NULL;
   size_t line_size = 0;
 
-  for (;;) {
+  while (true) {
 
     // print prompt text
     printf(">> ");
