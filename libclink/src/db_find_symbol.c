@@ -112,7 +112,8 @@ int clink_db_find_symbol(clink_db_t *db, const char *name, clink_iter_t **it) {
   static const char QUERY[] = "select symbols.path, symbols.category, "
     "symbols.line, symbols.col, symbols.parent, content.body from symbols left "
     "join content on symbols.path = content.path and symbols.line = "
-    "content.line where symbols.name = @name;";
+    "content.line where symbols.name = @name order by symbols.path, "
+    "symbols.line, symbols.col;";
 
   int rc = 0;
   clink_iter_t *i = NULL;

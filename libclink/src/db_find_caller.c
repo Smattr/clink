@@ -112,7 +112,8 @@ int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
   static const char QUERY[] = "select symbols.path, symbols.line, symbols.col, "
     "symbols.parent, content.body from symbols left join content on "
     "symbols.path = content.path and symbols.line = content.line where "
-    "symbols.name = @name and symbols.category = @category;";
+    "symbols.name = @name and symbols.category = @category order by "
+    "symbols.path, symbols.line, symbols.col;";
 
   int rc = 0;
   clink_iter_t *i = NULL;
