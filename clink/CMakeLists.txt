@@ -27,8 +27,12 @@ target_link_libraries(clink ${CMAKE_THREAD_LIBS_INIT})
 
 set(CURSES_NEED_NCURSES True)
 find_package(Curses REQUIRED)
-target_include_directories(clink PUBLIC ${CURSES_INCLUDE_DIR})
+target_include_directories(clink PRIVATE ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
+
+find_package(SQLite3 REQUIRED)
+target_include_directories(clink PRIVATE ${SQLite3_INCLUDE_DIRS})
+target_link_libraries(clink ${SQLite3_LIBRARIES})
 
 find_program(XXD xxd)
 if(${XXD} STREQUAL "XXD-NOTFOUND")

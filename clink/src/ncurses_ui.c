@@ -64,13 +64,13 @@ enum { COLUMN_COUNT = 4 };
 
 /// will these two symbols appear identically in the results list?
 static bool are_duplicates(const clink_symbol_t *a, const clink_symbol_t *b) {
-  if (strcmp(a->name, b->name) != 0)
+  if (LIKELY(strcmp(a->name, b->name) != 0))
     return false;
-  if (strcmp(a->path, b->path) != 0)
+  if (LIKELY(strcmp(a->path, b->path) != 0))
     return false;
-  if (a->lineno != b->lineno)
+  if (LIKELY(a->lineno != b->lineno))
     return false;
-  if (a->colno != b->colno)
+  if (LIKELY(a->colno != b->colno))
     return false;
   return true;
 }
@@ -91,14 +91,14 @@ static int format_results(clink_iter_t *it) {
     // retrieve the next symbol
     const clink_symbol_t *symbol = NULL;
     if ((rc = clink_iter_next_symbol(it, &symbol))) {
-      if (rc == ENOMSG) // exhausted iterator
+      if (LIKELY(rc == ENOMSG)) // exhausted iterator
         rc = 0;
       break;
     }
 
     // skip if the containing file has been deleted or moved
     assert(symbol->path != NULL);
-    if (access(symbol->path, F_OK) < 0)
+    if (UNLIKELY(access(symbol->path, F_OK) < 0))
       continue;
 
     // If this duplicates the previous result, skip it. This can happen when,
@@ -115,7 +115,7 @@ static int format_results(clink_iter_t *it) {
     if (results.size == results.count) {
       size_t s = results.size == 0 ? 128 : results.size * 2;
       clink_symbol_t *r = realloc(results.rows, s * sizeof(results.rows[0]));
-      if (r == NULL) {
+      if (UNLIKELY(r == NULL)) {
         rc = ENOMEM;
         break;
       }
@@ -125,7 +125,7 @@ static int format_results(clink_iter_t *it) {
 
     // append the new symbol
     clink_symbol_t *target = &results.rows[results.count];
-    if ((rc = clink_symbol_copy(target, symbol)))
+    if (UNLIKELY((rc = clink_symbol_copy(target, symbol))))
       break;
     ++results.count;
 
@@ -147,7 +147,7 @@ static int find_symbol(const char *query) {
 
   clink_iter_t *it = NULL;
   int rc = clink_db_find_symbol(database, query, &it);
-  if (rc)
+  if (UNLIKELY(rc))
     return rc;
 
   return format_results(it);
@@ -157,7 +157,7 @@ static int find_definition(const char *query) {
 
   clink_iter_t *it = NULL;
   int rc = clink_db_find_definition(database, query, &it);
-  if (rc)
+  if (UNLIKELY(rc))
     return rc;
 
   return format_results(it);
@@ -167,7 +167,7 @@ static int find_call(const char *query) {
 
   clink_iter_t *it = NULL;
   int rc = clink_db_find_call(database, query, &it);
-  if (rc)
+  if (UNLIKELY(rc))
     return rc;
 
   return format_results(it);
@@ -177,7 +177,7 @@ static int find_caller(const char *query) {
 
   clink_iter_t *it = NULL;
   int rc = clink_db_find_caller(database, query, &it);
-  if (rc)
+  if (UNLIKELY(rc))
     return rc;
 
   return format_results(it);
@@ -187,7 +187,7 @@ static int find_includer(const char *query) {
 
   clink_iter_t *it = NULL;
   int rc = clink_db_find_includer(database, query, &it);
-  if (rc)
+  if (UNLIKELY(rc))
     return rc;
 
   return format_results(it);
@@ -397,10 +397,10 @@ static int handle_input(void) {
     case 10: // enter
       if (strlen(left) > 0 || strlen(right) > 0) {
         char *query = NULL;
-        if (asprintf(&query, "%s%s", left, right) < 0)
+        if (UNLIKELY(asprintf(&query, "%s%s", left, right) < 0))
           return errno;
         int rc = functions[prompt_index].handler(query);
-        if (rc)
+        if (UNLIKELY(rc))
           return rc;
         from_row = 0;
         select_index = 0;
@@ -434,7 +434,7 @@ static int handle_input(void) {
         // expand right if necessary
         if (strlen(right) == right_size - 1) {
           char *r = realloc(right, right_size * 2);
-          if (r == NULL)
+          if (UNLIKELY(r == NULL))
             return ENOMEM;
           right = r;
           right_size *= 2;
@@ -457,7 +457,7 @@ static int handle_input(void) {
         // expand left if necessary
         if (strlen(left) == left_size - 1) {
           char *l = realloc(left, left_size * 2);
-          if (l == NULL)
+          if (UNLIKELY(l == NULL))
             return ENOMEM;
           left = l;
           left_size *= 2;
@@ -488,7 +488,7 @@ static int handle_input(void) {
       // expand right if necessary
       while (strlen(left) + strlen(right) > right_size - 1) {
         char *r = realloc(right, right_size * 2);
-        if (r == NULL)
+        if (UNLIKELY(r == NULL))
           return ENOMEM;
         right = r;
         right_size *= 2;
@@ -511,7 +511,7 @@ static int handle_input(void) {
       // expand left if necessary
       while (strlen(left) + strlen(right) > left_size - 1) {
         char *l = realloc(left, left_size * 2);
-        if (l == NULL)
+        if (UNLIKELY(l == NULL))
           return ENOMEM;
         left = l;
         left_size *= 2;
@@ -568,7 +568,7 @@ static int handle_input(void) {
       // expand left if necessary
       if (strlen(left) + 1 > left_size - 1) {
         char *l = realloc(left, left_size * 2);
-        if (l == NULL)
+        if (UNLIKELY(l == NULL))
           return ENOMEM;
         left = l;
         left_size *= 2;
@@ -664,9 +664,9 @@ enter:
       reset_prog_mode();
 
       // restore ncurses’ handlers
-      if (read_tstp == 0)
+      if (LIKELY(read_tstp == 0))
         (void)sigaction(SIGTSTP, &curses_tstp, NULL);
-      if (read_winch == 0)
+      if (LIKELY(read_winch == 0))
         (void)sigaction(SIGWINCH, &curses_winch, NULL);
 
       refresh();
@@ -722,12 +722,12 @@ int ncurses_ui(clink_db_t *db) {
 
   // setup our initial (empty) accrued text at the prompt
   left = calloc(1, BUFSIZ);
-  if (left == NULL)
+  if (UNLIKELY(left == NULL))
     return ENOMEM;
   left_size = BUFSIZ;
 
   right = calloc(1, BUFSIZ);
-  if (right == NULL) {
+  if (UNLIKELY(right == NULL)) {
     free(left);
     return ENOMEM;
   }
