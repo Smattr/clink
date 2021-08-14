@@ -18,9 +18,6 @@
 #include <unistd.h>
 #include "work_queue.h"
 
-/// mutual exclusion mechanism for using stdout/stderr
-pthread_mutex_t print_lock;
-
 /// Is stdout a tty? Initialised in build().
 static bool tty;
 
@@ -49,25 +46,23 @@ __attribute__((format(printf, 2, 3)))
 static void progress(unsigned long thread_id, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  int r = pthread_mutex_lock(&print_lock);
-  if (LIKELY(r == 0)) {
+  flockfile(stdout);
 
-    // move up to this thread’s progress line
-    if (smart_progress())
-      printf("\033[%luA\033[K", option.threads - thread_id);
+  // move up to this thread’s progress line
+  if (smart_progress())
+    printf("\033[%luA\033[K", option.threads - thread_id);
 
-    printf("%lu: ", thread_id);
-    vprintf(fmt, ap);
-    printf("\n");
+  printf("%lu: ", thread_id);
+  vprintf(fmt, ap);
+  printf("\n");
 
-    // move back to the bottom
-    if (smart_progress() && thread_id != option.threads - 1) {
-      printf("\033[%luB", option.threads - thread_id - 1);
-      fflush(stdout);
-    }
-
-    (void)pthread_mutex_unlock(&print_lock);
+  // move back to the bottom
+  if (smart_progress() && thread_id != option.threads - 1) {
+    printf("\033[%luB", option.threads - thread_id - 1);
+    fflush(stdout);
   }
+
+  funlockfile(stdout);
   va_end(ap);
 }
 
@@ -76,23 +71,21 @@ __attribute__((format(printf, 2, 3)))
 static void error(unsigned long thread_id, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  int r = pthread_mutex_lock(&print_lock);
-  if (LIKELY(r == 0)) {
-    if (smart_progress())
-      printf("\033[%luA\033[K", option.threads - thread_id);
-    printf("%lu: ", thread_id);
-    if (option.colour == ALWAYS)
-      printf("\033[31m"); // red
-    vprintf(fmt, ap);
-    if (option.colour == ALWAYS)
-      printf("\033[0m"); // reset
-    printf("\n");
-    if (smart_progress() && thread_id != option.threads - 1) {
-      printf("\033[%luB", option.threads - thread_id - 1);
-      fflush(stdout);
-    }
-    (void)pthread_mutex_unlock(&print_lock);
+  flockfile(stdout);
+  if (smart_progress())
+    printf("\033[%luA\033[K", option.threads - thread_id);
+  printf("%lu: ", thread_id);
+  if (option.colour == ALWAYS)
+    printf("\033[31m"); // red
+  vprintf(fmt, ap);
+  if (option.colour == ALWAYS)
+    printf("\033[0m"); // reset
+  printf("\n");
+  if (smart_progress() && thread_id != option.threads - 1) {
+    printf("\033[%luB", option.threads - thread_id - 1);
+    fflush(stdout);
   }
+  funlockfile(stdout);
   va_end(ap);
 }
 
@@ -395,12 +388,6 @@ int build(clink_db_t *db) {
 
   int rc = 0;
 
-  // create a mutex for protecting printf and friends
-  if (UNLIKELY((rc = pthread_mutex_init(&print_lock, NULL)))) {
-    fprintf(stderr, "failed to create mutex: %s\n", strerror(rc));
-    return rc;
-  }
-
   // setup a work queue to manage our tasks
   work_queue_t *wq = NULL;
   if (UNLIKELY((rc = work_queue_new(&wq)))) {
@@ -443,7 +430,6 @@ int build(clink_db_t *db) {
 done:
   (void)sigint_unblock();
   work_queue_free(&wq);
-  (void)pthread_mutex_destroy(&print_lock);
 
   return rc;
 }
