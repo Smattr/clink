@@ -17,23 +17,6 @@
 #include <unistd.h>
 #include "work_queue.h"
 
-/// add a symbol to the Clink database
-static int add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
-
-  int rc = clink_db_add_symbol(db, symbol);
-
-  return rc;
-}
-
-/// add a content line to the Clink database
-static int add_line(clink_db_t *db, const char *path, unsigned long lineno,
-    const char *line) {
-
-  int rc = clink_db_add_line(db, path, lineno, line);
-
-  return rc;
-}
-
 /// mutual exclusion mechanism for using stdout/stderr
 pthread_mutex_t print_lock;
 
@@ -223,7 +206,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
             DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
               symbol->colno, symbol->name);
-            if ((rc = add_symbol(db, symbol)))
+            if ((rc = clink_db_add_symbol(db, symbol)))
               break;
           }
         }
@@ -254,7 +237,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
               break;
             }
 
-            if ((rc = add_line(db, t.path, lineno, line)))
+            if ((rc = clink_db_add_line(db, t.path, lineno, line)))
               break;
 
             ++lineno;
