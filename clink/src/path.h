@@ -74,11 +74,3 @@ bool is_root(const char *path);
  * \returns 0 on success or an errno on failure
  */
 int join(const char *branch, const char *stem, char **path);
-
-/** get the last modified time of a file
- *
- * \param path File to inspect
- * \param timestamp [out] Last modified time on success
- * \returns 0 on success or an errno on failure
- */
-int mtime(const char *path, uint64_t *timestamp);
