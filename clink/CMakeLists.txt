@@ -30,6 +30,10 @@ find_package(Curses REQUIRED)
 target_include_directories(clink PRIVATE ${CURSES_INCLUDE_DIR})
 target_link_libraries(clink ${CURSES_LIBRARIES})
 
+find_package(SQLite3 REQUIRED)
+target_include_directories(clink PRIVATE ${SQLite3_INCLUDE_DIRS})
+target_link_libraries(clink ${SQLite3_LIBRARIES})
+
 find_program(XXD xxd)
 if(${XXD} STREQUAL "XXD-NOTFOUND")
   message(FATAL_ERROR "xxd not found")
