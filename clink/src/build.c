@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "build.h"
 #include <clink/clink.h>
+#include "../../common/compiler.h"
 #include <errno.h>
 #include "option.h"
 #include "path.h"
@@ -28,7 +29,7 @@ static bool tty;
 static bool smart_progress(void) {
 
   // do not play ANSI tricks if we are debugging
-  if (option.debug)
+  if (UNLIKELY(option.debug))
     return false;
 
   // also do not do it if we are piped into something else
@@ -49,7 +50,7 @@ static void progress(unsigned long thread_id, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   int r = pthread_mutex_lock(&print_lock);
-  if (r == 0) {
+  if (LIKELY(r == 0)) {
 
     // move up to this thread’s progress line
     if (smart_progress())
@@ -76,7 +77,7 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   int r = pthread_mutex_lock(&print_lock);
-  if (r == 0) {
+  if (LIKELY(r == 0)) {
     if (smart_progress())
       printf("\033[%luA\033[K", option.threads - thread_id);
     printf("%lu: ", thread_id);
@@ -99,7 +100,7 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
 /// handling when we are not in debug mode.
 #define DEBUG(args...) \
   do { \
-    if (option.debug) { \
+    if (UNLIKELY(option.debug)) { \
       progress(thread_id, args); \
     } \
   } while (0)
@@ -126,7 +127,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       break;
     }
 
-    if (rc) {
+    if (UNLIKELY(rc)) {
       error(thread_id, "failed to pop work queue: %s", strerror(rc));
       break;
     }
@@ -155,7 +156,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     // generate a friendlier name for the source path
     char *display = NULL;
-    if ((rc = disppath(t.path, &display))) {
+    if (UNLIKELY((rc = disppath(t.path, &display)))) {
       free(t.path);
       error(thread_id, "failed to make %s relative: %s", t.path, strerror(rc));
       break;
@@ -170,7 +171,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         clink_db_remove(db, t.path);
 
         // enqueue this file for reading, as we know we will need its contents
-        if ((rc = work_queue_push_for_read(wq, t.path))) {
+        if (UNLIKELY((rc = work_queue_push_for_read(wq, t.path)))) {
           error(thread_id, "failed to queue %s for reading: %s", display,
             strerror(rc));
           break;
@@ -198,7 +199,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
             const clink_symbol_t *symbol = NULL;
             if ((rc = clink_iter_next_symbol(it, &symbol))) {
-              if (rc == ENOMSG) // exhausted iterator
+              if (LIKELY(rc == ENOMSG)) // exhausted iterator
                 rc = 0;
               break;
             }
@@ -206,14 +207,14 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
             DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
               symbol->colno, symbol->name);
-            if ((rc = clink_db_add_symbol(db, symbol)))
+            if (UNLIKELY((rc = clink_db_add_symbol(db, symbol))))
               break;
           }
         }
 
         clink_iter_free(&it);
 
-        if (rc)
+        if (UNLIKELY(rc))
           error(thread_id, "failed to parse %s: %s", display, strerror(rc));
 
         break;
@@ -225,19 +226,19 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         clink_iter_t *it = NULL;
         rc = clink_vim_highlight(&it, t.path);
 
-        if (rc == 0) {
+        if (LIKELY(rc == 0)) {
           // retrieve all lines and add them to the database
           unsigned long lineno = 1;
           while (true) {
 
             const char *line = NULL;
             if ((rc = clink_iter_next_str(it, &line))) {
-              if (rc == ENOMSG) // exhausted iterator
+              if (LIKELY(rc == ENOMSG)) // exhausted iterator
                 rc = 0;
               break;
             }
 
-            if ((rc = clink_db_add_line(db, t.path, lineno, line)))
+            if (UNLIKELY((rc = clink_db_add_line(db, t.path, lineno, line))))
               break;
 
             ++lineno;
@@ -246,7 +247,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
         clink_iter_free(&it);
 
-        if (rc) {
+        if (UNLIKELY(rc)) {
 
           // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
           // cryptically. If it looks like this happened, give the user a less
@@ -262,7 +263,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         // now we can insert a record for the file
         if (rc == 0) {
           struct stat st;
-          if (stat(t.path, &st) == 0) {
+          if (LIKELY(stat(t.path, &st) == 0)) {
             uint64_t hash = (uint64_t)st.st_size;
             uint64_t timestamp = (uint64_t)st.st_mtime;
             (void)clink_db_add_record(db, t.path, hash, timestamp);
@@ -277,11 +278,11 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     free(display);
     free(t.path);
 
-    if (rc)
+    if (UNLIKELY(rc))
       break;
 
     // check if we have been SIGINTed and should finish up
-    if (sigint_pending()) {
+    if (UNLIKELY(sigint_pending())) {
       progress(thread_id, "saw SIGINT; exiting...");
       break;
     }
@@ -290,7 +291,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
   // Signals are delivered to one arbitrary thread in a multithreaded process.
   // So if we saw a SIGINT, signal the thread before us so that it cascades and
   // is eventually propagated to all threads.
-  if (sigint_pending()) {
+  if (UNLIKELY(sigint_pending())) {
     unsigned long previous = (thread_id == 0 ? option.threads : thread_id) - 1;
     if (previous != thread_id)
       (void)pthread_kill(threads[previous], SIGINT);
@@ -331,12 +332,12 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
 
   // create threads
   pthread_t *threads = calloc(option.threads, sizeof(threads[0]));
-  if (threads == NULL)
+  if (UNLIKELY(threads == NULL))
     return ENOMEM;
 
   // create state for them
   process_args_t *args = calloc(bg_threads, sizeof(args[0]));
-  if (args == NULL) {
+  if (UNLIKELY(args == NULL)) {
     free(threads);
     return ENOMEM;
   }
@@ -395,14 +396,14 @@ int build(clink_db_t *db) {
   int rc = 0;
 
   // create a mutex for protecting printf and friends
-  if ((rc = pthread_mutex_init(&print_lock, NULL))) {
+  if (UNLIKELY((rc = pthread_mutex_init(&print_lock, NULL)))) {
     fprintf(stderr, "failed to create mutex: %s\n", strerror(rc));
     return rc;
   }
 
   // setup a work queue to manage our tasks
   work_queue_t *wq = NULL;
-  if ((rc = work_queue_new(&wq))) {
+  if (UNLIKELY((rc = work_queue_new(&wq)))) {
     fprintf(stderr, "failed to create work queue: %s\n", strerror(rc));
     goto done;
   }
@@ -415,7 +416,7 @@ int build(clink_db_t *db) {
     if (rc == EALREADY)
       rc = 0;
 
-    if (rc) {
+    if (UNLIKELY(rc)) {
       fprintf(stderr, "failed to add %s to work queue: %s\n", option.src[i],
         strerror(rc));
       goto done;
@@ -424,7 +425,7 @@ int build(clink_db_t *db) {
 
   // suppress SIGINT, so that we do not get interrupted midway through a
   // database write and corrupt it
-  if ((rc = sigint_block())) {
+  if (UNLIKELY((rc = sigint_block()))) {
     fprintf(stderr, "failed to block SIGINT: %s\n", strerror(rc));
     goto done;
   }
@@ -435,7 +436,8 @@ int build(clink_db_t *db) {
       printf("%lu:\n", i);
   }
 
-  if ((rc = option.threads > 1 ? mt_process(db, wq) : process(0, NULL, db, wq)))
+  if (UNLIKELY((rc = option.threads > 1 ? mt_process(db, wq)
+                                        : process(0, NULL, db, wq))))
     goto done;
 
 done:
