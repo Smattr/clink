@@ -62,6 +62,19 @@ static results_t results;
 /// number of result columns excluding the hot key
 enum { COLUMN_COUNT = 4 };
 
+/// will these two symbols appear identically in the results list?
+static bool are_duplicates(const clink_symbol_t *a, const clink_symbol_t *b) {
+  if (strcmp(a->name, b->name) != 0)
+    return false;
+  if (strcmp(a->path, b->path) != 0)
+    return false;
+  if (a->lineno != b->lineno)
+    return false;
+  if (a->colno != b->colno)
+    return false;
+  return true;
+}
+
 static int format_results(clink_iter_t *it) {
 
   // free any previous results
@@ -87,6 +100,16 @@ static int format_results(clink_iter_t *it) {
     assert(symbol->path != NULL);
     if (access(symbol->path, F_OK) < 0)
       continue;
+
+    // If this duplicates the previous result, skip it. This can happen when,
+    // e.g., there are two identically positioned records for a function call
+    // (one for the reference to the function and one for the call itself) and
+    // we are doing a general search for a symbol.
+    if (results.count > 0) {
+      const clink_symbol_t *previous = &results.rows[results.count - 1];
+      if (are_duplicates(previous, symbol))
+        continue;
+    }
 
     // expand results collection if necessary
     if (results.size == results.count) {
