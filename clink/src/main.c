@@ -10,6 +10,7 @@
 #include "option.h"
 #include "path.h"
 #include "sigint.h"
+#include <sqlite3.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -193,6 +194,22 @@ int main(int argc, char **argv) {
       }
       free(option.src[i]);
       option.src[i] = absolute;
+    }
+  }
+
+  // ensure SQLite is safe to use multi-threaded
+  if (option.threads > 1) {
+    if (!sqlite3_threadsafe()) {
+      fprintf(stderr, "your SQLite library does not support multi-threading\n");
+      rc = -1;
+      goto done;
+    }
+    int r = sqlite3_config(SQLITE_CONFIG_SERIALIZED);
+    if (r != SQLITE_OK) {
+      fprintf(stderr, "failed to set SQLite serialized mode: %s\n",
+              sqlite3_errstr(r));
+      rc = -1;
+      goto done;
     }
   }
 
