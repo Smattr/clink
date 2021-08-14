@@ -93,7 +93,7 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
     return EINVAL;
 
   static const char QUERY[] = "select distinct path from symbols where path = "
-    "@path1 or path like @path2;";
+    "@path1 or path like @path2 order by path;";
 
   int rc = 0;
   clink_iter_t *i = NULL;
