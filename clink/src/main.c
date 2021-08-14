@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
   // Ncurses interface, if requested
   if (option.ncurses_ui) {
     if ((rc = ncurses_ui(db)))
-      goto done;
+      goto done1;
   }
 
 done1:
