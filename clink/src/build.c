@@ -17,19 +17,10 @@
 #include <unistd.h>
 #include "work_queue.h"
 
-/// mutual exclusion mechanism for writing to the database
-pthread_mutex_t db_lock;
-
 /// add a symbol to the Clink database
 static int add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 
-  int rc = pthread_mutex_lock(&db_lock);
-  if (rc)
-    return rc;
-
-  rc = clink_db_add_symbol(db, symbol);
-
-  (void)pthread_mutex_unlock(&db_lock);
+  int rc = clink_db_add_symbol(db, symbol);
 
   return rc;
 }
@@ -38,13 +29,7 @@ static int add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 static int add_line(clink_db_t *db, const char *path, unsigned long lineno,
     const char *line) {
 
-  int rc = pthread_mutex_lock(&db_lock);
-  if (rc)
-    return rc;
-
-  rc = clink_db_add_line(db, path, lineno, line);
-
-  (void)pthread_mutex_unlock(&db_lock);
+  int rc = clink_db_add_line(db, path, lineno, line);
 
   return rc;
 }
@@ -426,16 +411,9 @@ int build(clink_db_t *db) {
 
   int rc = 0;
 
-  // create a mutex for protecting database accesses
-  if ((rc = pthread_mutex_init(&db_lock, NULL))) {
-    fprintf(stderr, "failed to create mutex: %s\n", strerror(rc));
-    return rc;
-  }
-
   // create a mutex for protecting printf and friends
   if ((rc = pthread_mutex_init(&print_lock, NULL))) {
     fprintf(stderr, "failed to create mutex: %s\n", strerror(rc));
-    (void)pthread_mutex_destroy(&db_lock);
     return rc;
   }
 
@@ -480,7 +458,6 @@ int build(clink_db_t *db) {
 done:
   (void)sigint_unblock();
   work_queue_free(&wq);
-  (void)pthread_mutex_destroy(&db_lock);
   (void)pthread_mutex_destroy(&print_lock);
 
   return rc;
