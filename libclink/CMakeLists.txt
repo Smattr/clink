@@ -59,7 +59,7 @@ endif ()
 execute_process(COMMAND ${LLVM_CONFIG} --includedir
   OUTPUT_VARIABLE CLANG_INCDIR
   OUTPUT_STRIP_TRAILING_WHITESPACE)
-target_include_directories(libclink PUBLIC "${CLANG_INCDIR}")
+target_include_directories(libclink PRIVATE "${CLANG_INCDIR}")
 execute_process(COMMAND ${LLVM_CONFIG} --libdir
   OUTPUT_VARIABLE CLANG_LIBDIR
   OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -70,7 +70,7 @@ endif ()
 target_link_libraries(libclink ${CLANG_LIBRARY})
 
 find_package(SQLite3 REQUIRED)
-target_include_directories(libclink PUBLIC ${SQLite3_INCLUDE_DIRS})
+target_include_directories(libclink PRIVATE ${SQLite3_INCLUDE_DIRS})
 target_link_libraries(libclink ${SQLite3_LIBRARIES})
 
 install(TARGETS libclink EXPORT LibclinkConfig
