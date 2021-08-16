@@ -1,7 +1,7 @@
 task:
 
-  # only test the master branch and pull requests
-  only_if: $CIRRUS_BRANCH == "master" || $CIRRUS_PR != ""
+  # only test the main branch and pull requests
+  only_if: $CIRRUS_BRANCH == "main" || $CIRRUS_PR != ""
 
   matrix:
 
