@@ -24,7 +24,7 @@ static const char RECORDS_SCHEMA[] = "create table if not exists records "
 
 static const char *PRAGMAS[] = {
   "pragma synchronous=OFF;",
-  "pragma journal_mode=MEMORY;",
+  "pragma journal_mode=OFF;",
   "pragma temp_store=MEMORY;",
 };
 
