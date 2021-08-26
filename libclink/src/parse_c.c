@@ -261,13 +261,7 @@ static void pop_symbol(state_t *s) {
   --s->next_size;
 }
 
-static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
-    CXClientData data) {
-
-  // we do not need the parent cursor
-  (void)parent;
-
-  state_t *s = data;
+static enum CXChildVisitResult visit(CXCursor cursor, state_t *s) {
 
   // enqueue this as a future cursor to expand
   s->rc = push_cursor(s, cursor);
@@ -365,6 +359,17 @@ done:
   return s->rc ? CXChildVisit_Break : CXChildVisit_Continue;
 }
 
+static enum CXChildVisitResult visit_iter(CXCursor cursor, CXCursor parent,
+    CXClientData data) {
+
+  // we do not need the parent cursor
+  (void)parent;
+
+  state_t *s = data;
+
+  return visit(cursor, s);
+}
+
 /// expand a pending cursor and add more entries to the next queue
 static int expand(state_t *s) {
 
@@ -379,7 +384,7 @@ static int expand(state_t *s) {
   s->current_parent = n.parent;
 
   // expand this node, discovering its children
-  (void)clang_visitChildren(n.cursor, visit, s);
+  (void)clang_visitChildren(n.cursor, visit_iter, s);
 
   // clear the current parent and discard this node
   s->current_parent = NULL;
