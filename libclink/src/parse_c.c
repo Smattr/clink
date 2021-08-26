@@ -75,7 +75,9 @@ static void state_free(state_t **s) {
   *s = NULL;
 }
 
-static int push_cursor(state_t *s, CXCursor cursor) {
+static int push_cursor(void *state, CXCursor cursor) {
+
+  state_t *s = state;
 
   assert(s != NULL);
 
@@ -83,8 +85,10 @@ static int push_cursor(state_t *s, CXCursor cursor) {
   if (s->pending_size == s->pending_capacity) {
     size_t c = s->pending_capacity == 0 ? 1 : s->pending_capacity * 2;
     node_t *p = realloc(s->pending, c * sizeof(p[0]));
-    if (UNLIKELY(p == NULL))
-      return ENOMEM;
+    if (UNLIKELY(p == NULL)) {
+      s->rc = ENOMEM;
+      return s->rc;
+    }
     s->pending_capacity = c;
     s->pending = p;
   }
@@ -144,15 +148,19 @@ static int push_cursor(state_t *s, CXCursor cursor) {
     // clean up
     clang_disposeString(text);
 
-    if (UNLIKELY(ok_parent && parent == NULL))
-      return ENOMEM;
+    if (UNLIKELY(ok_parent && parent == NULL)) {
+      s->rc = ENOMEM;
+      return s->rc;
+    }
 
   // otherwise, default to the parent of the current context
   } else if (s->current_parent != NULL) {
 
     parent = strdup(s->current_parent);
-    if (UNLIKELY(parent == NULL))
-      return ENOMEM;
+    if (UNLIKELY(parent == NULL)) {
+      s->rc = ENOMEM;
+      return s->rc;
+    }
   }
 
   // now we can enqueue it
@@ -161,7 +169,7 @@ static int push_cursor(state_t *s, CXCursor cursor) {
   s->pending[i].cursor = cursor;
   ++s->pending_size;
 
-  return 0;
+  return s->rc;
 }
 
 static node_t pop_cursor(state_t *s) {
@@ -182,8 +190,10 @@ static node_t pop_cursor(state_t *s) {
   return n;
 }
 
-static int push_symbol(state_t *s, clink_category_t category, const char *name,
-    const char *path, unsigned long lineno, unsigned long colno) {
+static int push_symbol(void *state, clink_category_t category, const char *name,
+    const char *path, unsigned lineno, unsigned colno) {
+
+  state_t *s = state;
 
   assert(s != NULL);
 
@@ -191,15 +201,16 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
   if (s->next_size == s->next_capacity) {
     size_t c = s->next_capacity == 0 ? 1 : s->next_capacity * 2;
     clink_symbol_t *n = realloc(s->next, c * sizeof(n[0]));
-    if (UNLIKELY(n == NULL))
-      return ENOMEM;
+    if (UNLIKELY(n == NULL)) {
+      s->rc = ENOMEM;
+      return s->rc;
+    }
     s->next_capacity = c;
     s->next = n;
   }
 
   assert(s->next_size < s->next_capacity);
 
-  int rc = 0;
   clink_symbol_t sym = { 0 };
 
   sym.category = category;
@@ -207,14 +218,14 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
   assert(name != NULL);
   sym.name = strdup(name);
   if (UNLIKELY(sym.name == NULL)) {
-    rc = ENOMEM;
+    s->rc = ENOMEM;
     goto done;
   }
 
   if (path != NULL) {
     sym.path = strdup(path);
     if (UNLIKELY(sym.path == NULL)) {
-      rc = ENOMEM;
+      s->rc = ENOMEM;
       goto done;
     }
   }
@@ -225,7 +236,7 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
   if (s->current_parent != NULL) {
     sym.parent = strdup(s->current_parent);
     if (UNLIKELY(sym.parent == NULL)) {
-      rc = ENOMEM;
+      s->rc = ENOMEM;
       goto done;
     }
   }
@@ -237,10 +248,10 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
   ++s->next_size;
 
 done:
-  if (rc)
+  if (s->rc)
     clink_symbol_clear(&sym);
 
-  return rc;
+  return s->rc;
 }
 
 static void pop_symbol(state_t *s) {
@@ -261,7 +272,31 @@ static void pop_symbol(state_t *s) {
   --s->next_size;
 }
 
-static enum CXChildVisitResult visit(CXCursor cursor, state_t *s) {
+/** a method for yielding a discovered symbol in `visit`
+ *
+ * \param state State specific to this action
+ * \param category Category of the discovered symbol
+ * \param name Name of the symbol
+ * \param fname Filename in which the symbol was found
+ * \param lineno Line number within `fname` at which the symbol was found
+ * \param colno Column number within `lineno` at which the symbol was found
+ * \returns 0 on success or an errno on failure
+ */
+typedef int (*yielder)(void *state, clink_category_t category, const char *name,
+                       const char *fname, unsigned lineno, unsigned colno);
+
+/** a method for enqueuing a Clang cursor to expand in `visit`
+ *
+ * \param state State specific to this action
+ * \param cursor Cursor to enqueue
+ * \returns 0 on success or an errno on failure
+ */
+typedef int (*enqueuer)(void *state, CXCursor cursor);
+
+static enum CXChildVisitResult visit(CXCursor cursor, void *state,
+                                     yielder yield, enqueuer enqueue) {
+
+  int rc = 0;
 
   // retrieve the type of this symbol
   enum CXCursorKind kind = clang_getCursorKind(cursor);
@@ -343,7 +378,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, state_t *s) {
     const char *fname = clang_getCString(filename);
 
     // enqueue this symbol for future yielding
-    s->rc = push_symbol(s, category, name, fname, lineno, colno);
+    rc = yield(state, category, name, fname, lineno, colno);
 
     clang_disposeString(filename);
   }
@@ -352,12 +387,12 @@ done:
   clang_disposeString(text);
 
   // abort visitation if we have seen an error
-  if (s->rc)
+  if (rc)
     return CXChildVisit_Break;
 
   // enqueue this as a future cursor to expand
-  s->rc = push_cursor(s, cursor);
-  if (s->rc)
+  rc = enqueue(state, cursor);
+  if (rc)
     return CXChildVisit_Break;
 
   return CXChildVisit_Continue;
@@ -369,9 +404,7 @@ static enum CXChildVisitResult visit_iter(CXCursor cursor, CXCursor parent,
   // we do not need the parent cursor
   (void)parent;
 
-  state_t *s = data;
-
-  return visit(cursor, s);
+  return visit(cursor, data, push_symbol, push_cursor);
 }
 
 /// expand a pending cursor and add more entries to the next queue
