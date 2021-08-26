@@ -263,11 +263,6 @@ static void pop_symbol(state_t *s) {
 
 static enum CXChildVisitResult visit(CXCursor cursor, state_t *s) {
 
-  // enqueue this as a future cursor to expand
-  s->rc = push_cursor(s, cursor);
-  if (s->rc)
-    return CXChildVisit_Break;
-
   // retrieve the type of this symbol
   enum CXCursorKind kind = clang_getCursorKind(cursor);
   clink_category_t category = CLINK_INCLUDE;
@@ -356,7 +351,16 @@ static enum CXChildVisitResult visit(CXCursor cursor, state_t *s) {
 done:
   clang_disposeString(text);
 
-  return s->rc ? CXChildVisit_Break : CXChildVisit_Continue;
+  // abort visitation if we have seen an error
+  if (s->rc)
+    return CXChildVisit_Break;
+
+  // enqueue this as a future cursor to expand
+  s->rc = push_cursor(s, cursor);
+  if (s->rc)
+    return CXChildVisit_Break;
+
+  return CXChildVisit_Continue;
 }
 
 static enum CXChildVisitResult visit_iter(CXCursor cursor, CXCursor parent,
