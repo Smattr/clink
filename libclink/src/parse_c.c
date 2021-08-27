@@ -490,6 +490,25 @@ static int clang_err_to_errno(int err) {
   }
 }
 
+static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
+    size_t argc, const char **argv) {
+
+  // create a Clang index
+  static const int excludePCH = 0;
+  static const int displayDiagnostics = 0;
+  *index = clang_createIndex(excludePCH, displayDiagnostics);
+
+  // parse the input file
+  enum CXErrorCode err = clang_parseTranslationUnit2(*index, filename, argv,
+    argc, NULL, 0,
+    CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_KeepGoing,
+    tu);
+  if (err != CXError_Success)
+    return clang_err_to_errno(err);
+
+  return 0;
+}
+
 int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
     const char **argv) {
 
@@ -514,20 +533,8 @@ int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
   clink_iter_t *i = NULL;
   int rc = 0;
 
-  // create a Clang index
-  static const int excludePCH = 0;
-  static const int displayDiagnostics = 0;
-  s->index = clang_createIndex(excludePCH, displayDiagnostics);
-
-  // parse the input file
-  enum CXErrorCode err = clang_parseTranslationUnit2(s->index, filename, argv,
-    argc, NULL, 0,
-    CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_KeepGoing,
-    &s->tu);
-  if (err != CXError_Success) {
-    rc = clang_err_to_errno(err);
+  if ((rc = init(&s->index, &s->tu, filename, argc, argv)))
     goto done;
-  }
 
   // get a top level cursor
   CXCursor root = clang_getTranslationUnitCursor(s->tu);
