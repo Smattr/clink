@@ -42,11 +42,11 @@ typedef struct {
   /// status of our Clang traversal (0 OK, non-zero on error)
   int rc;
 
-} state_t;
+} iter_state_t;
 
-static void state_free(state_t **s) {
+static void state_free(iter_state_t **s) {
 
-  state_t *ss = *s;
+  iter_state_t *ss = *s;
 
   if (ss == NULL)
     return;
@@ -77,7 +77,7 @@ static void state_free(state_t **s) {
 
 static int push_cursor(void *state, CXCursor cursor) {
 
-  state_t *s = state;
+  iter_state_t *s = state;
 
   assert(s != NULL);
 
@@ -172,7 +172,7 @@ static int push_cursor(void *state, CXCursor cursor) {
   return s->rc;
 }
 
-static node_t pop_cursor(state_t *s) {
+static node_t pop_cursor(iter_state_t *s) {
 
   assert(s != NULL);
   assert(s->pending_size > 0);
@@ -193,7 +193,7 @@ static node_t pop_cursor(state_t *s) {
 static int push_symbol(void *state, clink_category_t category, const char *name,
     const char *path, unsigned lineno, unsigned colno) {
 
-  state_t *s = state;
+  iter_state_t *s = state;
 
   assert(s != NULL);
 
@@ -254,7 +254,7 @@ done:
   return s->rc;
 }
 
-static void pop_symbol(state_t *s) {
+static void pop_symbol(iter_state_t *s) {
 
   assert(s != NULL);
 
@@ -408,7 +408,7 @@ static enum CXChildVisitResult visit_iter(CXCursor cursor, CXCursor parent,
 }
 
 /// expand a pending cursor and add more entries to the next queue
-static int expand(state_t *s) {
+static int expand(iter_state_t *s) {
 
   assert(s != NULL);
   assert(s->pending_size > 0);
@@ -438,7 +438,7 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
   if (UNLIKELY(yielded == NULL))
     return EINVAL;
 
-  state_t *s = it->state;
+  iter_state_t *s = it->state;
 
   if (UNLIKELY(s == NULL))
     return EINVAL;
@@ -472,7 +472,7 @@ static void my_free(clink_iter_t *it) {
   if (it->state == NULL)
     return;
 
-  state_free((state_t**)&it->state);
+  state_free((iter_state_t**)&it->state);
 }
 
 // translate a libclang error into the closest errno equivalent
@@ -503,7 +503,7 @@ int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
     return errno;
 
   // allocate iterator state
-  state_t *s = calloc(1, sizeof(*s));
+  iter_state_t *s = calloc(1, sizeof(*s));
   if (UNLIKELY(s == NULL))
     return ENOMEM;
 
