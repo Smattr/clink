@@ -79,28 +79,8 @@ static void state_free(iter_state_t **s) {
   *s = NULL;
 }
 
-static int push_cursor(void *state, CXCursor cursor) {
-
-  iter_state_t *s = state;
-
-  assert(s != NULL);
-
-  // do we need to expand the pending collection?
-  if (s->pending_size == s->pending_capacity) {
-    size_t c = s->pending_capacity == 0 ? 1 : s->pending_capacity * 2;
-    node_t *p = realloc(s->pending, c * sizeof(p[0]));
-    if (UNLIKELY(p == NULL)) {
-      s->rc = ENOMEM;
-      return s->rc;
-    }
-    s->pending_capacity = c;
-    s->pending = p;
-  }
-
-  assert(s->pending_size < s->pending_capacity);
-
-  // determine if this cursor is a definition
-  bool is_definition = false;
+// determine if this cursor is a definition
+static bool is_definition(CXCursor cursor) {
   switch (clang_getCursorKind(cursor)) {
     case CXCursor_StructDecl:
     case CXCursor_UnionDecl:
@@ -126,17 +106,37 @@ static int push_cursor(void *state, CXCursor cursor) {
     case CXCursor_NamespaceAlias:
     case CXCursor_TypeAliasDecl:
     case CXCursor_MacroDefinition:
-      is_definition = true;
-      break;
+      return true;
     default:
-      // leave as-is
       break;
   }
+  return false;
+}
+
+static int push_cursor(void *state, CXCursor cursor) {
+
+  iter_state_t *s = state;
+
+  assert(s != NULL);
+
+  // do we need to expand the pending collection?
+  if (s->pending_size == s->pending_capacity) {
+    size_t c = s->pending_capacity == 0 ? 1 : s->pending_capacity * 2;
+    node_t *p = realloc(s->pending, c * sizeof(p[0]));
+    if (UNLIKELY(p == NULL)) {
+      s->rc = ENOMEM;
+      return s->rc;
+    }
+    s->pending_capacity = c;
+    s->pending = p;
+  }
+
+  assert(s->pending_size < s->pending_capacity);
 
   char *parent = NULL;
 
   // if this node is a definition, it can serve as a semantic parent to children
-  if (is_definition) {
+  if (is_definition(cursor)) {
 
     // extract its name
     CXString text = clang_getCursorSpelling(cursor);
