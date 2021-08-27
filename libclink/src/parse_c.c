@@ -44,6 +44,13 @@ typedef struct {
 
 } iter_state_t;
 
+static void deinit(CXTranslationUnit tu, CXIndex index) {
+  if (tu != NULL)
+    clang_disposeTranslationUnit(tu);
+
+  clang_disposeIndex(index);
+}
+
 static void state_free(iter_state_t **s) {
 
   iter_state_t *ss = *s;
@@ -65,11 +72,8 @@ static void state_free(iter_state_t **s) {
   ss->pending = NULL;
   ss->pending_size = ss->pending_capacity = 0;
 
-  if (ss->tu != NULL)
-    clang_disposeTranslationUnit(ss->tu);
+  deinit(ss->tu, ss->index);
   ss->tu = NULL;
-
-  clang_disposeIndex(ss->index);
 
   free(ss);
   *s = NULL;
