@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <clang-c/Index.h>
 #include <clink/c.h>
+#include <clink/db.h>
 #include <clink/iter.h>
 #include <clink/symbol.h>
 #include "../../common/compiler.h"
@@ -563,6 +564,129 @@ done:
   } else {
     *it = i;
   }
+
+  return rc;
+}
+
+// state used by a C one shot parser
+typedef struct {
+
+  /// database to insert into
+  clink_db_t *db;
+
+  /// named parent of the current context during traversal
+  const char *current_parent;
+
+  /// status of our Clang traversal (0 OK, non-zero on error)
+  int rc;
+
+} oneshot_state_t;
+
+static int add_symbol(void *state, clink_category_t category, const char *name,
+    const char *path, unsigned lineno, unsigned colno) {
+
+  oneshot_state_t *s = state;
+  assert(s != NULL);
+
+  clink_symbol_t symbol = {.category = category, .name = (char*)name,
+                           .path = (char*)path, .lineno = lineno,
+                           .colno = colno, .parent = (char*)s->current_parent};
+  s->rc = clink_db_add_symbol(s->db, &symbol);
+
+  return s->rc;
+}
+
+static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
+    CXClientData data);
+
+static int visit_children(void *state, CXCursor cursor) {
+
+  oneshot_state_t *s = state;
+  assert(s != NULL);
+  assert(s->rc == 0 && "failure did not terminate traversal");
+
+  // default to the parent of the current context
+  const char *parent = s->current_parent;
+
+  CXString text;
+  bool needs_dispose = false;
+
+  // if this node is a definition, it can serve as a semantic parent to children
+  if (is_definition(cursor)) {
+
+    // extract its name
+    text = clang_getCursorSpelling(cursor);
+    needs_dispose = true;
+    const char *ctext = clang_getCString(text);
+
+    // is this a valid name for a parent?
+    bool ok_parent = ctext != NULL && strcmp(ctext, "") != 0;
+
+    // save it for use
+    if (ok_parent)
+      parent = ctext;
+  }
+
+  // state for descendants of this cursor to see
+  oneshot_state_t for_children = {.db = s->db, .current_parent = parent};
+
+  // recursively descend into this cursor’s children
+  (void)clang_visitChildren(cursor, visit_oneshot, &for_children);
+
+  // propagate any errors the visitation encountered
+  s->rc = for_children.rc;
+
+  if (needs_dispose)
+    clang_disposeString(text);
+
+  return s->rc;
+}
+
+static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
+    CXClientData data) {
+
+  // we do not need the parent cursor
+  (void)parent;
+
+  return visit(cursor, data, add_symbol, visit_children);
+}
+
+int clink_parse_c_into(clink_db_t *db, const char *filename, size_t argc,
+    const char **argv) {
+
+  if (UNLIKELY(db == NULL))
+    return EINVAL;
+
+  if (UNLIKELY(filename == NULL))
+    return EINVAL;
+
+  if (UNLIKELY(argc > 0 && argv == NULL))
+    return EINVAL;
+
+  // check the file is readable
+  if (access(filename, R_OK) < 0)
+    return errno;
+
+  int rc = 0;
+
+  // initialise Clang
+  CXIndex index;
+  CXTranslationUnit tu;
+  if ((rc = init(&index, &tu, filename, argc, argv)))
+    goto done;
+
+  // get a top level cursor
+  CXCursor root = clang_getTranslationUnitCursor(tu);
+
+  // state for the traversal
+  oneshot_state_t state = {.db = db};
+
+  // traverse from the root node
+  (void)clang_visitChildren(root, visit_oneshot, &state);
+  rc = state.rc;
+
+done:
+  deinit(tu, index);
 
   return rc;
 }
