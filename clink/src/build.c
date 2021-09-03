@@ -170,42 +170,42 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
           break;
         }
 
-        clink_iter_t *it = NULL;
-
         // assembly
         if (is_asm(t.path)) {
+
+          clink_iter_t *it = NULL;
           progress(thread_id, "parsing asm file %s", display);
           rc = clink_parse_asm(&it, t.path);
+
+          if (rc == 0) {
+            // parse all symbols and add them to the database
+            while (true) {
+
+              const clink_symbol_t *symbol = NULL;
+              if ((rc = clink_iter_next_symbol(it, &symbol))) {
+                if (LIKELY(rc == ENOMSG)) // exhausted iterator
+                  rc = 0;
+                break;
+              }
+              assert(symbol != NULL);
+
+              DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
+                symbol->colno, symbol->name);
+              if (UNLIKELY((rc = clink_db_add_symbol(db, symbol))))
+                break;
+            }
+          }
+
+          clink_iter_free(&it);
 
         // C/C++
         } else {
           assert(is_c(t.path));
           progress(thread_id, "parsing C/C++ file %s", display);
           const char **argv = (const char**)option.cxx_argv;
-          rc = clink_parse_c(&it, t.path, option.cxx_argc, argv);
+          rc = clink_parse_c_into(db, t.path, option.cxx_argc, argv);
 
         }
-
-        if (rc == 0) {
-          // parse all symbols and add them to the database
-          while (true) {
-
-            const clink_symbol_t *symbol = NULL;
-            if ((rc = clink_iter_next_symbol(it, &symbol))) {
-              if (LIKELY(rc == ENOMSG)) // exhausted iterator
-                rc = 0;
-              break;
-            }
-            assert(symbol != NULL);
-
-            DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
-              symbol->colno, symbol->name);
-            if (UNLIKELY((rc = clink_db_add_symbol(db, symbol))))
-              break;
-          }
-        }
-
-        clink_iter_free(&it);
 
         if (UNLIKELY(rc))
           error(thread_id, "failed to parse %s: %s", display, strerror(rc));
