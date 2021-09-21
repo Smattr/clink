@@ -250,8 +250,8 @@ static int from_html(const state_t *s, const char *line, char **output) {
   return 0;
 }
 
-// advance to the next content line
-static int move_next(state_t *s) {
+// read the next content line
+static int move_next_core(state_t *s, char **line_mem, size_t *line_mem_size) {
 
   assert(s != NULL);
 
@@ -262,22 +262,28 @@ static int move_next(state_t *s) {
   free(s->last);
   s->last = NULL;
 
-  int rc = 0;
+  errno = 0;
+  if (UNLIKELY(getline(line_mem, line_mem_size, s->highlighted) < 0))
+    return errno;
+
+  // is this the end of the content?
+  if (strcmp(*line_mem, "</pre>\n") == 0)
+    return ENOMSG;
+
+  // turn this line into ANSI highlighting
+  return from_html(s, *line_mem, &s->last);
+}
+
+// advance to the next content line
+static int move_next(state_t *s) {
+
+  assert(s != NULL);
 
   char *line = NULL;
   size_t line_size = 0;
-  errno = 0;
-  if (UNLIKELY(getline(&line, &line_size, s->highlighted) < 0)) {
-    rc = errno;
+  int rc = move_next_core(s, &line, &line_size);
 
-  // is this the end of the content?
-  } else if (strcmp(line, "</pre>\n") == 0) {
-    // leave it->last = NULL indicating iterator exhaustion
-
-  } else {
-    // turn this line into ANSI highlighting
-    rc = from_html(s, line, &s->last);
-  }
+  // if move_next_core returned ENOMSG (end of content), we leave s->last NULL
 
   free(line);
 
