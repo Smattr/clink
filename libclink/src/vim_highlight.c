@@ -313,46 +313,34 @@ static void my_free(clink_iter_t *it) {
   state_free((state_t**)&it->state);
 }
 
-int clink_vim_highlight(clink_iter_t **it, const char *filename) {
+// initial translation to HTML and parse styles
+static int setup(state_t *s, const char *filename) {
 
-  if (UNLIKELY(it == NULL))
-    return EINVAL;
-
-  if (UNLIKELY(filename == NULL))
-    return EINVAL;
+  assert(s != NULL);
+  assert(filename != NULL);
 
   // validate that the file exists and is readable
   if (access(filename, R_OK) < 0)
     return errno;
 
-  // create state that we will maintain within the iterator
-  state_t *s = calloc(1, sizeof(*s));
-  if (UNLIKELY(s == NULL))
-    return ENOMEM;
-
-  clink_iter_t *i = NULL;
   int rc = 0;
 
   // create a temporary directory to use for scratch space
   if (UNLIKELY((rc = temp_dir(&s->dir))))
-    goto done;
+    return rc;
 
   // construct a path to a temporary file to use for output
-  if (UNLIKELY(asprintf(&s->output, "%s/temp.html", s->dir) < 0)) {
-    rc = errno;
-    goto done;
-  }
+  if (UNLIKELY(asprintf(&s->output, "%s/temp.html", s->dir) < 0))
+    return errno;
 
   // convert the input to highlighted HTML
   if (UNLIKELY((rc = convert_to_html(filename, s->output))))
-    goto done;
+    return rc;
 
   // open the generated HTML
   s->highlighted = fopen(s->output, "r");
-  if (s->highlighted == NULL) {
-    rc = errno;
-    goto done;
-  }
+  if (s->highlighted == NULL)
+    return errno;
 
   // The file we have open at this point has a structure like the following:
   //
@@ -384,7 +372,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   regex_t style_re;
   if (UNLIKELY((rc = regcomp(&style_re, STYLE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
-    goto done;
+    return rc;
   }
 
   char *line = NULL;
@@ -396,7 +384,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       rc = errno;
       free(line);
       if (rc)
-        goto done1;
+        goto done;
       break;
     }
 
@@ -424,7 +412,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       } else if (UNLIKELY(r != 0)) {
         rc = re_err_to_errno(r);
         free(line);
-        goto done1;
+        goto done;
       }
 
       // build a style defining these attributes
@@ -444,7 +432,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       if (UNLIKELY(style.name == NULL)) {
         rc = errno;
         free(line);
-        goto done1;
+        goto done;
       }
 
       // expand the styles collection to make room for this new entry
@@ -454,7 +442,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
         rc = ENOMEM;
         free(style.name);
         free(line);
-        goto done1;
+        goto done;
       }
       s->styles = styles;
       ++s->styles_size;
@@ -469,12 +457,37 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
     }
   }
 
+done:
+  regfree(&style_re);
+
+  return rc;
+}
+
+int clink_vim_highlight(clink_iter_t **it, const char *filename) {
+
+  if (UNLIKELY(it == NULL))
+    return EINVAL;
+
+  if (UNLIKELY(filename == NULL))
+    return EINVAL;
+
+  // create state that we will maintain within the iterator
+  state_t *s = calloc(1, sizeof(*s));
+  if (UNLIKELY(s == NULL))
+    return ENOMEM;
+
+  clink_iter_t *i = NULL;
+  int rc = 0;
+
+  if ((rc = setup(s, filename)))
+    goto done;
+
   // if we reached here, we successfully parsed the style list and are into the
   // content, so now create an iterator for the caller
   i = calloc(1, sizeof(*i));
   if (UNLIKELY(i == NULL)) {
     rc = ENOMEM;
-    goto done1;
+    goto done;
   }
 
   i->next_str = next;
@@ -482,8 +495,6 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   s = NULL;
   i->free = my_free;
 
-done1:
-  regfree(&style_re);
 done:
   if (rc) {
     clink_iter_free(&i);
