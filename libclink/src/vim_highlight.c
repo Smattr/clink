@@ -98,13 +98,11 @@ typedef struct {
 
 } state_t;
 
-// clean up and deallocate a state_t
-static void state_free(state_t **st) {
+// clean up and deallocate a state_t*
+static void state_free_core(state_t *s) {
 
-  if (st == NULL && *st == NULL)
+  if (s == NULL)
     return;
-
-  state_t *s = *st;
 
   for (size_t i = 0; i < s->styles_size; ++i) {
     free(s->styles[i].name);
@@ -130,9 +128,18 @@ static void state_free(state_t **st) {
     (void)rmdir(s->dir);
   free(s->dir);
   s->dir = NULL;
+}
 
-  free(s);
-  *st = NULL;
+// clean up and deallocate a state_t**
+static void state_free(state_t **s) {
+
+  if (s == NULL)
+    return;
+
+  state_free_core(*s);
+
+  free(*s);
+  *s = NULL;
 }
 
 // Decode a fragment of HTML text produced by Vim’s TOhtml. It is assumed that
