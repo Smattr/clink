@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "build.h"
+#include "../../common/compiler.h"
 #include <clink/clink.h>
 #include <errno.h>
 #include <getopt.h>
@@ -39,6 +40,10 @@ static void xappend(char ***list, size_t *len, const char *item) {
   // append the new item
   (*list)[*len - 1] = xstrdup(item);
 }
+
+/// list of user includes (`--include …` or `-I…`)
+static char **includes;
+static size_t includes_len;
 
 static void parse_args(int argc, char **argv) {
 
@@ -84,8 +89,7 @@ static void parse_args(int argc, char **argv) {
         exit(EXIT_SUCCESS);
 
       case 'I': // --include
-        xappend(&option.cxx_argv, &option.cxx_argc, "-I");
-        xappend(&option.cxx_argv, &option.cxx_argc, optarg);
+        xappend(&includes, &includes_len, optarg);
         break;
 
       case 'j': // --jobs
@@ -173,6 +177,19 @@ int main(int argc, char **argv) {
     goto done;
   }
   assert(option.src != NULL && option.src_len > 0);
+
+  // setup `-I`/`-isystem` options
+  rc = set_cxx_flags(includes, includes_len);
+  // we do not need the includes collection any more
+  for (size_t i = 0; i < includes_len; ++i)
+    free(includes[i]);
+  free(includes);
+  includes = NULL;
+  includes_len = 0;
+  if (UNLIKELY(rc)) {
+    fprintf(stderr, "failed to set CXX flags: %s\n", strerror(rc));
+    goto done;
+  }
 
   if (option.update_database) {
     for (size_t i = 0; i < option.src_len; ++i) {

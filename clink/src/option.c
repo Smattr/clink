@@ -1,5 +1,8 @@
 #include <assert.h>
+#include <clink/clink.h>
+#include "../../common/compiler.h"
 #include <errno.h>
+#include <limits.h>
 #include "option.h"
 #include "path.h"
 #include <stdbool.h>
@@ -107,6 +110,73 @@ done:
     option.src = NULL;
     option.src_len = 0;
   }
+
+  return rc;
+}
+
+int set_cxx_flags(char **includes, size_t includes_len) {
+
+  // alias the parameters to names that more clearly fit our usage
+  char **user = includes;
+  size_t user_len = includes_len;
+
+  int rc = 0;
+
+  // retrieve the default include paths to specify as system directories
+  char **system = NULL;
+  size_t system_len = 0;
+  if (UNLIKELY((rc = clink_compiler_includes(NULL, &system, &system_len))))
+    return rc;
+
+  // ensure calculating the allocation below will not overflow
+  if (UNLIKELY(SIZE_MAX / 2 < system_len))
+    return EOVERFLOW;
+  if (UNLIKELY(SIZE_MAX / 2 < user_len))
+    return EOVERFLOW;
+  if (UNLIKELY(SIZE_MAX - 2 * system_len < 2 * user_len))
+    return EOVERFLOW;
+
+  // allocate space for both system and user directories with a prefix
+  assert(option.cxx_argv == NULL && "setting up CXX argv twice");
+  size_t argc = 2 * system_len + 2 * user_len;
+  char **argv = calloc(argc, sizeof(argv[0]));
+  if (UNLIKELY(argv == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
+  // copy in the system paths, taking ownership
+  for (size_t i = 0; i < system_len; ++i) {
+    argv[i * 2] = strdup("-isystem");
+    if (UNLIKELY(argv[i * 2] == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+    argv[i * 2 + 1] = system[i];
+    system[i] = NULL;
+  }
+
+  // copy in the user paths, taking ownership
+  for (size_t i = 0; i < user_len; ++i) {
+    size_t offset = i + system_len;
+    argv[offset * 2] = strdup("-I");
+    if (UNLIKELY(argv[offset * 2] == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+    argv[offset * 2 + 1] = user[i];
+    user[i] = NULL;
+  }
+
+done:
+  if (rc) {
+    for (size_t i = 0; i < argc; ++i)
+      free(argv[i]);
+    free(argv);
+  }
+  for (size_t i = 0; i < system_len; ++i)
+    free(system[i]);
+  free(system);
 
   return rc;
 }
