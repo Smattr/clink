@@ -60,6 +60,7 @@ static void parse_args(int argc, char **argv) {
         {"jobs",          required_argument, 0, 'j'},
         {"line-oriented", no_argument,       0, 'l'},
         {"no-build",      no_argument,       0, 'd'},
+        {"nostdinc",      no_argument,       0, 130},
         {0, 0, 0, 0},
         // clang-format on
     };
@@ -128,6 +129,10 @@ static void parse_args(int argc, char **argv) {
 
       case 129: // --debug
         option.debug = true;
+        break;
+
+      case 130: // --nostdinc
+        option.stdinc = false;
         break;
 
       default:

@@ -37,6 +37,9 @@ typedef struct {
   char **cxx_argv;
   size_t cxx_argc;
 
+  // include standard system directories in the include path?
+  bool stdinc;
+
   // debug mode
   bool debug;
 

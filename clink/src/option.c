@@ -22,6 +22,7 @@ option_t option = {
   .colour = AUTO,
   .cxx_argv = NULL,
   .cxx_argc = 0,
+  .stdinc = true,
   .debug = false,
 };
 
@@ -125,8 +126,10 @@ int set_cxx_flags(char **includes, size_t includes_len) {
   // retrieve the default include paths to specify as system directories
   char **system = NULL;
   size_t system_len = 0;
-  if (UNLIKELY((rc = clink_compiler_includes(NULL, &system, &system_len))))
-    return rc;
+  if (option.stdinc) {
+    if (UNLIKELY((rc = clink_compiler_includes(NULL, &system, &system_len))))
+      return rc;
+  }
 
   // ensure calculating the allocation below will not overflow
   if (UNLIKELY(SIZE_MAX / 2 < system_len))
