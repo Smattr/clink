@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <clink/db.h>
 #include <clink/iter.h>
 #include <clink/vim.h>
 #include "colour.h"
@@ -515,6 +516,47 @@ done:
   } else {
     *it = i;
   }
+
+  return rc;
+}
+
+int clink_vim_highlight_into(clink_db_t *db, const char *filename) {
+
+  if (UNLIKELY(db == NULL))
+    return EINVAL;
+
+  if (UNLIKELY(filename == NULL))
+    return EINVAL;
+
+  // setup a state for capturing dynamic resources
+  state_t s = {0};
+
+  int rc = 0;
+
+  // initial translation to highlighted content
+  if (UNLIKELY((rc = setup(&s, filename))))
+    goto done;
+
+  // parse the highlighted content line-by-line
+  char *line = NULL;
+  size_t line_size = 0;
+  for (unsigned long lineno = 1; ; ++lineno) {
+
+    if ((rc = move_next_core(&s, &line, &line_size))) {
+      if (LIKELY(rc == ENOMSG))
+        rc = 0;
+      break;
+    }
+
+    assert(s.last != NULL && "iterator returned NULL item");
+    if (UNLIKELY((rc = clink_db_add_line(db, filename, lineno, s.last))))
+      break;
+  }
+
+  free(line);
+
+done:
+  state_free_core(&s);
 
   return rc;
 }
