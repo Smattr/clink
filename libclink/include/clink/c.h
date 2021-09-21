@@ -23,8 +23,7 @@ extern "C" {
 CLINK_API int clink_parse_c(clink_iter_t **it, const char *filename,
                             size_t argc, const char **argv);
 
-/**
- * parse the given C/C++ file, inserting results into the given database
+/** parse the given C/C++ file, inserting results into the given database
  *
  * This function is provided as an alternative to `clink_parse_c` for when the
  * action being done with every result is simply to insert it into a Clink
