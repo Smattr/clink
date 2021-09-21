@@ -49,17 +49,19 @@ static void parse_args(int argc, char **argv) {
 
   while (true) {
     static const struct option opts[] = {
-      {"build-only",    no_argument,       0, 'b'},
-      {"color",         required_argument, 0, 128 },
-      {"colour",        required_argument, 0, 128 },
-      {"database",      required_argument, 0, 'f'},
-      {"debug",         no_argument,       0, 129 },
-      {"help",          no_argument,       0, 'h'},
-      {"include",       required_argument, 0, 'I'},
-      {"jobs",          required_argument, 0, 'j'},
-      {"line-oriented", no_argument,       0, 'l'},
-      {"no-build",      no_argument,       0, 'd'},
-      {0, 0, 0, 0},
+        // clang-format off
+        {"build-only",    no_argument,       0, 'b'},
+        {"color",         required_argument, 0, 128},
+        {"colour",        required_argument, 0, 128},
+        {"database",      required_argument, 0, 'f'},
+        {"debug",         no_argument,       0, 129},
+        {"help",          no_argument,       0, 'h'},
+        {"include",       required_argument, 0, 'I'},
+        {"jobs",          required_argument, 0, 'j'},
+        {"line-oriented", no_argument,       0, 'l'},
+        {"no-build",      no_argument,       0, 'd'},
+        {0, 0, 0, 0},
+        // clang-format on
     };
 
     int index = 0;
