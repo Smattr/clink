@@ -216,31 +216,8 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       // a file to be read and syntax highlighted
       case READ: {
         progress(thread_id, "syntax highlighting %s", display);
-        clink_iter_t *it = NULL;
-        rc = clink_vim_highlight(&it, t.path);
 
-        if (LIKELY(rc == 0)) {
-          // retrieve all lines and add them to the database
-          unsigned long lineno = 1;
-          while (true) {
-
-            const char *line = NULL;
-            if ((rc = clink_iter_next_str(it, &line))) {
-              if (LIKELY(rc == ENOMSG)) // exhausted iterator
-                rc = 0;
-              break;
-            }
-
-            if (UNLIKELY((rc = clink_db_add_line(db, t.path, lineno, line))))
-              break;
-
-            ++lineno;
-          }
-        }
-
-        clink_iter_free(&it);
-
-        if (UNLIKELY(rc)) {
+        if (UNLIKELY((rc = clink_vim_highlight_into(db, t.path)))) {
 
           // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
           // cryptically. If it looks like this happened, give the user a less

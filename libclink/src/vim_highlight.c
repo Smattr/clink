@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <clink/db.h>
 #include <clink/iter.h>
 #include <clink/vim.h>
 #include "colour.h"
@@ -98,13 +99,11 @@ typedef struct {
 
 } state_t;
 
-// clean up and deallocate a state_t
-static void state_free(state_t **st) {
+// clean up and deallocate a state_t*
+static void state_free_core(state_t *s) {
 
-  if (st == NULL && *st == NULL)
+  if (s == NULL)
     return;
-
-  state_t *s = *st;
 
   for (size_t i = 0; i < s->styles_size; ++i) {
     free(s->styles[i].name);
@@ -130,9 +129,18 @@ static void state_free(state_t **st) {
     (void)rmdir(s->dir);
   free(s->dir);
   s->dir = NULL;
+}
 
-  free(s);
-  *st = NULL;
+// clean up and deallocate a state_t**
+static void state_free(state_t **s) {
+
+  if (s == NULL)
+    return;
+
+  state_free_core(*s);
+
+  free(*s);
+  *s = NULL;
 }
 
 // Decode a fragment of HTML text produced by Vim’s TOhtml. It is assumed that
@@ -243,8 +251,8 @@ static int from_html(const state_t *s, const char *line, char **output) {
   return 0;
 }
 
-// advance to the next content line
-static int move_next(state_t *s) {
+// read the next content line
+static int move_next_core(state_t *s, char **line_mem, size_t *line_mem_size) {
 
   assert(s != NULL);
 
@@ -255,22 +263,28 @@ static int move_next(state_t *s) {
   free(s->last);
   s->last = NULL;
 
-  int rc = 0;
+  errno = 0;
+  if (UNLIKELY(getline(line_mem, line_mem_size, s->highlighted) < 0))
+    return errno;
+
+  // is this the end of the content?
+  if (strcmp(*line_mem, "</pre>\n") == 0)
+    return ENOMSG;
+
+  // turn this line into ANSI highlighting
+  return from_html(s, *line_mem, &s->last);
+}
+
+// advance to the next content line
+static int move_next(state_t *s) {
+
+  assert(s != NULL);
 
   char *line = NULL;
   size_t line_size = 0;
-  errno = 0;
-  if (UNLIKELY(getline(&line, &line_size, s->highlighted) < 0)) {
-    rc = errno;
+  int rc = move_next_core(s, &line, &line_size);
 
-  // is this the end of the content?
-  } else if (strcmp(line, "</pre>\n") == 0) {
-    // leave it->last = NULL indicating iterator exhaustion
-
-  } else {
-    // turn this line into ANSI highlighting
-    rc = from_html(s, line, &s->last);
-  }
+  // if move_next_core returned ENOMSG (end of content), we leave s->last NULL
 
   free(line);
 
@@ -313,46 +327,34 @@ static void my_free(clink_iter_t *it) {
   state_free((state_t**)&it->state);
 }
 
-int clink_vim_highlight(clink_iter_t **it, const char *filename) {
+// initial translation to HTML and parse styles
+static int setup(state_t *s, const char *filename) {
 
-  if (UNLIKELY(it == NULL))
-    return EINVAL;
-
-  if (UNLIKELY(filename == NULL))
-    return EINVAL;
+  assert(s != NULL);
+  assert(filename != NULL);
 
   // validate that the file exists and is readable
   if (access(filename, R_OK) < 0)
     return errno;
 
-  // create state that we will maintain within the iterator
-  state_t *s = calloc(1, sizeof(*s));
-  if (UNLIKELY(s == NULL))
-    return ENOMEM;
-
-  clink_iter_t *i = NULL;
   int rc = 0;
 
   // create a temporary directory to use for scratch space
   if (UNLIKELY((rc = temp_dir(&s->dir))))
-    goto done;
+    return rc;
 
   // construct a path to a temporary file to use for output
-  if (UNLIKELY(asprintf(&s->output, "%s/temp.html", s->dir) < 0)) {
-    rc = errno;
-    goto done;
-  }
+  if (UNLIKELY(asprintf(&s->output, "%s/temp.html", s->dir) < 0))
+    return errno;
 
   // convert the input to highlighted HTML
   if (UNLIKELY((rc = convert_to_html(filename, s->output))))
-    goto done;
+    return rc;
 
   // open the generated HTML
   s->highlighted = fopen(s->output, "r");
-  if (s->highlighted == NULL) {
-    rc = errno;
-    goto done;
-  }
+  if (s->highlighted == NULL)
+    return errno;
 
   // The file we have open at this point has a structure like the following:
   //
@@ -384,7 +386,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   regex_t style_re;
   if (UNLIKELY((rc = regcomp(&style_re, STYLE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
-    goto done;
+    return rc;
   }
 
   char *line = NULL;
@@ -396,7 +398,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       rc = errno;
       free(line);
       if (rc)
-        goto done1;
+        goto done;
       break;
     }
 
@@ -424,7 +426,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       } else if (UNLIKELY(r != 0)) {
         rc = re_err_to_errno(r);
         free(line);
-        goto done1;
+        goto done;
       }
 
       // build a style defining these attributes
@@ -444,7 +446,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
       if (UNLIKELY(style.name == NULL)) {
         rc = errno;
         free(line);
-        goto done1;
+        goto done;
       }
 
       // expand the styles collection to make room for this new entry
@@ -454,7 +456,7 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
         rc = ENOMEM;
         free(style.name);
         free(line);
-        goto done1;
+        goto done;
       }
       s->styles = styles;
       ++s->styles_size;
@@ -469,12 +471,37 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
     }
   }
 
+done:
+  regfree(&style_re);
+
+  return rc;
+}
+
+int clink_vim_highlight(clink_iter_t **it, const char *filename) {
+
+  if (UNLIKELY(it == NULL))
+    return EINVAL;
+
+  if (UNLIKELY(filename == NULL))
+    return EINVAL;
+
+  // create state that we will maintain within the iterator
+  state_t *s = calloc(1, sizeof(*s));
+  if (UNLIKELY(s == NULL))
+    return ENOMEM;
+
+  clink_iter_t *i = NULL;
+  int rc = 0;
+
+  if ((rc = setup(s, filename)))
+    goto done;
+
   // if we reached here, we successfully parsed the style list and are into the
   // content, so now create an iterator for the caller
   i = calloc(1, sizeof(*i));
   if (UNLIKELY(i == NULL)) {
     rc = ENOMEM;
-    goto done1;
+    goto done;
   }
 
   i->next_str = next;
@@ -482,8 +509,6 @@ int clink_vim_highlight(clink_iter_t **it, const char *filename) {
   s = NULL;
   i->free = my_free;
 
-done1:
-  regfree(&style_re);
 done:
   if (rc) {
     clink_iter_free(&i);
@@ -491,6 +516,47 @@ done:
   } else {
     *it = i;
   }
+
+  return rc;
+}
+
+int clink_vim_highlight_into(clink_db_t *db, const char *filename) {
+
+  if (UNLIKELY(db == NULL))
+    return EINVAL;
+
+  if (UNLIKELY(filename == NULL))
+    return EINVAL;
+
+  // setup a state for capturing dynamic resources
+  state_t s = {0};
+
+  int rc = 0;
+
+  // initial translation to highlighted content
+  if (UNLIKELY((rc = setup(&s, filename))))
+    goto done;
+
+  // parse the highlighted content line-by-line
+  char *line = NULL;
+  size_t line_size = 0;
+  for (unsigned long lineno = 1; ; ++lineno) {
+
+    if ((rc = move_next_core(&s, &line, &line_size))) {
+      if (LIKELY(rc == ENOMSG))
+        rc = 0;
+      break;
+    }
+
+    assert(s.last != NULL && "iterator returned NULL item");
+    if (UNLIKELY((rc = clink_db_add_line(db, filename, lineno, s.last))))
+      break;
+  }
+
+  free(line);
+
+done:
+  state_free_core(&s);
 
   return rc;
 }
