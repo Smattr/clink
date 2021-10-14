@@ -2,8 +2,8 @@
 #include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 // file to open
@@ -36,8 +36,8 @@ static void parse_args(int argc, char **argv) {
   while (true) {
 
     static struct option opts[] = {
-      { "include", required_argument, 0, 'I' },
-      { 0, 0, 0, 0 },
+        {"include", required_argument, 0, 'I'},
+        {0, 0, 0, 0},
     };
 
     int option_index = 0;
@@ -48,23 +48,23 @@ static void parse_args(int argc, char **argv) {
 
     switch (c) {
 
-      case 'I':
-        // expand clang_argv
-        clang_argc += 2;
-        clang_argv = xrealloc(clang_argv, clang_argc * sizeof(clang_argv[0]));
+    case 'I':
+      // expand clang_argv
+      clang_argc += 2;
+      clang_argv = xrealloc(clang_argv, clang_argc * sizeof(clang_argv[0]));
 
-        // add arguments to include the given directory
-        clang_argv[clang_argc - 2] = xstrdup("-I");
-        clang_argv[clang_argc - 1] = xstrdup(optarg);
+      // add arguments to include the given directory
+      clang_argv[clang_argc - 2] = xstrdup("-I");
+      clang_argv[clang_argc - 1] = xstrdup(optarg);
 
-        break;
+      break;
 
-      case '?':
-        fprintf(stderr, "usage: %s [-I PATH | --include PATH] filename\n"
-                        " test utiltiy for Clink's C/C++ parser\n",
-                        argv[0]);
-        exit(EXIT_FAILURE);
-
+    case '?':
+      fprintf(stderr,
+              "usage: %s [-I PATH | --include PATH] filename\n"
+              " test utiltiy for Clink's C/C++ parser\n",
+              argv[0]);
+      exit(EXIT_FAILURE);
     }
   }
 
@@ -90,7 +90,8 @@ int main(int argc, char **argv) {
   // create an iterator for parsing the input file
   int rc = 0;
   clink_iter_t *it = NULL;
-  if ((rc = clink_parse_c(&it, filename, clang_argc, (const char**)clang_argv))) {
+  if ((rc = clink_parse_c(&it, filename, clang_argc,
+                          (const char **)clang_argv))) {
     fprintf(stderr, "clink_parse_c: %s\n", strerror(rc));
     goto done;
   }
@@ -112,22 +113,21 @@ int main(int argc, char **argv) {
 
     switch (sym->category) {
 
-      case CLINK_DEFINITION:
-        printf("definition");
-        break;
+    case CLINK_DEFINITION:
+      printf("definition");
+      break;
 
-      case CLINK_INCLUDE:
-        printf("include");
-        break;
+    case CLINK_INCLUDE:
+      printf("include");
+      break;
 
-      case CLINK_FUNCTION_CALL:
-        printf("function call");
-        break;
+    case CLINK_FUNCTION_CALL:
+      printf("function call");
+      break;
 
-      case CLINK_REFERENCE:
-        printf("reference");
-        break;
-
+    case CLINK_REFERENCE:
+      printf("reference");
+      break;
     }
 
     printf(" of %s\n", sym->name);
