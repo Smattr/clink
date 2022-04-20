@@ -61,6 +61,7 @@ static void parse_args(int argc, char **argv) {
         {"line-oriented", no_argument,       0, 'l'},
         {"no-build",      no_argument,       0, 'd'},
         {"nostdinc",      no_argument,       0, 130},
+        {"version",       no_argument,       0, 'V'},
         {0, 0, 0, 0},
         // clang-format on
     };
@@ -134,6 +135,10 @@ static void parse_args(int argc, char **argv) {
       case 130: // --nostdinc
         option.stdinc = false;
         break;
+
+      case 'V': // --version
+        fprintf(stderr, "clink version %s\n", clink_version());
+        exit(EXIT_SUCCESS);
 
       default:
         exit(EXIT_FAILURE);
