@@ -94,8 +94,7 @@ def main(args: [str]) -> int:
   # get the contents of the old version file if it exists
   old = None
   if os.path.exists(args[1]):
-    with open(args[1], "rt") as f:
-      old = f.read()
+    old = Path(args[1]).read_text()
 
   version = None
 
@@ -124,8 +123,7 @@ def main(args: [str]) -> int:
   # If the version has changed, update the output. Otherwise we leave the old
   # contents – and more importantly, the timestamp – intact.
   if old != new:
-    with open(args[1], "wt") as f:
-      f.write(new)
+    Path(args[1]).write_text(new)
 
   return 0
 
