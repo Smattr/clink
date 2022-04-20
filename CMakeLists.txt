@@ -90,3 +90,8 @@ add_test(join test/join/join)
 add_test(run-echo test/run-echo/run-echo)
 add_test(run-echo-mask test/run-echo-mask/run-echo-mask)
 add_test(run-touch test/run-touch/run-touch)
+
+add_custom_target(format
+  COMMAND git ls-files -z '**/*.c' '**/*.h' |
+    xargs -0 -- clang-format -i --style=file
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
