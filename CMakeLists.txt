@@ -7,9 +7,9 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wwrite-strings -Wmissing-prototypes -Wshadow")
 
-# make asprintf() and posix_openpt() prototypes visible
+# make asprintf() prototype visible
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-  add_definitions(-D_GNU_SOURCE -D_XOPEN_SOURCE=700)
+  add_definitions(-D_GNU_SOURCE)
 endif()
 
 # enable --as-needed, present on GNU ld on Linux, to minimise dependencies
