@@ -1,22 +1,22 @@
-#include <assert.h>
 #include "build.h"
-#include <clink/clink.h>
 #include "../../common/compiler.h"
-#include <errno.h>
 #include "option.h"
 #include "path.h"
-#include <pthread.h>
 #include "sigint.h"
+#include "work_queue.h"
+#include <assert.h>
+#include <clink/clink.h>
+#include <errno.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "work_queue.h"
 
 /// Is stdout a tty? Initialised in build().
 static bool tty;
@@ -42,8 +42,8 @@ static bool smart_progress(void) {
 }
 
 /// print progress indication
-__attribute__((format(printf, 2, 3)))
-static void progress(unsigned long thread_id, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) static void
+progress(unsigned long thread_id, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   flockfile(stdout);
@@ -67,8 +67,8 @@ static void progress(unsigned long thread_id, const char *fmt, ...) {
 }
 
 /// print an error message
-__attribute__((format(printf, 2, 3)))
-static void error(unsigned long thread_id, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) static void error(unsigned long thread_id,
+                                                        const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   flockfile(stdout);
@@ -91,16 +91,16 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
 
 /// Debug printf. This is implemented as a macro to avoid expensive varargs
 /// handling when we are not in debug mode.
-#define DEBUG(args...) \
-  do { \
-    if (UNLIKELY(option.debug)) { \
-      progress(thread_id, args); \
-    } \
+#define DEBUG(args...)                                                         \
+  do {                                                                         \
+    if (UNLIKELY(option.debug)) {                                              \
+      progress(thread_id, args);                                               \
+    }                                                                          \
   } while (0)
 
 /// drain a work queue, processing its entries into the database
 static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
-    work_queue_t *wq) {
+                   work_queue_t *wq) {
 
   assert(db != NULL);
   assert(wq != NULL);
@@ -157,92 +157,90 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     switch (t.type) {
 
-      // a file to be parsed
-      case PARSE: {
+    // a file to be parsed
+    case PARSE: {
 
-        // remove anything related to the file we are about to parse
-        clink_db_remove(db, t.path);
+      // remove anything related to the file we are about to parse
+      clink_db_remove(db, t.path);
 
-        // enqueue this file for reading, as we know we will need its contents
-        if (UNLIKELY((rc = work_queue_push_for_read(wq, t.path)))) {
-          error(thread_id, "failed to queue %s for reading: %s", display,
-            strerror(rc));
-          break;
+      // enqueue this file for reading, as we know we will need its contents
+      if (UNLIKELY((rc = work_queue_push_for_read(wq, t.path)))) {
+        error(thread_id, "failed to queue %s for reading: %s", display,
+              strerror(rc));
+        break;
+      }
+
+      // assembly
+      if (is_asm(t.path)) {
+
+        clink_iter_t *it = NULL;
+        progress(thread_id, "parsing asm file %s", display);
+        rc = clink_parse_asm(&it, t.path);
+
+        if (rc == 0) {
+          // parse all symbols and add them to the database
+          while (true) {
+
+            const clink_symbol_t *symbol = NULL;
+            if ((rc = clink_iter_next_symbol(it, &symbol))) {
+              if (LIKELY(rc == ENOMSG)) // exhausted iterator
+                rc = 0;
+              break;
+            }
+            assert(symbol != NULL);
+
+            DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
+                  symbol->colno, symbol->name);
+            if (UNLIKELY((rc = clink_db_add_symbol(db, symbol))))
+              break;
+          }
         }
 
-        // assembly
-        if (is_asm(t.path)) {
-
-          clink_iter_t *it = NULL;
-          progress(thread_id, "parsing asm file %s", display);
-          rc = clink_parse_asm(&it, t.path);
-
-          if (rc == 0) {
-            // parse all symbols and add them to the database
-            while (true) {
-
-              const clink_symbol_t *symbol = NULL;
-              if ((rc = clink_iter_next_symbol(it, &symbol))) {
-                if (LIKELY(rc == ENOMSG)) // exhausted iterator
-                  rc = 0;
-                break;
-              }
-              assert(symbol != NULL);
-
-              DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
-                symbol->colno, symbol->name);
-              if (UNLIKELY((rc = clink_db_add_symbol(db, symbol))))
-                break;
-            }
-          }
-
-          clink_iter_free(&it);
+        clink_iter_free(&it);
 
         // C/C++
+      } else {
+        assert(is_c(t.path));
+        progress(thread_id, "parsing C/C++ file %s", display);
+        const char **argv = (const char **)option.cxx_argv;
+        rc = clink_parse_c_into(db, t.path, option.cxx_argc, argv);
+      }
+
+      if (UNLIKELY(rc))
+        error(thread_id, "failed to parse %s: %s", display, strerror(rc));
+
+      break;
+    }
+
+    // a file to be read and syntax highlighted
+    case READ: {
+      progress(thread_id, "syntax highlighting %s", display);
+
+      if (UNLIKELY((rc = clink_vim_highlight_into(db, t.path)))) {
+
+        // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
+        // cryptically. If it looks like this happened, give the user a less
+        // confusing message.
+        if (sigint_pending()) {
+          error(thread_id, "failed to read %s: received SIGINT", display);
+
         } else {
-          assert(is_c(t.path));
-          progress(thread_id, "parsing C/C++ file %s", display);
-          const char **argv = (const char**)option.cxx_argv;
-          rc = clink_parse_c_into(db, t.path, option.cxx_argc, argv);
-
+          error(thread_id, "failed to read %s: %s", display, strerror(rc));
         }
-
-        if (UNLIKELY(rc))
-          error(thread_id, "failed to parse %s: %s", display, strerror(rc));
-
-        break;
       }
 
-      // a file to be read and syntax highlighted
-      case READ: {
-        progress(thread_id, "syntax highlighting %s", display);
-
-        if (UNLIKELY((rc = clink_vim_highlight_into(db, t.path)))) {
-
-          // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
-          // cryptically. If it looks like this happened, give the user a less
-          // confusing message.
-          if (sigint_pending()) {
-            error(thread_id, "failed to read %s: received SIGINT", display);
-
-          } else {
-            error(thread_id, "failed to read %s: %s", display, strerror(rc));
-          }
+      // now we can insert a record for the file
+      if (rc == 0) {
+        struct stat st;
+        if (LIKELY(stat(t.path, &st) == 0)) {
+          uint64_t hash = (uint64_t)st.st_size;
+          uint64_t timestamp = (uint64_t)st.st_mtime;
+          (void)clink_db_add_record(db, t.path, hash, timestamp);
         }
-
-        // now we can insert a record for the file
-        if (rc == 0) {
-          struct stat st;
-          if (LIKELY(stat(t.path, &st) == 0)) {
-            uint64_t hash = (uint64_t)st.st_size;
-            uint64_t timestamp = (uint64_t)st.st_mtime;
-            (void)clink_db_add_record(db, t.path, hash, timestamp);
-          }
-        }
-
-        break;
       }
 
+      break;
+    }
     }
 
     free(display);
@@ -290,7 +288,7 @@ static void *process_entry(void *args) {
 
   int rc = process(thread_id, threads, db, wq);
 
-  return (void*)(intptr_t)rc;
+  return (void *)(intptr_t)rc;
 }
 
 // call process() multi-threaded
@@ -315,7 +313,7 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
   // set up data for all threads
   for (size_t i = 1; i < option.threads; ++i)
     args[i - 1] = (process_args_t){
-      .thread_id = i, .threads = threads, .db = db, .wq = wq };
+        .thread_id = i, .threads = threads, .db = db, .wq = wq};
 
   // start all threads
   size_t started = 0;
@@ -382,7 +380,7 @@ int build(clink_db_t *db) {
 
     if (UNLIKELY(rc)) {
       fprintf(stderr, "failed to add %s to work queue: %s\n", option.src[i],
-        strerror(rc));
+              strerror(rc));
       goto done;
     }
   }

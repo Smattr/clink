@@ -2,15 +2,15 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
 #include <assert.h>
 #include <clink/db.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -59,8 +59,10 @@ int main(void) {
     uint64_t hash, timestamp;
     int r = clink_db_find_record(db, "/baz/bar.c", &hash, &timestamp);
     if (r != ENOENT) {
-      fprintf(stderr, "unexpected result from finding non-existent file: %d != "
-        "ENOENT\n", r);
+      fprintf(stderr,
+              "unexpected result from finding non-existent file: %d != "
+              "ENOENT\n",
+              r);
       rc = -1;
     }
   }
@@ -70,8 +72,10 @@ int main(void) {
     uint64_t hash;
     int r = clink_db_find_record(db, "/baz/bar.c", &hash, NULL);
     if (r != ENOENT) {
-      fprintf(stderr, "unexpected result from finding non-existent file, with "
-        "null timestamp: %d != ENOENT\n", r);
+      fprintf(stderr,
+              "unexpected result from finding non-existent file, with "
+              "null timestamp: %d != ENOENT\n",
+              r);
       rc = -1;
     }
   }
@@ -79,16 +83,20 @@ int main(void) {
     uint64_t timestamp;
     int r = clink_db_find_record(db, "/baz/bar.c", NULL, &timestamp);
     if (r != ENOENT) {
-      fprintf(stderr, "unexpected result from finding non-existent file, with "
-        "null hash: %d != ENOENT\n", r);
+      fprintf(stderr,
+              "unexpected result from finding non-existent file, with "
+              "null hash: %d != ENOENT\n",
+              r);
       rc = -1;
     }
   }
   if (rc == 0) {
     int r = clink_db_find_record(db, "/baz/bar.c", NULL, NULL);
     if (r != ENOENT) {
-      fprintf(stderr, "unexpected result from finding non-existent file, with "
-        "null hash and timestamp: %d != ENOENT\n", r);
+      fprintf(stderr,
+              "unexpected result from finding non-existent file, with "
+              "null hash and timestamp: %d != ENOENT\n",
+              r);
       rc = -1;
     }
   }
@@ -99,7 +107,7 @@ int main(void) {
       uint64_t hash, timestamp;
       if ((rc = clink_db_find_record(db, "/foo/bar.c", &hash, &timestamp))) {
         fprintf(stderr, "unexpected result from finding file: %s\n",
-          strerror(rc));
+                strerror(rc));
         break;
       }
 
@@ -121,7 +129,7 @@ int main(void) {
       uint64_t hash;
       if ((rc = clink_db_find_record(db, "/foo/bar.c", &hash, NULL))) {
         fprintf(stderr, "unexpected result from finding file: %s\n",
-          strerror(rc));
+                strerror(rc));
         break;
       }
 

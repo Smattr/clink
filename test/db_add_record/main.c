@@ -2,7 +2,7 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
 #include <assert.h>

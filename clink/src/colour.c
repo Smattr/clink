@@ -7,9 +7,7 @@
 // we need to pack a colour combination in this way because the default ncurses
 // implementation only supports 64 colour pairs and hence rejects any colour ID
 // above 64
-static short colour_pair_id(short fg, short bg) {
-  return ((fg << 3) | bg) + 1;
-}
+static short colour_pair_id(short fg, short bg) { return ((fg << 3) | bg) + 1; }
 
 int init_ncurses_colours(void) {
 
@@ -24,8 +22,9 @@ int init_ncurses_colours(void) {
   // make the current terminal colour scheme available
   use_default_colors();
 
-  static const short COLOURS[] = { COLOR_BLACK, COLOR_RED, COLOR_GREEN,
-    COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE };
+  static const short COLOURS[] = {COLOR_BLACK,  COLOR_RED,  COLOR_GREEN,
+                                  COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA,
+                                  COLOR_CYAN,   COLOR_WHITE};
 
   // use a simple encoding scheme to configure every possible colour
   // combination
@@ -44,7 +43,7 @@ int init_ncurses_colours(void) {
 }
 
 static int print_bw(const char *s, int (*put)(int c, FILE *stream),
-  FILE *stream) {
+                    FILE *stream) {
 
   enum {
     IDLE,
@@ -56,32 +55,30 @@ static int print_bw(const char *s, int (*put)(int c, FILE *stream),
 
     switch (state) {
 
-      case IDLE:
-        if (*s == 27) {
-          state = SAW_ESC;
-        } else {
-          if (put(*s, stream) == EOF)
-            return -1;
-        }
-        break;
+    case IDLE:
+      if (*s == 27) {
+        state = SAW_ESC;
+      } else {
+        if (put(*s, stream) == EOF)
+          return -1;
+      }
+      break;
 
-      case SAW_ESC:
-        if (*s == '[') {
-          state = SAW_LSQUARE;
-        } else {
-          if (put(*s, stream) == EOF)
-            return -1;
-          state = IDLE;
-        }
-        break;
+    case SAW_ESC:
+      if (*s == '[') {
+        state = SAW_LSQUARE;
+      } else {
+        if (put(*s, stream) == EOF)
+          return -1;
+        state = IDLE;
+      }
+      break;
 
-      case SAW_LSQUARE:
-        if (*s == 'm')
-          state = IDLE;
-        break;
-
+    case SAW_LSQUARE:
+      if (*s == 'm')
+        state = IDLE;
+      break;
     }
-
   }
 
   return 0;
@@ -97,9 +94,7 @@ static int addch_wrapper(int c, FILE *ignored) {
   return 0;
 }
 
-void printw_bw(const char *s) {
-  (void)print_bw(s, addch_wrapper, NULL);
-}
+void printw_bw(const char *s) { (void)print_bw(s, addch_wrapper, NULL); }
 
 void printw_colour(const char *s) {
 
@@ -122,64 +117,63 @@ void printw_colour(const char *s) {
 
     switch (state) {
 
-      case IDLE:
-        if (*s == 27) {
-          state = SAW_ESC;
-        } else {
-          addch(*s);
-        }
-        break;
+    case IDLE:
+      if (*s == 27) {
+        state = SAW_ESC;
+      } else {
+        addch(*s);
+      }
+      break;
 
-      case SAW_ESC:
-        if (*s == '[') {
-          bold = false;
-          underline = false;
-          fg = COLOR_WHITE;
-          bg = COLOR_BLACK;
-          code = 0;
-          state = SAW_LSQUARE;
-        } else {
-          addch(*s);
+    case SAW_ESC:
+      if (*s == '[') {
+        bold = false;
+        underline = false;
+        fg = COLOR_WHITE;
+        bg = COLOR_BLACK;
+        code = 0;
+        state = SAW_LSQUARE;
+      } else {
+        addch(*s);
+        state = IDLE;
+      }
+      break;
+
+    case SAW_LSQUARE:
+
+      if (*s == ';' || *s == 'm') {
+        if (code == 1) {
+          bold = true;
+        } else if (code == 4) {
+          underline = true;
+        } else if (code >= 30 && code <= 37) {
+          fg = code - 30;
+        } else if (code >= 40 && code <= 47) {
+          bg = code - 40;
+        } else if (code == 0) { // reset
+          standend();
           state = IDLE;
+          continue;
         }
-        break;
+        // otherwise, ignore
+      }
 
-      case SAW_LSQUARE:
+      if (*s == 'm') {
+        attrset((bold ? A_BOLD : 0) | (underline ? A_UNDERLINE : 0) |
+                COLOR_PAIR(colour_pair_id(fg, bg)));
+        state = IDLE;
+      } else if (*s >= '0' && *s <= '9') {
+        code = code * 10 + (unsigned)(*s - '0');
+      } else if (*s == ';') {
+        // reset to parse another code
+        code = 0;
+      } else {
+        // something unrecognised
+        addch(*s);
+        state = IDLE;
+      }
 
-        if (*s == ';' || *s == 'm') {
-          if (code == 1) {
-            bold = true;
-          } else if (code == 4) {
-            underline = true;
-          } else if (code >= 30 && code <= 37) {
-            fg = code - 30;
-          } else if (code >= 40 && code <= 47) {
-            bg = code - 40;
-          } else if (code == 0) { // reset
-            standend();
-            state = IDLE;
-            continue;
-          }
-          // otherwise, ignore
-        }
-
-        if (*s == 'm') {
-          attrset((bold ? A_BOLD : 0) | (underline ? A_UNDERLINE : 0) |
-            COLOR_PAIR(colour_pair_id(fg, bg)));
-          state = IDLE;
-        } else if (*s >= '0' && *s <= '9') {
-          code = code * 10 + (unsigned)(*s - '0');
-        } else if (*s == ';') {
-          // reset to parse another code
-          code = 0;
-        } else {
-          // something unrecognised
-          addch(*s);
-          state = IDLE;
-        }
-
-        break;
-
+      break;
     }
   }
 }

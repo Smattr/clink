@@ -1,5 +1,5 @@
-#include <errno.h>
 #include "set.h"
+#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +40,7 @@ static uint64_t hash(const char *key) {
 
   uint64_t h = seed ^ (len * m);
 
-  const unsigned char *data = (const unsigned char*)key;
+  const unsigned char *data = (const unsigned char *)key;
   const unsigned char *end = data + len / sizeof(uint64_t) * sizeof(uint64_t);
 
   while (data != end) {
@@ -60,6 +60,7 @@ static uint64_t hash(const char *key) {
   const unsigned char *data2 = data;
 
   switch (len & 7) {
+  // clang-format off
     case 7: h ^= (uint64_t)data2[6] << 48; // fall through
     case 6: h ^= (uint64_t)data2[5] << 40; // fall through
     case 5: h ^= (uint64_t)data2[4] << 32; // fall through
@@ -68,6 +69,7 @@ static uint64_t hash(const char *key) {
     case 2: h ^= (uint64_t)data2[1] << 8;  // fall through 
     case 1: h ^= (uint64_t)data2[0];
     h *= m;
+    // clang-format on
   }
 
   h ^= h >> r;
@@ -76,7 +78,6 @@ static uint64_t hash(const char *key) {
 
   return h;
 }
-
 
 int set_add(set_t *s, const char *item) {
 
@@ -118,7 +119,7 @@ void set_free(set_t **s) {
   set_t *set = *s;
 
   for (size_t i = 0; i < BUCKETS; ++i) {
-    for (set_node_t *n = set->nodes[i]; n != NULL; ) {
+    for (set_node_t *n = set->nodes[i]; n != NULL;) {
       set_node_t *next = n->next;
       free(n->value);
       free(n);

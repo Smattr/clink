@@ -1,8 +1,8 @@
+#include "../../common/compiler.h"
+#include "get_environ.h"
 #include <assert.h>
 #include <clink/c.h>
-#include "../../common/compiler.h"
 #include <errno.h>
-#include "get_environ.h"
 #include <fcntl.h>
 #include <spawn.h>
 #include <stdbool.h>
@@ -39,7 +39,6 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
 
     if (strcmp(line, "#include \"...\" search starts here:\n") == 0)
       break;
-
   }
 
   // read includes
@@ -99,7 +98,6 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
     }
   }
 
-
 done:
   free(line);
 
@@ -116,7 +114,7 @@ done:
 }
 
 int clink_compiler_includes(const char *compiler, char ***includes,
-    size_t *includes_len) {
+                            size_t *includes_len) {
 
   if (includes == NULL)
     return EINVAL;
@@ -136,14 +134,13 @@ int clink_compiler_includes(const char *compiler, char ***includes,
     cxx = "c++";
 
   // construct a command to ask the compiler what its #include paths are
-  const char *argv[] = { cxx, "-E", "-x", "c++", "-", "-v", NULL };
+  const char *argv[] = {cxx, "-E", "-x", "c++", "-", "-v", NULL};
 
   int rc = 0;
   posix_spawn_file_actions_t fa;
   int devnull = -1;
-  int channel[2] = { -1, -1 };
+  int channel[2] = {-1, -1};
   FILE *child_err = NULL;
-
 
   if ((rc = posix_spawn_file_actions_init(&fa)))
     return rc;
@@ -177,7 +174,7 @@ int clink_compiler_includes(const char *compiler, char ***includes,
   {
     // start the child
     pid_t pid;
-    char *const *args = (char*const*)argv;
+    char *const *args = (char *const *)argv;
     if ((rc = posix_spawnp(&pid, argv[0], &fa, NULL, args, get_environ())))
       goto done;
 

@@ -1,8 +1,8 @@
+#include "iter.h"
+#include "../../common/compiler.h"
 #include <clink/iter.h>
 #include <clink/symbol.h>
-#include "../../common/compiler.h"
 #include <errno.h>
-#include "iter.h"
 #include <stdlib.h>
 
 int clink_iter_next_str(clink_iter_t *it, const char **yielded) {

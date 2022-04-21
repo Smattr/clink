@@ -1,5 +1,5 @@
-#include <errno.h>
 #include "help.h"
+#include <errno.h>
 #include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #ifdef __APPLE__
-  #include <crt_externs.h>
+#include <crt_externs.h>
 #endif
 
 static char **get_environ(void) {
@@ -68,12 +68,12 @@ int help(void) {
 
   // run man to display the help text
   {
-    const char *argv[] = { "man",
+    const char *argv[] = {"man",
 #ifdef __linux__
-      "--local-file ",
+                          "--local-file ",
 #endif
-      path, NULL };
-    char *const *args = (char*const*)argv;
+                          path, NULL};
+    char *const *args = (char *const *)argv;
     if ((rc = posix_spawnp(NULL, argv[0], NULL, NULL, args, get_environ())))
       goto done;
   }

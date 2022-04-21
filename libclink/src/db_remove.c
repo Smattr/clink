@@ -1,7 +1,7 @@
-#include <clink/db.h>
 #include "../../common/compiler.h"
 #include "db.h"
 #include "sql.h"
+#include <clink/db.h>
 #include <sqlite3.h>
 #include <stddef.h>
 
@@ -18,7 +18,8 @@ void clink_db_remove(clink_db_t *db, const char *path) {
 
   // first delete it from the symbols table
   {
-    static const char SYMBOLS_DELETE[] = "delete from symbols where path = @path";
+    static const char SYMBOLS_DELETE[] =
+        "delete from symbols where path = @path";
 
     sqlite3_stmt *s = NULL;
     if (UNLIKELY(sql_prepare(db->db, SYMBOLS_DELETE, &s)))
@@ -36,7 +37,8 @@ void clink_db_remove(clink_db_t *db, const char *path) {
 
   // now delete it from the content table
   {
-    static const char CONTENT_DELETE[] = "delete from content where path = @path";
+    static const char CONTENT_DELETE[] =
+        "delete from content where path = @path";
 
     sqlite3_stmt *s = NULL;
     if (UNLIKELY(sql_prepare(db->db, CONTENT_DELETE, &s)))

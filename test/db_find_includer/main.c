@@ -2,7 +2,7 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
 #include <assert.h>
@@ -49,12 +49,12 @@ int main(void) {
   // add a new symbol
   if (rc == 0) {
 
-    clink_symbol_t symbol
-      = { .category = CLINK_INCLUDE, .lineno = 42, .colno = 10 };
+    clink_symbol_t symbol = {
+        .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
 
-    symbol.name = (char*)"sym-name";
-    symbol.path = (char*)"/foo/bar";
-    symbol.parent = (char*)"sym-parent";
+    symbol.name = (char *)"sym-name";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)
@@ -64,12 +64,12 @@ int main(void) {
   // add another new symbol that is not a #include
   if (rc == 0) {
 
-    clink_symbol_t symbol
-      = { .category = CLINK_DEFINITION, .lineno = 42, .colno = 10 };
+    clink_symbol_t symbol = {
+        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
-    symbol.name = (char*)"sym-name2";
-    symbol.path = (char*)"/foo/bar";
-    symbol.parent = (char*)"sym-parent";
+    symbol.name = (char *)"sym-name2";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)
@@ -123,37 +123,37 @@ int main(void) {
 
       if (sym->category != CLINK_INCLUDE) {
         fprintf(stderr, "incorrect symbol category: %d != %d\n",
-          (int)sym->category, (int)CLINK_INCLUDE);
+                (int)sym->category, (int)CLINK_INCLUDE);
         r2 = -1;
       }
 
       if (strcmp(sym->name, "sym-name") != 0) {
         fprintf(stderr, "incorrect symbol name: \"%s\" != \"sym-name\"\n",
-          sym->name);
+                sym->name);
         r2 = -1;
       }
 
       if (sym->lineno != 42) {
         fprintf(stderr, "incorrect symbol line number: %lu != 42\n",
-          sym->lineno);
+                sym->lineno);
         r2 = -1;
       }
 
       if (sym->colno != 10) {
         fprintf(stderr, "incorrect symbol column number: %lu != 10\n",
-          sym->colno);
+                sym->colno);
         r2 = -1;
       }
 
       if (strcmp(sym->path, "/foo/bar") != 0) {
         fprintf(stderr, "incorrect symbol path: \"%s\" != \"/foo/bar\"\n",
-          sym->path);
+                sym->path);
         r2 = -1;
       }
 
       if (strcmp(sym->parent, "sym-parent") != 0) {
         fprintf(stderr, "incorrect symbol parent: \"%s\" != \"sym-parent\"\n",
-          sym->parent);
+                sym->parent);
         r2 = -1;
       }
     }

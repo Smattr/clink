@@ -1,10 +1,10 @@
+#include "../../common/compiler.h"
+#include "db.h"
+#include "sql.h"
 #include <assert.h>
 #include <clink/db.h>
 #include <clink/symbol.h>
-#include "../../common/compiler.h"
-#include "db.h"
 #include <errno.h>
-#include "sql.h"
 #include <sqlite3.h>
 #include <stddef.h>
 
@@ -21,9 +21,10 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 
   // insert into the symbol table
 
-  static const char SYMBOL_INSERT[] = "insert or replace into symbols (name, "
-    "path, category, line, col, parent) values (@name, @path, @category, "
-    "@line, @col, @parent);";
+  static const char SYMBOL_INSERT[] =
+      "insert or replace into symbols (name, "
+      "path, category, line, col, parent) values (@name, @path, @category, "
+      "@line, @col, @parent);";
 
   int rc = 0;
 

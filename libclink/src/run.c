@@ -1,9 +1,9 @@
-#include <assert.h>
+#include "run.h"
 #include "../../common/compiler.h"
+#include "get_environ.h"
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "get_environ.h"
-#include "run.h"
 #include <spawn.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -43,7 +43,7 @@ int run(const char **argv, bool mask_stdout) {
   {
     // spawn the child
     pid_t pid;
-    char *const *args = (char*const*)argv;
+    char *const *args = (char *const *)argv;
     rc = posix_spawnp(&pid, argv[0], &fa, NULL, args, get_environ());
     if (rc != 0)
       goto done;

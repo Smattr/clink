@@ -1,13 +1,15 @@
 #include <clink/clink.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int main(int argc, char **argv) {
 
   if (argc > 2 || (argc == 2 && strcmp(argv[1], "--help") == 0)) {
-    fprintf(stderr, "usage: %s [compiler (default $CXX)]\n"
-                    " list #include paths used by a C++ compiler\n", argv[0]);
+    fprintf(stderr,
+            "usage: %s [compiler (default $CXX)]\n"
+            " list #include paths used by a C++ compiler\n",
+            argv[0]);
     return EXIT_FAILURE;
   }
 

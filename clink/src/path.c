@@ -1,6 +1,6 @@
+#include "path.h"
 #include <ctype.h>
 #include <errno.h>
-#include "path.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,11 +38,10 @@ static bool has_ext(const char *path, const char *ext) {
   return strcasecmp(path + strlen(path) - strlen(ext), ext) == 0;
 }
 
-bool is_asm(const char *path) {
-  return has_ext(path, "s");
-}
+bool is_asm(const char *path) { return has_ext(path, "s"); }
 
 bool is_c(const char *path) {
+  // clang-format off
   return has_ext(path, "c")
       || has_ext(path, "c++")
       || has_ext(path, "cpp")
@@ -50,6 +49,7 @@ bool is_c(const char *path) {
       || has_ext(path, "cc")
       || has_ext(path, "h")
       || has_ext(path, "hpp");
+  // clang-format on
 }
 
 bool is_dir(const char *path) {

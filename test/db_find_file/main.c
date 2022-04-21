@@ -2,7 +2,7 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
 #include <assert.h>
@@ -50,12 +50,12 @@ int main(void) {
   // add a new symbol
   if (rc == 0) {
 
-    clink_symbol_t symbol
-      = { .category = CLINK_FUNCTION_CALL, .lineno = 42, .colno = 10 };
+    clink_symbol_t symbol = {
+        .category = CLINK_FUNCTION_CALL, .lineno = 42, .colno = 10};
 
-    symbol.name = (char*)"sym-name";
-    symbol.path = (char*)"/foo/bar";
-    symbol.parent = (char*)"sym-parent";
+    symbol.name = (char *)"sym-name";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)
@@ -65,12 +65,12 @@ int main(void) {
   // add another new symbol in a different file
   if (rc == 0) {
 
-    clink_symbol_t symbol
-      = { .category = CLINK_DEFINITION, .lineno = 42, .colno = 10 };
+    clink_symbol_t symbol = {
+        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
-    symbol.name = (char*)"sym-name2";
-    symbol.path = (char*)"/foo/bar2";
-    symbol.parent = (char*)"sym-parent";
+    symbol.name = (char *)"sym-name2";
+    symbol.path = (char *)"/foo/bar2";
+    symbol.parent = (char *)"sym-parent";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)
@@ -80,12 +80,12 @@ int main(void) {
   // add another with a common suffix
   if (rc == 0) {
 
-    clink_symbol_t symbol
-      = { .category = CLINK_DEFINITION, .lineno = 42, .colno = 10 };
+    clink_symbol_t symbol = {
+        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
-    symbol.name = (char*)"sym-name3";
-    symbol.path = (char*)"/baz/bar";
-    symbol.parent = (char*)"sym-parent3";
+    symbol.name = (char *)"sym-name3";
+    symbol.path = (char *)"/baz/bar";
+    symbol.parent = (char *)"sym-parent3";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)

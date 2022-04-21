@@ -3,11 +3,11 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
-#include <assert.h>
 #include "run.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
@@ -36,13 +36,12 @@ int main(void) {
 
     // use run() to echo some text
     {
-      const char *args[] = { "echo", "hello", "world", NULL };
+      const char *args[] = {"echo", "hello", "world", NULL};
       int r = run(args, false);
       assert(r == EXIT_SUCCESS);
     }
 
     exit(EXIT_SUCCESS);
-
   }
 
   // close the end of the pipe we do not need
@@ -59,7 +58,7 @@ int main(void) {
 
   // read out of the pipe
   {
-    char buffer[128] = { 0 };
+    char buffer[128] = {0};
     ssize_t r = read(fd[0], buffer, sizeof(buffer));
     assert(r == strlen("hello world\n"));
     assert(strcmp(buffer, "hello world\n") == 0);

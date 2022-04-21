@@ -2,7 +2,7 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
 #include <assert.h>
@@ -48,12 +48,12 @@ int main(void) {
   // add a new symbol
   if (rc == 0) {
 
-    clink_symbol_t symbol
-      = { .category = CLINK_DEFINITION, .lineno = 42, .colno = 10 };
+    clink_symbol_t symbol = {
+        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
-    symbol.name = (char*)"sym-name";
-    symbol.path = (char*)"/foo/bar";
-    symbol.parent = (char*)"sym-parent";
+    symbol.name = (char *)"sym-name";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)

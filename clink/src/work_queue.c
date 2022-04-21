@@ -1,10 +1,10 @@
-#include <errno.h>
+#include "work_queue.h"
 #include "file_queue.h"
 #include "path.h"
+#include "str_queue.h"
+#include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include "str_queue.h"
-#include "work_queue.h"
 
 struct work_queue {
 

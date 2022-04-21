@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #ifdef __APPLE__
-  #include <crt_externs.h>
+#include <crt_externs.h>
 #endif
 
 char **get_environ(void) {

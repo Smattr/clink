@@ -1,10 +1,10 @@
+#include "option.h"
+#include "../../common/compiler.h"
+#include "path.h"
 #include <assert.h>
 #include <clink/clink.h>
-#include "../../common/compiler.h"
 #include <errno.h>
 #include <limits.h>
-#include "option.h"
-#include "path.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,18 +12,18 @@
 #include <unistd.h>
 
 option_t option = {
-  .database_path = NULL,
-  .src = NULL,
-  .src_len = 0,
-  .update_database = true,
-  .ncurses_ui = true,
-  .line_ui = false,
-  .threads = 0,
-  .colour = AUTO,
-  .cxx_argv = NULL,
-  .cxx_argc = 0,
-  .stdinc = true,
-  .debug = false,
+    .database_path = NULL,
+    .src = NULL,
+    .src_len = 0,
+    .update_database = true,
+    .ncurses_ui = true,
+    .line_ui = false,
+    .threads = 0,
+    .colour = AUTO,
+    .cxx_argv = NULL,
+    .cxx_argc = 0,
+    .stdinc = true,
+    .debug = false,
 };
 
 int set_db_path(void) {

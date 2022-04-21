@@ -2,11 +2,11 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
-#include <assert.h>
 #include "../../clink/src/path.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 

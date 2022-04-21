@@ -2,7 +2,7 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
 #include <assert.h>
@@ -38,37 +38,36 @@ static int find(clink_db_t *db, const char *path) {
 
     if (sym->category != CLINK_INCLUDE) {
       fprintf(stderr, "incorrect symbol category: %d != %d\n",
-        (int)sym->category, (int)CLINK_INCLUDE);
+              (int)sym->category, (int)CLINK_INCLUDE);
       return -1;
     }
 
     if (strcmp(sym->name, PATH) != 0) {
-      fprintf(stderr, "incorrect symbol name: \"%s\" != \"%s\"\n",
-        sym->name, PATH);
+      fprintf(stderr, "incorrect symbol name: \"%s\" != \"%s\"\n", sym->name,
+              PATH);
       return -1;
     }
 
     if (sym->lineno != 42) {
-      fprintf(stderr, "incorrect symbol line number: %lu != 42\n",
-        sym->lineno);
+      fprintf(stderr, "incorrect symbol line number: %lu != 42\n", sym->lineno);
       return -1;
     }
 
     if (sym->colno != 10) {
       fprintf(stderr, "incorrect symbol column number: %lu != 10\n",
-        sym->colno);
+              sym->colno);
       return -1;
     }
 
     if (strcmp(sym->path, "/foo/bar") != 0) {
       fprintf(stderr, "incorrect symbol path: \"%s\" != \"/foo/bar\"\n",
-        sym->path);
+              sym->path);
       return -1;
     }
 
     if (strcmp(sym->parent, "sym-parent") != 0) {
       fprintf(stderr, "incorrect symbol parent: \"%s\" != \"sym-parent\"\n",
-        sym->parent);
+              sym->parent);
       return -1;
     }
   }
@@ -127,12 +126,12 @@ int main(void) {
   // add an include that is a path with multiple components
   if (rc == 0) {
 
-    clink_symbol_t symbol
-      = { .category = CLINK_INCLUDE, .lineno = 42, .colno = 10 };
+    clink_symbol_t symbol = {
+        .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
 
-    symbol.name = (char*)"include/clink/clink.h";
-    symbol.path = (char*)"/foo/bar";
-    symbol.parent = (char*)"sym-parent";
+    symbol.name = (char *)"include/clink/clink.h";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)
