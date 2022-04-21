@@ -59,6 +59,28 @@ int set_db_path(void) {
       goto done;
     }
 
+    // is this the root of a repository checkout?
+    // TODO: support Git Worktrees?
+    static const char *VCS_DIR[] = {".git", ".hg", ".svn"};
+    for (size_t i = 0; i < sizeof(VCS_DIR) / sizeof(VCS_DIR[0]); i++) {
+
+      // derive the candidate repository metadata dir
+      char *vcs_dir = NULL;
+      if ((rc = join(branch, VCS_DIR[i], &vcs_dir))) {
+        free(candidate);
+        goto done;
+      }
+
+      // if it exists, use an adjacent database
+      if (access(vcs_dir, F_OK) == 0) {
+        free(vcs_dir);
+        option.database_path = candidate;
+        goto done;
+      }
+
+      free(vcs_dir);
+    }
+
     free(candidate);
 
     // if we just checked the file system root, give up
