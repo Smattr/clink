@@ -1,9 +1,9 @@
+#include "line_ui.h"
+#include "colour.h"
 #include <assert.h>
 #include <clink/clink.h>
-#include "colour.h"
 #include <ctype.h>
 #include <errno.h>
-#include "line_ui.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +49,8 @@ static int drain_iter(clink_iter_t *it, bool use_parent) {
 
     // buffer the symbol’s details
     if (fprintf(buf, "%s %s %lu ", symbol->path,
-        use_parent ? symbol->parent : symbol->name, symbol->lineno) < 0) {
+                use_parent ? symbol->parent : symbol->name,
+                symbol->lineno) < 0) {
       rc = errno;
       goto done;
     }
@@ -171,68 +172,68 @@ int line_ui(clink_db_t *db) {
 
     switch (line[0]) {
 
-      case '0': { // find symbol
-        clink_iter_t *it = NULL;
-        if ((rc = clink_db_find_symbol(db, command + 1, &it)))
-          break;
-        rc = drain_iter(it, true);
+    case '0': { // find symbol
+      clink_iter_t *it = NULL;
+      if ((rc = clink_db_find_symbol(db, command + 1, &it)))
         break;
-      }
+      rc = drain_iter(it, true);
+      break;
+    }
 
-      case '1': { // find definition
-        clink_iter_t *it = NULL;
-        if ((rc = clink_db_find_definition(db, command + 1, &it)))
-          break;
-        rc = drain_iter(it, false);
+    case '1': { // find definition
+      clink_iter_t *it = NULL;
+      if ((rc = clink_db_find_definition(db, command + 1, &it)))
         break;
-      }
+      rc = drain_iter(it, false);
+      break;
+    }
 
-      case '2': { // find calls
-        clink_iter_t *it = NULL;
-        if ((rc = clink_db_find_call(db, command + 1, &it)))
-          break;
-        rc = drain_iter(it, false);
+    case '2': { // find calls
+      clink_iter_t *it = NULL;
+      if ((rc = clink_db_find_call(db, command + 1, &it)))
         break;
-      }
+      rc = drain_iter(it, false);
+      break;
+    }
 
-      case '3': { // find callers
-        clink_iter_t *it = NULL;
-        if ((rc = clink_db_find_caller(db, command + 1, &it)))
-          break;
-        rc = drain_iter(it, true);
+    case '3': { // find callers
+      clink_iter_t *it = NULL;
+      if ((rc = clink_db_find_caller(db, command + 1, &it)))
         break;
-      }
+      rc = drain_iter(it, true);
+      break;
+    }
 
-      case '7': { // find file
-        clink_iter_t *it = NULL;
-        if ((rc = clink_db_find_file(db, command + 1, &it)))
-          break;
-        rc = drain_str_iter(it);
+    case '7': { // find file
+      clink_iter_t *it = NULL;
+      if ((rc = clink_db_find_file(db, command + 1, &it)))
         break;
-      }
+      rc = drain_str_iter(it);
+      break;
+    }
 
-      case '8': { // find includers
-        clink_iter_t *it = NULL;
-        if ((rc = clink_db_find_includer(db, command + 1, &it)))
-          break;
-        rc = drain_iter(it, true);
+    case '8': { // find includers
+      clink_iter_t *it = NULL;
+      if ((rc = clink_db_find_includer(db, command + 1, &it)))
         break;
-      }
+      rc = drain_iter(it, true);
+      break;
+    }
 
-      // Commands we do not support. Just pretend there were no results.
-      case '4': // find text
-      case '5': // change text
-      case '6': // find pattern
-      case '9': // find assignments
-        printf("cscope: 0 lines\n");
-        break;
+    // Commands we do not support. Just pretend there were no results.
+    case '4': // find text
+    case '5': // change text
+    case '6': // find pattern
+    case '9': // find assignments
+      printf("cscope: 0 lines\n");
+      break;
 
-      /* Bail out on any unrecognised command, under the assumption Vim would
-       * never send us a malformed command.
-       */
-      default:
-        rc = EINVAL;
-        break;
+    /* Bail out on any unrecognised command, under the assumption Vim would
+     * never send us a malformed command.
+     */
+    default:
+      rc = EINVAL;
+      break;
     }
 
     if (rc)

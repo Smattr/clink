@@ -93,7 +93,7 @@ CLINK_API int clink_db_find_caller(clink_db_t *db, const char *name,
  * \returns 0 on success or an errno on failure
  */
 CLINK_API int clink_db_find_definition(clink_db_t *db, const char *name,
-  clink_iter_t **it);
+                                       clink_iter_t **it);
 
 /** find a given file in the database
  *

@@ -1,11 +1,11 @@
+#include "../../common/compiler.h"
+#include "iter.h"
+#include "re.h"
 #include <assert.h>
 #include <clink/asm.h>
 #include <clink/iter.h>
 #include <clink/symbol.h>
-#include "../../common/compiler.h"
 #include <errno.h>
-#include "iter.h"
-#include "re.h"
 #include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -14,50 +14,50 @@
 
 // regex for recognising a #define
 static const char DEFINE[] =
-  "^[[:blank:]]*#[[:blank:]]*define[[:blank:]]+([[:alpha:]_][[:alnum:]_]*)";
+    "^[[:blank:]]*#[[:blank:]]*define[[:blank:]]+([[:alpha:]_][[:alnum:]_]*)";
 
 // regex for recognising a #include
 static const char INCLUDE[] =
-  "^[[:blank:]]*#[[:blank:]]*include[[:blank:]]*(<[^>]*>|\"[^\"]*\")";
+    "^[[:blank:]]*#[[:blank:]]*include[[:blank:]]*(<[^>]*>|\"[^\"]*\")";
 
 // regex for recognising a function definition
 static const char FUNCTION[] =
-  "^[[:blank:]]*([[:alpha:]\\._][[:alnum:]\\._\\$@]*)[[:blank:]]*:";
+    "^[[:blank:]]*([[:alpha:]\\._][[:alnum:]\\._\\$@]*)[[:blank:]]*:";
 
 // regex for recognising a branch
 static const char CALL[] =
-  "^[[:blank:]]*("
+    "^[[:blank:]]*("
 
-  // ARM. Note, we omit some jumps like bx that take a register, cbz that
-  // are rarely used for long jumps and literal pool loads that are more
-  // complex to parse.
-  "b|beq|bne|bcs|bhs|bcc|blo|bmi|bpl|bvs|bvc|bhi|bls|bge|blt|bgt|ble|bal|bl"
-  "|bleq|blne|blcs|blhs|blcc|bllo|blmi|blpl|blvs|blvc|blhi|blls|blge|bllt"
-  "|blgt|blle|blal|blx|blxeq|blxne|blxcs|blxhs|blxcc|blxlo|blxmi|blxpl|blxvs"
-  "|blxvc|blxhi|blxls|blxge|blxlt|blxgt|blxle|blxal"
+    // ARM. Note, we omit some jumps like bx that take a register, cbz that
+    // are rarely used for long jumps and literal pool loads that are more
+    // complex to parse.
+    "b|beq|bne|bcs|bhs|bcc|blo|bmi|bpl|bvs|bvc|bhi|bls|bge|blt|bgt|ble|bal|bl"
+    "|bleq|blne|blcs|blhs|blcc|bllo|blmi|blpl|blvs|blvc|blhi|blls|blge|bllt"
+    "|blgt|blle|blal|blx|blxeq|blxne|blxcs|blxhs|blxcc|blxlo|blxmi|blxpl|blxvs"
+    "|blxvc|blxhi|blxls|blxge|blxlt|blxgt|blxle|blxal"
 
-  // AVR. We omit brb{c|s} that take a bit index as the first parameter.
-  "|brcc|brcs|breq|brge|brhc|brhs|brid|brie|brlo|brlt|brmi|brme|brpl|brsh"
-  "|brtc|brts|brvc|brvs|jmp"
+    // AVR. We omit brb{c|s} that take a bit index as the first parameter.
+    "|brcc|brcs|breq|brge|brhc|brhs|brid|brie|brlo|brlt|brmi|brme|brpl|brsh"
+    "|brtc|brts|brvc|brvs|jmp"
 
-  // MIPS. Support here isn't great because MIPS has a set of instructions
-  // that take registers to compare as the first parameters (beq and
-  // friends). Parsing these requires more acrobatics than we're willing
-  // to admit.
-  "|j|jal"
+    // MIPS. Support here isn't great because MIPS has a set of instructions
+    // that take registers to compare as the first parameters (beq and
+    // friends). Parsing these requires more acrobatics than we're willing
+    // to admit.
+    "|j|jal"
 
-  // PowerPC. Note that we omit bne which is a bit trickier to parse.
-  "|b|ba|bl|bla|blt|bdnz"
+    // PowerPC. Note that we omit bne which is a bit trickier to parse.
+    "|b|ba|bl|bla|blt|bdnz"
 
-  // RISC-V. Note we omit all the conditional branch instructions.
-  "|jal"
+    // RISC-V. Note we omit all the conditional branch instructions.
+    "|jal"
 
-  // x86. Note that we omit some jumps like loop that are rarely used for
-  // function calls.
-  "|call|callq|ja|jae|jb|jbe|jc|jcxz|je|jecxz|jg|jge|jl|jle|jmp|jna|jnae|jnb"
-  "|jnbe|jnc|jne|jng|jnge|jnl|jnle|jno|jnp|jns|jnz|jo|jp|jpe|jpo|js|jz"
+    // x86. Note that we omit some jumps like loop that are rarely used for
+    // function calls.
+    "|call|callq|ja|jae|jb|jbe|jc|jcxz|je|jecxz|jg|jge|jl|jle|jmp|jna|jnae|jnb"
+    "|jnbe|jnc|jne|jng|jnge|jnl|jnle|jno|jnp|jns|jnz|jo|jp|jpe|jpo|js|jz"
 
-  ")[[:blank:]]+([[:alpha:]\\._][[:alnum:]\\._\\$@]*)";
+    ")[[:blank:]]+([[:alpha:]\\._][[:alnum:]\\._\\$@]*)";
 
 // state used by an ASM parsing iterator
 typedef struct {
@@ -97,7 +97,7 @@ typedef struct {
 
 /// add a symbol to our pending next-to-yield slot
 static int add_symbol(state_t *s, clink_category_t cat, const char *line,
-    const regmatch_t *m, const char *parent) {
+                      const regmatch_t *m, const char *parent) {
 
   assert(s != NULL);
   assert(line != NULL);

@@ -3,11 +3,11 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
-#include <assert.h>
 #include "run.h"
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +42,7 @@ int main(void) {
   }
 
   // use run() to touch the target
-  const char *args[] = { "touch", target, NULL };
+  const char *args[] = {"touch", target, NULL};
   {
     int r = run(args, false);
     assert(r == EXIT_SUCCESS);

@@ -1,19 +1,19 @@
+#include "../../common/compiler.h"
+#include "colour.h"
+#include "iter.h"
+#include "re.h"
+#include "run.h"
+#include "temp_dir.h"
 #include <assert.h>
 #include <clink/db.h>
 #include <clink/iter.h>
 #include <clink/vim.h>
-#include "colour.h"
-#include "../../common/compiler.h"
 #include <errno.h>
-#include "iter.h"
-#include "re.h"
 #include <regex.h>
-#include "run.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "temp_dir.h"
 #include <unistd.h>
 
 // This file is essentially insanity. Do not say I did not warn you.
@@ -58,11 +58,12 @@ static int convert_to_html(const char *input, const char *output) {
     return errno;
 
   // Construct a command line to open the file in Vim, convert it to highlighted
-  // HTML, save this to the output and exit. 
+  // HTML, save this to the output and exit.
   // FIXME wrap it in timeout
   // in case the user has a weird ~/.vimrc and we end up hanging.
-  char const *argv[] = { "vim", "-n", "--not-a-term", "-X", "+set nonumber",
-    "+TOhtml", save_command, "+qa!", input, NULL };
+  char const *argv[] = {"vim",           "-n",      "--not-a-term", "-X",
+                        "+set nonumber", "+TOhtml", save_command,   "+qa!",
+                        input,           NULL};
 
   int rc = run(argv, true);
 
@@ -157,14 +158,16 @@ static int from_html(const state_t *s, const char *line, char **output) {
     char value;
   };
   static const struct translation HTML_DECODE[] = {
-    { "amp;", '&' },
-    { "gt;", '>' },
-    { "lt;", '<' },
-    { "nbsp;", ' ' },
-    { "quot;", '"' },
+      // clang-format off
+      { "amp;", '&' },
+      { "gt;", '>' },
+      { "lt;", '<' },
+      { "nbsp;", ' ' },
+      { "quot;", '"' },
+      // clang-format on
   };
-  static const size_t HTML_DECODE_SIZE
-    = sizeof(HTML_DECODE) / sizeof(HTML_DECODE[0]);
+  static const size_t HTML_DECODE_SIZE =
+      sizeof(HTML_DECODE) / sizeof(HTML_DECODE[0]);
 
   // setup a dynamic buffer to construct the output
   char *out = NULL;
@@ -173,16 +176,15 @@ static int from_html(const state_t *s, const char *line, char **output) {
   if (UNLIKELY(buf == NULL))
     return errno;
 
-#define PR(args...) \
-  do { \
-    if (fprintf(buf, args) < 0) { \
-      int rc = errno; \
-      (void)fclose(buf); \
-      free(out); \
-      return rc; \
-    } \
+#define PR(args...)                                                            \
+  do {                                                                         \
+    if (fprintf(buf, args) < 0) {                                              \
+      int rc = errno;                                                          \
+      (void)fclose(buf);                                                       \
+      free(out);                                                               \
+      return rc;                                                               \
+    }                                                                          \
   } while (0)
-  
 
   for (size_t i = 0; i < strlen(line); i++) {
 
@@ -219,7 +221,7 @@ static int from_html(const state_t *s, const char *line, char **output) {
             const style_t *style = &s->styles[j];
             if (strncmp(&line[start], style->name, len) == 0) {
               PR("\033[3%u;4%u%s%sm", style->fg, style->bg,
-                (style->bold ? ";1" : ""), (style->underline ? ";4" : ""));
+                 (style->bold ? ";1" : ""), (style->underline ? ";4" : ""));
               i += end - &line[i] + 1;
               formatted = true;
               break;
@@ -230,7 +232,7 @@ static int from_html(const state_t *s, const char *line, char **output) {
             continue;
         }
       }
-      
+
       // how about a </span> ?
       else if (strncmp(&line[i], SPAN_CLOSE, strlen(SPAN_CLOSE)) == 0) {
         PR("\033[0m");
@@ -324,7 +326,7 @@ static void my_free(clink_iter_t *it) {
   if (it == NULL)
     return;
 
-  state_free((state_t**)&it->state);
+  state_free((state_t **)&it->state);
 }
 
 // initial translation to HTML and parse styles
@@ -376,13 +378,14 @@ static int setup(state_t *s, const char *filename) {
   // mother told you and parse HTML and CSS using a combination of regexing and
   // string searching. Hey, I warned you this was not going to be pleasant.
 
-  static const char STYLE[] = "^\\.([[:alpha:]][[:alnum:]]+)[[:blank:]]*"
-    "\\{[[:blank:]]*(color:[[:blank:]]*#([[:xdigit:]]{6});[[:blank:]]*)?"
-    "(background-color:[[:blank:]]*#([[:xdigit:]]{6});[[:blank:]]*"
-    "(padding-bottom:[[:blank:]]*1px;[[:blank:]]*)?)?"
-    "(font-weight:[[:blank:]]*bold;[[:blank:]]*)?"
-    "(font-style:[[:blank:]]*italic;[[:blank:]]*)?"
-    "(text-decoration:[[:blank:]]*underline;[[:blank:]]*)?";
+  static const char STYLE[] =
+      "^\\.([[:alpha:]][[:alnum:]]+)[[:blank:]]*"
+      "\\{[[:blank:]]*(color:[[:blank:]]*#([[:xdigit:]]{6});[[:blank:]]*)?"
+      "(background-color:[[:blank:]]*#([[:xdigit:]]{6});[[:blank:]]*"
+      "(padding-bottom:[[:blank:]]*1px;[[:blank:]]*)?)?"
+      "(font-weight:[[:blank:]]*bold;[[:blank:]]*)?"
+      "(font-style:[[:blank:]]*italic;[[:blank:]]*)?"
+      "(text-decoration:[[:blank:]]*underline;[[:blank:]]*)?";
   regex_t style_re;
   if (UNLIKELY((rc = regcomp(&style_re, STYLE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
@@ -404,6 +407,7 @@ static int setup(state_t *s, const char *filename) {
 
     if (line[0] == '.') {
 
+      // clang-format off
       // Setup for extraction of CSS attributes. The entries of match will be:
       //
       //   match[0]: the entire expression                             (ignore)
@@ -416,6 +420,7 @@ static int setup(state_t *s, const char *filename) {
       //   match[7]: "font-weight: bold;"
       //   match[8]: "font-style: italic;"                             (ignore for now)
       //   match[9]: "text-decoration: underline;"
+      // clang-format on
 
       // is this a style definition line?
       regmatch_t m[10];
@@ -430,7 +435,7 @@ static int setup(state_t *s, const char *filename) {
       }
 
       // build a style defining these attributes
-      style_t style = { .fg = 9, .bg = 9, .bold = false, .underline = false };
+      style_t style = {.fg = 9, .bg = 9, .bold = false, .underline = false};
       if (m[2].rm_so >= 0)
         style.fg = html_colour_to_ansi(line + m[3].rm_so);
       if (m[4].rm_so >= 0)
@@ -450,8 +455,8 @@ static int setup(state_t *s, const char *filename) {
       }
 
       // expand the styles collection to make room for this new entry
-      style_t *styles
-        = realloc(s->styles, sizeof(styles[0]) * (s->styles_size + 1));
+      style_t *styles =
+          realloc(s->styles, sizeof(styles[0]) * (s->styles_size + 1));
       if (UNLIKELY(styles == NULL)) {
         rc = ENOMEM;
         free(style.name);
@@ -540,7 +545,7 @@ int clink_vim_highlight_into(clink_db_t *db, const char *filename) {
   // parse the highlighted content line-by-line
   char *line = NULL;
   size_t line_size = 0;
-  for (unsigned long lineno = 1; ; ++lineno) {
+  for (unsigned long lineno = 1;; ++lineno) {
 
     if ((rc = move_next_core(&s, &line, &line_size))) {
       if (LIKELY(rc == ENOMSG))

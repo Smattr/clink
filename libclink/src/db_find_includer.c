@@ -1,11 +1,11 @@
+#include "../../common/compiler.h"
+#include "db.h"
+#include "iter.h"
+#include "sql.h"
 #include <clink/db.h>
 #include <clink/iter.h>
 #include <clink/symbol.h>
-#include "../../common/compiler.h"
-#include "db.h"
 #include <errno.h>
-#include "iter.h"
-#include "sql.h"
 #include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,12 +69,12 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
 
   // construct a symbol from the result
   s->last.category = CLINK_INCLUDE;
-  s->last.name = (char*)sqlite3_column_text(s->stmt, 0);
-  s->last.path = (char*)sqlite3_column_text(s->stmt, 1);
+  s->last.name = (char *)sqlite3_column_text(s->stmt, 0);
+  s->last.path = (char *)sqlite3_column_text(s->stmt, 1);
   s->last.lineno = sqlite3_column_int64(s->stmt, 2);
   s->last.colno = sqlite3_column_int64(s->stmt, 3);
-  s->last.parent = (char*)sqlite3_column_text(s->stmt, 4);
-  s->last.context = (char*)sqlite3_column_text(s->stmt, 5);
+  s->last.parent = (char *)sqlite3_column_text(s->stmt, 4);
+  s->last.context = (char *)sqlite3_column_text(s->stmt, 5);
 
   // yield it
   *yielded = &s->last;
@@ -86,11 +86,11 @@ static void my_free(clink_iter_t *it) {
   if (it == NULL)
     return;
 
-  state_free((state_t**)&it->state);
+  state_free((state_t **)&it->state);
 }
 
 int clink_db_find_includer(clink_db_t *db, const char *name,
-    clink_iter_t **it) {
+                           clink_iter_t **it) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;
@@ -104,11 +104,13 @@ int clink_db_find_includer(clink_db_t *db, const char *name,
   if (UNLIKELY(it == NULL))
     return EINVAL;
 
-  static const char QUERY[] = "select symbols.name, symbols.path, symbols.line,"
-    "symbols.col, symbols.parent, content.body from symbols left join content "
-    "on symbols.path = content.path and symbols.line = content.line where "
-    "symbols.name like ('%' || @name) and symbols.category = @category order "
-    "by symbols.path, symbols.line, symbols.col;";
+  static const char QUERY[] =
+      "select symbols.name, symbols.path, symbols.line,"
+      "symbols.col, symbols.parent, content.body from symbols left join "
+      "content "
+      "on symbols.path = content.path and symbols.line = content.line where "
+      "symbols.name like ('%' || @name) and symbols.category = @category order "
+      "by symbols.path, symbols.line, symbols.col;";
 
   int rc = 0;
   clink_iter_t *i = NULL;
@@ -153,4 +155,3 @@ done:
 
   return rc;
 }
-

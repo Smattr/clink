@@ -1,14 +1,14 @@
-#include <clink/db.h>
 #include "../../common/compiler.h"
 #include "db.h"
-#include <errno.h>
 #include "sql.h"
+#include <clink/db.h>
+#include <errno.h>
 #include <sqlite3.h>
 #include <stdint.h>
 #include <string.h>
 
 int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
-    uint64_t timestamp) {
+                        uint64_t timestamp) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;
@@ -23,7 +23,7 @@ int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
     return EINVAL;
 
   static const char INSERT[] = "insert or replace into records (path, hash, "
-    "timestamp) values (@path, @hash, @timestamp);";
+                               "timestamp) values (@path, @hash, @timestamp);";
 
   int rc = 0;
 

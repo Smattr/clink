@@ -1,10 +1,10 @@
-#include <clink/db.h>
-#include <clink/iter.h>
 #include "../../common/compiler.h"
 #include "db.h"
-#include <errno.h>
 #include "iter.h"
 #include "sql.h"
+#include <clink/db.h>
+#include <clink/iter.h>
+#include <errno.h>
 #include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,7 +63,7 @@ static int next(clink_iter_t *it, const char **yielded) {
   }
 
   // extract the path
-  s->last = (char*)sqlite3_column_text(s->stmt, 0);
+  s->last = (char *)sqlite3_column_text(s->stmt, 0);
 
   // yield it
   *yielded = s->last;
@@ -75,7 +75,7 @@ static void my_free(clink_iter_t *it) {
   if (it == NULL)
     return;
 
-  state_free((state_t**)&it->state);
+  state_free((state_t **)&it->state);
 }
 
 int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
@@ -93,7 +93,7 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
     return EINVAL;
 
   static const char QUERY[] = "select distinct path from symbols where path = "
-    "@path1 or path like @path2 order by path;";
+                              "@path1 or path like @path2 order by path;";
 
   int rc = 0;
   clink_iter_t *i = NULL;
@@ -110,8 +110,8 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
     goto done;
 
   // bind the where clause to our given function
-  if (UNLIKELY((rc = sqlite3_bind_text(s->stmt, 1, name, -1,
-                                       SQLITE_TRANSIENT)))) {
+  if (UNLIKELY(
+          (rc = sqlite3_bind_text(s->stmt, 1, name, -1, SQLITE_TRANSIENT)))) {
     rc = sql_err_to_errno(rc);
     goto done;
   }

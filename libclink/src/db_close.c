@@ -1,5 +1,5 @@
-#include <clink/db.h>
 #include "db.h"
+#include <clink/db.h>
 #include <sqlite3.h>
 #include <stdlib.h>
 

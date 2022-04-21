@@ -1,6 +1,6 @@
+#include "sigint.h"
 #include <errno.h>
 #include <signal.h>
-#include "sigint.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -23,9 +23,7 @@ static int change(bool block) {
   return 0;
 }
 
-int sigint_block(void) {
-  return change(true);
-}
+int sigint_block(void) { return change(true); }
 
 bool sigint_pending(void) {
 
@@ -38,6 +36,4 @@ bool sigint_pending(void) {
   return sigismember(&set, SIGINT) == 1;
 }
 
-int sigint_unblock(void) {
-  return change(false);
-}
+int sigint_unblock(void) { return change(false); }

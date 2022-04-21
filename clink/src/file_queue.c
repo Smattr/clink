@@ -1,13 +1,13 @@
-#include <assert.h>
-#include <errno.h>
-#include <dirent.h>
 #include "file_queue.h"
 #include "path.h"
 #include "set.h"
-#include <stdbool.h>
 #include "str_queue.h"
-#include <string.h>
+#include <assert.h>
+#include <dirent.h>
+#include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -133,7 +133,6 @@ int file_queue_pop(file_queue_t *fq, char **path) {
       // otherwise, we need to try again
       free(next);
       continue;
-
     }
 
     // remove a path from the pending queue

@@ -1,12 +1,12 @@
+#include "../../common/compiler.h"
+#include "iter.h"
 #include <assert.h>
 #include <clang-c/Index.h>
 #include <clink/c.h>
 #include <clink/db.h>
 #include <clink/iter.h>
 #include <clink/symbol.h>
-#include "../../common/compiler.h"
 #include <errno.h>
-#include "iter.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +14,7 @@
 
 // a Clang node we are intending to traverse
 typedef struct {
-  char *parent; ///< named parent, grandparent, etc. of this node
+  char *parent;    ///< named parent, grandparent, etc. of this node
   CXCursor cursor; ///< reference to the node itself
 } node_t;
 
@@ -83,33 +83,33 @@ static void state_free(iter_state_t **s) {
 // determine if this cursor is a definition
 static bool is_definition(CXCursor cursor) {
   switch (clang_getCursorKind(cursor)) {
-    case CXCursor_StructDecl:
-    case CXCursor_UnionDecl:
-    case CXCursor_ClassDecl:
-    case CXCursor_EnumDecl:
-    case CXCursor_FieldDecl:
-    case CXCursor_EnumConstantDecl:
-    case CXCursor_FunctionDecl:
-    case CXCursor_VarDecl:
-    case CXCursor_ParmDecl:
-    case CXCursor_TypedefDecl:
-    case CXCursor_CXXMethod:
-    case CXCursor_Namespace:
-    case CXCursor_Constructor:
-    case CXCursor_Destructor:
-    case CXCursor_ConversionFunction:
-    case CXCursor_TemplateTypeParameter:
-    case CXCursor_NonTypeTemplateParameter:
-    case CXCursor_TemplateTemplateParameter:
-    case CXCursor_FunctionTemplate:
-    case CXCursor_ClassTemplate:
-    case CXCursor_ClassTemplatePartialSpecialization:
-    case CXCursor_NamespaceAlias:
-    case CXCursor_TypeAliasDecl:
-    case CXCursor_MacroDefinition:
-      return true;
-    default:
-      break;
+  case CXCursor_StructDecl:
+  case CXCursor_UnionDecl:
+  case CXCursor_ClassDecl:
+  case CXCursor_EnumDecl:
+  case CXCursor_FieldDecl:
+  case CXCursor_EnumConstantDecl:
+  case CXCursor_FunctionDecl:
+  case CXCursor_VarDecl:
+  case CXCursor_ParmDecl:
+  case CXCursor_TypedefDecl:
+  case CXCursor_CXXMethod:
+  case CXCursor_Namespace:
+  case CXCursor_Constructor:
+  case CXCursor_Destructor:
+  case CXCursor_ConversionFunction:
+  case CXCursor_TemplateTypeParameter:
+  case CXCursor_NonTypeTemplateParameter:
+  case CXCursor_TemplateTemplateParameter:
+  case CXCursor_FunctionTemplate:
+  case CXCursor_ClassTemplate:
+  case CXCursor_ClassTemplatePartialSpecialization:
+  case CXCursor_NamespaceAlias:
+  case CXCursor_TypeAliasDecl:
+  case CXCursor_MacroDefinition:
+    return true;
+  default:
+    break;
   }
   return false;
 }
@@ -158,7 +158,7 @@ static int push_cursor(void *state, CXCursor cursor) {
       return s->rc;
     }
 
-  // otherwise, default to the parent of the current context
+    // otherwise, default to the parent of the current context
   } else if (s->current_parent != NULL) {
 
     parent = strdup(s->current_parent);
@@ -187,7 +187,7 @@ static node_t pop_cursor(iter_state_t *s) {
 
   // shuffle the queue forwards, overwriting this with the new head
   memmove(s->pending, &s->pending[1],
-    (s->pending_size - 1) * sizeof(s->pending[0]));
+          (s->pending_size - 1) * sizeof(s->pending[0]));
 
   // update the queue size
   --s->pending_size;
@@ -196,7 +196,7 @@ static node_t pop_cursor(iter_state_t *s) {
 }
 
 static int push_symbol(void *state, clink_category_t category, const char *name,
-    const char *path, unsigned lineno, unsigned colno) {
+                       const char *path, unsigned lineno, unsigned colno) {
 
   iter_state_t *s = state;
 
@@ -216,7 +216,7 @@ static int push_symbol(void *state, clink_category_t category, const char *name,
 
   assert(s->next_size < s->next_capacity);
 
-  clink_symbol_t sym = { 0 };
+  clink_symbol_t sym = {0};
 
   sym.category = category;
 
@@ -307,57 +307,57 @@ static enum CXChildVisitResult visit(CXCursor cursor, void *state,
   enum CXCursorKind kind = clang_getCursorKind(cursor);
   clink_category_t category = CLINK_INCLUDE;
   switch (kind) {
-    case CXCursor_StructDecl:
-    case CXCursor_UnionDecl:
-    case CXCursor_ClassDecl:
-    case CXCursor_EnumDecl:
-    case CXCursor_FieldDecl:
-    case CXCursor_EnumConstantDecl:
-    case CXCursor_FunctionDecl:
-    case CXCursor_VarDecl:
-    case CXCursor_ParmDecl:
-    case CXCursor_TypedefDecl:
-    case CXCursor_CXXMethod:
-    case CXCursor_Namespace:
-    case CXCursor_Constructor:
-    case CXCursor_Destructor:
-    case CXCursor_ConversionFunction:
-    case CXCursor_TemplateTypeParameter:
-    case CXCursor_NonTypeTemplateParameter:
-    case CXCursor_TemplateTemplateParameter:
-    case CXCursor_FunctionTemplate:
-    case CXCursor_ClassTemplate:
-    case CXCursor_ClassTemplatePartialSpecialization:
-    case CXCursor_NamespaceAlias:
-    case CXCursor_TypeAliasDecl:
-    case CXCursor_MacroDefinition:
-      category = CLINK_DEFINITION;
-      break;
-    case CXCursor_CallExpr:
-    case CXCursor_MacroExpansion:
-      category = CLINK_FUNCTION_CALL;
-      break;
-    case CXCursor_UsingDirective:
-    case CXCursor_UsingDeclaration:
-    case CXCursor_TypeRef:
-    case CXCursor_TemplateRef:
-    case CXCursor_NamespaceRef:
-    case CXCursor_MemberRef:
-    case CXCursor_LabelRef:
-    case CXCursor_OverloadedDeclRef:
-    case CXCursor_VariableRef:
-    case CXCursor_DeclRefExpr:
-    case CXCursor_MemberRefExpr:
-    case CXCursor_CXXThisExpr:
-    case CXCursor_UnexposedExpr:
-      category = CLINK_REFERENCE;
-      break;
-    case CXCursor_InclusionDirective:
-      category = CLINK_INCLUDE;
-      break;
+  case CXCursor_StructDecl:
+  case CXCursor_UnionDecl:
+  case CXCursor_ClassDecl:
+  case CXCursor_EnumDecl:
+  case CXCursor_FieldDecl:
+  case CXCursor_EnumConstantDecl:
+  case CXCursor_FunctionDecl:
+  case CXCursor_VarDecl:
+  case CXCursor_ParmDecl:
+  case CXCursor_TypedefDecl:
+  case CXCursor_CXXMethod:
+  case CXCursor_Namespace:
+  case CXCursor_Constructor:
+  case CXCursor_Destructor:
+  case CXCursor_ConversionFunction:
+  case CXCursor_TemplateTypeParameter:
+  case CXCursor_NonTypeTemplateParameter:
+  case CXCursor_TemplateTemplateParameter:
+  case CXCursor_FunctionTemplate:
+  case CXCursor_ClassTemplate:
+  case CXCursor_ClassTemplatePartialSpecialization:
+  case CXCursor_NamespaceAlias:
+  case CXCursor_TypeAliasDecl:
+  case CXCursor_MacroDefinition:
+    category = CLINK_DEFINITION;
+    break;
+  case CXCursor_CallExpr:
+  case CXCursor_MacroExpansion:
+    category = CLINK_FUNCTION_CALL;
+    break;
+  case CXCursor_UsingDirective:
+  case CXCursor_UsingDeclaration:
+  case CXCursor_TypeRef:
+  case CXCursor_TemplateRef:
+  case CXCursor_NamespaceRef:
+  case CXCursor_MemberRef:
+  case CXCursor_LabelRef:
+  case CXCursor_OverloadedDeclRef:
+  case CXCursor_VariableRef:
+  case CXCursor_DeclRefExpr:
+  case CXCursor_MemberRefExpr:
+  case CXCursor_CXXThisExpr:
+  case CXCursor_UnexposedExpr:
+    category = CLINK_REFERENCE;
+    break;
+  case CXCursor_InclusionDirective:
+    category = CLINK_INCLUDE;
+    break;
 
-    default: // something irrelevant
-      return CXChildVisit_Continue;
+  default: // something irrelevant
+    return CXChildVisit_Continue;
   }
 
   // retrieve the name of this thing
@@ -404,7 +404,7 @@ done:
 }
 
 static enum CXChildVisitResult visit_iter(CXCursor cursor, CXCursor parent,
-    CXClientData data) {
+                                          CXClientData data) {
 
   // we do not need the parent cursor
   (void)parent;
@@ -477,22 +477,27 @@ static void my_free(clink_iter_t *it) {
   if (it->state == NULL)
     return;
 
-  state_free((iter_state_t**)&it->state);
+  state_free((iter_state_t **)&it->state);
 }
 
 // translate a libclang error into the closest errno equivalent
 static int clang_err_to_errno(int err) {
   switch (err) {
-    case CXError_Failure: return ENOTRECOVERABLE;
-    case CXError_Crashed: return EIO;
-    case CXError_InvalidArguments: return EINVAL;
-    case CXError_ASTReadError: return EPROTO;
-    default: return 0;
+  case CXError_Failure:
+    return ENOTRECOVERABLE;
+  case CXError_Crashed:
+    return EIO;
+  case CXError_InvalidArguments:
+    return EINVAL;
+  case CXError_ASTReadError:
+    return EPROTO;
+  default:
+    return 0;
   }
 }
 
 static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
-    size_t argc, const char **argv) {
+                size_t argc, const char **argv) {
 
   // create a Clang index
   static const int excludePCH = 0;
@@ -500,10 +505,11 @@ static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
   *index = clang_createIndex(excludePCH, displayDiagnostics);
 
   // parse the input file
-  enum CXErrorCode err = clang_parseTranslationUnit2(*index, filename, argv,
-    argc, NULL, 0,
-    CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_KeepGoing,
-    tu);
+  enum CXErrorCode err = clang_parseTranslationUnit2(
+      *index, filename, argv, argc, NULL, 0,
+      CXTranslationUnit_DetailedPreprocessingRecord |
+          CXTranslationUnit_KeepGoing,
+      tu);
   if (err != CXError_Success)
     return clang_err_to_errno(err);
 
@@ -511,7 +517,7 @@ static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
 }
 
 int clink_parse_c(clink_iter_t **it, const char *filename, size_t argc,
-    const char **argv) {
+                  const char **argv) {
 
   if (UNLIKELY(it == NULL))
     return EINVAL;
@@ -583,21 +589,24 @@ typedef struct {
 } oneshot_state_t;
 
 static int add_symbol(void *state, clink_category_t category, const char *name,
-    const char *path, unsigned lineno, unsigned colno) {
+                      const char *path, unsigned lineno, unsigned colno) {
 
   oneshot_state_t *s = state;
   assert(s != NULL);
 
-  clink_symbol_t symbol = {.category = category, .name = (char*)name,
-                           .path = (char*)path, .lineno = lineno,
-                           .colno = colno, .parent = (char*)s->current_parent};
+  clink_symbol_t symbol = {.category = category,
+                           .name = (char *)name,
+                           .path = (char *)path,
+                           .lineno = lineno,
+                           .colno = colno,
+                           .parent = (char *)s->current_parent};
   s->rc = clink_db_add_symbol(s->db, &symbol);
 
   return s->rc;
 }
 
 static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
-    CXClientData data);
+                                             CXClientData data);
 
 static int visit_children(void *state, CXCursor cursor) {
 
@@ -643,7 +652,7 @@ static int visit_children(void *state, CXCursor cursor) {
 }
 
 static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
-    CXClientData data) {
+                                             CXClientData data) {
 
   // we do not need the parent cursor
   (void)parent;
@@ -652,7 +661,7 @@ static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
 }
 
 int clink_parse_c_into(clink_db_t *db, const char *filename, size_t argc,
-    const char **argv) {
+                       const char **argv) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;

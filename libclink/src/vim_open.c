@@ -1,13 +1,13 @@
-#include <clink/vim.h>
 #include "../../common/compiler.h"
-#include <errno.h>
 #include "run.h"
+#include <clink/vim.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 int clink_vim_open(const char *filename, unsigned long lineno,
-    unsigned long colno) {
+                   unsigned long colno) {
 
   // check filename is valid
   if (UNLIKELY(filename == NULL))
@@ -27,7 +27,7 @@ int clink_vim_open(const char *filename, unsigned long lineno,
     return ENOMEM;
 
   // construct a argument vector to invoke Vim
-  char const *argv[] = { "vim", cursor, filename, NULL };
+  char const *argv[] = {"vim", cursor, filename, NULL};
 
   // run it
   int rc = run(argv, false);

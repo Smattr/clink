@@ -1,5 +1,5 @@
-#include <assert.h>
 #include "colour.h"
+#include <assert.h>
 #include <ctype.h>
 #include <limits.h>
 #include <stddef.h>
@@ -8,9 +8,11 @@
 static uint8_t hex_to_int(char c) {
   assert(isxdigit(c));
   switch (c) {
+  // clang-format off
     case '0' ... '9': return c - '0';
     case 'a' ... 'f': return (uint8_t)(c - 'a') + 10;
     case 'A' ... 'F': return (uint8_t)(c - 'A') + 10;
+    // clang-format on
   }
   __builtin_unreachable();
 }
@@ -35,16 +37,20 @@ unsigned html_colour_to_ansi(const char *html) {
   // First, we define the ANSI colours as RGB values. These definitions match
   // what 2html uses for 8-bit colour, so an HTML colour intended to map
   // *exactly* to one of these should correctly end up with a distance of 0.
-  struct colour { uint8_t red; uint8_t green; uint8_t blue; };
+  struct colour {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+  };
   static const struct colour ANSI[] = {
-    /* black   */ { 0x00, 0x00, 0x00 },
-    /* red     */ { 0xff, 0x60, 0x60 },
-    /* green   */ { 0x00, 0xff, 0x00 },
-    /* yellow  */ { 0xff, 0xff, 0x00 },
-    /* blue    */ { 0x80, 0x80, 0xff },
-    /* magenta */ { 0xff, 0x40, 0xff },
-    /* cyan    */ { 0x00, 0xff, 0xff },
-    /* white   */ { 0xff, 0xff, 0xff },
+      /* black   */ {0x00, 0x00, 0x00},
+      /* red     */ {0xff, 0x60, 0x60},
+      /* green   */ {0x00, 0xff, 0x00},
+      /* yellow  */ {0xff, 0xff, 0x00},
+      /* blue    */ {0x80, 0x80, 0xff},
+      /* magenta */ {0xff, 0x40, 0xff},
+      /* cyan    */ {0x00, 0xff, 0xff},
+      /* white   */ {0xff, 0xff, 0xff},
   };
   static const size_t ANSI_SIZE = sizeof(ANSI) / sizeof(ANSI[0]);
 
@@ -52,9 +58,8 @@ unsigned html_colour_to_ansi(const char *html) {
   size_t min_index;
   unsigned min_distance = UINT_MAX;
   for (size_t i = 0; i < ANSI_SIZE; i++) {
-    unsigned distance = diff(red, ANSI[i].red)
-                      + diff(green, ANSI[i].green)
-                      + diff(blue, ANSI[i].blue);
+    unsigned distance = diff(red, ANSI[i].red) + diff(green, ANSI[i].green) +
+                        diff(blue, ANSI[i].blue);
     if (distance < min_distance) {
       min_index = i;
       min_distance = distance;

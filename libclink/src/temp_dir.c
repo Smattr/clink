@@ -1,8 +1,8 @@
+#include "temp_dir.h"
 #include "../../common/compiler.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "temp_dir.h"
 #include <unistd.h>
 
 int temp_dir(char **dir) {

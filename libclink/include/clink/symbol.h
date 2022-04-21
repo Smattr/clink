@@ -45,7 +45,7 @@ typedef struct {
  * \returns 0 on success or an errno on failure
  */
 CLINK_API int clink_symbol_copy(clink_symbol_t *__restrict__ dst,
-  const clink_symbol_t *__restrict__ src);
+                                const clink_symbol_t *__restrict__ src);
 
 /** clean up and deallocate the contents of a symbol structure
  *

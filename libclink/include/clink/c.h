@@ -50,7 +50,7 @@ CLINK_API int clink_parse_c_into(clink_db_t *db, const char *filename,
  * \returns 0 on success or an errno on failure
  */
 CLINK_API int clink_compiler_includes(const char *compiler, char ***includes,
-  size_t *includes_len);
+                                      size_t *includes_len);
 
 #ifdef __cplusplus
 }

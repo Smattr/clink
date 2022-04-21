@@ -2,13 +2,13 @@
 
 // force assertions on
 #ifdef NDEBUG
-  #undef NDEBUG
+#undef NDEBUG
 #endif
 
-#include <assert.h>
 #include "colour.h"
-#include <stdlib.h>
+#include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(void) {
 

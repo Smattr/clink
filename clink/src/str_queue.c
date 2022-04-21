@@ -1,6 +1,6 @@
-#include <errno.h>
-#include "set.h"
 #include "str_queue.h"
+#include "set.h"
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -108,7 +108,7 @@ void str_queue_free(str_queue_t **sq) {
   if (sq == NULL || *sq == NULL)
     return;
 
-  for (node_t *n = (*sq)->head; n != NULL; ) {
+  for (node_t *n = (*sq)->head; n != NULL;) {
     node_t *next = n->next;
     free(n->value);
     free(n);

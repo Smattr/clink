@@ -1,13 +1,13 @@
-#include <clink/db.h>
 #include "../../common/compiler.h"
 #include "db.h"
-#include <errno.h>
 #include "sql.h"
+#include <clink/db.h>
+#include <errno.h>
 #include <sqlite3.h>
 #include <stddef.h>
 
 int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
-    const char *line) {
+                      const char *line) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;
@@ -26,8 +26,9 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
 
   // insert into the content table
 
-  static const char CONTENT_INSERT[] = "insert or replace into content (path, "
-    "line, body) values (@path, @line, @body);";
+  static const char CONTENT_INSERT[] =
+      "insert or replace into content (path, "
+      "line, body) values (@path, @line, @body);";
 
   int rc = 0;
 

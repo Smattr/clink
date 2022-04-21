@@ -19,7 +19,7 @@ extern "C" {
  * \returns Vim’s exit status
  */
 CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
-  unsigned long colno);
+                             unsigned long colno);
 
 /** create a string iterator for the Vim-highlighted lines of the given file
  *

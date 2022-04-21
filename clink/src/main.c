@@ -1,16 +1,16 @@
-#include <assert.h>
-#include "build.h"
 #include "../../common/compiler.h"
-#include <clink/clink.h>
-#include <errno.h>
-#include <getopt.h>
+#include "build.h"
 #include "help.h"
-#include <limits.h>
 #include "line_ui.h"
 #include "ncurses_ui.h"
 #include "option.h"
 #include "path.h"
 #include "sigint.h"
+#include <assert.h>
+#include <clink/clink.h>
+#include <errno.h>
+#include <getopt.h>
+#include <limits.h>
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -74,74 +74,75 @@ static void parse_args(int argc, char **argv) {
 
     switch (c) {
 
-      case 'b': // --build-only
-        option.ncurses_ui = false;
-        option.line_ui = false;
-        break;
+    case 'b': // --build-only
+      option.ncurses_ui = false;
+      option.line_ui = false;
+      break;
 
-      case 'd': // --no-build
-        option.update_database = false;
-        break;
+    case 'd': // --no-build
+      option.update_database = false;
+      break;
 
-      case 'f': // --database
-        free(option.database_path);
-        option.database_path = xstrdup(optarg);
-        break;
+    case 'f': // --database
+      free(option.database_path);
+      option.database_path = xstrdup(optarg);
+      break;
 
-      case 'h': // --help
-        help();
-        exit(EXIT_SUCCESS);
+    case 'h': // --help
+      help();
+      exit(EXIT_SUCCESS);
 
-      case 'I': // --include
-        xappend(&includes, &includes_len, optarg);
-        break;
+    case 'I': // --include
+      xappend(&includes, &includes_len, optarg);
+      break;
 
-      case 'j': // --jobs
-        if (strcmp(optarg, "auto") == 0) {
-          option.threads = 0;
-        } else {
-          char *endptr;
-          option.threads = strtoul(optarg, &endptr, 0);
-          if (optarg == endptr || (option.threads == ULONG_MAX &&
-                  errno == ERANGE)) {
-            fprintf(stderr, "illegal value to --jobs: %s\n", optarg);
-            exit(EXIT_FAILURE);
-          }
-        }
-        break;
-
-      case 'l':
-        option.ncurses_ui = false;
-        option.line_ui = true;
-        break;
-
-      case 128: // --colour
-        if (strcmp(optarg, "auto") == 0) {
-          option.colour = AUTO;
-        } else if (strcmp(optarg, "always") == 0) {
-          option.colour = ALWAYS;
-        } else if (strcmp(optarg, "never") == 0) {
-          option.colour = NEVER;
-        } else {
-          fprintf(stderr, "illegal value to --colour: %s\n", optarg);;
+    case 'j': // --jobs
+      if (strcmp(optarg, "auto") == 0) {
+        option.threads = 0;
+      } else {
+        char *endptr;
+        option.threads = strtoul(optarg, &endptr, 0);
+        if (optarg == endptr ||
+            (option.threads == ULONG_MAX && errno == ERANGE)) {
+          fprintf(stderr, "illegal value to --jobs: %s\n", optarg);
           exit(EXIT_FAILURE);
         }
-        break;
+      }
+      break;
 
-      case 129: // --debug
-        option.debug = true;
-        break;
+    case 'l':
+      option.ncurses_ui = false;
+      option.line_ui = true;
+      break;
 
-      case 130: // --nostdinc
-        option.stdinc = false;
-        break;
-
-      case 'V': // --version
-        fprintf(stderr, "clink version %s\n", clink_version());
-        exit(EXIT_SUCCESS);
-
-      default:
+    case 128: // --colour
+      if (strcmp(optarg, "auto") == 0) {
+        option.colour = AUTO;
+      } else if (strcmp(optarg, "always") == 0) {
+        option.colour = ALWAYS;
+      } else if (strcmp(optarg, "never") == 0) {
+        option.colour = NEVER;
+      } else {
+        fprintf(stderr, "illegal value to --colour: %s\n", optarg);
+        ;
         exit(EXIT_FAILURE);
+      }
+      break;
+
+    case 129: // --debug
+      option.debug = true;
+      break;
+
+    case 130: // --nostdinc
+      option.stdinc = false;
+      break;
+
+    case 'V': // --version
+      fprintf(stderr, "clink version %s\n", clink_version());
+      exit(EXIT_SUCCESS);
+
+    default:
+      exit(EXIT_FAILURE);
     }
   }
 
@@ -185,7 +186,7 @@ int main(int argc, char **argv) {
   // figure out what source paths we should scan
   if ((rc = set_src())) {
     fprintf(stderr, "failed to set source files/directories to scan: %s\n",
-      strerror(rc));
+            strerror(rc));
     goto done;
   }
   assert(option.src != NULL && option.src_len > 0);
@@ -218,7 +219,7 @@ int main(int argc, char **argv) {
       if (absolute == NULL) {
         rc = errno;
         fprintf(stderr, "failed to make %s absolute: %s\n", option.src[i],
-          strerror(rc));
+                strerror(rc));
         goto done;
       }
       free(option.src[i]);
@@ -263,7 +264,7 @@ int main(int argc, char **argv) {
     if (a == NULL) {
       rc = errno;
       fprintf(stderr, "failed to make %s absolute: %s\n", option.database_path,
-        strerror(rc));
+              strerror(rc));
       goto done1;
     }
     free(option.database_path);

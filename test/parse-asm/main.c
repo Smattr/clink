@@ -8,8 +8,10 @@
 int main(int argc, char **argv) {
 
   if (argc != 2) {
-    fprintf(stderr, "usage: %s filename\n"
-                 " test utility for Clink's assembly parser\n", argv[0]);
+    fprintf(stderr,
+            "usage: %s filename\n"
+            " test utility for Clink's assembly parser\n",
+            argv[0]);
     return EXIT_FAILURE;
   }
 
@@ -37,22 +39,21 @@ int main(int argc, char **argv) {
 
     switch (s->category) {
 
-      case CLINK_DEFINITION:
-        printf("definition");
-        break;
+    case CLINK_DEFINITION:
+      printf("definition");
+      break;
 
-      case CLINK_INCLUDE:
-        printf("include");
-        break;
+    case CLINK_INCLUDE:
+      printf("include");
+      break;
 
-      case CLINK_FUNCTION_CALL:
-        printf("function call");
-        break;
+    case CLINK_FUNCTION_CALL:
+      printf("function call");
+      break;
 
-      case CLINK_REFERENCE:
-        printf("reference");
-        break;
-
+    case CLINK_REFERENCE:
+      printf("reference");
+      break;
     }
 
     printf(" of %s\n", s->name);

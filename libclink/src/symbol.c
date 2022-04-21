@@ -1,11 +1,11 @@
-#include <clink/symbol.h>
 #include "../../common/compiler.h"
+#include <clink/symbol.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
 int clink_symbol_copy(clink_symbol_t *restrict dst,
-    const clink_symbol_t *restrict src) {
+                      const clink_symbol_t *restrict src) {
 
   if (UNLIKELY(dst == NULL))
     return EINVAL;
