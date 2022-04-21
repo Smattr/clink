@@ -24,8 +24,13 @@ stdout is a TTY).
 .RS
 Open or create the symbol database at path \fIFILE\fR. Without this option,
 Clink will default to opening the file .clink.db in the current directory or any
-parent thereof if it exists. If none of these exist, Clink will fallback
-to .clink.db in the current directory.
+parent thereof if it exists. It will stop its search when it reaches the root of
+a Git, Mercurial, or Subversion checkout, under the assumption that you do not
+wish to index beyond the boundary of a repository you are in.
+.PP
+If no repository root is found, the search will stop when reaching the root
+directory of the file system, at which point Clink will fallback to .clink.db in
+the current directory.
 .RE
 .PP
 \fB--debug\fR
