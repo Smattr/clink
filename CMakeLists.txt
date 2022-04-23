@@ -93,7 +93,19 @@ add_test(run-echo test/run-echo/run-echo)
 add_test(run-echo-mask test/run-echo-mask/run-echo-mask)
 add_test(run-touch test/run-touch/run-touch)
 
-add_custom_target(format
-  COMMAND git ls-files -z '**/*.c' '**/*.h' |
-    xargs -0 -- clang-format -i --style=file
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+find_program(CLANG_FORMAT
+  NAMES
+    clang-format
+    clang-format-mp-14 clang-format-14
+    clang-format-mp-13 clang-format-13
+    clang-format-mp-12 clang-format-12
+    clang-format-mp-11 clang-format-11)
+find_program(GIT git)
+find_program(XARGS xargs)
+if(CLANG_FORMAT AND GIT)
+  add_custom_target(format
+    COMMAND ${GIT} ls-files -z '**/*.c' '**/*.h' |
+      ${XARGS} -0 -- ${CLANG_FORMAT} -i --style=file
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "clang-formatting sources")
+endif()
