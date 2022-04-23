@@ -1,2 +1,2 @@
 add_executable(db_find_includer_stem main.c)
-target_link_libraries(db_find_includer_stem libclink)
+target_link_libraries(db_find_includer_stem PRIVATE libclink)

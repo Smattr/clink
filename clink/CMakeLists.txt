@@ -20,19 +20,19 @@ add_executable(clink
 
 target_include_directories(clink PRIVATE src)
 
-target_link_libraries(clink libclink)
+target_link_libraries(clink PRIVATE libclink)
 
 find_package(Threads REQUIRED)
-target_link_libraries(clink ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(clink PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
 set(CURSES_NEED_NCURSES True)
 find_package(Curses REQUIRED)
 target_include_directories(clink PRIVATE SYSTEM ${CURSES_INCLUDE_DIRS})
-target_link_libraries(clink ${CURSES_LIBRARIES})
+target_link_libraries(clink PRIVATE ${CURSES_LIBRARIES})
 
 find_package(SQLite3 REQUIRED)
 target_include_directories(clink PRIVATE SYSTEM ${SQLite3_INCLUDE_DIRS})
-target_link_libraries(clink ${SQLite3_LIBRARIES})
+target_link_libraries(clink PRIVATE ${SQLite3_LIBRARIES})
 
 find_program(XXD xxd)
 if(${XXD} STREQUAL "XXD-NOTFOUND")
