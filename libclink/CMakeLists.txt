@@ -59,7 +59,7 @@ target_include_directories(libclink PRIVATE SYSTEM ${LIBCLANG_INCLUDE_DIRS})
 target_link_libraries(libclink ${LIBCLANG_LIBRARIES})
 
 find_package(SQLite3 REQUIRED)
-target_include_directories(libclink PRIVATE ${SQLite3_INCLUDE_DIRS})
+target_include_directories(libclink PRIVATE SYSTEM ${SQLite3_INCLUDE_DIRS})
 target_link_libraries(libclink ${SQLite3_LIBRARIES})
 
 install(TARGETS libclink EXPORT LibclinkConfig

@@ -31,7 +31,7 @@ target_include_directories(clink PRIVATE ${CURSES_INCLUDE_DIRS})
 target_link_libraries(clink ${CURSES_LIBRARIES})
 
 find_package(SQLite3 REQUIRED)
-target_include_directories(clink PRIVATE ${SQLite3_INCLUDE_DIRS})
+target_include_directories(clink PRIVATE SYSTEM ${SQLite3_INCLUDE_DIRS})
 target_link_libraries(clink ${SQLite3_LIBRARIES})
 
 find_program(XXD xxd)
