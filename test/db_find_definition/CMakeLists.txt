@@ -1,2 +1,2 @@
 add_executable(db_find_definition main.c)
-target_link_libraries(db_find_definition libclink)
+target_link_libraries(db_find_definition PRIVATE libclink)

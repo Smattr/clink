@@ -20,34 +20,33 @@ add_executable(clink
 
 target_include_directories(clink PRIVATE src)
 
-target_link_libraries(clink libclink)
+target_link_libraries(clink PRIVATE libclink)
 
 find_package(Threads REQUIRED)
-target_link_libraries(clink ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(clink PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
 set(CURSES_NEED_NCURSES True)
 find_package(Curses REQUIRED)
-target_include_directories(clink PRIVATE ${CURSES_INCLUDE_DIR})
-target_link_libraries(clink ${CURSES_LIBRARIES})
+target_include_directories(clink PRIVATE SYSTEM ${CURSES_INCLUDE_DIRS})
+target_link_libraries(clink PRIVATE ${CURSES_LIBRARIES})
 
 find_package(SQLite3 REQUIRED)
-target_include_directories(clink PRIVATE ${SQLite3_INCLUDE_DIRS})
-target_link_libraries(clink ${SQLite3_LIBRARIES})
+target_include_directories(clink PRIVATE SYSTEM ${SQLite3_INCLUDE_DIRS})
+target_link_libraries(clink PRIVATE ${SQLite3_LIBRARIES})
 
-find_program(XXD xxd)
-if(${XXD} STREQUAL "XXD-NOTFOUND")
-  message(FATAL_ERROR "xxd not found")
-endif()
+find_program(XXD xxd REQUIRED)
 add_custom_command(OUTPUT manpage.c
   COMMAND ${XXD} -include clink.1 ${CMAKE_CURRENT_BINARY_DIR}/manpage.c
   MAIN_DEPENDENCY src/clink.1
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+find_program(GZIP gzip REQUIRED)
 add_custom_target(man-clink
   ALL
   DEPENDS clink.1.gz)
 add_custom_command(OUTPUT clink.1.gz
-  COMMAND gzip -9 --no-name --to-stdout src/clink.1 >"${CMAKE_CURRENT_BINARY_DIR}/clink.1.gz"
+  COMMAND ${GZIP} -9 --no-name --to-stdout src/clink.1
+    >"${CMAKE_CURRENT_BINARY_DIR}/clink.1.gz"
   MAIN_DEPENDENCY src/clink.1
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
