@@ -199,11 +199,16 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         clink_iter_free(&it);
 
         // C/C++
-      } else {
-        assert(is_c(t.path));
+      } else if (is_c(t.path)) {
         progress(thread_id, "parsing C/C++ file %s", display);
         const char **argv = (const char **)option.cxx_argv;
         rc = clink_parse_c_into(db, t.path, option.cxx_argc, argv);
+
+        // DEF
+      } else {
+        assert(is_def(t.path));
+        progress(thread_id, "parsing DEF file %s", display);
+        rc = clink_parse_def_into(db, t.path);
       }
 
       if (UNLIKELY(rc))

@@ -8,7 +8,7 @@
 static uint8_t hex_to_int(char c) {
   assert(isxdigit(c));
   switch (c) {
-  // clang-format off
+    // clang-format off
     case '0' ... '9': return c - '0';
     case 'a' ... 'f': return (uint8_t)(c - 'a') + 10;
     case 'A' ... 'F': return (uint8_t)(c - 'A') + 10;

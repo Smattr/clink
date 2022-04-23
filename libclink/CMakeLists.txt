@@ -19,6 +19,8 @@ add_library(libclink
   src/get_environ.c
   src/iter.c
   src/parse_asm.c
+  src/parse_def.c
+  src/parse_generic.c
   src/parse_c.c
   src/re.c
   src/run.c

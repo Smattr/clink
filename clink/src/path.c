@@ -52,6 +52,8 @@ bool is_c(const char *path) {
   // clang-format on
 }
 
+bool is_def(const char *path) { return has_ext(path, "def"); }
+
 bool is_dir(const char *path) {
 
   if (path == NULL)

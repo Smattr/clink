@@ -58,8 +58,8 @@ int work_queue_push_for_parse(work_queue_t *wq, const char *path) {
   if (path == NULL)
     return EINVAL;
 
-  // do not allow queueing files that aren't ASM/C/C++ for parsing
-  if (is_file(path) && !(is_asm(path) || is_c(path)))
+  // do not allow queueing files that are not ASM/C/C++/DEF for parsing
+  if (is_file(path) && !(is_asm(path) || is_c(path) || is_def(path)))
     return EINVAL;
 
   int rc = 0;
