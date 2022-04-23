@@ -34,10 +34,7 @@ find_package(SQLite3 REQUIRED)
 target_include_directories(clink PRIVATE SYSTEM ${SQLite3_INCLUDE_DIRS})
 target_link_libraries(clink PRIVATE ${SQLite3_LIBRARIES})
 
-find_program(XXD xxd)
-if(${XXD} STREQUAL "XXD-NOTFOUND")
-  message(FATAL_ERROR "xxd not found")
-endif()
+find_program(XXD xxd REQUIRED)
 add_custom_command(OUTPUT manpage.c
   COMMAND ${XXD} -include clink.1 ${CMAKE_CURRENT_BINARY_DIR}/manpage.c
   MAIN_DEPENDENCY src/clink.1
