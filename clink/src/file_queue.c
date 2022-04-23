@@ -125,7 +125,7 @@ int file_queue_pop(file_queue_t *fq, char **path) {
       }
 
       // if this is a file and eligible for parsing, return it
-      if (is_file(next) && (is_asm(next) || is_c(next))) {
+      if (is_file(next) && (is_asm(next) || is_c(next) || is_def(next))) {
         *path = next;
         break;
       }

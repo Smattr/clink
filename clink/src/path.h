@@ -45,6 +45,13 @@ bool is_asm(const char *path);
  */
 bool is_c(const char *path);
 
+/** is this a path to an MSVC Module-Definition file?
+ *
+ * \param path Path to assess
+ * \returns True if this is an MSVC Module-Definition file
+ */
+bool is_def(const char *path);
+
 /** is this a directory?
  *
  * \param path Path to assess
