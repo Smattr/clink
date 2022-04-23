@@ -7,6 +7,7 @@
 #include <clink/asm.h>
 #include <clink/c.h>
 #include <clink/db.h>
+#include <clink/def.h>
 #include <clink/generic.h>
 #include <clink/iter.h>
 #include <clink/symbol.h>
