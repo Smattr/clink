@@ -30,6 +30,7 @@ add_library(libclink
   src/temp_dir.c
   src/vim_highlight.c
   src/vim_open.c
+  src/vim_read.c
   ${CMAKE_CURRENT_BINARY_DIR}/version.c)
 
 if(APPLE)
