@@ -1,4 +1,5 @@
 #include "../../common/compiler.h"
+#include "debug.h"
 #include "get_environ.h"
 #include <assert.h>
 #include <clink/vim.h>
@@ -396,6 +397,8 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
   if ((rc = get_extent(filename, &rows, &columns)))
     goto done;
 
+  DEBUG("%s has %zu rows and %zu columns", filename, rows, columns);
+
   // ask Vim to render the file
   if (UNLIKELY((rc = run_vim(&vim_stdout, &vim, filename, rows, columns))))
     goto done;
@@ -453,6 +456,7 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
       static const char MOVE_ORIGIN[] = "\033[1;1H";
       char *reset = strstr(line, MOVE_ORIGIN);
       if (UNLIKELY(reset == NULL)) {
+        DEBUG("failed to find <esc>[1;1H origin jump");
         rc = EBADMSG;
         goto done;
       }
@@ -506,12 +510,13 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
           size_t skip = 0;
           if (match_skip_to(p, &skip)) {
             if (UNLIKELY(skip_to != 0)) {
-              // multiple skip line sequences in a single line
+              DEBUG("multiple skip line sequences emitted in line %zu", lineno);
               rc = EBADMSG;
               goto done;
             }
             if (UNLIKELY(skip <= lineno)) {
-              // backwards jump
+              DEBUG("backwards jump to line %zu emitted in line %zu", skip,
+                    lineno);
               rc = EBADMSG;
               goto done;
             }
@@ -535,6 +540,8 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
         }
 
         // otherwise we have an unrecognised sequence
+        DEBUG("unrecognised sequence <esc>%.*s… on line %zu", 10, p + 1,
+              lineno);
         rc = EBADMSG;
         goto done;
       }
