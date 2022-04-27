@@ -284,26 +284,56 @@ static bool match_ignore(char *s) {
 }
 
 /// shift out characters from `s` if it points to a cursor move sequence
-static bool match_skip_to(char *s, size_t *skip_to_out) {
+static bool match_skip_to(char *s, size_t *skip_to_out, size_t *tab_out) {
 
   assert(s != NULL);
   assert(*s == '\033');
   assert(skip_to_out != NULL);
 
-  // look for "<esc>\[\d+;1H"
+  // look for "<esc>\[\d+;\d+H"
   if (!startswith(s, "\033["))
     return false;
   size_t skip_to = 0;
   size_t i;
   for (i = 2; isdigit(s[i]); ++i)
     skip_to = skip_to * 10 + s[i] - '0';
-  if (!startswith(s + i, ";1H"))
+  if (s[i] != ';')
+    return false;
+  size_t tab = 0;
+  for (++i; isdigit(s[i]); ++i)
+    tab = tab * 10 + s[i] - '0';
+  if (s[i] != 'H')
     return false;
 
-  strmove(s, s + i + sizeof(";1H") - 1);
+  strmove(s, s + i + 1);
   *skip_to_out = skip_to;
+  *tab_out = tab - 1; // -1 because '1' is the left margin
 
   return true;
+}
+
+/// prepend spaces to a string
+static int prepend_tab(char **s, size_t *size, size_t tab) {
+
+  assert(s != NULL);
+  assert(*s != NULL);
+  assert(size != NULL);
+
+  // enlarge the memory for these spaces
+  size_t new_size = *size + tab;
+  char *new_s = realloc(*s, new_size);
+  if (UNLIKELY(new_s == NULL))
+    return ENOMEM;
+
+  // shuffle the string content forwards to make room
+  strmove(new_s + tab, new_s);
+
+  // insert the indentation
+  memset(new_s, ' ', tab);
+
+  *s = new_s;
+  *size = new_size;
+  return 0;
 }
 
 /// add a colour formatting directive to the start of a string
@@ -413,6 +443,7 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
   // read lines from Vim, yielding the output to the caller
   size_t lineno = 1;
   size_t skip_to = 0;
+  size_t tab = 0;
   for (bool first = true;; first = false) {
 
     // reset errno in preparation for calling `getline`, so we can distinguish
@@ -431,6 +462,13 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
       if (UNLIKELY((rc = errno)))
         goto done;
       break;
+    }
+
+    // if there is a pending indentation, apply it now
+    if (tab > 0) {
+      if (UNLIKELY((rc = prepend_tab(&line, &line_size, tab))))
+        goto done;
+      tab = 0;
     }
 
     // if the formatting from the previous line was not closed by Vim, we need
@@ -508,7 +546,7 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
         // are we pointing at a sequence to jump over blank lines?
         {
           size_t skip = 0;
-          if (match_skip_to(p, &skip)) {
+          if (match_skip_to(p, &skip, &tab)) {
             if (UNLIKELY(skip_to != 0)) {
               DEBUG("multiple skip line sequences emitted in line %zu", lineno);
               rc = EBADMSG;
