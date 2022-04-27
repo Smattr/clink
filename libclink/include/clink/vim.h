@@ -58,6 +58,18 @@ CLINK_API int clink_vim_read(const char *filename,
                              int (*callback)(void *state, const char *line),
                              void *state);
 
+/** Vim-highlight the given file, inserting results into the given database
+ *
+ * This function is provided as an alternative to `clink_vim_read` for when the
+ * action being done with every result is simply to insert it into a Clink
+ * database.
+ *
+ * \param db Database to insert into
+ * \param filename Source file to read
+ * \returns 0 on success or an errno on failure
+ */
+CLINK_API int clink_vim_read_into(clink_db_t *db, const char *filename);
+
 #ifdef __cplusplus
 }
 #endif
