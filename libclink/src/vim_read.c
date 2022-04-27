@@ -348,23 +348,26 @@ static int prepend_colour(char **s, size_t *size, int colour) {
   assert(colour >= 0 && colour <= 99);
 
   // enlarge the backing memory to fit the prefix
+  size_t length = strlen(*s);
   size_t directive = sizeof("\033[m") - 1 + (colour > 9 ? 2 : 1);
-  size_t new_size = *size + directive;
-  char *new_s = realloc(*s, new_size);
-  if (UNLIKELY(new_s == NULL))
-    return ENOMEM;
+  size_t new_extent = length + 1 + directive;
+  if (new_extent > *size) {
+    char *new_s = realloc(*s, new_extent);
+    if (UNLIKELY(new_s == NULL))
+      return ENOMEM;
+    *s = new_s;
+    *size = new_extent;
+  }
 
   // shuffle the string content forwards to make room
-  strmove(new_s + directive, new_s);
+  strmove(*s + directive, *s);
 
   // insert the formatting directive
-  (void)snprintf(new_s, directive, "\033[%d", colour);
-  assert(new_s[directive - 1] == '\0' &&
+  (void)snprintf(*s, directive, "\033[%d", colour);
+  assert((*s)[directive - 1] == '\0' &&
          "snprintf did not write NUL terminator");
-  new_s[directive - 1] = 'm';
+  (*s)[directive - 1] = 'm';
 
-  *s = new_s;
-  *size = new_size;
   return 0;
 }
 
