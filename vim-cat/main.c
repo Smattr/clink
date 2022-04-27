@@ -4,7 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int print(const char *line) {
+static int print(void *ignored, const char *line) {
+
+  (void)ignored;
+
   if (fputs(line, stdout) == EOF)
     return errno;
 
@@ -22,7 +25,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  int rc = clink_vim_read(argv[1], print);
+  int rc = clink_vim_read(argv[1], print, NULL);
   if (rc != 0) {
     fprintf(stderr, "failed: %s\n", strerror(rc));
     return EXIT_FAILURE;

@@ -404,7 +404,9 @@ enum {
   BG_DEFAULT = 49, // default background colour code
 };
 
-int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
+int clink_vim_read(const char *filename,
+                   int (*callback)(void *state, const char *line),
+                   void *state) {
 
   if (UNLIKELY(filename == NULL))
     return EINVAL;
@@ -594,7 +596,7 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
         goto done;
     }
 
-    if ((rc = callback(line)))
+    if ((rc = callback(state, line)))
       goto done;
 
     ++lineno;
@@ -602,7 +604,7 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
     // did we see any directives indicating following blank lines?
     assert(skip_to == 0 || skip_to >= lineno);
     while (skip_to > lineno) {
-      if ((rc = callback("\n")))
+      if ((rc = callback(state, "\n")))
         goto done;
       ++lineno;
     }
@@ -612,7 +614,7 @@ int clink_vim_read(const char *filename, int (*callback)(const char *line)) {
   // Vim does not bother emitting the trailing blank lines, either explicitly or
   // as a skip sequence, so handle them ourselves
   while (lineno < rows) {
-    if ((rc = callback(lineno == rows ? "" : "\n")))
+    if ((rc = callback(state, lineno == rows ? "" : "\n")))
       goto done;
     ++lineno;
   }

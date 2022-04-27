@@ -50,11 +50,13 @@ CLINK_API int clink_vim_highlight_into(clink_db_t *db, const char *filename);
  *
  * \param filename Source file to read
  * \param callback Handler for highlighted lines
+ * \param state State to pass as first parameter to the callback
  * \returns 0 on success, an errno on failure, or the last non-zero return from
  *   the caller’s callback if there was one
  */
 CLINK_API int clink_vim_read(const char *filename,
-                             int (*callback)(const char *line));
+                             int (*callback)(void *state, const char *line),
+                             void *state);
 
 #ifdef __cplusplus
 }
