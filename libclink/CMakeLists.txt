@@ -16,6 +16,7 @@ add_library(libclink
   src/db_find_symbol.c
   src/db_open.c
   src/db_remove.c
+  src/debug.c
   src/get_environ.c
   src/iter.c
   src/parse_asm.c
@@ -30,6 +31,10 @@ add_library(libclink
   src/vim_highlight.c
   src/vim_open.c
   ${CMAKE_CURRENT_BINARY_DIR}/version.c)
+
+if(APPLE)
+  target_compile_options(libclink PRIVATE -fno-common)
+endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
