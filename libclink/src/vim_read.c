@@ -320,19 +320,22 @@ static int prepend_tab(char **s, size_t *size, size_t tab) {
   assert(size != NULL);
 
   // enlarge the memory for these spaces
-  size_t new_size = *size + tab;
-  char *new_s = realloc(*s, new_size);
-  if (UNLIKELY(new_s == NULL))
-    return ENOMEM;
+  size_t length = strlen(*s);
+  size_t new_extent = length + 1 + tab;
+  if (new_extent > *size) {
+    char *new_s = realloc(*s, new_extent);
+    if (UNLIKELY(new_s == NULL))
+      return ENOMEM;
+    *s = new_s;
+    *size = new_extent;
+  }
 
   // shuffle the string content forwards to make room
-  strmove(new_s + tab, new_s);
+  strmove(*s + tab, *s);
 
   // insert the indentation
-  memset(new_s, ' ', tab);
+  memset(*s, ' ', tab);
 
-  *s = new_s;
-  *size = new_size;
   return 0;
 }
 
