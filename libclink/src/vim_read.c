@@ -548,34 +548,42 @@ int clink_vim_read(const char *filename,
         // are we pointing at a sequence to jump over blank lines?
         {
           size_t skip = 0;
-          if (match_skip_to(p, &skip, &tab)) {
+          size_t t = 0;
+          if (match_skip_to(p, &skip, &t)) {
             if (UNLIKELY(skip_to != 0)) {
               DEBUG("multiple skip line sequences emitted in line %zu", lineno);
               rc = EBADMSG;
               goto done;
             }
-            if (UNLIKELY(skip <= lineno)) {
-              DEBUG("backwards jump to line %zu emitted in line %zu", skip,
-                    lineno);
+            if (UNLIKELY(skip < lineno)) {
+              DEBUG("backwards jump to line %zu column %zu emitted in line %zu",
+                    skip, lineno, tab);
               rc = EBADMSG;
               goto done;
             }
-            skip_to = skip;
+            if (skip == lineno) {
+              // ignore moves to the same line we are currently on, as this is
+              // how Vim deals with non-1-width characters
+              continue;
+            } else {
+              skip_to = skip;
+              tab = t;
 
-            // stash the pending line that followed this jump sequence
-            assert(saved == NULL && "leaking saved line");
-            saved = strdup(p);
-            if (UNLIKELY(saved == NULL)) {
-              rc = ENOMEM;
-              goto done;
+              // stash the pending line that followed this jump sequence
+              assert(saved == NULL && "leaking saved line");
+              saved = strdup(p);
+              if (UNLIKELY(saved == NULL)) {
+                rc = ENOMEM;
+                goto done;
+              }
+
+              // Terminate the line we just completed. This write is safe
+              // because we know the jump sequence occupied at least 6 bytes.
+              p[0] = '\n';
+              p[1] = '\0';
+
+              break;
             }
-
-            // Terminate the line we just completed. This write is safe because
-            // we know the jump sequence occupied at least 6 bytes.
-            p[0] = '\n';
-            p[1] = '\0';
-
-            break;
           }
         }
 
