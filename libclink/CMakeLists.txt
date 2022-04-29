@@ -1,6 +1,7 @@
 project(libclink LANGUAGES C)
 
 add_library(libclink
+  src/buffer.c
   src/colour.c
   src/compiler_includes.c
   src/db_add_line.c
@@ -28,6 +29,7 @@ add_library(libclink
   src/sql.c
   src/symbol.c
   src/temp_dir.c
+  src/term.c
   src/vim_highlight.c
   src/vim_open.c
   src/vim_read.c
