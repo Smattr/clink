@@ -27,7 +27,7 @@ task:
 
     - name: macOS
       osx_instance:
-        image: catalina-xcode-12.1
+        image: monterey-xcode-13.3
       environment:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         CTEST_OUTPUT_ON_FAILURE: 1
