@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../common/compiler.h"
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -9,7 +10,7 @@ static inline bool sql_ok(int error) {
 }
 
 /// translate a SQLite primary result code to an errno
-__attribute__((visibility("internal"))) int sql_err_to_errno(int err);
+INTERNAL int sql_err_to_errno(int err);
 
 static inline int sql_exec(sqlite3 *db, const char *query) {
   int r = sqlite3_exec(db, query, NULL, NULL, NULL);
