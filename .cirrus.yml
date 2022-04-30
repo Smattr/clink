@@ -16,7 +16,7 @@ task:
 
     - name: Linux
       container:
-        image: gcc:10.3
+        image: gcc:11.3
       environment:
         DEBIAN_FRONTEND: noninteractive
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined -fuse-ld=gold
