@@ -1,4 +1,6 @@
 #pragma once
 
+#include "../../common/compiler.h"
+
 /// get a pointer to environ
-__attribute__((visibility("internal"))) char **get_environ(void);
+INTERNAL char **get_environ(void);

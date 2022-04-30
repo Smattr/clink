@@ -4,6 +4,8 @@
 
 #include <assert.h>
 
+#define INTERNAL __attribute__((visibility("internal")))
+
 #define LIKELY(expr) __builtin_expect(!!(expr), 1)
 #define UNLIKELY(expr) __builtin_expect((expr), 0)
 
