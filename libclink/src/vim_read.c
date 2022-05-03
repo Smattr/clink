@@ -52,6 +52,7 @@ static int get_extent(const char *filename, size_t *rows, size_t *columns) {
   size_t lines = 1;
   size_t width = 0;
   size_t max_width = 0;
+  int last = EOF;
 
   int rc = 0;
 
@@ -60,6 +61,7 @@ static int get_extent(const char *filename, size_t *rows, size_t *columns) {
     int c = getc(f);
     if (c == EOF)
       break;
+    last = c;
 
     // is this a Unix end of line?
     if (c == '\n') {
@@ -103,6 +105,12 @@ static int get_extent(const char *filename, size_t *rows, size_t *columns) {
   if (max_width < width)
     max_width = width;
 
+  // if the file ended with a newline, we do not count the next (empty) line
+  if (last == '\n') {
+    assert(lines > 1);
+    --lines;
+  }
+
 done:
   (void)fclose(f);
 
@@ -121,6 +129,9 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
   assert(out != NULL);
   assert(pid != NULL);
   assert(filename != NULL);
+
+  // we need one extra row for the Vim statusline
+  ++rows;
 
   // bump the terminal dimensions if they are likely to confuse or impede Vim
   if (rows < 20)
