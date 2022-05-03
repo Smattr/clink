@@ -36,49 +36,70 @@ typedef struct {
 
 static style_t style_default(void) { return (style_t){0}; }
 
-/// emit directives for the diff between `a` and `b`
-static int style_update(style_t a, style_t b, FILE *f) {
+static bool style_eq(style_t a, style_t b) {
+
+  if (a.custom_fg != b.custom_fg)
+    return false;
+
+  if (a.custom_fg && a.fg != b.fg)
+    return false;
+
+  if (a.custom_bg != b.custom_bg)
+    return false;
+
+  if (a.custom_bg && a.bg != b.bg)
+    return false;
+
+  if (a.bold != b.bold)
+    return false;
+
+  if (a.underline != b.underline)
+    return false;
+
+  return true;
+}
+
+/// write a directive for the given style
+static int style_put(style_t style, FILE *f) {
   assert(f != NULL);
 
-  if (a.custom_fg != b.custom_fg || a.fg != b.fg) {
-    if (b.custom_fg) {
-      if (UNLIKELY(fprintf(f, "\033[3%um", b.fg) < 0))
-        return errno;
-    } else {
-      if (UNLIKELY(fputs("\033[39m", f) == EOF))
-        return errno;
-    }
+  if (UNLIKELY(fputs("\033[", f) == EOF))
+    return errno;
+
+  if (style.custom_fg) {
+    if (UNLIKELY(fprintf(f, "3%u", style.fg) < 0))
+      return errno;
+  } else {
+    if (UNLIKELY(fputs("39", f) == EOF))
+      return errno;
   }
 
-  if (a.custom_bg != b.custom_bg || a.bg != b.bg) {
-    if (b.custom_bg) {
-      if (UNLIKELY(fprintf(f, "\033[4%um", b.bg) < 0))
-        return errno;
-    } else {
-      if (UNLIKELY(fputs("\033[49m", f) == EOF))
-        return errno;
-    }
+  if (style.custom_bg) {
+    if (UNLIKELY(fprintf(f, ";4%u", style.bg) < 0))
+      return errno;
+  } else {
+    if (UNLIKELY(fputs(";49", f) == EOF))
+      return errno;
   }
 
-  if (a.bold != b.bold) {
-    if (b.bold) {
-      if (UNLIKELY(fputs("\033[1m", f) == EOF))
-        return errno;
-    } else {
-      if (UNLIKELY(fputs("\033[22m", f) == EOF))
-        return errno;
-    }
+  if (style.bold) {
+    if (UNLIKELY(fputs(";1", f) == EOF))
+      return errno;
+  } else {
+    if (UNLIKELY(fputs(";22", f) == EOF))
+      return errno;
   }
 
-  if (a.underline != b.underline) {
-    if (b.underline) {
-      if (UNLIKELY(fputs("\033[4m", f) == EOF))
-        return errno;
-    } else {
-      if (UNLIKELY(fputs("\033[24m", f) == EOF))
-        return errno;
-    }
+  if (style.underline) {
+    if (UNLIKELY(fputs(";4", f) == EOF))
+      return errno;
+  } else {
+    if (UNLIKELY(fputs(";24", f) == EOF))
+      return errno;
   }
+
+  if (UNLIKELY(fputc('m', f) == EOF))
+    return errno;
 
   return 0;
 }
@@ -750,10 +771,12 @@ int term_readline(term_t *t, size_t row, const char **line) {
     const cell_t *cell = get_cell(t, i + 1, row);
 
     // update style for this grapheme, if necessary
-    int rc = style_update(style, cell->style, f);
-    if (UNLIKELY(rc != 0))
-      return rc;
-    style = cell->style;
+    if (!style_eq(style, cell->style)) {
+      int rc = style_put(cell->style, f);
+      if (UNLIKELY(rc != 0))
+        return rc;
+      style = cell->style;
+    }
 
     // if this cell is empty, write a space to mimic its effect
     if (cell_is_empty(cell)) {
@@ -762,7 +785,8 @@ int term_readline(term_t *t, size_t row, const char **line) {
 
       // otherwise write the character itself
     } else {
-      if (UNLIKELY((rc = cell_put(cell, f))))
+      int rc = cell_put(cell, f);
+      if (UNLIKELY(rc != 0))
         return rc;
     }
   }
