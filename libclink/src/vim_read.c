@@ -1,16 +1,15 @@
 #include "../../common/compiler.h"
 #include "debug.h"
 #include "get_environ.h"
+#include "term.h"
 #include <assert.h>
 #include <clink/vim.h>
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <spawn.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -227,189 +226,6 @@ done:
   return rc;
 }
 
-static bool startswith(const char *s, const char *prefix) {
-  assert(s != NULL);
-  assert(prefix != NULL);
-  return strncmp(s, prefix, strlen(prefix)) == 0;
-}
-
-static bool isnot8(int c) { return isdigit(c) && c != '8'; }
-
-static void strmove(char *to, const char *from) {
-  memmove(to, from, strlen(from) + 1);
-}
-
-/// shift out characters from `s` if it points at an irrelevant escape sequence
-static bool match_ignore(char *s) {
-
-  assert(s != NULL);
-  assert(*s == '\033');
-
-  // is this a "<esc>\[\?\d+[hl]" private sequence?
-  if (startswith(s, "\033[?")) {
-    for (size_t i = 3;; ++i) {
-      if (isdigit(s[i])) {
-        // continue
-      } else if (s[i] == 'h' || s[i] == 'l') {
-        strmove(s, s + i + 1);
-        return true;
-      } else {
-        break;
-      }
-    }
-  }
-
-  // is this the "<esc>>" Normal Keypad sequence?
-  static const char NORMAL_KEYPAD[] = "\033>";
-  if (startswith(s, NORMAL_KEYPAD)) {
-    strmove(s, s + sizeof(NORMAL_KEYPAD) - 1);
-    return true;
-  }
-
-  // is this a "<esc>[\d+h" Set Mode sequence?
-  if (startswith(s, "\033[")) {
-    for (size_t i = 2;; ++i) {
-      if (isdigit(s[i])) {
-        // continue
-      } else if (s[i] == 'h') {
-        strmove(s, s + i + 1);
-        return true;
-      } else {
-        break;
-      }
-    }
-  }
-
-  return false;
-}
-
-/// shift out characters from `s` if it points to a cursor move sequence
-static bool match_skip_to(char *s, size_t *skip_to_out, size_t *tab_out) {
-
-  assert(s != NULL);
-  assert(*s == '\033');
-  assert(skip_to_out != NULL);
-
-  // look for "<esc>\[\d+;\d+H"
-  if (!startswith(s, "\033["))
-    return false;
-  size_t skip_to = 0;
-  size_t i;
-  for (i = 2; isdigit(s[i]); ++i)
-    skip_to = skip_to * 10 + s[i] - '0';
-  if (s[i] != ';')
-    return false;
-  size_t tab = 0;
-  for (++i; isdigit(s[i]); ++i)
-    tab = tab * 10 + s[i] - '0';
-  if (s[i] != 'H')
-    return false;
-
-  strmove(s, s + i + 1);
-  *skip_to_out = skip_to;
-  *tab_out = tab - 1; // -1 because '1' is the left margin
-
-  return true;
-}
-
-/// prepend spaces to a string
-static int prepend_tab(char **s, size_t *size, size_t tab) {
-
-  assert(s != NULL);
-  assert(*s != NULL);
-  assert(size != NULL);
-
-  // enlarge the memory for these spaces
-  size_t length = strlen(*s);
-  size_t new_extent = length + 1 + tab;
-  if (new_extent > *size) {
-    char *new_s = realloc(*s, new_extent);
-    if (UNLIKELY(new_s == NULL))
-      return ENOMEM;
-    *s = new_s;
-    *size = new_extent;
-  }
-
-  // shuffle the string content forwards to make room
-  strmove(*s + tab, *s);
-
-  // insert the indentation
-  memset(*s, ' ', tab);
-
-  return 0;
-}
-
-/// add a colour formatting directive to the start of a string
-static int prepend_colour(char **s, size_t *size, int colour) {
-
-  assert(s != NULL);
-  assert(*s != NULL);
-  assert(size != NULL);
-  assert(colour >= 0 && colour <= 99);
-
-  // enlarge the backing memory to fit the prefix
-  size_t length = strlen(*s);
-  size_t directive = sizeof("\033[m") - 1 + (colour > 9 ? 2 : 1);
-  size_t new_extent = length + 1 + directive;
-  if (new_extent > *size) {
-    char *new_s = realloc(*s, new_extent);
-    if (UNLIKELY(new_s == NULL))
-      return ENOMEM;
-    *s = new_s;
-    *size = new_extent;
-  }
-
-  // shuffle the string content forwards to make room
-  strmove(*s + directive, *s);
-
-  // insert the formatting directive
-  (void)snprintf(*s, directive, "\033[%d", colour);
-  assert((*s)[directive - 1] == '\0' &&
-         "snprintf did not write NUL terminator");
-  (*s)[directive - 1] = 'm';
-
-  return 0;
-}
-
-/// add a colour reset directive to the end of a string
-static int append_reset(char **s, size_t *size) {
-
-  assert(s != NULL);
-  assert(*s != NULL);
-  assert(size != NULL);
-
-  // do we need to expand the backing allocation to fit this directive?
-  static const char RESET[] = "\033[0m";
-  size_t length = strlen(*s);
-  if (length + sizeof(RESET) > *size) {
-    char *new_s = realloc(*s, length + sizeof(RESET));
-    if (UNLIKELY(new_s == NULL))
-      return ENOMEM;
-    *s = new_s;
-    *size = length + sizeof(RESET);
-  }
-
-  // if this ends in a Windows line ending, insert before this
-  if (length >= 2 && strcmp(*s + length - 2, "\r\n") == 0) {
-    (void)snprintf(*s + length - 2, sizeof(RESET) + 2, "%s\r\n", RESET);
-
-    // if this ends in a Unix line ending, insert before this
-  } else if (length >= 1 && (*s)[length - 1] == '\n') {
-    (void)snprintf(*s + length - 1, sizeof(RESET) + 1, "%s\n", RESET);
-
-    // otherwise, just append it
-  } else {
-    strcat(*s, RESET);
-  }
-
-  return 0;
-}
-
-enum {
-  FG_DEFAULT = 39, // default foreground colour code
-  BG_DEFAULT = 49, // default background colour code
-};
-
 int clink_vim_read(const char *filename,
                    int (*callback)(void *state, const char *line),
                    void *state) {
@@ -421,9 +237,7 @@ int clink_vim_read(const char *filename,
     return EINVAL;
 
   int rc = 0;
-  char *line = NULL;    // last received line from Vim
-  size_t line_size = 0; // allocated bytes backing `line`
-  char *saved = NULL;   // pending data from `line` from previous loop iteration
+  term_t *term = NULL;
   FILE *vim_stdout = NULL; // pipe to Vim’s stdout
   pid_t vim = 0;
 
@@ -437,6 +251,10 @@ int clink_vim_read(const char *filename,
 
   DEBUG("%s has %zu rows and %zu columns", filename, rows, columns);
 
+  // create a virtual terminal
+  if (UNLIKELY((rc = term_new(&term, columns, rows))))
+    goto done;
+
   // ask Vim to render the file
   if (UNLIKELY((rc = run_vim(&vim_stdout, &vim, filename, rows, columns))))
     goto done;
@@ -444,198 +262,22 @@ int clink_vim_read(const char *filename,
   assert(vim_stdout != NULL && "invalid stream for Vim’s output");
   assert(vim > 0 && "invalid PID for Vim");
 
-  int fg = FG_DEFAULT;  // current foreground colour
-  int bg = BG_DEFAULT;  // current background colour
-  bool is_bold = false; // is bold on?
+  // drain Vim’s output into the virtual terminal
+  if (UNLIKELY((rc = term_send(term, vim_stdout))))
+    goto done;
 
-  // read lines from Vim, yielding the output to the caller
-  size_t lineno = 1;
-  size_t skip_to = 0;
-  size_t tab = 0;
-  for (bool first = true;; first = false) {
+  // pass terminal lines back to the caller
+  for (size_t row = 1; row <= rows; ++row) {
 
-    // reset errno in preparation for calling `getline`, so we can distinguish
-    // between failure and EOF
-    errno = 0;
-
-    // do we have a pending line from last iteration?
-    if (saved != NULL) {
-      free(line);
-      line = saved;
-      line_size = strlen(saved) + 1;
-      saved = NULL;
-
-      // otherwise read in the next one
-    } else if (getline(&line, &line_size, vim_stdout) == -1) {
-      if (UNLIKELY((rc = errno)))
-        goto done;
-      break;
-    }
-
-    // if there is a pending indentation, apply it now
-    if (tab > 0) {
-      if (UNLIKELY((rc = prepend_tab(&line, &line_size, tab))))
-        goto done;
-      tab = 0;
-    }
-
-    // if the formatting from the previous line was not closed by Vim, we need
-    // to reapply it to this line
-    if (fg != FG_DEFAULT) {
-      assert(fg >= 30 && fg < 40);
-      if (UNLIKELY((rc = prepend_colour(&line, &line_size, fg))))
-        goto done;
-    }
-    if (bg != BG_DEFAULT) {
-      assert(bg >= 40 && bg < 50);
-      if (UNLIKELY((rc = prepend_colour(&line, &line_size, bg))))
-        goto done;
-    }
-    if (is_bold) {
-      if (UNLIKELY((rc = prepend_colour(&line, &line_size, 1))))
-        goto done;
-    }
-
-    // the first line contains some status output before ESC[1;1H resetting, so
-    // strip this
-    if (first) {
-      static const char MOVE_ORIGIN[] = "\033[1;1H";
-      char *reset = strstr(line, MOVE_ORIGIN);
-      if (UNLIKELY(reset == NULL)) {
-        DEBUG("failed to find <esc>[1;1H origin jump");
-        rc = EBADMSG;
-        goto done;
-      }
-      strmove(line, reset + sizeof(MOVE_ORIGIN) - 1);
-    }
-
-    // scan for escape sequences we need to adjust
-    for (char *p = line; *p != '\0';) {
-
-      // are we pointing at the start of an escape sequence?
-      if (*p == '\033') {
-
-        // if this is a foreground colour switch, update our tracking
-        if (p[1] == '[' && p[2] == '3' && isnot8(p[3]) && p[4] == 'm') {
-          fg = 30 + p[3] - '0';
-          p += sizeof("\033[3.m") - 1;
-          continue;
-        }
-
-        // if this is a background colour switch, update our tracking
-        if (p[1] == '[' && p[2] == '4' && isnot8(p[3]) && p[4] == 'm') {
-          bg = 40 + p[3] - '0';
-          p += sizeof("\033[4.m") - 1;
-          continue;
-        }
-
-        // if this is bold enable, update our tracking
-        static const char BOLD_ENABLE[] = "\033[1m";
-        if (startswith(p, BOLD_ENABLE)) {
-          is_bold = true;
-          p += sizeof(BOLD_ENABLE) - 1;
-          continue;
-        }
-
-        // if this is reset, update our tracking
-        static const char RESET[] = "\033[0m";
-        if (startswith(p, RESET)) {
-          fg = FG_DEFAULT;
-          bg = BG_DEFAULT;
-          is_bold = false;
-          p += sizeof(RESET) - 1;
-          continue;
-        }
-
-        // are we pointing at a sequence that should be ignored?
-        if (match_ignore(p))
-          continue;
-
-        // are we pointing at a sequence to jump over blank lines?
-        {
-          size_t skip = 0;
-          size_t t = 0;
-          if (match_skip_to(p, &skip, &t)) {
-            if (UNLIKELY(skip_to != 0)) {
-              DEBUG("multiple skip line sequences emitted in line %zu", lineno);
-              rc = EBADMSG;
-              goto done;
-            }
-            if (UNLIKELY(skip < lineno)) {
-              DEBUG("backwards jump to line %zu column %zu emitted in line %zu",
-                    skip, lineno, tab);
-              rc = EBADMSG;
-              goto done;
-            }
-            if (skip == lineno) {
-              // ignore moves to the same line we are currently on, as this is
-              // how Vim deals with non-1-width characters
-              continue;
-            } else {
-              skip_to = skip;
-              tab = t;
-
-              // stash the pending line that followed this jump sequence
-              assert(saved == NULL && "leaking saved line");
-              saved = strdup(p);
-              if (UNLIKELY(saved == NULL)) {
-                rc = ENOMEM;
-                goto done;
-              }
-
-              // Terminate the line we just completed. This write is safe
-              // because we know the jump sequence occupied at least 6 bytes.
-              p[0] = '\n';
-              p[1] = '\0';
-
-              break;
-            }
-          }
-        }
-
-        // otherwise we have an unrecognised sequence
-        DEBUG("unrecognised sequence <esc>%.*s… on line %zu", 10, p + 1,
-              lineno);
-        rc = EBADMSG;
-        goto done;
-      }
-
-      // regular character; continue
-      ++p;
-    }
-
-    // if formatting was not reset at the end of the line, force this
-    if (fg != FG_DEFAULT || bg != BG_DEFAULT || is_bold) {
-      if (UNLIKELY((rc = append_reset(&line, &line_size))))
-        goto done;
-    }
-
-    if ((rc = callback(state, line)))
+    const char *line = NULL;
+    if (UNLIKELY((rc = term_readline(term, row, &line))))
       goto done;
 
-    ++lineno;
-
-    // did we see any directives indicating following blank lines?
-    assert(skip_to == 0 || skip_to >= lineno);
-    while (skip_to > lineno) {
-      if ((rc = callback(state, "\n")))
-        goto done;
-      ++lineno;
-    }
-    skip_to = 0;
-  }
-
-  // Vim does not bother emitting the trailing blank lines, either explicitly or
-  // as a skip sequence, so handle them ourselves
-  while (lineno < rows) {
-    if ((rc = callback(state, lineno == rows ? "" : "\n")))
+    if (UNLIKELY((rc = callback(state, line))))
       goto done;
-    ++lineno;
   }
 
 done:
-  free(saved);
-  free(line);
   if (vim_stdout != NULL)
     (void)fclose(vim_stdout);
 
@@ -654,6 +296,8 @@ done:
       }
     }
   }
+
+  term_free(&term);
 
   return rc;
 }
