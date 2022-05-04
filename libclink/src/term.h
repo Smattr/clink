@@ -49,7 +49,8 @@ INTERNAL int term_readline(term_t *t, size_t row, const char **line);
 
 /** wipe any data previously rendered to this terminal
  *
- * This also resets the cursor position to the origin, (1, 1).
+ * This also resets the cursor position to the origin, (1, 1) and the style to
+ * its default.
  *
  * \param t Terminal to blank
  */

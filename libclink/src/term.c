@@ -828,6 +828,9 @@ void term_reset(term_t *t) {
   // reset cursor to home
   t->x = 1;
   t->y = 1;
+
+  // reset current style
+  t->style = style_default();
 }
 
 void term_free(term_t **t) {
