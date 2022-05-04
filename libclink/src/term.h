@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "../../common/compiler.h"
 #include <stddef.h>
 #include <stdio.h>
 
@@ -24,7 +25,7 @@ typedef struct term term_t;
  * \param rows Height of the terminal to create
  * \returns 0 on success or an errno on failure
  */
-int term_new(term_t **t, size_t columns, size_t rows);
+INTERNAL int term_new(term_t **t, size_t columns, size_t rows);
 
 /** write data to the terminal
  *
@@ -35,7 +36,7 @@ int term_new(term_t **t, size_t columns, size_t rows);
  * \param from Source to read data from
  * \returns 0 on success or an errno on failure
  */
-int term_send(term_t *t, FILE *from);
+INTERNAL int term_send(term_t *t, FILE *from);
 
 /** read a line of data from the terminal
  *
@@ -44,7 +45,7 @@ int term_send(term_t *t, FILE *from);
  * \param line [out] Read data on success
  * \returns 0 on success or an errno on failure
  */
-int term_readline(term_t *t, size_t row, const char **line);
+INTERNAL int term_readline(term_t *t, size_t row, const char **line);
 
 /** wipe any data previously rendered to this terminal
  *
@@ -56,4 +57,4 @@ void term_clear(term_t *t);
  *
  * \param t Terminal to destroy
  */
-void term_free(term_t **t);
+INTERNAL void term_free(term_t **t);
