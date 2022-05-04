@@ -792,8 +792,10 @@ int term_readline(term_t *t, size_t row, const char **line) {
   }
 
   // reset the style to simplify the caller’s life
-  if (UNLIKELY(fputs("\033[0m", f) == EOF))
-    return errno;
+  if (!style_eq(style, style_default())) {
+    if (UNLIKELY(fputs("\033[0m", f) == EOF))
+      return errno;
+  }
 
   // success; NUL terminate the buffer and make it available to the caller
   buffer_sync(&t->stage);
