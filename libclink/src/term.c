@@ -557,6 +557,17 @@ static int process_csi(term_t *t, const char *csi) {
   return 0;
 }
 
+/// consume a character and advance if it matches the expected
+static bool eat_if(FILE *f, char expected) {
+  assert(f != NULL);
+  int c = getc(f);
+  if (c == expected)
+    return true;
+  if (c != EOF)
+    ungetc(c, f);
+  return false;
+}
+
 /// read a UTF-8 character from the given stream
 static utf8_t get_utf8(FILE *f) {
   assert(f != NULL);
@@ -586,6 +597,12 @@ static utf8_t get_utf8(FILE *f) {
     return REPLACEMENT;
 
   utf8_t u = {{c}};
+
+  // recognise Windows line endings and treat them as a single character
+  if (c == '\r' && eat_if(f, '\n')) {
+    u.bytes[1] = '\n';
+    return u;
+  }
 
   // is this a 1-byte character? Assume this is the common case, given we are
   // parsing programming source code.
@@ -628,17 +645,6 @@ static utf8_t get_utf8(FILE *f) {
   u.bytes[3] = c;
 
   return u;
-}
-
-/// consume a character and advance if it matches the expected
-static bool eat_if(FILE *f, char expected) {
-  assert(f != NULL);
-  int c = getc(f);
-  if (c == expected)
-    return true;
-  if (c != EOF)
-    ungetc(c, f);
-  return false;
 }
 
 int term_send(term_t *t, FILE *from) {
@@ -710,7 +716,7 @@ int term_send(term_t *t, FILE *from) {
     cell_clear(cell);
 
     // for a newline, just leave the cell clear
-    if (!utf8eq(u, "\n")) {
+    if (!utf8eq(u, "\n") && !utf8eq(u, "\r\n")) {
 
       cell->style = t->style;
 
@@ -727,10 +733,8 @@ int term_send(term_t *t, FILE *from) {
       }
     }
 
-    // TODO: windows line endings
-
     // advance our cell position
-    if (utf8eq(u, "\n") || t->x == t->columns) {
+    if (utf8eq(u, "\n") || utf8eq(u, "\r\n") || t->x == t->columns) {
       if (t->y < t->rows) {
         ++t->y;
         t->x = 1;
