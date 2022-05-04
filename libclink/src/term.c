@@ -352,6 +352,19 @@ static int process_H(term_t *t, size_t index, bool is_default, size_t entry) {
   return 0;
 }
 
+static void term_clear(term_t *t) {
+
+  if (t == NULL)
+    return;
+
+  for (size_t y = 1; y <= t->rows; ++y) {
+    for (size_t x = 1; x <= t->columns; ++x) {
+      cell_t *cell = get_cell(t, x, y);
+      cell_clear(cell);
+    }
+  }
+}
+
 static int process_J(term_t *t, size_t index, bool is_default, size_t entry) {
   assert(t != NULL);
 
@@ -803,17 +816,16 @@ int term_readline(term_t *t, size_t row, const char **line) {
   return 0;
 }
 
-void term_clear(term_t *t) {
+void term_reset(term_t *t) {
 
   if (t == NULL)
     return;
 
-  for (size_t y = 1; y <= t->rows; ++y) {
-    for (size_t x = 1; x <= t->columns; ++x) {
-      cell_t *cell = get_cell(t, x, y);
-      cell_clear(cell);
-    }
-  }
+  term_clear(t);
+
+  // reset cursor to home
+  t->x = 1;
+  t->y = 1;
 }
 
 void term_free(term_t **t) {
