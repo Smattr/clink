@@ -134,8 +134,8 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
   ++rows;
 
   // bump the terminal dimensions if they are likely to confuse or impede Vim
-  if (rows < 20)
-    rows = 20;
+  if (rows < 2)
+    rows = 2;
   if (columns < 80)
     columns = 80;
 
