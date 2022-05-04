@@ -536,6 +536,8 @@ static int process_csi(term_t *t, const char *csi) {
     return ENOTSUP;
   }
 
+  DEBUG("processing <esc>[%s", csi);
+
   // process ';' separated entries
   size_t index = 0;
   bool is_default = true;
