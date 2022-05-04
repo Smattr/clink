@@ -389,12 +389,7 @@ static int process_J(term_t *t, size_t index, bool is_default, size_t entry) {
 
   case 2: // clear entire screen
   case 3: // clear entire screen and delete scrollback
-    for (size_t y = 1; y <= t->rows; ++y) {
-      for (size_t x = 1; x <= t->columns; ++x) {
-        cell_t *cell = get_cell(t, x, y);
-        cell_clear(cell);
-      }
-    }
+    term_clear(t);
     break;
 
   default:
@@ -808,6 +803,19 @@ int term_readline(term_t *t, size_t row, const char **line) {
   return 0;
 }
 
+void term_clear(term_t *t) {
+
+  if (t == NULL)
+    return;
+
+  for (size_t y = 1; y <= t->rows; ++y) {
+    for (size_t x = 1; x <= t->columns; ++x) {
+      cell_t *cell = get_cell(t, x, y);
+      cell_clear(cell);
+    }
+  }
+}
+
 void term_free(term_t **t) {
 
   if (t == NULL)
@@ -816,14 +824,9 @@ void term_free(term_t **t) {
   if (*t == NULL)
     return;
 
-  buffer_close(&(*t)->stage);
+  term_clear(*t);
 
-  for (size_t y = 1; y <= (*t)->rows; ++y) {
-    for (size_t x = 1; x < (*t)->columns; ++x) {
-      cell_t *cell = get_cell(*t, x, y);
-      cell_clear(cell);
-    }
-  }
+  buffer_close(&(*t)->stage);
 
   free(*t);
 

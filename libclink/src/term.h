@@ -46,6 +46,12 @@ int term_send(term_t *t, FILE *from);
  */
 int term_readline(term_t *t, size_t row, const char **line);
 
+/** wipe any data previously rendered to this terminal
+ *
+ * \param t Terminal to blank
+ */
+void term_clear(term_t *t);
+
 /** deallocate a terminal
  *
  * \param t Terminal to destroy
