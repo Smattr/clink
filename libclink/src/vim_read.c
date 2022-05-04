@@ -124,11 +124,13 @@ done:
 
 /// start Vim, reading and displaying the given file at the given dimensions
 static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
-                   size_t columns) {
+                   size_t columns, size_t top_row) {
 
   assert(out != NULL);
   assert(pid != NULL);
   assert(filename != NULL);
+  assert(columns <= 10000 && "Vim will not render this many columns");
+  assert(rows <= 999 && "Vim will not render this many rows");
 
   // we need one extra row for the Vim statusline
   ++rows;
@@ -138,6 +140,10 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
     rows = 2;
   if (columns < 80)
     columns = 80;
+
+  // clamp the top row to a legal value
+  if (top_row == 0)
+    top_row = 1;
 
   int rc = 0;
   FILE *output = NULL;
@@ -195,6 +201,15 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
   char set_columns[sizeof("+set columns=") + 20];
   (void)snprintf(set_columns, sizeof(set_columns), "+set columns=%zu", columns);
 
+  // construct Vim parameter to jump to the given row
+  char call_cursor[sizeof("+call cursor(,1)") + 20];
+  (void)snprintf(call_cursor, sizeof(call_cursor), "+call cursor(%zu,1)",
+                 top_row);
+
+  DEBUG("running Vim with '+set lines=%zu', '+set columns=%zu', '+call "
+        "cursor(%zu,1)' on %s",
+        rows, columns, top_row, filename);
+
   // construct a Vim invocation that opens and displays the file and then exits
   char const *argv[] = {
       "vim",
@@ -204,8 +219,11 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
       "+set nonumber",     // hide line numbers in case the user has them on
       "+set laststatus=0", // hide status footer line
       "+set noruler",      // hide row,column position footer
+      "+set nowrap",       // disable text wrapping in case we have long rows
       set_rows,
       set_columns,
+      call_cursor,
+      "+z",      // scroll cursor row to the top of the buffer
       "+redraw", // force a screen render to happen before exiting
       "+qa!",    // exit with prejudice
       "--",
@@ -249,8 +267,6 @@ int clink_vim_read(const char *filename,
 
   int rc = 0;
   term_t *term = NULL;
-  FILE *vim_stdout = NULL; // pipe to Vim’s stdout
-  pid_t vim = 0;
 
   // learn the extent (character width and height) of this file so we can lie to
   // Vim and claim we have a terminal of these dimensions to prevent it
@@ -262,52 +278,86 @@ int clink_vim_read(const char *filename,
 
   DEBUG("%s has %zu rows and %zu columns", filename, rows, columns);
 
+  // Vim has a hard limit of 10000 columns, so if the file is wider than that we
+  // just let anything beyond this be invisible
+  if (UNLIKELY(columns > 10000)) {
+    DEBUG("clamping %zu columns to 10000", columns);
+    columns = 10000;
+  }
+
+  // Vim has a hard limit of 1000 rows, so subtract 1 for the statusline and
+  // move in chunks of 999 rows if we have a file taller than this
+  size_t term_rows = rows;
+  if (term_rows > 1000) {
+    DEBUG("clamping terminal rows from %zu to 1000", term_rows);
+    term_rows = 1000;
+  }
+
   // create a virtual terminal
-  if (UNLIKELY((rc = term_new(&term, columns, rows))))
+  if (UNLIKELY((rc = term_new(&term, columns, term_rows))))
     goto done;
 
-  // ask Vim to render the file
-  if (UNLIKELY((rc = run_vim(&vim_stdout, &vim, filename, rows, columns))))
-    goto done;
+  for (size_t row = 1; row <= rows;) {
 
-  assert(vim_stdout != NULL && "invalid stream for Vim’s output");
-  assert(vim > 0 && "invalid PID for Vim");
+    // if we are beyond the first iteration of this loop, clear terminal
+    // contents from the last iteration
+    if (row > 1)
+      term_reset(term);
 
-  // drain Vim’s output into the virtual terminal
-  if (UNLIKELY((rc = term_send(term, vim_stdout))))
-    goto done;
+    // how many rows can we render in this pass?
+    size_t vim_rows = rows - row + 1;
+    if (vim_rows > 999)
+      vim_rows = 999;
 
-  // pass terminal lines back to the caller
-  for (size_t row = 1; row <= rows; ++row) {
-
-    const char *line = NULL;
-    if (UNLIKELY((rc = term_readline(term, row, &line))))
+    // ask Vim to render the file
+    FILE *vim_stdout = NULL;
+    pid_t vim = 0;
+    if (UNLIKELY((
+            rc = run_vim(&vim_stdout, &vim, filename, vim_rows, columns, row))))
       goto done;
 
-    if (UNLIKELY((rc = callback(state, line))))
-      goto done;
+    assert(vim_stdout != NULL && "invalid stream for Vim’s output");
+    assert(vim > 0 && "invalid PID for Vim");
+
+    // drain Vim’s output into the virtual terminal
+    rc = term_send(term, vim_stdout);
+
+    // clean up after Vim
+    {
+      (void)fclose(vim_stdout);
+      vim_stdout = NULL;
+
+      int status;
+      if (UNLIKELY(waitpid(vim, &status, 0) < 0)) {
+        if (rc == 0)
+          rc = errno;
+      } else if (rc == 0) {
+        if (WIFEXITED(status)) {
+          rc = WEXITSTATUS(status);
+        } else {
+          rc = status;
+        }
+      }
+      vim = 0;
+      if (UNLIKELY(rc != 0))
+        goto done;
+    }
+
+    // pass terminal lines back to the caller
+    for (size_t y = 1; y <= vim_rows; ++y) {
+
+      const char *line = NULL;
+      if (UNLIKELY((rc = term_readline(term, y, &line))))
+        goto done;
+
+      if (UNLIKELY((rc = callback(state, line))))
+        goto done;
+    }
+
+    row += vim_rows;
   }
 
 done:
-  if (vim_stdout != NULL)
-    (void)fclose(vim_stdout);
-
-  if (vim > 0) {
-
-    // wait for Vim to finish executing
-    int status;
-    if (UNLIKELY(waitpid(vim, &status, 0) < 0)) {
-      if (rc == 0)
-        rc = errno;
-    } else if (rc == 0) {
-      if (WIFEXITED(status)) {
-        rc = WEXITSTATUS(status);
-      } else {
-        rc = status;
-      }
-    }
-  }
-
   term_free(&term);
 
   return rc;
