@@ -329,13 +329,18 @@ int clink_vim_read(const char *filename,
 
       int status;
       if (UNLIKELY(waitpid(vim, &status, 0) < 0)) {
-        if (rc == 0)
+        if (rc == 0) {
           rc = errno;
+          DEBUG("waitpid failed: %s", strerror(rc));
+        }
       } else if (rc == 0) {
         if (WIFEXITED(status)) {
           rc = WEXITSTATUS(status);
+          if (UNLIKELY(rc != 0))
+            DEBUG("Vim exited with failure: %d", rc);
         } else {
           rc = status;
+          DEBUG("Vim exited abnormally: %d", rc);
         }
       }
       vim = 0;
