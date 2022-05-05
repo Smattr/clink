@@ -201,17 +201,9 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
   char set_columns[sizeof("+set columns=") + 20];
   (void)snprintf(set_columns, sizeof(set_columns), "+set columns=%zu", columns);
 
-  // construct Vim parameter to jump to the given row
-  char call_cursor[sizeof("+call cursor(,1)") + 20];
-  (void)snprintf(call_cursor, sizeof(call_cursor), "+call cursor(%zu,1)",
-                 top_row);
-
-  DEBUG("running Vim with '+set lines=%zu', '+set columns=%zu', '+call "
-        "cursor(%zu,1)' on %s",
-        rows, columns, top_row, filename);
-
-  // construct a Vim invocation that opens and displays the file and then exits
-  char const *argv[] = {
+  // prefix of the command we will run
+  enum { ARGS = 17 };
+  char const *argv[ARGS] = {
       "vim",
       "-R",                // read-only mode
       "--not-a-term",      // do not check whether std* is a TTY
@@ -222,13 +214,49 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
       "+set nowrap",       // disable text wrapping in case we have long rows
       set_rows,
       set_columns,
-      call_cursor,
-      "+z",      // scroll cursor row to the top of the buffer
-      "+redraw", // force a screen render to happen before exiting
-      "+qa!",    // exit with prejudice
-      "--",
-      filename,
-      NULL};
+  };
+  size_t arg_index = 0;
+  while (argv[arg_index] != NULL) {
+    ++arg_index;
+    assert(arg_index < ARGS);
+  }
+
+  // if we need to jump to a later row, construct Vim parameters for this
+  char call_cursor[sizeof("+call cursor(,1)") + 20];
+  if (top_row > 1) {
+    (void)snprintf(call_cursor, sizeof(call_cursor), "+call cursor(%zu,1)",
+                   top_row);
+
+    argv[arg_index] = call_cursor;
+    ++arg_index;
+    assert(arg_index < ARGS);
+
+    argv[arg_index] = "+z"; // scroll cursor row to the top of the buffer
+    ++arg_index;
+    assert(arg_index < ARGS);
+
+    DEBUG("running Vim with '+set lines=%zu', '+set columns=%zu', '+call "
+          "cursor(%zu,1)' on %s",
+          rows, columns, top_row, filename);
+  } else {
+    DEBUG("running Vim with '+set lines=%zu', '+set columns=%zu' on %s", rows,
+          columns, filename);
+  }
+
+  argv[arg_index] = "+redraw"; // force a screen render to happen before exiting
+  ++arg_index;
+  assert(arg_index < ARGS);
+
+  argv[arg_index] = "+qa!"; // exit with prejudice
+  ++arg_index;
+  assert(arg_index < ARGS);
+
+  argv[arg_index] = "--";
+  ++arg_index;
+  assert(arg_index < ARGS);
+  argv[arg_index] = filename;
+  ++arg_index;
+  assert(arg_index < ARGS);
 
   // spawn Vim
   pid_t p = 0;
