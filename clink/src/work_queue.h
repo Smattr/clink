@@ -35,15 +35,6 @@ int work_queue_new(work_queue_t **wq);
  */
 int work_queue_push_for_parse(work_queue_t *wq, const char *path);
 
-/** enqueue a new file to be read for highlighting
- *
- * \param wq Queue to operate on
- * \param path File to be read
- * \returns 0 if the path was added, EALREADY if the path had already passed
- *   through the queue, or another errno on failure
- */
-int work_queue_push_for_read(work_queue_t *wq, const char *path);
-
 /** dequeue a piece of work from the front of the queue
  *
  * \param wq Queue to operate on
