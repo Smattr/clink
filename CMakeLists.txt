@@ -37,7 +37,7 @@ endif()
 
 add_subdirectory(clink)
 add_subdirectory(libclink)
-add_subdirectory(vim-cat)
+add_subdirectory(vimcat)
 
 add_subdirectory(test/db_add_line)
 add_subdirectory(test/db_add_record)
