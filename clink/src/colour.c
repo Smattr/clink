@@ -2,6 +2,7 @@
 #include <curses.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 
 // we need to pack a colour combination in this way because the default ncurses
@@ -104,6 +105,9 @@ void printw_colour(const char *s) {
     SAW_LSQUARE,
   } state = IDLE;
 
+  // for extended UTF-8 characters, emit this instead
+  static const char UTF8_REPLACEMENT = '?';
+
   // a partial ANSI code we have parsed
   unsigned code;
 
@@ -120,6 +124,11 @@ void printw_colour(const char *s) {
     case IDLE:
       if (*s == 27) {
         state = SAW_ESC;
+      } else if ((uint8_t)*s >> 7) { // non-ASCII
+        // drain continuation bytes
+        while (((uint8_t)s[1] >> 6) == 2)
+          ++s;
+        addch(UTF8_REPLACEMENT);
       } else {
         addch(*s);
       }
