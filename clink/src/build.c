@@ -221,7 +221,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     case READ: {
       progress(thread_id, "syntax highlighting %s", display);
 
-      if (UNLIKELY((rc = clink_vim_highlight_into(db, t.path)))) {
+      if (UNLIKELY((rc = clink_vim_read_into(db, t.path)))) {
 
         // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
         // cryptically. If it looks like this happened, give the user a less

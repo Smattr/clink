@@ -1,7 +1,7 @@
 project(libclink LANGUAGES C)
 
 add_library(libclink
-  src/colour.c
+  src/buffer.c
   src/compiler_includes.c
   src/db_add_line.c
   src/db_add_record.c
@@ -28,8 +28,10 @@ add_library(libclink
   src/sql.c
   src/symbol.c
   src/temp_dir.c
-  src/vim_highlight.c
+  src/term.c
   src/vim_open.c
+  src/vim_read.c
+  src/vim_read_into.c
   ${CMAKE_CURRENT_BINARY_DIR}/version.c)
 
 if(APPLE)
