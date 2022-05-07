@@ -155,70 +155,57 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       break;
     }
 
-    switch (t.type) {
+    assert(t.type == PARSE);
 
-    // a file to be parsed
-    case PARSE: {
+    // remove anything related to the file we are about to parse
+    clink_db_remove(db, t.path);
 
-      // remove anything related to the file we are about to parse
-      clink_db_remove(db, t.path);
+    // assembly
+    if (is_asm(t.path)) {
 
-      // enqueue this file for reading, as we know we will need its contents
-      if (UNLIKELY((rc = work_queue_push_for_read(wq, t.path)))) {
-        error(thread_id, "failed to queue %s for reading: %s", display,
-              strerror(rc));
-        break;
-      }
+      clink_iter_t *it = NULL;
+      progress(thread_id, "parsing asm file %s", display);
+      rc = clink_parse_asm(&it, t.path);
 
-      // assembly
-      if (is_asm(t.path)) {
+      if (rc == 0) {
+        // parse all symbols and add them to the database
+        while (true) {
 
-        clink_iter_t *it = NULL;
-        progress(thread_id, "parsing asm file %s", display);
-        rc = clink_parse_asm(&it, t.path);
-
-        if (rc == 0) {
-          // parse all symbols and add them to the database
-          while (true) {
-
-            const clink_symbol_t *symbol = NULL;
-            if ((rc = clink_iter_next_symbol(it, &symbol))) {
-              if (LIKELY(rc == ENOMSG)) // exhausted iterator
-                rc = 0;
-              break;
-            }
-            assert(symbol != NULL);
-
-            DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
-                  symbol->colno, symbol->name);
-            if (UNLIKELY((rc = clink_db_add_symbol(db, symbol))))
-              break;
+          const clink_symbol_t *symbol = NULL;
+          if ((rc = clink_iter_next_symbol(it, &symbol))) {
+            if (LIKELY(rc == ENOMSG)) // exhausted iterator
+              rc = 0;
+            break;
           }
+          assert(symbol != NULL);
+
+          DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
+                symbol->colno, symbol->name);
+          if (UNLIKELY((rc = clink_db_add_symbol(db, symbol))))
+            break;
         }
-
-        clink_iter_free(&it);
-
-        // C/C++
-      } else if (is_c(t.path)) {
-        progress(thread_id, "parsing C/C++ file %s", display);
-        const char **argv = (const char **)option.cxx_argv;
-        rc = clink_parse_c_into(db, t.path, option.cxx_argc, argv);
-
-        // DEF
-      } else {
-        assert(is_def(t.path));
-        progress(thread_id, "parsing DEF file %s", display);
-        rc = clink_parse_def_into(db, t.path);
       }
 
-      if (UNLIKELY(rc))
-        error(thread_id, "failed to parse %s: %s", display, strerror(rc));
+      clink_iter_free(&it);
 
-      break;
+      // C/C++
+    } else if (is_c(t.path)) {
+      progress(thread_id, "parsing C/C++ file %s", display);
+      const char **argv = (const char **)option.cxx_argv;
+      rc = clink_parse_c_into(db, t.path, option.cxx_argc, argv);
+
+      // DEF
+    } else {
+      assert(is_def(t.path));
+      progress(thread_id, "parsing DEF file %s", display);
+      rc = clink_parse_def_into(db, t.path);
     }
 
-    // a file to be read and syntax highlighted
-    case READ: {
+    if (UNLIKELY(rc))
+      error(thread_id, "failed to parse %s: %s", display, strerror(rc));
+
+    if (LIKELY(rc == 0)) {
+
       progress(thread_id, "syntax highlighting %s", display);
 
       if (UNLIKELY((rc = clink_vim_read_into(db, t.path)))) {
@@ -243,9 +230,6 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
           (void)clink_db_add_record(db, t.path, hash, timestamp);
         }
       }
-
-      break;
-    }
     }
 
     free(display);
