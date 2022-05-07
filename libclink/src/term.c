@@ -738,8 +738,11 @@ int term_send(term_t *t, FILE *from) {
         memcpy(cell->grapheme.value, u.bytes, sizeof(cell->grapheme.value));
 
       } else {
-        assert(0);
-        // TODO: dynamic allocation
+        cell->grapheme.pointer = (uintptr_t)strndup(u.bytes, sizeof(u.bytes));
+        if (UNLIKELY(cell->grapheme.pointer == 0))
+          return ENOMEM;
+
+        cell->grapheme.is_pointer = true;
       }
     }
 
