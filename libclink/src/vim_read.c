@@ -221,19 +221,22 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
     assert(arg_index < ARGS);
   }
 
+#define APPEND(str)                                                            \
+  do {                                                                         \
+    assert(argv[arg_index] == NULL && "overwriting existing argument");        \
+    argv[arg_index] = (str);                                                   \
+    ++arg_index;                                                               \
+    assert(arg_index < ARGS && "exceeding allocated Vim arguments");           \
+  } while (0)
+
   // if we need to jump to a later row, construct Vim parameters for this
   char call_cursor[sizeof("+call cursor(,1)") + 20];
   if (top_row > 1) {
     (void)snprintf(call_cursor, sizeof(call_cursor), "+call cursor(%zu,1)",
                    top_row);
 
-    argv[arg_index] = call_cursor;
-    ++arg_index;
-    assert(arg_index < ARGS);
-
-    argv[arg_index] = "+z"; // scroll cursor row to the top of the buffer
-    ++arg_index;
-    assert(arg_index < ARGS);
+    APPEND(call_cursor);
+    APPEND("+z"); // scroll cursor row to the top of the buffer
 
     DEBUG("running Vim with '+set lines=%zu', '+set columns=%zu', '+call "
           "cursor(%zu,1)' on %s",
@@ -243,20 +246,12 @@ static int run_vim(FILE **out, pid_t *pid, const char *filename, size_t rows,
           columns, filename);
   }
 
-  argv[arg_index] = "+redraw"; // force a screen render to happen before exiting
-  ++arg_index;
-  assert(arg_index < ARGS);
+  APPEND("+redraw"); // force a screen render to happen before exiting
+  APPEND("+qa!");    // exit with prejudice
+  APPEND("--");
+  APPEND(filename);
 
-  argv[arg_index] = "+qa!"; // exit with prejudice
-  ++arg_index;
-  assert(arg_index < ARGS);
-
-  argv[arg_index] = "--";
-  ++arg_index;
-  assert(arg_index < ARGS);
-  argv[arg_index] = filename;
-  ++arg_index;
-  assert(arg_index < ARGS);
+#undef APPEND
 
   // spawn Vim
   pid_t p = 0;
