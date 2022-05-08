@@ -110,8 +110,8 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
   while (true) {
 
     // get an item from the work queue
-    task_t t;
-    rc = work_queue_pop(wq, &t);
+    char *path = NULL;
+    rc = work_queue_pop(wq, &path);
 
     // if we have exhausted the work queue, we are done
     if (rc == ENOMSG) {
@@ -125,21 +125,21 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       break;
     }
 
-    assert(t.path != NULL);
+    assert(path != NULL);
 
     // see if we know of this file
     {
       uint64_t hash = 0;
       uint64_t timestamp = 0;
-      if (clink_db_find_record(db, t.path, &hash, &timestamp) == 0) {
+      if (clink_db_find_record(db, path, &hash, &timestamp) == 0) {
         // stat the file to see if it has changed
         struct stat st;
-        if (stat(t.path, &st) == 0) {
+        if (stat(path, &st) == 0) {
           // if it has not changed since last update, skip it
           if (hash == (uint64_t)st.st_size) {
             if (timestamp == (uint64_t)st.st_mtime) {
-              DEBUG("skipping unmodified file %s", t.path);
-              free(t.path);
+              DEBUG("skipping unmodified file %s", path);
+              free(path);
               continue;
             }
           }
@@ -149,23 +149,21 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     // generate a friendlier name for the source path
     char *display = NULL;
-    if (UNLIKELY((rc = disppath(t.path, &display)))) {
-      free(t.path);
-      error(thread_id, "failed to make %s relative: %s", t.path, strerror(rc));
+    if (UNLIKELY((rc = disppath(path, &display)))) {
+      free(path);
+      error(thread_id, "failed to make %s relative: %s", path, strerror(rc));
       break;
     }
 
-    assert(t.type == PARSE);
-
     // remove anything related to the file we are about to parse
-    clink_db_remove(db, t.path);
+    clink_db_remove(db, path);
 
     // assembly
-    if (is_asm(t.path)) {
+    if (is_asm(path)) {
 
       clink_iter_t *it = NULL;
       progress(thread_id, "parsing asm file %s", display);
-      rc = clink_parse_asm(&it, t.path);
+      rc = clink_parse_asm(&it, path);
 
       if (rc == 0) {
         // parse all symbols and add them to the database
@@ -189,16 +187,16 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       clink_iter_free(&it);
 
       // C/C++
-    } else if (is_c(t.path)) {
+    } else if (is_c(path)) {
       progress(thread_id, "parsing C/C++ file %s", display);
       const char **argv = (const char **)option.cxx_argv;
-      rc = clink_parse_c_into(db, t.path, option.cxx_argc, argv);
+      rc = clink_parse_c_into(db, path, option.cxx_argc, argv);
 
       // DEF
     } else {
-      assert(is_def(t.path));
+      assert(is_def(path));
       progress(thread_id, "parsing DEF file %s", display);
-      rc = clink_parse_def_into(db, t.path);
+      rc = clink_parse_def_into(db, path);
     }
 
     if (UNLIKELY(rc))
@@ -208,7 +206,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
       progress(thread_id, "syntax highlighting %s", display);
 
-      if (UNLIKELY((rc = clink_vim_read_into(db, t.path)))) {
+      if (UNLIKELY((rc = clink_vim_read_into(db, path)))) {
 
         // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
         // cryptically. If it looks like this happened, give the user a less
@@ -224,16 +222,16 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       // now we can insert a record for the file
       if (rc == 0) {
         struct stat st;
-        if (LIKELY(stat(t.path, &st) == 0)) {
+        if (LIKELY(stat(path, &st) == 0)) {
           uint64_t hash = (uint64_t)st.st_size;
           uint64_t timestamp = (uint64_t)st.st_mtime;
-          (void)clink_db_add_record(db, t.path, hash, timestamp);
+          (void)clink_db_add_record(db, path, hash, timestamp);
         }
       }
     }
 
     free(display);
-    free(t.path);
+    free(path);
 
     if (UNLIKELY(rc))
       break;

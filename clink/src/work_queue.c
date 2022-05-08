@@ -70,12 +70,12 @@ done:
   return rc;
 }
 
-int work_queue_pop(work_queue_t *wq, task_t *t) {
+int work_queue_pop(work_queue_t *wq, char **path) {
 
   if (wq == NULL)
     return EINVAL;
 
-  if (t == NULL)
+  if (path == NULL)
     return EINVAL;
 
   int rc = 0;
@@ -84,17 +84,11 @@ int work_queue_pop(work_queue_t *wq, task_t *t) {
     return rc;
 
   // see if we have something to parse
-  char *path = NULL;
-  if ((rc = file_queue_pop(wq->to_parse, &path)))
+  if ((rc = file_queue_pop(wq->to_parse, path)))
     goto done;
-
-  t->type = PARSE;
 
 done:
   (void)pthread_mutex_unlock(&wq->lock);
-
-  if (rc == 0)
-    t->path = path;
 
   return rc;
 }
