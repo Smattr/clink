@@ -361,7 +361,7 @@ int build(clink_db_t *db) {
 
   // add our source paths to the work queue
   for (size_t i = 0; i < option.src_len; ++i) {
-    rc = work_queue_push_for_parse(wq, option.src[i]);
+    rc = work_queue_push(wq, option.src[i]);
 
     // ignore duplicate paths
     if (rc == EALREADY)

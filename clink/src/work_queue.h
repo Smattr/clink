@@ -26,14 +26,14 @@ typedef struct {
  */
 int work_queue_new(work_queue_t **wq);
 
-/** enqueue a new file or directory for parsing
+/** enqueue a new file or directory for parsing and highlighting
  *
  * \param wq Queue to operate on
  * \param path File or directory to add
  * \returns 0 if the path was added, EALREADY if the path had already passed
  *   through the queue, or another errno on failure
  */
-int work_queue_push_for_parse(work_queue_t *wq, const char *path);
+int work_queue_push(work_queue_t *wq, const char *path);
 
 /** dequeue a piece of work from the front of the queue
  *

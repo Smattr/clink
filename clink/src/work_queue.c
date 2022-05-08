@@ -44,7 +44,7 @@ done:
   return rc;
 }
 
-int work_queue_push_for_parse(work_queue_t *wq, const char *path) {
+int work_queue_push(work_queue_t *wq, const char *path) {
 
   if (wq == NULL)
     return EINVAL;
