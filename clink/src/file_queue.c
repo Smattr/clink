@@ -1,6 +1,5 @@
 #include "file_queue.h"
 #include "path.h"
-#include "set.h"
 #include "str_queue.h"
 #include <assert.h>
 #include <dirent.h>
@@ -12,9 +11,6 @@
 #include <unistd.h>
 
 struct file_queue {
-
-  /// paths we have previously pushed into our queue
-  set_t *pushed;
 
   /// paths we have enqueued, but not yet opened
   str_queue_t *pending;
@@ -30,9 +26,6 @@ int file_queue_new(file_queue_t **fq) {
     return ENOMEM;
 
   int rc = 0;
-
-  if ((rc = set_new(&f->pushed)))
-    goto done;
 
   if ((rc = str_queue_new(&f->pending)))
     goto done;
@@ -51,12 +44,6 @@ static int push_file(file_queue_t *fq, const char *path) {
 
   assert(fq != NULL);
   assert(path != NULL);
-
-  int rc = 0;
-
-  // check if we have previously consumed this path
-  if ((rc = set_add(fq->pushed, path)))
-    return rc;
 
   return str_queue_push(fq->pending, path);
 }
@@ -169,8 +156,6 @@ void file_queue_free(file_queue_t **fq) {
   file_queue_t *f = *fq;
 
   str_queue_free(&f->pending);
-
-  set_free(&f->pushed);
 
   free(*fq);
   *fq = NULL;
