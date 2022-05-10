@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 typedef struct file_queue file_queue_t;
 
 /** create a new queue
@@ -19,6 +21,13 @@ int file_queue_new(file_queue_t **fq);
  *   already been in the queue previously, or another errno on failure
  */
 int file_queue_push(file_queue_t *fq, const char *path);
+
+/** retrieve the number of elements in a queue
+ *
+ * \param fq Queue to inspect
+ * \returns Number of elements in this queue
+ */
+size_t file_queue_size(const file_queue_t *fq);
 
 /** remove a file from the head of the queue
  *

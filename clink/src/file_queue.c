@@ -136,6 +136,11 @@ int file_queue_push(file_queue_t *fq, const char *path) {
   return is_dir(path) ? push_dir(fq, path) : push_file(fq, path);
 }
 
+size_t file_queue_size(const file_queue_t *fq) {
+  assert(fq != NULL);
+  return str_queue_size(fq->pending);
+}
+
 int file_queue_pop(file_queue_t *fq, char **path) {
 
   if (fq == NULL)
