@@ -1,5 +1,6 @@
 #include "str_queue.h"
 #include "set.h"
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +19,9 @@ struct str_queue {
   /// head and tail of the queue itself
   node_t *head;
   node_t *tail;
+
+  /// number of elements in the queue
+  size_t size;
 };
 
 int str_queue_new(str_queue_t **sq) {
@@ -74,7 +78,14 @@ int str_queue_push(str_queue_t *sq, const char *str) {
     sq->tail = n;
   }
 
+  ++sq->size;
+
   return 0;
+}
+
+size_t str_queue_size(const str_queue_t *sq) {
+  assert(sq != NULL);
+  return sq->size;
 }
 
 int str_queue_pop(str_queue_t *sq, char **str) {
@@ -99,6 +110,8 @@ int str_queue_pop(str_queue_t *sq, char **str) {
   // if the queue only had one element, we need to blank the tail too
   if (head == sq->tail)
     sq->tail = NULL;
+
+  --sq->size;
 
   return 0;
 }

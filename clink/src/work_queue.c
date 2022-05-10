@@ -2,6 +2,7 @@
 #include "file_queue.h"
 #include "path.h"
 #include "str_queue.h"
+#include <assert.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -68,6 +69,22 @@ done:
   (void)pthread_mutex_unlock(&wq->lock);
 
   return rc;
+}
+
+int work_queue_size(work_queue_t *wq, size_t *size) {
+
+  if (wq == NULL)
+    return EINVAL;
+
+  int rc = pthread_mutex_lock(&wq->lock);
+  if (rc != 0)
+    return rc;
+
+  *size = file_queue_size(wq->to_parse);
+
+  (void)pthread_mutex_unlock(&wq->lock);
+
+  return 0;
 }
 
 int work_queue_pop(work_queue_t *wq, char **path) {
