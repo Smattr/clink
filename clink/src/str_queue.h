@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 /// opaque pointer to a queue structure
 typedef struct str_queue str_queue_t;
 
@@ -20,6 +22,13 @@ int str_queue_new(str_queue_t **sq);
  *   already been in the queue previously, or another errno on failure
  */
 int str_queue_push(str_queue_t *sq, const char *str);
+
+/** number of elements in a queue
+ *
+ * \param sq Queue to inspect
+ * \returns Number of elements in this queue
+ */
+size_t str_queue_size(const str_queue_t *sq);
 
 /** remove a string from the head of the queue
  *
