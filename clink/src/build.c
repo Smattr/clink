@@ -21,6 +21,12 @@
 /// Is stdout a tty? Initialised in build().
 static bool tty;
 
+/// total number of files we have to parse
+static size_t total_files;
+
+/// number of files we have completed parsing
+static size_t done_files;
+
 /// use ANSI codes to move the cursor around to generate smoother progress
 /// output?
 static bool smart_progress(void) {
@@ -50,15 +56,15 @@ progress(unsigned long thread_id, const char *fmt, ...) {
 
   // move up to this thread’s progress line
   if (smart_progress())
-    printf("\033[%luA\033[K", option.threads - thread_id);
+    printf("\033[%luA\033[K", option.threads - thread_id + 1);
 
   printf("%lu: ", thread_id);
   vprintf(fmt, ap);
   printf("\n");
 
   // move back to the bottom
-  if (smart_progress() && thread_id != option.threads - 1) {
-    printf("\033[%luB", option.threads - thread_id - 1);
+  if (smart_progress()) {
+    printf("\033[%luB", option.threads - thread_id);
     fflush(stdout);
   }
 
@@ -73,7 +79,7 @@ __attribute__((format(printf, 2, 3))) static void error(unsigned long thread_id,
   va_start(ap, fmt);
   flockfile(stdout);
   if (smart_progress())
-    printf("\033[%luA\033[K", option.threads - thread_id);
+    printf("\033[%luA\033[K", option.threads - thread_id + 1);
   printf("%lu: ", thread_id);
   if (option.colour == ALWAYS)
     printf("\033[31m"); // red
@@ -81,12 +87,29 @@ __attribute__((format(printf, 2, 3))) static void error(unsigned long thread_id,
   if (option.colour == ALWAYS)
     printf("\033[0m"); // reset
   printf("\n");
-  if (smart_progress() && thread_id != option.threads - 1) {
-    printf("\033[%luB", option.threads - thread_id - 1);
+  if (smart_progress()) {
+    printf("\033[%luB", option.threads - thread_id);
     fflush(stdout);
   }
   funlockfile(stdout);
   va_end(ap);
+}
+
+/// increment the progress counter
+static void increment(void) {
+
+  flockfile(stdout);
+
+  // move up to the line the progress is on
+  if (smart_progress())
+    printf("\033[1A\033[K");
+
+  // print a progress update
+  ++done_files;
+  printf("%zu / %zu (%.02f%%)\n", done_files, total_files,
+         (double)done_files / total_files * 100);
+
+  funlockfile(stdout);
 }
 
 /// Debug printf. This is implemented as a macro to avoid expensive varargs
@@ -228,6 +251,9 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     if (UNLIKELY(rc))
       break;
 
+    // bump the progress counter
+    increment();
+
     // check if we have been SIGINTed and should finish up
     if (UNLIKELY(sigint_pending())) {
       progress(thread_id, "saw SIGINT; exiting...");
@@ -364,6 +390,10 @@ int build(clink_db_t *db) {
     }
   }
 
+  // learn how many files we just enqueued
+  if (UNLIKELY((rc = work_queue_size(wq, &total_files))))
+    goto done;
+
   // suppress SIGINT, so that we do not get interrupted midway through a
   // database write and corrupt it
   if (UNLIKELY((rc = sigint_block()))) {
@@ -375,6 +405,7 @@ int build(clink_db_t *db) {
   if (smart_progress()) {
     for (unsigned long i = 0; i < option.threads; ++i)
       printf("%lu:\n", i);
+    printf("0 / %zu (0.00%%)\n", total_files);
   }
 
   if (UNLIKELY((rc = option.threads > 1 ? mt_process(db, wq)
