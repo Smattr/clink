@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 /// opaque type for the queue
 typedef struct work_queue work_queue_t;
 
@@ -20,6 +22,14 @@ int work_queue_new(work_queue_t **wq);
  *   through the queue, or another errno on failure
  */
 int work_queue_push(work_queue_t *wq, const char *path);
+
+/** retrieve the number of elements in a queue
+ *
+ * \param wq Queue to inspect
+ * \param size [out] The number of elements in the queue on success
+ * \returns 0 on success or an errno on failure
+ */
+int work_queue_size(work_queue_t *wq, size_t *size);
 
 /** dequeue a piece of work from the front of the queue
  *
