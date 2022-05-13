@@ -14,11 +14,12 @@ int set_new(set_t **s);
 /** add a new string to the set
  *
  * \param s Set to operate on
- * \param item String to add
+ * \param item [inout] String to add. On success or `EALREADY`, this points to
+ *   the allocated copy of the string present in the set.
  * \returns 0 on success if the string was not already present in the set,
- *   EALREADY if the string was already in the set, or an errno on failure
+ *   `EALREADY` if the string was already in the set, or an errno on failure
  */
-int set_add(set_t *s, const char *item);
+int set_add(set_t *s, const char **item);
 
 /** clear and deallocate a string set
  *

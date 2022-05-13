@@ -57,7 +57,7 @@ int str_queue_push(str_queue_t *sq, const char *str) {
     return EINVAL;
 
   // check if we have already seen this string
-  int rc = set_add(sq->seen, str);
+  int rc = set_add(sq->seen, &str);
   if (rc)
     return rc;
 

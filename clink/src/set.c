@@ -79,7 +79,7 @@ static uint64_t hash(const char *key) {
   return h;
 }
 
-int set_add(set_t *s, const char *item) {
+int set_add(set_t *s, const char **item) {
 
   if (s == NULL)
     return EINVAL;
@@ -87,23 +87,29 @@ int set_add(set_t *s, const char *item) {
   if (item == NULL)
     return EINVAL;
 
-  uint64_t bucket = hash(item) % BUCKETS;
+  if (*item == NULL)
+    return EINVAL;
+
+  uint64_t bucket = hash(*item) % BUCKETS;
 
   // check if this item already exists
   for (const set_node_t *n = s->nodes[bucket]; n != NULL; n = n->next) {
-    if (strcmp(n->value, item) == 0)
+    if (strcmp(n->value, *item) == 0) {
+      *item = n->value;
       return EALREADY;
+    }
   }
 
   set_node_t *n = calloc(1, sizeof(*n));
   if (n == NULL)
     return ENOMEM;
 
-  n->value = strdup(item);
+  n->value = strdup(*item);
   if (n->value == NULL) {
     free(n);
     return ENOMEM;
   }
+  *item = n->value;
 
   n->next = s->nodes[bucket];
   s->nodes[bucket] = n;
