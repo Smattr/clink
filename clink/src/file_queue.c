@@ -120,6 +120,10 @@ int file_queue_push(file_queue_t *fq, const char *path) {
   if (access(path, R_OK) < 0)
     return errno;
 
+  // do not allow queueing files that are not ASM/C/C++/DEF for parsing
+  if (is_file(path) && !(is_asm(path) || is_c(path) || is_def(path)))
+    return EINVAL;
+
   return is_dir(path) ? push_dir(fq, path) : push_file(fq, path);
 }
 
