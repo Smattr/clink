@@ -3,7 +3,7 @@
 #include "option.h"
 #include "path.h"
 #include "sigint.h"
-#include "work_queue.h"
+#include "file_queue.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <errno.h>
@@ -123,10 +123,10 @@ static void increment(void) {
 
 /// drain a work queue, processing its entries into the database
 static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
-                   work_queue_t *wq) {
+                   file_queue_t *q) {
 
   assert(db != NULL);
-  assert(wq != NULL);
+  assert(q != NULL);
 
   int rc = 0;
 
@@ -134,7 +134,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     // get an item from the work queue
     const char *path = NULL;
-    rc = work_queue_pop(wq, &path);
+    rc = file_queue_pop(q, &path);
 
     // if we have exhausted the work queue, we are done
     if (rc == ENOMSG) {
@@ -275,7 +275,7 @@ typedef struct {
   unsigned long thread_id;
   pthread_t *threads;
   clink_db_t *db;
-  work_queue_t *wq;
+  file_queue_t *q;
 } process_args_t;
 
 // trampoline for unpacking the calling convention used by pthreads
@@ -286,15 +286,15 @@ static void *process_entry(void *args) {
   unsigned long thread_id = a->thread_id;
   pthread_t *threads = a->threads;
   clink_db_t *db = a->db;
-  work_queue_t *wq = a->wq;
+  file_queue_t *q = a->q;
 
-  int rc = process(thread_id, threads, db, wq);
+  int rc = process(thread_id, threads, db, q);
 
   return (void *)(intptr_t)rc;
 }
 
 // call process() multi-threaded
-static int mt_process(clink_db_t *db, work_queue_t *wq) {
+static int mt_process(clink_db_t *db, file_queue_t *q) {
 
   // the total threads is ourselves plus all the others
   assert(option.threads >= 1);
@@ -315,7 +315,7 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
   // set up data for all threads
   for (size_t i = 1; i < option.threads; ++i)
     args[i - 1] = (process_args_t){
-        .thread_id = i, .threads = threads, .db = db, .wq = wq};
+        .thread_id = i, .threads = threads, .db = db, .q = q};
 
   // start all threads
   size_t started = 0;
@@ -330,7 +330,7 @@ static int mt_process(clink_db_t *db, work_queue_t *wq) {
   }
 
   // join in helping with the rest
-  int rc = process(0, threads, db, wq);
+  int rc = process(0, threads, db, q);
 
   // collect other threads
   for (size_t i = 0; i < started; ++i) {
@@ -366,15 +366,15 @@ int build(clink_db_t *db) {
   int rc = 0;
 
   // setup a work queue to manage our tasks
-  work_queue_t *wq = NULL;
-  if (UNLIKELY((rc = work_queue_new(&wq)))) {
+  file_queue_t *q = NULL;
+  if (UNLIKELY((rc = file_queue_new(&q)))) {
     fprintf(stderr, "failed to create work queue: %s\n", strerror(rc));
     goto done;
   }
 
   // add our source paths to the work queue
   for (size_t i = 0; i < option.src_len; ++i) {
-    rc = work_queue_push(wq, option.src[i]);
+    rc = file_queue_push(q, option.src[i]);
 
     // ignore duplicate paths
     if (rc == EALREADY)
@@ -388,8 +388,7 @@ int build(clink_db_t *db) {
   }
 
   // learn how many files we just enqueued
-  if (UNLIKELY((rc = work_queue_size(wq, &total_files))))
-    goto done;
+  total_files = file_queue_size(q);
 
   // suppress SIGINT, so that we do not get interrupted midway through a
   // database write and corrupt it
@@ -405,13 +404,13 @@ int build(clink_db_t *db) {
     printf("0 / %zu (0.00%%)\n", total_files);
   }
 
-  if (UNLIKELY((rc = option.threads > 1 ? mt_process(db, wq)
-                                        : process(0, NULL, db, wq))))
+  if (UNLIKELY((rc = option.threads > 1 ? mt_process(db, q)
+                                        : process(0, NULL, db, q))))
     goto done;
 
 done:
   (void)sigint_unblock();
-  work_queue_free(&wq);
+  file_queue_free(&q);
 
   return rc;
 }

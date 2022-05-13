@@ -15,7 +15,6 @@ add_executable(clink
   src/set.c
   src/sigint.c
   src/str_queue.c
-  src/work_queue.c
   ${CMAKE_CURRENT_BINARY_DIR}/manpage.c)
 
 target_include_directories(clink PRIVATE src)
