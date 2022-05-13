@@ -15,14 +15,22 @@ struct str_queue {
   size_t capacity;
 
   /// data curently within the backing memory above
-  size_t head;
-  size_t size;
+  const char **head;
+  const char **tail;
 };
 
 static void check_invariant(const str_queue_t *sq) {
-  assert(sq->head <= sq->capacity);
-  assert(sq->size <= sq->capacity);
-  assert(sq->head + sq->size <= sq->capacity);
+
+  // head should be within the allocated region
+  assert(sq->head >= sq->base);
+  assert(sq->head <= sq->base + sq->capacity);
+
+  // tail should be within the allocated region
+  assert(sq->tail >= sq->base);
+  assert(sq->tail <= sq->base + sq->capacity);
+
+  // head should precede tail
+  assert(sq->head <= sq->tail);
 
   (void)sq;
 }
@@ -62,41 +70,42 @@ int str_queue_push(str_queue_t *sq, const char *str) {
 
   check_invariant(sq);
 
+  assert(sq->base == sq->head &&
+         "head and base are out of sync; pop in str_queue phase 1?");
+
   // check if we have already seen this string
   int rc = set_add(sq->seen, &str);
   if (rc)
     return rc;
 
   // do we need to expand the backing memory?
-  if (sq->capacity == sq->head + sq->size) {
+  if (sq->tail == sq->base + sq->capacity) {
     size_t new_capacity = sq->capacity * 2;
     if (new_capacity == 0)
       new_capacity = 4096 / sizeof(sq->base[0]);
 
-    char **b = realloc(sq->base, new_capacity * sizeof(sq->base[0]));
+    const char **b = realloc(sq->base, new_capacity * sizeof(sq->base[0]));
     if (b == NULL)
       return ENOMEM;
 
     sq->base = b;
+    sq->tail = sq->base + (sq->tail - sq->head);
+    sq->head = sq->base;
     sq->capacity = new_capacity;
 
     check_invariant(sq);
   }
 
-  {
-    size_t tail = sq->head + sq->size;
-    assert(tail < sq->capacity);
-    sq->base[tail] = str;
-  }
-
-  ++sq->size;
+  assert(sq->tail < sq->base + sq->capacity);
+  *sq->tail = str;
+  ++sq->tail;
 
   return 0;
 }
 
 size_t str_queue_size(const str_queue_t *sq) {
   assert(sq != NULL);
-  return sq->size;
+  return sq->tail - sq->head;
 }
 
 int str_queue_pop(str_queue_t *sq, const char **str) {
@@ -113,11 +122,10 @@ int str_queue_pop(str_queue_t *sq, const char **str) {
   if (str_queue_size(sq) == 0)
     return ENOMSG;
 
-  *str = sq->base[sq->head];
+  *str = *sq->head;
 
   // remove the head
   ++sq->head;
-  --sq->size;
 
   return 0;
 }

@@ -16,6 +16,11 @@ int str_queue_new(str_queue_t **sq);
 
 /** add a new string to queue
  *
+ * It is assumed nothing has been popped from the queue when you call this
+ * function. That is, operation on a `str_queue_t` is expected to proceed in two
+ * distinct phases: (1) push elements, (2) pop elements. Interleaving push and
+ * pop steps is not supported.
+ *
  * \param sq Queue to operate on
  * \param str String to add
  * \returns 0 on success if the string was added, EALREADY if the string had
