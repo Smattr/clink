@@ -11,7 +11,7 @@ struct str_queue {
   set_t *seen;
 
   /// backing memory for the queue
-  char **base;
+  const char **base;
   size_t capacity;
 
   /// data curently within the backing memory above
@@ -86,9 +86,7 @@ int str_queue_push(str_queue_t *sq, const char *str) {
   {
     size_t tail = sq->head + sq->size;
     assert(tail < sq->capacity);
-    sq->base[tail] = strdup(str);
-    if (sq->base[tail] == NULL)
-      return ENOMEM;
+    sq->base[tail] = str;
   }
 
   ++sq->size;
@@ -101,7 +99,7 @@ size_t str_queue_size(const str_queue_t *sq) {
   return sq->size;
 }
 
-int str_queue_pop(str_queue_t *sq, char **str) {
+int str_queue_pop(str_queue_t *sq, const char **str) {
 
   if (sq == NULL)
     return EINVAL;
@@ -129,8 +127,6 @@ void str_queue_free(str_queue_t **sq) {
   if (sq == NULL || *sq == NULL)
     return;
 
-  for (size_t i = 0; i < str_queue_size(*sq); ++i)
-    free((*sq)->base[(*sq)->head + i]);
   free((*sq)->base);
 
   set_free(&(*sq)->seen);

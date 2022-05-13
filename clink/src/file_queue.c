@@ -128,7 +128,7 @@ size_t file_queue_size(const file_queue_t *fq) {
   return str_queue_size(fq->pending);
 }
 
-int file_queue_pop(file_queue_t *fq, char **path) {
+int file_queue_pop(file_queue_t *fq, const char **path) {
 
   if (fq == NULL)
     return EINVAL;
@@ -139,7 +139,7 @@ int file_queue_pop(file_queue_t *fq, char **path) {
   int rc = 0;
 
   // remove a path from the pending queue
-  char *next = NULL;
+  const char *next = NULL;
   if ((rc = str_queue_pop(fq->pending, &next)))
     return rc;
   assert(next != NULL);

@@ -38,7 +38,7 @@ int work_queue_size(work_queue_t *wq, size_t *size);
  * \returns 0 if a file was popped, ENOMSG if the queue was empty, or another
  *   errno on failure
  */
-int work_queue_pop(work_queue_t *wq, char **path);
+int work_queue_pop(work_queue_t *wq, const char **path);
 
 /** clear and deallocate a queue
  *

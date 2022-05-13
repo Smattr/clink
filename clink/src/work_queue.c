@@ -87,7 +87,7 @@ int work_queue_size(work_queue_t *wq, size_t *size) {
   return 0;
 }
 
-int work_queue_pop(work_queue_t *wq, char **path) {
+int work_queue_pop(work_queue_t *wq, const char **path) {
 
   if (wq == NULL)
     return EINVAL;

@@ -37,7 +37,7 @@ size_t str_queue_size(const str_queue_t *sq);
  * \returns 0 if a string was popped, ENOMSG if the queue was empty, or an errno
  *   on failure
  */
-int str_queue_pop(str_queue_t *sq, char **str);
+int str_queue_pop(str_queue_t *sq, const char **str);
 
 /** clear and deallocate a queue
  *

@@ -133,7 +133,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
   while (true) {
 
     // get an item from the work queue
-    char *path = NULL;
+    const char *path = NULL;
     rc = work_queue_pop(wq, &path);
 
     // if we have exhausted the work queue, we are done
@@ -161,7 +161,6 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         if (hash == (uint64_t)st.st_size) {
           if (timestamp == (uint64_t)st.st_mtime) {
             DEBUG("skipping unmodified file %s", path);
-            free(path);
             continue;
           }
         }
@@ -171,7 +170,6 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     // generate a friendlier name for the source path
     char *display = NULL;
     if (UNLIKELY((rc = disppath(path, &display)))) {
-      free(path);
       error(thread_id, "failed to make %s relative: %s", path, strerror(rc));
       break;
     }
@@ -246,7 +244,6 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     }
 
     free(display);
-    free(path);
 
     if (UNLIKELY(rc))
       break;
