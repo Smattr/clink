@@ -2,6 +2,7 @@
 #include "set.h"
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -118,14 +119,22 @@ int str_queue_pop(str_queue_t *sq, const char **str) {
 
   check_invariant(sq);
 
+  // we can read tail unsynchronised because it is not modified since the last
+  // multithreading sequence point, but we need to protect our read of head
+  const char **head = __atomic_load_n(&sq->head, __ATOMIC_ACQUIRE);
+  const char **tail = sq->tail;
+
+retry:
   // is the queue empty?
-  if (str_queue_size(sq) == 0)
+  if (head == tail)
     return ENOMSG;
 
-  *str = *sq->head;
+  *str = *head;
 
-  // remove the head
-  ++sq->head;
+  // try to remove the head
+  if (!__atomic_compare_exchange_n(&sq->head, &head, head + 1, false,
+                                   __ATOMIC_RELEASE, __ATOMIC_ACQUIRE))
+    goto retry;
 
   return 0;
 }

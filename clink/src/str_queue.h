@@ -37,6 +37,9 @@ size_t str_queue_size(const str_queue_t *sq);
 
 /** remove a string from the head of the queue
  *
+ * This function is thread-safe, in the sense that multiple threads can call it
+ * concurrently, passing the same `sq`.
+ *
  * \param sq Queue to operate on
  * \param str [out] String that was popped
  * \returns 0 if a string was popped, ENOMSG if the queue was empty, or an errno
