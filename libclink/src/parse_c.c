@@ -89,6 +89,52 @@ static int add_symbol(state_t *state, clink_category_t category,
   return state->rc;
 }
 
+static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
+                                             CXClientData data);
+
+static int visit_children(void *state, CXCursor cursor) {
+
+  state_t *s = state;
+  assert(s != NULL);
+  assert(s->rc == 0 && "failure did not terminate traversal");
+
+  // default to the parent of the current context
+  const char *parent = s->current_parent;
+
+  CXString text;
+  bool needs_dispose = false;
+
+  // if this node is a definition, it can serve as a semantic parent to children
+  if (is_definition(cursor)) {
+
+    // extract its name
+    text = clang_getCursorSpelling(cursor);
+    needs_dispose = true;
+    const char *ctext = clang_getCString(text);
+
+    // is this a valid name for a parent?
+    bool ok_parent = ctext != NULL && strcmp(ctext, "") != 0;
+
+    // save it for use
+    if (ok_parent)
+      parent = ctext;
+  }
+
+  // state for descendants of this cursor to see
+  state_t for_children = {.db = s->db, .current_parent = parent};
+
+  // recursively descend into this cursor’s children
+  (void)clang_visitChildren(cursor, visit_oneshot, &for_children);
+
+  // propagate any errors the visitation encountered
+  s->rc = for_children.rc;
+
+  if (needs_dispose)
+    clang_disposeString(text);
+
+  return s->rc;
+}
+
 static enum CXChildVisitResult visit(CXCursor cursor, void *state,
                                      enqueuer enqueue) {
 
@@ -228,52 +274,6 @@ static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
     return clang_err_to_errno(err);
 
   return 0;
-}
-
-static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
-                                             CXClientData data);
-
-static int visit_children(void *state, CXCursor cursor) {
-
-  state_t *s = state;
-  assert(s != NULL);
-  assert(s->rc == 0 && "failure did not terminate traversal");
-
-  // default to the parent of the current context
-  const char *parent = s->current_parent;
-
-  CXString text;
-  bool needs_dispose = false;
-
-  // if this node is a definition, it can serve as a semantic parent to children
-  if (is_definition(cursor)) {
-
-    // extract its name
-    text = clang_getCursorSpelling(cursor);
-    needs_dispose = true;
-    const char *ctext = clang_getCString(text);
-
-    // is this a valid name for a parent?
-    bool ok_parent = ctext != NULL && strcmp(ctext, "") != 0;
-
-    // save it for use
-    if (ok_parent)
-      parent = ctext;
-  }
-
-  // state for descendants of this cursor to see
-  state_t for_children = {.db = s->db, .current_parent = parent};
-
-  // recursively descend into this cursor’s children
-  (void)clang_visitChildren(cursor, visit_oneshot, &for_children);
-
-  // propagate any errors the visitation encountered
-  s->rc = for_children.rc;
-
-  if (needs_dispose)
-    clang_disposeString(text);
-
-  return s->rc;
 }
 
 static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
