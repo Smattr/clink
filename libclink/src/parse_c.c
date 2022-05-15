@@ -84,14 +84,13 @@ static int add_symbol(state_t *state, clink_category_t category,
 static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
                                              CXClientData data);
 
-static int visit_children(void *state, CXCursor cursor) {
+static int visit_children(state_t *state, CXCursor cursor) {
 
-  state_t *s = state;
-  assert(s != NULL);
-  assert(s->rc == 0 && "failure did not terminate traversal");
+  assert(state != NULL);
+  assert(state->rc == 0 && "failure did not terminate traversal");
 
   // default to the parent of the current context
-  const char *parent = s->current_parent;
+  const char *parent = state->current_parent;
 
   CXString text;
   bool needs_dispose = false;
@@ -113,18 +112,18 @@ static int visit_children(void *state, CXCursor cursor) {
   }
 
   // state for descendants of this cursor to see
-  state_t for_children = {.db = s->db, .current_parent = parent};
+  state_t for_children = {.db = state->db, .current_parent = parent};
 
   // recursively descend into this cursor’s children
   (void)clang_visitChildren(cursor, visit_oneshot, &for_children);
 
   // propagate any errors the visitation encountered
-  s->rc = for_children.rc;
+  state->rc = for_children.rc;
 
   if (needs_dispose)
     clang_disposeString(text);
 
-  return s->rc;
+  return state->rc;
 }
 
 static enum CXChildVisitResult visit(CXCursor cursor, void *state) {
