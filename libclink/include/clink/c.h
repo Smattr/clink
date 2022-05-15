@@ -1,7 +1,6 @@
 #pragma once
 
 #include <clink/db.h>
-#include <clink/iter.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -11,17 +10,6 @@ extern "C" {
 #ifndef CLINK_API
 #define CLINK_API __attribute__((visibility("default")))
 #endif
-
-/** create an iterator for parsing the given C/C++ file
- *
- * \param it [out] Created iterator on success
- * \param filename Path to source file to parse
- * \param argc Number of elements in argv
- * \param argv Arguments to pass to Clang
- * \returns 0 on success or an errno on failure
- */
-CLINK_API int clink_parse_c(clink_iter_t **it, const char *filename,
-                            size_t argc, const char **argv);
 
 /** parse the given C/C++ file, inserting results into the given database
  *
