@@ -1,9 +1,9 @@
 #include "build.h"
 #include "../../common/compiler.h"
+#include "file_queue.h"
 #include "option.h"
 #include "path.h"
 #include "sigint.h"
-#include "file_queue.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <errno.h>
@@ -314,8 +314,8 @@ static int mt_process(clink_db_t *db, file_queue_t *q) {
 
   // set up data for all threads
   for (size_t i = 1; i < option.threads; ++i)
-    args[i - 1] = (process_args_t){
-        .thread_id = i, .threads = threads, .db = db, .q = q};
+    args[i - 1] =
+        (process_args_t){.thread_id = i, .threads = threads, .db = db, .q = q};
 
   // start all threads
   size_t started = 0;
