@@ -1,8 +1,6 @@
 Clink — a modern re-implementation of Cscope
 ============================================
 
-*this is currently a work in progress and should not be considered stable*
-
 When working in a large, complex C/C++ code base, an invaluable navigation tool
 is Cscope_. However, Cscope is showing its age and has some issues that prevent
 it from being the perfect assistant. Clink aims to be bring the Cscope
@@ -23,6 +21,8 @@ What does that mean?
   you.
 * **Exact jumps** – Clink opens Vim not only at the right line, but at the right
   column for the entry you’ve asked for.
+* **MSVC DEFs file support** – Not too common nowadays, but still nice for
+  your code browser to understand these.
 * **Fewer features** – Cscope’s options to find files and regex text are now
   better served by any__ number__ of__ other__ tools__ and are not included in
   Clink.
@@ -47,14 +47,17 @@ Notes for devs
 
 * The on-disk database format is extremely bloated. As with performance, I have
   put no effort into optimising this yet and easy wins abound.
+* C/C++ parsing is imprecise and really needs compilation database support to
+  improve, https://github.com/Smattr/clink/issues/46.
 * Vim integration is currently hard coded. I didn’t make this parametric or
   implement any abstraction for this because Vim is my unabashed weapon of
   choice. If you want support for another editor, please ask me and I’ll
   probably do it.
-* The line-oriented interface is a bare bones hack intended to mimic Cscope just
+* The line-oriented interface is likely bit-rotted and does not currently work.
+  It needs resurrecting. It was a bare bones hack intended to mimic Cscope just
   well enough to fool Vim into talking to it. If you want a more full featured
   line-oriented interface, please ask.
-* Cscope’s "find assignments to this symbol" is not implemented. Honestly, I
+* Cscope’s “find assignments to this symbol” is not implemented. Honestly, I
   have never used this query. Have you? It actually sounds really useful, but I
   have never once thought of this until enumerating Cscope’s options while
   implementing Clink.
