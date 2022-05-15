@@ -124,17 +124,16 @@ int str_queue_pop(str_queue_t *sq, const char **str) {
   const char **head = __atomic_load_n(&sq->head, __ATOMIC_ACQUIRE);
   const char **tail = sq->tail;
 
-retry:
-  // is the queue empty?
-  if (head == tail)
-    return ENOMSG;
+  do {
+    // is the queue empty?
+    if (head == tail)
+      return ENOMSG;
 
-  *str = *head;
+    *str = *head;
 
-  // try to remove the head
-  if (!__atomic_compare_exchange_n(&sq->head, &head, head + 1, false,
-                                   __ATOMIC_RELEASE, __ATOMIC_ACQUIRE))
-    goto retry;
+    // try to remove the head
+  } while (!__atomic_compare_exchange_n(&sq->head, &head, head + 1, false,
+                                        __ATOMIC_RELEASE, __ATOMIC_ACQUIRE));
 
   return 0;
 }
