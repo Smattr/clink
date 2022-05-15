@@ -71,6 +71,37 @@ typedef int (*yielder)(void *state, clink_category_t category, const char *name,
  */
 typedef int (*enqueuer)(void *state, CXCursor cursor);
 
+// state used by the visitor
+typedef struct {
+
+  /// database to insert into
+  clink_db_t *db;
+
+  /// named parent of the current context during traversal
+  const char *current_parent;
+
+  /// status of our Clang traversal (0 OK, non-zero on error)
+  int rc;
+
+} state_t;
+
+static int add_symbol(void *state, clink_category_t category, const char *name,
+                      const char *path, unsigned lineno, unsigned colno) {
+
+  state_t *s = state;
+  assert(s != NULL);
+
+  clink_symbol_t symbol = {.category = category,
+                           .name = (char *)name,
+                           .path = (char *)path,
+                           .lineno = lineno,
+                           .colno = colno,
+                           .parent = (char *)s->current_parent};
+  s->rc = clink_db_add_symbol(s->db, &symbol);
+
+  return s->rc;
+}
+
 static enum CXChildVisitResult visit(CXCursor cursor, void *state,
                                      yielder yield, enqueuer enqueue) {
 
@@ -210,37 +241,6 @@ static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
     return clang_err_to_errno(err);
 
   return 0;
-}
-
-// state used by the visitor
-typedef struct {
-
-  /// database to insert into
-  clink_db_t *db;
-
-  /// named parent of the current context during traversal
-  const char *current_parent;
-
-  /// status of our Clang traversal (0 OK, non-zero on error)
-  int rc;
-
-} state_t;
-
-static int add_symbol(void *state, clink_category_t category, const char *name,
-                      const char *path, unsigned lineno, unsigned colno) {
-
-  state_t *s = state;
-  assert(s != NULL);
-
-  clink_symbol_t symbol = {.category = category,
-                           .name = (char *)name,
-                           .path = (char *)path,
-                           .lineno = lineno,
-                           .colno = colno,
-                           .parent = (char *)s->current_parent};
-  s->rc = clink_db_add_symbol(s->db, &symbol);
-
-  return s->rc;
 }
 
 static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
