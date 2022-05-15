@@ -212,7 +212,7 @@ static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
   return 0;
 }
 
-// state used by a C one shot parser
+// state used by the visitor
 typedef struct {
 
   /// database to insert into
@@ -224,12 +224,12 @@ typedef struct {
   /// status of our Clang traversal (0 OK, non-zero on error)
   int rc;
 
-} oneshot_state_t;
+} state_t;
 
 static int add_symbol(void *state, clink_category_t category, const char *name,
                       const char *path, unsigned lineno, unsigned colno) {
 
-  oneshot_state_t *s = state;
+  state_t *s = state;
   assert(s != NULL);
 
   clink_symbol_t symbol = {.category = category,
@@ -248,7 +248,7 @@ static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
 
 static int visit_children(void *state, CXCursor cursor) {
 
-  oneshot_state_t *s = state;
+  state_t *s = state;
   assert(s != NULL);
   assert(s->rc == 0 && "failure did not terminate traversal");
 
@@ -275,7 +275,7 @@ static int visit_children(void *state, CXCursor cursor) {
   }
 
   // state for descendants of this cursor to see
-  oneshot_state_t for_children = {.db = s->db, .current_parent = parent};
+  state_t for_children = {.db = s->db, .current_parent = parent};
 
   // recursively descend into this cursor’s children
   (void)clang_visitChildren(cursor, visit_oneshot, &for_children);
@@ -326,7 +326,7 @@ int clink_parse_c_into(clink_db_t *db, const char *filename, size_t argc,
   CXCursor root = clang_getTranslationUnitCursor(tu);
 
   // state for the traversal
-  oneshot_state_t state = {.db = db};
+  state_t state = {.db = db};
 
   // traverse from the root node
   (void)clang_visitChildren(root, visit_oneshot, &state);
