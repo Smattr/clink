@@ -50,19 +50,6 @@ static bool is_definition(CXCursor cursor) {
   return false;
 }
 
-/** a method for yielding a discovered symbol in `visit`
- *
- * \param state State specific to this action
- * \param category Category of the discovered symbol
- * \param name Name of the symbol
- * \param fname Filename in which the symbol was found
- * \param lineno Line number within `fname` at which the symbol was found
- * \param colno Column number within `lineno` at which the symbol was found
- * \returns 0 on success or an errno on failure
- */
-typedef int (*yielder)(void *state, clink_category_t category, const char *name,
-                       const char *fname, unsigned lineno, unsigned colno);
-
 /** a method for enqueuing a Clang cursor to expand in `visit`
  *
  * \param state State specific to this action
@@ -103,7 +90,7 @@ static int add_symbol(void *state, clink_category_t category, const char *name,
 }
 
 static enum CXChildVisitResult visit(CXCursor cursor, void *state,
-                                     yielder yield, enqueuer enqueue) {
+                                     enqueuer enqueue) {
 
   int rc = 0;
 
@@ -186,8 +173,8 @@ static enum CXChildVisitResult visit(CXCursor cursor, void *state,
     CXString filename = clang_getFileName(file);
     const char *fname = clang_getCString(filename);
 
-    // enqueue this symbol for future yielding
-    rc = yield(state, category, name, fname, lineno, colno);
+    // add this symbol to the database
+    rc = add_symbol(state, category, name, fname, lineno, colno);
 
     clang_disposeString(filename);
   }
@@ -295,7 +282,7 @@ static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
   // we do not need the parent cursor
   (void)parent;
 
-  return visit(cursor, data, add_symbol, visit_children);
+  return visit(cursor, data, visit_children);
 }
 
 int clink_parse_c_into(clink_db_t *db, const char *filename, size_t argc,
