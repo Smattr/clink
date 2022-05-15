@@ -72,21 +72,21 @@ typedef struct {
 
 } state_t;
 
-static int add_symbol(void *state, clink_category_t category, const char *name,
-                      const char *path, unsigned lineno, unsigned colno) {
+static int add_symbol(state_t *state, clink_category_t category,
+                      const char *name, const char *path, unsigned lineno,
+                      unsigned colno) {
 
-  state_t *s = state;
-  assert(s != NULL);
+  assert(state != NULL);
 
   clink_symbol_t symbol = {.category = category,
                            .name = (char *)name,
                            .path = (char *)path,
                            .lineno = lineno,
                            .colno = colno,
-                           .parent = (char *)s->current_parent};
-  s->rc = clink_db_add_symbol(s->db, &symbol);
+                           .parent = (char *)state->current_parent};
+  state->rc = clink_db_add_symbol(state->db, &symbol);
 
-  return s->rc;
+  return state->rc;
 }
 
 static enum CXChildVisitResult visit(CXCursor cursor, void *state,
