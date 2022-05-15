@@ -50,14 +50,6 @@ static bool is_definition(CXCursor cursor) {
   return false;
 }
 
-/** a method for enqueuing a Clang cursor to expand in `visit`
- *
- * \param state State specific to this action
- * \param cursor Cursor to enqueue
- * \returns 0 on success or an errno on failure
- */
-typedef int (*enqueuer)(void *state, CXCursor cursor);
-
 // state used by the visitor
 typedef struct {
 
@@ -135,8 +127,7 @@ static int visit_children(void *state, CXCursor cursor) {
   return s->rc;
 }
 
-static enum CXChildVisitResult visit(CXCursor cursor, void *state,
-                                     enqueuer enqueue) {
+static enum CXChildVisitResult visit(CXCursor cursor, void *state) {
 
   int rc = 0;
 
@@ -232,8 +223,8 @@ done:
   if (rc)
     return CXChildVisit_Break;
 
-  // enqueue this as a future cursor to expand
-  rc = enqueue(state, cursor);
+  // recurse into the children
+  rc = visit_children(state, cursor);
   if (rc)
     return CXChildVisit_Break;
 
@@ -282,7 +273,7 @@ static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
   // we do not need the parent cursor
   (void)parent;
 
-  return visit(cursor, data, visit_children);
+  return visit(cursor, data);
 }
 
 int clink_parse_c_into(clink_db_t *db, const char *filename, size_t argc,
