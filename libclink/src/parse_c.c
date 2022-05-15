@@ -81,8 +81,8 @@ static int add_symbol(state_t *state, clink_category_t category,
   return state->rc;
 }
 
-static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
-                                             CXClientData data);
+static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
+                                     CXClientData data);
 
 static int visit_children(state_t *state, CXCursor cursor) {
 
@@ -115,7 +115,7 @@ static int visit_children(state_t *state, CXCursor cursor) {
   state_t for_children = {.db = state->db, .current_parent = parent};
 
   // recursively descend into this cursor’s children
-  (void)clang_visitChildren(cursor, visit_oneshot, &for_children);
+  (void)clang_visitChildren(cursor, visit, &for_children);
 
   // propagate any errors the visitation encountered
   state->rc = for_children.rc;
@@ -126,7 +126,11 @@ static int visit_children(state_t *state, CXCursor cursor) {
   return state->rc;
 }
 
-static enum CXChildVisitResult visit(CXCursor cursor, void *state) {
+static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
+                                     CXClientData state) {
+
+  // we do not need the parent cursor
+  (void)parent;
 
   int rc = 0;
 
@@ -266,15 +270,6 @@ static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
   return 0;
 }
 
-static enum CXChildVisitResult visit_oneshot(CXCursor cursor, CXCursor parent,
-                                             CXClientData data) {
-
-  // we do not need the parent cursor
-  (void)parent;
-
-  return visit(cursor, data);
-}
-
 int clink_parse_c_into(clink_db_t *db, const char *filename, size_t argc,
                        const char **argv) {
 
@@ -306,7 +301,7 @@ int clink_parse_c_into(clink_db_t *db, const char *filename, size_t argc,
   state_t state = {.db = db};
 
   // traverse from the root node
-  (void)clang_visitChildren(root, visit_oneshot, &state);
+  (void)clang_visitChildren(root, visit, &state);
   rc = state.rc;
 
 done:
