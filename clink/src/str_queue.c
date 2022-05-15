@@ -2,27 +2,39 @@
 #include "set.h"
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
-/// a node within the linked list that forms the queue itself
-typedef struct node {
-  char *value;
-  struct node *next;
-} node_t;
 
 struct str_queue {
 
   /// strings we have previously added to the queue
   set_t *seen;
 
-  /// head and tail of the queue itself
-  node_t *head;
-  node_t *tail;
+  /// backing memory for the queue
+  const char **base;
+  size_t capacity;
 
-  /// number of elements in the queue
-  size_t size;
+  /// data curently within the backing memory above
+  const char **head;
+  const char **tail;
 };
+
+static void check_invariant(const str_queue_t *sq) {
+
+  // head should be within the allocated region
+  assert(sq->head >= sq->base);
+  assert(sq->head <= sq->base + sq->capacity);
+
+  // tail should be within the allocated region
+  assert(sq->tail >= sq->base);
+  assert(sq->tail <= sq->base + sq->capacity);
+
+  // head should precede tail
+  assert(sq->head <= sq->tail);
+
+  (void)sq;
+}
 
 int str_queue_new(str_queue_t **sq) {
 
@@ -42,6 +54,7 @@ done:
   if (rc) {
     str_queue_free(&q);
   } else {
+    check_invariant(q);
     *sq = q;
   }
 
@@ -56,39 +69,47 @@ int str_queue_push(str_queue_t *sq, const char *str) {
   if (str == NULL)
     return EINVAL;
 
+  check_invariant(sq);
+
+  assert(sq->base == sq->head &&
+         "head and base are out of sync; pop in str_queue phase 1?");
+
   // check if we have already seen this string
-  int rc = set_add(sq->seen, str);
+  int rc = set_add(sq->seen, &str);
   if (rc)
     return rc;
 
-  node_t *n = calloc(1, sizeof(*n));
-  if (n == NULL)
-    return ENOMEM;
+  // do we need to expand the backing memory?
+  if (sq->tail == sq->base + sq->capacity) {
+    size_t new_capacity = sq->capacity * 2;
+    if (new_capacity == 0)
+      new_capacity = 4096 / sizeof(sq->base[0]);
 
-  n->value = strdup(str);
-  if (n->value == NULL) {
-    free(n);
-    return ENOMEM;
+    const char **b = realloc(sq->base, new_capacity * sizeof(sq->base[0]));
+    if (b == NULL)
+      return ENOMEM;
+
+    sq->base = b;
+    sq->tail = sq->base + (sq->tail - sq->head);
+    sq->head = sq->base;
+    sq->capacity = new_capacity;
+
+    check_invariant(sq);
   }
 
-  if (sq->tail == NULL) {
-    sq->head = sq->tail = n;
-  } else {
-    sq->tail->next = n;
-    sq->tail = n;
-  }
-
-  ++sq->size;
+  assert(sq->tail < sq->base + sq->capacity);
+  *sq->tail = str;
+  ++sq->tail;
 
   return 0;
 }
 
 size_t str_queue_size(const str_queue_t *sq) {
   assert(sq != NULL);
-  return sq->size;
+  return sq->tail - sq->head;
 }
 
-int str_queue_pop(str_queue_t *sq, char **str) {
+int str_queue_pop(str_queue_t *sq, const char **str) {
 
   if (sq == NULL)
     return EINVAL;
@@ -96,22 +117,24 @@ int str_queue_pop(str_queue_t *sq, char **str) {
   if (str == NULL)
     return EINVAL;
 
+  check_invariant(sq);
+
+  // we can read tail unsynchronised because it is not modified since the last
+  // multithreading sequence point, but we need to protect our read of head
+  const char **head = __atomic_load_n(&sq->head, __ATOMIC_ACQUIRE);
+  const char **tail = sq->tail;
+
+retry:
   // is the queue empty?
-  if (sq->head == NULL)
+  if (head == tail)
     return ENOMSG;
 
-  *str = sq->head->value;
+  *str = *head;
 
-  // remove the head
-  node_t *head = sq->head;
-  sq->head = sq->head->next;
-  free(head);
-
-  // if the queue only had one element, we need to blank the tail too
-  if (head == sq->tail)
-    sq->tail = NULL;
-
-  --sq->size;
+  // try to remove the head
+  if (!__atomic_compare_exchange_n(&sq->head, &head, head + 1, false,
+                                   __ATOMIC_RELEASE, __ATOMIC_ACQUIRE))
+    goto retry;
 
   return 0;
 }
@@ -121,14 +144,7 @@ void str_queue_free(str_queue_t **sq) {
   if (sq == NULL || *sq == NULL)
     return;
 
-  for (node_t *n = (*sq)->head; n != NULL;) {
-    node_t *next = n->next;
-    free(n->value);
-    free(n);
-    n = next;
-  }
-  (*sq)->head = NULL;
-  (*sq)->tail = NULL;
+  free((*sq)->base);
 
   set_free(&(*sq)->seen);
 

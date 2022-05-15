@@ -36,7 +36,7 @@ size_t file_queue_size(const file_queue_t *fq);
  * \returns 0 if an entry was popped, ENOMSG if the queue was empty, or an errno
  *   on failure
  */
-int file_queue_pop(file_queue_t *fq, char **path);
+int file_queue_pop(file_queue_t *fq, const char **path);
 
 /** clear and deallocate a queue
  *
