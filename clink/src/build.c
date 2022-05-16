@@ -180,30 +180,8 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     // assembly
     if (is_asm(path)) {
 
-      clink_iter_t *it = NULL;
       progress(thread_id, "parsing asm file %s", display);
-      rc = clink_parse_asm(&it, path);
-
-      if (rc == 0) {
-        // parse all symbols and add them to the database
-        while (true) {
-
-          const clink_symbol_t *symbol = NULL;
-          if ((rc = clink_iter_next_symbol(it, &symbol))) {
-            if (LIKELY(rc == ENOMSG)) // exhausted iterator
-              rc = 0;
-            break;
-          }
-          assert(symbol != NULL);
-
-          DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
-                symbol->colno, symbol->name);
-          if (UNLIKELY((rc = clink_db_add_symbol(db, symbol))))
-            break;
-        }
-      }
-
-      clink_iter_free(&it);
+      rc = clink_parse_asm(db, path);
 
       // C/C++
     } else if (is_c(path)) {

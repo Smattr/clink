@@ -1,9 +1,8 @@
 #include "../../common/compiler.h"
-#include "iter.h"
 #include "re.h"
 #include <assert.h>
 #include <clink/asm.h>
-#include <clink/iter.h>
+#include <clink/db.h>
 #include <clink/symbol.h>
 #include <errno.h>
 #include <regex.h>
@@ -62,8 +61,11 @@ static const char CALL[] =
 // state used by an ASM parsing iterator
 typedef struct {
 
+  /// database we are inserting into
+  clink_db_t *db;
+
   /// filename of the source
-  char *filename;
+  const char *filename;
 
   /// source file being read
   FILE *in;
@@ -87,16 +89,10 @@ typedef struct {
   regex_t call;
   bool call_valid;
 
-  /// optional function that we are currently within during parsing
-  char *parent;
-
-  /// last yielded symbol
-  clink_symbol_t last;
-
 } state_t;
 
 /// add a symbol to our pending next-to-yield slot
-static int add_symbol(state_t *s, clink_category_t cat, const char *line,
+static int add_symbol(const state_t *s, clink_category_t cat, const char *line,
                       const regmatch_t *m, const char *parent) {
 
   assert(s != NULL);
@@ -105,50 +101,35 @@ static int add_symbol(state_t *s, clink_category_t cat, const char *line,
 
   int rc = 0;
 
-  s->last.category = cat;
+  clink_symbol_t symbol = {.category = cat,
+                           .path = (char *)s->filename,
+                           .lineno = s->lineno,
+                           .colno = m->rm_so + 1,
+                           .parent = (char *)parent};
 
-  s->last.name = strndup(line + m->rm_so, m->rm_eo - m->rm_so);
-  if (UNLIKELY(s->last.name == NULL)) {
+  symbol.name = strndup(line + m->rm_so, m->rm_eo - m->rm_so);
+  if (UNLIKELY(symbol.name == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
-  s->last.path = strdup(s->filename);
-  if (UNLIKELY(s->last.path == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-
-  s->last.lineno = s->lineno;
-
-  s->last.colno = m->rm_so + 1;
-
-  if (parent != NULL) {
-    s->last.parent = strdup(parent);
-    if (UNLIKELY(s->last.parent == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
-  }
+  rc = clink_db_add_symbol(s->db, &symbol);
 
 done:
-  if (rc)
-    clink_symbol_clear(&s->last);
+  free(symbol.name);
 
   return rc;
 }
 
-/// populate s->last with the next-to-yield symbol
-static int refill_last(state_t *s) {
+/// run the assembly parsing job described by our state parameter
+static int parse(state_t *s) {
 
   assert(s != NULL);
 
-  // discard the previous if necessary
-  clink_symbol_clear(&s->last);
-
-  // now we want to find at least one new symbol
-
   int rc = 0;
+
+  // optional function that we are currently within during parsing
+  char *parent = NULL;
 
   char *line = NULL;
   size_t line_size = 0;
@@ -159,11 +140,7 @@ static int refill_last(state_t *s) {
 
     errno = 0;
     if (getline(&line, &line_size, s->in) < 0) {
-      if (errno) {
-        rc = errno;
-      } else { // EOF
-        rc = ENOMSG;
-      }
+      rc = errno;
       break;
     }
 
@@ -174,11 +151,11 @@ static int refill_last(state_t *s) {
       int r = regexec(&s->define, line, m_len, m, 0);
       if (r == 0) { // match
         rc = add_symbol(s, CLINK_DEFINITION, line, &m[1], NULL);
-        break;
       } else if (r != REG_NOMATCH) { // error
         rc = re_err_to_errno(r);
-        break;
       }
+      if (rc != 0)
+        break;
     }
 
     // is this a #include?
@@ -193,11 +170,11 @@ static int refill_last(state_t *s) {
         --m[1].rm_eo;
 
         rc = add_symbol(s, CLINK_INCLUDE, line, &m[1], NULL);
-        break;
       } else if (r != REG_NOMATCH) { // error
         rc = re_err_to_errno(r);
-        break;
       }
+      if (rc != 0)
+        break;
     }
 
     // is this a function?
@@ -210,16 +187,16 @@ static int refill_last(state_t *s) {
           break;
 
         // save the context we  are now assumed to be within
-        free(s->parent);
-        s->parent = strndup(line + m[1].rm_so, m[1].rm_eo - m[1].rm_so);
-        if (s->parent == NULL)
+        free(parent);
+        parent = strndup(line + m[1].rm_so, m[1].rm_eo - m[1].rm_so);
+        if (parent == NULL)
           rc = ENOMEM;
 
-        break;
       } else if (r != REG_NOMATCH) { // error
         rc = re_err_to_errno(r);
-        break;
       }
+      if (rc != 0)
+        break;
     }
 
     // is this a branch?
@@ -228,55 +205,22 @@ static int refill_last(state_t *s) {
       size_t m_len = sizeof(m) / sizeof(m[0]);
       int r = regexec(&s->call, line, m_len, m, 0);
       if (r == 0) { // match
-        rc = add_symbol(s, CLINK_FUNCTION_CALL, line, &m[2], s->parent);
-        break;
+        rc = add_symbol(s, CLINK_FUNCTION_CALL, line, &m[2], parent);
       } else if (r != REG_NOMATCH) { // error
         rc = re_err_to_errno(r);
-        break;
       }
+      if (rc != 0)
+        break;
     }
   }
 
   free(line);
+  free(parent);
 
   return rc;
 }
 
-static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
-
-  if (UNLIKELY(it == NULL))
-    return EINVAL;
-
-  if (UNLIKELY(yielded == NULL))
-    return EINVAL;
-
-  state_t *s = it->state;
-  if (UNLIKELY(s == NULL))
-    return EINVAL;
-
-  // acquire a new next symbol
-  int rc = refill_last(s);
-  if (rc)
-    return rc;
-
-  // yield this
-  *yielded = &s->last;
-  return 0;
-}
-
-static void my_free(clink_iter_t *it) {
-
-  if (it == NULL)
-    return;
-
-  state_t *s = it->state;
-  if (s == NULL)
-    return;
-
-  clink_symbol_clear(&s->last);
-
-  free(s->parent);
-  s->parent = NULL;
+static void state_free(state_t *s) {
 
   if (s->call_valid)
     regfree(&s->call);
@@ -297,89 +241,58 @@ static void my_free(clink_iter_t *it) {
   if (s->in != NULL)
     (void)fclose(s->in);
   s->in = NULL;
-
-  free(s->filename);
-  s->filename = NULL;
-
-  free(s);
-  it->state = NULL;
 }
 
-int clink_parse_asm(clink_iter_t **it, const char *filename) {
+int clink_parse_asm(clink_db_t *db, const char *filename) {
 
-  if (UNLIKELY(it == NULL))
+  if (UNLIKELY(db == NULL))
     return EINVAL;
 
   if (UNLIKELY(filename == NULL))
     return EINVAL;
 
-  // allocate a new iterator
-  clink_iter_t *i = calloc(1, sizeof(*i));
-  if (UNLIKELY(i == NULL))
-    return ENOMEM;
-
-  // setup our member functions
-  i->next_symbol = next;
-  i->free = my_free;
-
   int rc = 0;
-
-  // allocate state for our iterator
-  state_t *s = calloc(1, sizeof(*s));
-  if (UNLIKELY(s == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-  i->state = s;
-
-  // save the filename for later use in symbol construction
-  s->filename = strdup(filename);
-  if (UNLIKELY(s->filename == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
+  state_t s = {.db = db, .filename = filename};
 
   // open the input file
-  s->in = fopen(filename, "r");
-  if (s->in == NULL) {
+  s.in = fopen(filename, "r");
+  if (s.in == NULL) {
     rc = errno;
     goto done;
   }
 
   // construct regex for recognising a #define
-  if (UNLIKELY((rc = regcomp(&s->define, DEFINE, REG_EXTENDED)))) {
+  if (UNLIKELY((rc = regcomp(&s.define, DEFINE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
-  s->define_valid = true;
+  s.define_valid = true;
 
   // construct regex for recognising a #include
-  if (UNLIKELY((rc = regcomp(&s->include, INCLUDE, REG_EXTENDED)))) {
+  if (UNLIKELY((rc = regcomp(&s.include, INCLUDE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
-  s->include_valid = true;
+  s.include_valid = true;
 
   // construct regex for recognising a function definition
-  if (UNLIKELY((rc = regcomp(&s->function, FUNCTION, REG_EXTENDED)))) {
+  if (UNLIKELY((rc = regcomp(&s.function, FUNCTION, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
-  s->function_valid = true;
+  s.function_valid = true;
 
   // construct regex for recognising a branch
-  if (UNLIKELY((rc = regcomp(&s->call, CALL, REG_EXTENDED)))) {
+  if (UNLIKELY((rc = regcomp(&s.call, CALL, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
-  s->call_valid = true;
+  s.call_valid = true;
+
+  rc = parse(&s);
 
 done:
-  if (rc) {
-    clink_iter_free(&i);
-  } else {
-    *it = i;
-  }
+  state_free(&s);
 
   return rc;
 }
