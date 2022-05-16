@@ -13,11 +13,6 @@ extern "C" {
 
 /** parse the given C/C++ file, inserting results into the given database
  *
- * This function is provided as an alternative to `clink_parse_c` for when the
- * action being done with every result is simply to insert it into a Clink
- * database. This function avoids the overhead of constructing and managing
- * iterator state.
- *
  * \param db Database to insert into
  * \param filename Path to source file to parse
  * \param argc Number of elements in argv
