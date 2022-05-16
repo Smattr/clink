@@ -270,8 +270,8 @@ static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
   return 0;
 }
 
-int clink_parse_c_into(clink_db_t *db, const char *filename, size_t argc,
-                       const char **argv) {
+int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
+                  const char **argv) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;

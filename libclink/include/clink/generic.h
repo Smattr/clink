@@ -23,9 +23,9 @@ extern "C" {
  * \param keywords_length The number of entries in `keywords`
  * \returns 0 on success or an errno on failure
  */
-CLINK_API int clink_parse_generic_into(clink_db_t *db, const char *filename,
-                                       const char **keywords,
-                                       size_t keywords_length);
+CLINK_API int clink_parse_generic(clink_db_t *db, const char *filename,
+                                  const char **keywords,
+                                  size_t keywords_length);
 
 #ifdef __cplusplus
 }

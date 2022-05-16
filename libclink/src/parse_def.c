@@ -3,7 +3,7 @@
 #include <clink/generic.h>
 #include <errno.h>
 
-int clink_parse_def_into(clink_db_t *db, const char *filename) {
+int clink_parse_def(clink_db_t *db, const char *filename) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;
@@ -48,5 +48,5 @@ int clink_parse_def_into(clink_db_t *db, const char *filename) {
   };
   static const size_t KEYWORDS_LENGTH = sizeof(KEYWORDS) / sizeof(KEYWORDS[0]);
 
-  return clink_parse_generic_into(db, filename, KEYWORDS, KEYWORDS_LENGTH);
+  return clink_parse_generic(db, filename, KEYWORDS, KEYWORDS_LENGTH);
 }

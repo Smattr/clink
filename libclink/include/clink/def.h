@@ -16,7 +16,7 @@ extern "C" {
  * \param filename Path to .def file to parse
  * \returns 0 on success or an errno on failure
  */
-CLINK_API int clink_parse_def_into(clink_db_t *db, const char *filename);
+CLINK_API int clink_parse_def(clink_db_t *db, const char *filename);
 
 #ifdef __cplusplus
 }

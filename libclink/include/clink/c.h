@@ -19,8 +19,8 @@ extern "C" {
  * \param argv Arguments to pass to Clang
  * \returns 0 on success or an errno on failure
  */
-CLINK_API int clink_parse_c_into(clink_db_t *db, const char *filename,
-                                 size_t argc, const char **argv);
+CLINK_API int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
+                            const char **argv);
 
 /** get the built-in list of #include paths the compiler knows
  *
