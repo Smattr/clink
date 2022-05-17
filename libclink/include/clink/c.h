@@ -13,19 +13,14 @@ extern "C" {
 
 /** parse the given C/C++ file, inserting results into the given database
  *
- * This function is provided as an alternative to `clink_parse_c` for when the
- * action being done with every result is simply to insert it into a Clink
- * database. This function avoids the overhead of constructing and managing
- * iterator state.
- *
  * \param db Database to insert into
  * \param filename Path to source file to parse
  * \param argc Number of elements in argv
  * \param argv Arguments to pass to Clang
  * \returns 0 on success or an errno on failure
  */
-CLINK_API int clink_parse_c_into(clink_db_t *db, const char *filename,
-                                 size_t argc, const char **argv);
+CLINK_API int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
+                            const char **argv);
 
 /** get the built-in list of #include paths the compiler knows
  *

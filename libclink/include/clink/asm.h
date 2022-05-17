@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <clink/iter.h>
+#include <clink/db.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,13 +36,13 @@ extern "C" {
 #define CLINK_API __attribute__((visibility("default")))
 #endif
 
-/** create an iterator for parsing the given assembly file
+/** parse the given assembly file into the given database
  *
- * \param it [out] Created iterator on success
+ * \param db Database to insert into
  * \param filename Path to source file to parse
  * \returns 0 on success or an errno on failure
  */
-CLINK_API int clink_parse_asm(clink_iter_t **it, const char *filename);
+CLINK_API int clink_parse_asm(clink_db_t *db, const char *filename);
 
 #ifdef __cplusplus
 }

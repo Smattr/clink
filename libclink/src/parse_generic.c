@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int clink_parse_generic_into(clink_db_t *db, const char *filename,
-                             const char **keywords, size_t keywords_length) {
+int clink_parse_generic(clink_db_t *db, const char *filename,
+                        const char **keywords, size_t keywords_length) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;
