@@ -35,6 +35,36 @@ CLINK_API int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 CLINK_API int clink_compiler_includes(const char *compiler, char ***includes,
                                       size_t *includes_len);
 
+/// opaque handle to a compilation database
+typedef struct clink_comp_db clink_comp_db_t;
+
+/** parse a Clang compilation database
+ *
+ * \param db [out] Handle to the database on success
+ * \param path Path to the directory containing a compile_commands.json
+ * \returns 0 on success or an errno on failure
+ */
+CLINK_API int clink_comp_db_open(clink_comp_db_t **db, const char *path);
+
+/** lookup command line arguments to compile a given source
+ *
+ * \param db Compilation database to search
+ * \param path Source being compiled
+ * \param argc [out] Number of elements in returned `argv`
+ * \param argv [out] Arguments to the compiler when building this source
+ * \returns 0 on success or an errno on failure
+ */
+CLINK_API int clink_comp_db_find(const clink_comp_db_t *db, const char *path,
+                                 size_t *argc, char ***argv);
+
+/** release a compilation database and deallocate resources
+ *
+ * `*db` is `NULL` on return.
+ *
+ * \param db [inout] Database to deallocate
+ */
+CLINK_API void clink_comp_db_close(clink_comp_db_t **db);
+
 #ifdef __cplusplus
 }
 #endif

@@ -2,6 +2,9 @@ project(libclink LANGUAGES C)
 
 add_library(libclink
   src/buffer.c
+  src/comp_db_close.c
+  src/comp_db_find.c
+  src/comp_db_open.c
   src/compiler_includes.c
   src/db_add_line.c
   src/db_add_record.c
