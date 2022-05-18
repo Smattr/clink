@@ -81,3 +81,11 @@ bool is_root(const char *path);
  * \returns 0 on success or an errno on failure
  */
 int join(const char *branch, const char *stem, char **path);
+
+/** get the containing directory of a path
+ *
+ * \param path Original file or directory to move up from
+ * \param dir [out] Parent directory on success
+ * \returns 0 on success or an errno on failure
+ */
+int parent(const char *path, char **dir);

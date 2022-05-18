@@ -12,6 +12,7 @@ add_executable(clink
   src/ncurses_ui.c
   src/option.c
   src/path.c
+  src/parent.c
   src/set.c
   src/sigint.c
   src/str_queue.c
