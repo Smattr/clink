@@ -137,7 +137,6 @@ static void parse_args(int argc, char **argv) {
         option.colour = NEVER;
       } else {
         fprintf(stderr, "illegal value to --colour: %s\n", optarg);
-        ;
         exit(EXIT_FAILURE);
       }
       break;
