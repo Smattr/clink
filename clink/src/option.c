@@ -1,5 +1,6 @@
 #include "option.h"
 #include "../../common/compiler.h"
+#include "debug.h"
 #include "path.h"
 #include <assert.h>
 #include <clink/clink.h>
@@ -203,6 +204,83 @@ done:
   for (size_t i = 0; i < system_len; ++i)
     free(system[i]);
   free(system);
+
+  return rc;
+}
+
+int set_comp_db(void) {
+
+  // if the compilation database has been expicitly setup, we are done
+  if (option.comp_db != NULL)
+    return 0;
+
+  int rc = 0;
+  char *dir = NULL;
+  char *candidate = NULL;
+
+  // consider our sources in the order in which the user passed them
+  for (size_t i = 0; i < option.src_len; ++i) {
+
+    // this should have been checked for existence in `main`
+    assert(access(option.src[i], F_OK) == 0);
+
+    // this should have been made absolute in `main`
+    assert(option.src[i][0] == '/');
+
+    // find the containing directory of this source
+    if (is_file(option.src[i])) {
+      if (UNLIKELY(rc = dirname(option.src[i], &dir)))
+        goto done;
+    } else {
+      dir = strdup(option.src[i]);
+      if (UNLIKELY(dir == NULL)) {
+        rc = ENOMEM;
+        goto done;
+      }
+    }
+
+    while (true) {
+
+      // does this directory itself contain a compilation database?
+      if (UNLIKELY(rc = join(dir, "compile_commands.json", &candidate)))
+        goto done;
+      if (access(candidate, F_OK) == 0) {
+        DEBUG("selecting compilation database %s", candidate);
+        rc = clink_comp_db_open(&option.comp_db, candidate);
+        goto done;
+      }
+      free(candidate);
+      candidate = NULL;
+
+      // does the build/ in this directory contain a compilation database?
+      if (UNLIKELY(rc = join(dir, "build/compile_commands.json", &candidate)))
+        goto done;
+      if (access(candidate, F_OK) == 0) {
+        // truncate “/compile_commands.json”
+        candidate[strlen(candidate) - sizeof("compile_commands.json")] = '\0';
+        DEBUG("selecting compilation database %s", candidate);
+        rc = clink_comp_db_open(&option.comp_db, candidate);
+        goto done;
+      }
+      free(candidate);
+      candidate = NULL;
+
+      // is we just checked the root directory, we are done
+      if (is_root(dir))
+        break;
+
+      // move up one level
+      char *parent = NULL;
+      if (UNLIKELY(rc = dirname(dir, &parent)))
+        goto done;
+      free(dir);
+      dir = parent;
+    }
+  }
+
+done:
+  free(candidate);
+  free(dir);
 
   return rc;
 }

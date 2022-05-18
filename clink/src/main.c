@@ -239,6 +239,12 @@ int main(int argc, char **argv) {
     }
   }
 
+  // set up an optional compilation database
+  if (UNLIKELY(rc = set_comp_db())) {
+    fprintf(stderr, "failed to setup compilation database: %s\n", strerror(rc));
+    goto done;
+  }
+
   // ensure SQLite is safe to use multi-threaded
   if (option.threads > 1) {
     if (!sqlite3_threadsafe()) {

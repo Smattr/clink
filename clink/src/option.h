@@ -75,5 +75,14 @@ int set_src(void);
  */
 int set_cxx_flags(char **includes, size_t includes_len);
 
+/** setup compilation database
+ *
+ * If this has not already been set explicitly by the user
+ * (`--compile-commands-dir` or `-p` options), it is implicitly determined by
+ * the source paths. This function performs this search and sets
+ * `option.comp_db`.
+ */
+int set_comp_db(void);
+
 // deallocate members of option
 void clean_up_options(void);
