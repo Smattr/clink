@@ -50,24 +50,25 @@ static void parse_args(int argc, char **argv) {
   while (true) {
     static const struct option opts[] = {
         // clang-format off
-        {"build-only",    no_argument,       0, 'b'},
-        {"color",         required_argument, 0, 128},
-        {"colour",        required_argument, 0, 128},
-        {"database",      required_argument, 0, 'f'},
-        {"debug",         no_argument,       0, 129},
-        {"help",          no_argument,       0, 'h'},
-        {"include",       required_argument, 0, 'I'},
-        {"jobs",          required_argument, 0, 'j'},
-        {"line-oriented", no_argument,       0, 'l'},
-        {"no-build",      no_argument,       0, 'd'},
-        {"nostdinc",      no_argument,       0, 130},
-        {"version",       no_argument,       0, 'V'},
+        {"build-only",           no_argument,       0, 'b'},
+        {"color",                required_argument, 0, 128},
+        {"colour",               required_argument, 0, 128},
+        {"compile-commands-dir", required_argument, 0, 'p'},
+        {"database",             required_argument, 0, 'f'},
+        {"debug",                no_argument,       0, 129},
+        {"help",                 no_argument,       0, 'h'},
+        {"include",              required_argument, 0, 'I'},
+        {"jobs",                 required_argument, 0, 'j'},
+        {"line-oriented",        no_argument,       0, 'l'},
+        {"no-build",             no_argument,       0, 'd'},
+        {"nostdinc",             no_argument,       0, 130},
+        {"version",              no_argument,       0, 'V'},
         {0, 0, 0, 0},
         // clang-format on
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bdf:hI:j:l", opts, &index);
+    int c = getopt_long(argc, argv, "bdf:hI:j:lp:", opts, &index);
 
     if (c == -1)
       break;
@@ -113,6 +114,18 @@ static void parse_args(int argc, char **argv) {
     case 'l':
       option.ncurses_ui = false;
       option.line_ui = true;
+      break;
+
+    case 'p':
+      clink_comp_db_close(&option.comp_db);
+      {
+        int r = clink_comp_db_open(&option.comp_db, optarg);
+        if (UNLIKELY(r != 0)) {
+          fprintf(stderr, "failed to load compilation database %s: %s\n",
+                  optarg, strerror(r));
+          exit(EXIT_FAILURE);
+        }
+      }
       break;
 
     case 128: // --colour

@@ -22,6 +22,7 @@ option_t option = {
     .colour = AUTO,
     .cxx_argv = NULL,
     .cxx_argc = 0,
+    .comp_db = NULL,
     .stdinc = true,
     .debug = false,
 };
@@ -222,4 +223,6 @@ void clean_up_options(void) {
   free(option.cxx_argv);
   option.cxx_argv = NULL;
   option.cxx_argc = 0;
+
+  clink_comp_db_close(&option.comp_db);
 }

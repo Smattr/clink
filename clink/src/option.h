@@ -1,5 +1,6 @@
 #pragma once
 
+#include <clink/clink.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -36,6 +37,9 @@ typedef struct {
   // arguments to pass to Clang when parsing C/C++
   char **cxx_argv;
   size_t cxx_argc;
+
+  // optional Clang compilation database
+  clink_comp_db_t *comp_db;
 
   // include standard system directories in the include path?
   bool stdinc;

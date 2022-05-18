@@ -20,6 +20,14 @@ are "always" (enable), "never" (disable), and "auto" (decide based on whether
 stdout is a TTY).
 .RE
 .PP
+\fB--compile-commands-dir\fR \fIDIR\fR, \fB-p\fR \fIDIR\fR
+.RS
+Path to a directory containing a compile_commands.json database describing how
+to compile your sources. If this option is not provided, Clink will search the
+directories of your source paths and their parents and \fIbuild\fR
+subdirectories in these directories.
+.RE
+.PP
 \fB--database\fR \fIFILE\fR, \fB-f\fR \fIFILE\fR
 .RS
 Open or create the symbol database at path \fIFILE\fR. Without this option,
