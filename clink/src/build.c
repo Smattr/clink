@@ -121,6 +121,47 @@ static void increment(void) {
     }                                                                          \
   } while (0)
 
+/// lock to protect database lookup
+static pthread_mutex_t comp_db_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/// determine the Clang arguments associated with a given C/C++ source
+static int get_args(unsigned long thread_id, const char *path, size_t *argc,
+                    char ***argv) {
+
+  assert(path != NULL);
+  assert(argc != NULL);
+  assert(argv != NULL);
+
+  // if we have no compilation database, fallback to the default arguments
+  if (option.comp_db == NULL) {
+    *argc = option.cxx_argc;
+    *argv = option.cxx_argv;
+    return 0;
+  }
+
+  // lock the database in case Clang internals are not thread safe
+  int rc = pthread_mutex_lock(&comp_db_lock);
+  if (UNLIKELY(rc != 0))
+    return rc;
+
+  // lookup arguments for this source
+  rc = clink_comp_db_find(option.comp_db, path, argc, argv);
+
+  // if this had no entry in the database, fallback to the default arguments
+  if (rc == ENOMSG) {
+    rc = 0;
+    *argc = option.cxx_argc;
+    *argv = option.cxx_argv;
+  }
+
+  if (UNLIKELY(rc != 0))
+    DEBUG("failed to retrieve arguments for %s: %s", path, strerror(rc));
+
+  (void)pthread_mutex_unlock(&comp_db_lock);
+
+  return rc;
+}
+
 /// drain a work queue, processing its entries into the database
 static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
                    file_queue_t *q) {
@@ -185,9 +226,25 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
       // C/C++
     } else if (is_c(path)) {
+
       progress(thread_id, "parsing C/C++ file %s", display);
-      const char **argv = (const char **)option.cxx_argv;
-      rc = clink_parse_c(db, path, option.cxx_argc, argv);
+
+      // determine what Clang arguments we should compile this with
+      size_t argc = 0;
+      char **argv = NULL;
+      rc = get_args(thread_id, path, &argc, &argv);
+
+      if (LIKELY(rc == 0)) {
+        const char **av = (const char **)argv;
+        rc = clink_parse_c(db, path, argc, av);
+      }
+
+      // if we dynamically allocated the arguments, clean them up
+      if (argv != option.cxx_argv) {
+        for (size_t i = 0; i < argc; ++i)
+          free(argv[i]);
+        free(argv);
+      }
 
       // DEF
     } else {
