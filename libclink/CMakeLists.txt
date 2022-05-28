@@ -27,7 +27,6 @@ add_library(libclink
   src/run.c
   src/sql.c
   src/symbol.c
-  src/temp_dir.c
   src/term.c
   src/vim_open.c
   src/vim_read.c
