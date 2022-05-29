@@ -8,7 +8,6 @@
 
 #include "run.h"
 #include <assert.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -44,7 +43,7 @@ int main(void) {
   // use run() to touch the target
   const char *args[] = {"touch", target, NULL};
   {
-    int r = run(args, false);
+    int r = run(args);
     assert(r == EXIT_SUCCESS);
   }
 

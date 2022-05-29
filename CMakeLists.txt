@@ -60,7 +60,6 @@ add_subdirectory(test/is_root)
 add_subdirectory(test/join)
 add_subdirectory(test/ls-includes)
 add_subdirectory(test/run-echo)
-add_subdirectory(test/run-echo-mask)
 add_subdirectory(test/run-touch)
 add_subdirectory(test/vim-open)
 
@@ -86,7 +85,6 @@ add_test(disppath test/disppath/disppath)
 add_test(is_root test/is_root/is_root)
 add_test(join test/join/join)
 add_test(run-echo test/run-echo/run-echo)
-add_test(run-echo-mask test/run-echo-mask/run-echo-mask)
 add_test(run-touch test/run-touch/run-touch)
 
 find_program(CLANG_FORMAT

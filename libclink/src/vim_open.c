@@ -2,7 +2,6 @@
 #include "run.h"
 #include <clink/vim.h>
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -30,7 +29,7 @@ int clink_vim_open(const char *filename, unsigned long lineno,
   char const *argv[] = {"vim", cursor, filename, NULL};
 
   // run it
-  int rc = run(argv, false);
+  int rc = run(argv);
 
   // clean up
   free(cursor);

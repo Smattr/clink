@@ -37,7 +37,7 @@ int main(void) {
     // use run() to echo some text
     {
       const char *args[] = {"echo", "hello", "world", NULL};
-      int r = run(args, false);
+      int r = run(args);
       assert(r == EXIT_SUCCESS);
     }
 
