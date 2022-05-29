@@ -98,7 +98,7 @@ find_program(CLANG_FORMAT
     clang-format-mp-11 clang-format-11)
 find_program(GIT git)
 find_program(XARGS xargs)
-if(CLANG_FORMAT AND GIT)
+if(CLANG_FORMAT AND GIT AND XARGS)
   add_custom_target(format
     COMMAND ${GIT} ls-files -z '**/*.c' '**/*.h' |
       ${XARGS} -0 -- ${CLANG_FORMAT} -i --style=file
