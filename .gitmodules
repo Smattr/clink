@@ -1,0 +1,3 @@
+[submodule "libclink/vimcat"]
+	path = libclink/vimcat
+	url = https://github.com/Smattr/vimcat
