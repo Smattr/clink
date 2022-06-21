@@ -3,7 +3,6 @@ project(libclink LANGUAGES C)
 add_subdirectory(vimcat/libvimcat)
 
 add_library(libclink
-  src/buffer.c
   src/compiler_includes.c
   src/db_add_line.c
   src/db_add_record.c
@@ -29,7 +28,6 @@ add_library(libclink
   src/run.c
   src/sql.c
   src/symbol.c
-  src/term.c
   src/vim_open.c
   src/vim_read.c
   src/vim_read_into.c
@@ -61,6 +59,8 @@ target_include_directories(libclink
   src)
 
 set_target_properties(libclink PROPERTIES PREFIX "")
+
+target_link_libraries(libclink PRIVATE libvimcat)
 
 find_package(LIBCLANG REQUIRED)
 target_include_directories(libclink PRIVATE SYSTEM ${LIBCLANG_INCLUDE_DIRS})
