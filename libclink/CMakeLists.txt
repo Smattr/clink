@@ -1,5 +1,7 @@
 project(libclink LANGUAGES C)
 
+add_subdirectory(vimcat/libvimcat)
+
 add_library(libclink
   src/buffer.c
   src/compiler_includes.c
