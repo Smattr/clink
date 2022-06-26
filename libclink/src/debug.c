@@ -2,10 +2,13 @@
 #include <clink/debug.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <vimcat/vimcat.h>
 
 FILE *debug;
 
 FILE *clink_set_debug(FILE *stream) {
+  (void)vimcat_set_debug(stream);
+
   FILE *old = debug;
   debug = stream;
   return old;
