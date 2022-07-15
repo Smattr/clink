@@ -8,7 +8,8 @@
 #include <string.h>
 
 int clink_parse_generic(clink_db_t *db, const char *filename,
-                        const char **keywords, size_t keywords_length) {
+                        const char **keywords, size_t keywords_length,
+                        const char **defn_leaders, size_t defn_leaders_length) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;
@@ -17,6 +18,9 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
     return EINVAL;
 
   if (UNLIKELY(keywords == NULL && keywords_length > 0))
+    return EINVAL;
+
+  if (UNLIKELY(defn_leaders == NULL && defn_leaders_length > 0))
     return EINVAL;
 
   FILE *f = fopen(filename, "r");
@@ -41,13 +45,14 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   unsigned colno = 1;
 
   // a symbol we will update and reuse as we parse
-  clink_symbol_t symbol = {.category = CLINK_REFERENCE,
-                           .path = (char *)filename,
-                           .lineno = lineno,
-                           .colno = colno};
+  clink_symbol_t symbol = {
+      .path = (char *)filename, .lineno = lineno, .colno = colno};
 
   // was the last character we read '\r'?
   bool last_cr = false;
+
+  // was the last token we read a definition leader?
+  bool last_defn_leader = false;
 
   while (true) {
 
@@ -72,7 +77,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
     } else if (has_pending) {
       (void)fflush(buffer);
 
-      // is this one of the restricted keywords
+      // is this one of the restricted keywords?
       bool is_keyword = false;
       for (size_t i = 0; i < keywords_length; ++i) {
         if (strcmp(pending, keywords[i]) == 0) {
@@ -81,16 +86,40 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
         }
       }
 
-      // if it is not a keyword, insert it as a reference
+      // is this a definition leader?
+      bool is_defn_leader = false;
+      for (size_t i = 0; i < defn_leaders_length; ++i) {
+        if (strcmp(pending, defn_leaders[i]) == 0) {
+          is_defn_leader = true;
+          break;
+        }
+      }
+
+      // if it is not a keyword, insert it
       if (!is_keyword) {
         symbol.name = pending;
+        // assume a definition leader itself cannot be a definition
+        if (last_defn_leader && !is_defn_leader) {
+          symbol.category = CLINK_DEFINITION;
+        } else {
+          symbol.category = CLINK_REFERENCE;
+        }
         if ((rc = clink_db_add_symbol(db, &symbol)))
           goto done;
       }
 
+      // Does this indicate the next symbol is a definition? Note that both
+      // keywords and non-keywords can be definition leaders.
+      last_defn_leader = is_defn_leader;
+
       has_pending = false;
       memset(pending, 0, strlen(pending));
       rewind(buffer);
+
+      // if this is something other than whitespace, it separates a definition
+      // leader from anything it could apply to
+    } else if (!isspace(c)) {
+      last_defn_leader = false;
     }
 
     // are we done?
