@@ -2,10 +2,15 @@
 #include <clink/generic.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 int clink_parse_generic(clink_db_t *db, const char *filename,
                         const char **keywords, size_t keywords_length,
@@ -23,15 +28,32 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   if (UNLIKELY(defn_leaders == NULL && defn_leaders_length > 0))
     return EINVAL;
 
-  FILE *f = fopen(filename, "r");
-  if (f == NULL)
-    return errno;
-
   int rc = 0;
-
+  int f = -1;
+  struct stat st;
+  uint8_t *base = MAP_FAILED;
   char *pending = NULL;
   size_t pending_length = 0;
-  FILE *buffer = open_memstream(&pending, &pending_length);
+  FILE *buffer = NULL;
+
+  f = open(filename, O_RDONLY);
+  if (f < 0) {
+    rc = errno;
+    goto done;
+  }
+
+  if (fstat(f, &st) < 0) {
+    rc = errno;
+    goto done;
+  }
+
+  base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, f, 0);
+  if (base == MAP_FAILED) {
+    rc = errno;
+    goto done;
+  }
+
+  buffer = open_memstream(&pending, &pending_length);
   if (UNLIKELY(buffer == NULL)) {
     rc = errno;
     goto done;
@@ -54,9 +76,9 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   // was the last token we read a definition leader?
   bool last_defn_leader = false;
 
-  while (true) {
+  for (size_t j = 0;; ++j) {
 
-    int c = getc(f);
+    int c = j < (size_t)st.st_size ? base[j] : EOF;
 
     // is this character eligible to be part of a symbol?
     if (isalpha(c) || c == '_' || (has_pending && isdigit(c))) {
@@ -150,7 +172,10 @@ done:
   if (LIKELY(buffer != NULL))
     (void)fclose(buffer);
   free(pending);
-  (void)fclose(f);
+  if (base != MAP_FAILED)
+    (void)munmap(base, st.st_size);
+  if (f >= 0)
+    (void)close(f);
 
   return rc;
 }
