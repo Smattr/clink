@@ -9,8 +9,6 @@ experience into the twenty first century.
 What does that mean?
 --------------------
 
-* **Full C/C++ semantic support** – Clink uses libclang, which means it
-  understands your code (including macros) as well as your compiler does.
 * **Multicore support** – Parsing multiple, independent files trivially
   parallelises, so why be limited by one core?
 * **Assembly support** – Systems code often calls into assembly, at which point
