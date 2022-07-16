@@ -221,8 +221,14 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
     goto done;
   }
 
+  // number of '{' we are deep
+  size_t bracing = 0;
+
   // previous symbol seen
   span_t last = {0};
+
+  // function definition we are within
+  span_t parent = {0};
 
   // a symbol currently being accrued
   span_t pending = {0};
@@ -259,6 +265,15 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
           goto done;
         }
 
+        if (parent.base != NULL) {
+          symbol.parent = strndup(parent.base, parent.size);
+          if (UNLIKELY(parent.base == NULL)) {
+            free(symbol.name);
+            rc = ENOMEM;
+            goto done;
+          }
+        }
+
         // is this an enum/struct/union definition?
         if (is_leader(last) && peek(s, "{")) {
           symbol.category = CLINK_DEFINITION;
@@ -266,6 +281,11 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
           // is this some other kind of definition?
         } else if (is_type(last) && !is_type(pending)) {
           symbol.category = CLINK_DEFINITION;
+
+          // if this is a function definition, consider this our parent for any
+          // upcoming symbols
+          if (bracing == 0 && peek(s, "("))
+            parent = pending;
 
           // is this a function call?
         } else if (!is_type(last) && !is_type(pending) && eat_if(&s, "(")) {
@@ -278,6 +298,8 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
         rc = clink_db_add_symbol(db, &symbol);
 
+        free(symbol.parent);
+        symbol.parent = NULL;
         free(symbol.name);
         symbol.name = NULL;
 
@@ -313,6 +335,17 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
     // account for pointers
     if (pending.base == NULL && !isspace(c) && c != '*')
       last = (span_t){0};
+
+    // are we entering a function (overly broad match, but OK)?
+    if (c == '{')
+      ++bracing;
+
+    // are we leaving a function?
+    if (c == '}' && bracing > 0) {
+      --bracing;
+      if (bracing == 0)
+        parent = (span_t){0};
+    }
 
     eat_one(&s);
   }
