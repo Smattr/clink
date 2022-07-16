@@ -131,8 +131,14 @@ static void eat_one(scanner_t *s) {
   assert(s->offset <= s->size && "corrupted scanner state");
   assert(s->offset < s->size && "advancing an exhausted scanner");
 
-  if (s->base[s->offset] == '\n') {
-    // TODO: Windows line endings
+  if (s->base[s->offset] == '\r') {
+    if (s->offset + 1 < s->size && s->base[s->offset + 1] == '\n') {
+      // Windows line ending
+      ++s->offset;
+    }
+    ++s->lineno;
+    s->colno = 1;
+  } else if (s->base[s->offset] == '\n') {
     ++s->lineno;
     s->colno = 1;
   } else {
