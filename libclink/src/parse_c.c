@@ -268,7 +268,7 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
         if (parent.base != NULL) {
           symbol.parent = strndup(parent.base, parent.size);
-          if (UNLIKELY(parent.base == NULL)) {
+          if (UNLIKELY(symbol.parent == NULL)) {
             free(symbol.name);
             rc = ENOMEM;
             goto done;
