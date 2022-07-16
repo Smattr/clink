@@ -350,6 +350,20 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
       continue;
     }
 
+    // if this is a string literal, drain it
+    if (eat_if(&s, "\"")) {
+      while (s.offset < s.size) {
+        if (eat_if(&s, "\\\""))
+          continue;
+        if (eat_if(&s, "\\\\"))
+          continue;
+        if (eat_if(&s, "\""))
+          break;
+        eat_one(&s);
+      }
+      continue;
+    }
+
     // are we entering a function (overly broad match, but OK)?
     if (c == '{')
       ++bracing;
