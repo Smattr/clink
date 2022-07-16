@@ -310,7 +310,7 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
           symbol.category = CLINK_DEFINITION;
 
           // is this some other kind of definition?
-        } else if (is_type(last) && !is_type(pending)) {
+        } else if (last.base != NULL && !is_type(pending)) {
           symbol.category = CLINK_DEFINITION;
 
           // if this is a function definition, consider this our parent for any
@@ -321,7 +321,8 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
           }
 
           // is this a function call?
-        } else if (!is_type(last) && !is_type(pending) && eat_if(&s, "(")) {
+        } else if (get_active_parent(&parent) != NULL && !is_type(pending) &&
+                   eat_if(&s, "(")) {
           symbol.category = CLINK_FUNCTION_CALL;
 
           // otherwise consider this a reference
