@@ -187,6 +187,36 @@ static bool peek(scanner_t s, const char *expected) {
   return eat_if(&s, expected);
 }
 
+/// state capturing our idea of the current semantic parent
+typedef struct {
+  size_t bracing;      ///< levels of '{' we are deep
+  span_t brace_parent; ///< parent wrt '{' scope
+  size_t parens;       ///< levels of '(' we are deep
+  span_t paren_parent; ///< parent wrt '(' scope
+} parent_t;
+
+/// determine the current semantic parent
+static const span_t *get_active_parent(const parent_t *parents) {
+
+  assert(parents != NULL);
+
+  // if we are inside a '{' scope, assume this is a function body
+  if (parents->bracing > 0) {
+    if (parents->brace_parent.base == NULL)
+      return NULL;
+    return &parents->brace_parent;
+  }
+
+  // if we are inside a '(' scope, assume this is a function parameter list
+  if (parents->parens > 0) {
+    if (parents->paren_parent.base == NULL)
+      return NULL;
+    return &parents->paren_parent;
+  }
+
+  return NULL;
+}
+
 int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
                   const char **argv) {
 
@@ -222,14 +252,11 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
     goto done;
   }
 
-  // number of '{' we are deep
-  size_t bracing = 0;
+  // state capturing function definition we may be within
+  parent_t parent = {0};
 
   // previous symbol seen
   span_t last = {0};
-
-  // function definition we are within
-  span_t parent = {0};
 
   // a symbol currently being accrued
   span_t pending = {0};
@@ -266,12 +293,15 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
           goto done;
         }
 
-        if (parent.base != NULL) {
-          symbol.parent = strndup(parent.base, parent.size);
-          if (UNLIKELY(symbol.parent == NULL)) {
-            free(symbol.name);
-            rc = ENOMEM;
-            goto done;
+        {
+          const span_t *symbol_parent = get_active_parent(&parent);
+          if (symbol_parent != NULL) {
+            symbol.parent = strndup(symbol_parent->base, symbol_parent->size);
+            if (UNLIKELY(symbol.parent == NULL)) {
+              free(symbol.name);
+              rc = ENOMEM;
+              goto done;
+            }
           }
         }
 
@@ -285,9 +315,9 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
           // if this is a function definition, consider this our parent for any
           // upcoming symbols
-          if (bracing == 0 && peek(s, "(")) {
-            parent = pending;
-            DEBUG("entering parent \"%.*s\"", (int)parent.size, parent.base);
+          if (parent.bracing == 0 && peek(s, "(")) {
+            DEBUG("entering parent \"%.*s\"", (int)pending.size, pending.base);
+            parent.brace_parent = parent.paren_parent = pending;
           }
 
           // is this a function call?
@@ -376,16 +406,28 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
     // are we entering a function (overly broad match, but OK)?
     if (c == '{')
-      ++bracing;
+      ++parent.bracing;
 
     // are we leaving a function?
-    if (c == '}' && bracing > 0) {
-      --bracing;
-      if (bracing == 0) {
-        if (parent.base != NULL)
-          DEBUG("leaving parent \"%.*s\"", (int)parent.size, parent.base);
-        parent = (span_t){0};
+    if (c == '}' && parent.bracing > 0) {
+      --parent.bracing;
+      if (parent.bracing == 0) {
+        if (parent.brace_parent.base != NULL)
+          DEBUG("leaving parent \"%.*s\"", (int)parent.brace_parent.size,
+                parent.brace_parent.base);
+        parent.brace_parent = (span_t){0};
       }
+    }
+
+    // are we entering a function’s argument list (overly broad match, but OK)?
+    if (c == '(')
+      ++parent.parens;
+
+    // are we leaving a function’s argument list?
+    if (c == ')' && parent.parens > 0) {
+      --parent.parens;
+      if (parent.parens == 0)
+        parent.paren_parent = (span_t){0};
     }
 
     eat_one(&s);
