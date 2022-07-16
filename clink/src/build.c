@@ -184,7 +184,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       rc = clink_parse_asm(db, path);
 
       // C/C++
-    } else if (is_c(path)) {
+    } else if (is_c(path) || is_cxx(path)) {
       progress(thread_id, "parsing C/C++ file %s", display);
       const char **argv = (const char **)option.cxx_argv;
       rc = clink_parse_c(db, path, option.cxx_argc, argv);

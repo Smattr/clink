@@ -40,16 +40,11 @@ static bool has_ext(const char *path, const char *ext) {
 
 bool is_asm(const char *path) { return has_ext(path, "s"); }
 
-bool is_c(const char *path) {
-  // clang-format off
-  return has_ext(path, "c")
-      || has_ext(path, "c++")
-      || has_ext(path, "cpp")
-      || has_ext(path, "cxx")
-      || has_ext(path, "cc")
-      || has_ext(path, "h")
-      || has_ext(path, "hpp");
-  // clang-format on
+bool is_c(const char *path) { return has_ext(path, "c") || has_ext(path, "h"); }
+
+bool is_cxx(const char *path) {
+  return has_ext(path, "c++") || has_ext(path, "cpp") || has_ext(path, "cxx") ||
+         has_ext(path, "cc") || has_ext(path, "h") || has_ext(path, "hpp");
 }
 
 bool is_def(const char *path) { return has_ext(path, "def"); }
