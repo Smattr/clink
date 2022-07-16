@@ -48,5 +48,5 @@ int clink_parse_def(clink_db_t *db, const char *filename) {
   };
   static const size_t KEYWORDS_LENGTH = sizeof(KEYWORDS) / sizeof(KEYWORDS[0]);
 
-  return clink_parse_generic(db, filename, KEYWORDS, KEYWORDS_LENGTH);
+  return clink_parse_generic(db, filename, KEYWORDS, KEYWORDS_LENGTH, NULL, 0);
 }
