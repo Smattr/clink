@@ -267,11 +267,10 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
         } else if (is_type(last) && !is_type(pending)) {
           symbol.category = CLINK_DEFINITION;
 
-#if 0 // TODO
-      // is this a function call?
-        } else if (parent.base !== NULL && eat_if(&s, "(")) {
+          // is this a function call?
+        } else if (!is_type(last) && !is_type(pending) && eat_if(&s, "(")) {
+          symbol.category = CLINK_FUNCTION_CALL;
 
-#endif
           // otherwise consider this a reference
         } else {
           symbol.category = CLINK_REFERENCE;
