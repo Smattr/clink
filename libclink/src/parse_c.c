@@ -21,6 +21,7 @@
 ///     would be to write one from scratch.
 
 #include "../../common/compiler.h"
+#include "debug.h"
 #include "scanner.h"
 #include "span.h"
 #include <assert.h>
@@ -284,8 +285,10 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
           // if this is a function definition, consider this our parent for any
           // upcoming symbols
-          if (bracing == 0 && peek(s, "("))
+          if (bracing == 0 && peek(s, "(")) {
             parent = pending;
+            DEBUG("entering parent \"%.*s\"", (int)parent.size, parent.base);
+          }
 
           // is this a function call?
         } else if (!is_type(last) && !is_type(pending) && eat_if(&s, "(")) {
@@ -295,6 +298,13 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
         } else {
           symbol.category = CLINK_REFERENCE;
         }
+
+        DEBUG("recognised %s:%lu:%lu: %s with name \"%s\" and parent \"%s\"",
+              filename, symbol.lineno, symbol.colno,
+              symbol.category == CLINK_DEFINITION      ? "definition"
+              : symbol.category == CLINK_FUNCTION_CALL ? "function call"
+                                                       : "reference",
+              symbol.name, symbol.parent == NULL ? "<none>" : symbol.parent);
 
         rc = clink_db_add_symbol(db, &symbol);
 
@@ -371,8 +381,11 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
     // are we leaving a function?
     if (c == '}' && bracing > 0) {
       --bracing;
-      if (bracing == 0)
+      if (bracing == 0) {
+        if (parent.base != NULL)
+          DEBUG("leaving parent \"%.*s\"", (int)parent.size, parent.base);
         parent = (span_t){0};
+      }
     }
 
     eat_one(&s);
