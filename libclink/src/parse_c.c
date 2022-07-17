@@ -21,6 +21,7 @@
 ///     would be to write one from scratch.
 
 #include "../../common/compiler.h"
+#include "add_symbol.h"
 #include "debug.h"
 #include "scanner.h"
 #include "span.h"
@@ -266,9 +267,8 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
   // a symbol currently being accrued
   span_t pending = {0};
-
-  // a symbol we will update and reuse as we parse
-  clink_symbol_t symbol = {.path = (char *)filename};
+  unsigned long pending_lineno;
+  unsigned long pending_colno;
 
   while (s.offset < s.size) {
     char c = s.base[s.offset];
@@ -278,8 +278,8 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
       // if we are starting a new symbol, note its position
       if (pending.base == NULL) {
-        symbol.lineno = s.lineno;
-        symbol.colno = s.colno;
+        pending_lineno = s.lineno;
+        pending_colno = s.colno;
         pending = (span_t){.base = &s.base[s.offset]};
       }
 
@@ -292,32 +292,14 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
       if (!is_keyword(pending)) {
 
-        assert(symbol.name == NULL);
-        symbol.name = strndup(pending.base, pending.size);
-        if (UNLIKELY(symbol.name == NULL)) {
-          rc = ENOMEM;
-          goto done;
-        }
-
-        {
-          const span_t *symbol_parent = get_active_parent(&parent);
-          if (symbol_parent != NULL) {
-            symbol.parent = strndup(symbol_parent->base, symbol_parent->size);
-            if (UNLIKELY(symbol.parent == NULL)) {
-              free(symbol.name);
-              rc = ENOMEM;
-              goto done;
-            }
-          }
-        }
-
+        clink_category_t category;
         // is this an enum/struct/union definition?
         if (is_leader(last) && peek(s, "{")) {
-          symbol.category = CLINK_DEFINITION;
+          category = CLINK_DEFINITION;
 
           // is this some other kind of definition?
         } else if (last.base != NULL && !is_type(pending)) {
-          symbol.category = CLINK_DEFINITION;
+          category = CLINK_DEFINITION;
 
           // if this is a function definition, consider this our parent for any
           // upcoming symbols
@@ -329,28 +311,33 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
           // is this a function call?
         } else if (get_active_parent(&parent) != NULL && !is_type(pending) &&
                    peek(s, "(")) {
-          symbol.category = CLINK_FUNCTION_CALL;
+          category = CLINK_FUNCTION_CALL;
 
           // otherwise consider this a reference
         } else {
-          symbol.category = CLINK_REFERENCE;
+          category = CLINK_REFERENCE;
         }
 
-        DEBUG("recognised %s:%lu:%lu: %s with name \"%s\" and parent \"%s\"",
-              filename, symbol.lineno, symbol.colno,
-              symbol.category == CLINK_DEFINITION      ? "definition"
-              : symbol.category == CLINK_FUNCTION_CALL ? "function call"
-                                                       : "reference",
-              symbol.name, symbol.parent == NULL ? "<none>" : symbol.parent);
+        span_t symbol_parent = {0};
+        {
+          const span_t *p = get_active_parent(&parent);
+          if (p != NULL)
+            symbol_parent = *p;
+        }
 
-        rc = clink_db_add_symbol(db, &symbol);
+        DEBUG(
+            "recognised %s:%lu:%lu: %s with name \"%.*s\" and parent \"%.*s\"",
+            filename, pending_lineno, pending_colno,
+            category == CLINK_DEFINITION      ? "definition"
+            : category == CLINK_FUNCTION_CALL ? "function call"
+                                              : "reference",
+            (int)pending.size, pending.base,
+            (int)(symbol_parent.base == NULL ? strlen("<none>")
+                                             : symbol_parent.size),
+            symbol_parent.base == NULL ? "<none>" : symbol_parent.base);
 
-        free(symbol.parent);
-        symbol.parent = NULL;
-        free(symbol.name);
-        symbol.name = NULL;
-
-        if (rc != 0)
+        if ((rc = add_symbol(db, category, pending, filename, pending_lineno,
+                             pending_colno, symbol_parent)))
           goto done;
       }
 
