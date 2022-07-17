@@ -64,6 +64,41 @@ static bool is_type(span_t token) {
   return false;
 }
 
+/// is this a type-like token we can safely ignore?
+static bool is_qualifier(span_t token) {
+
+  assert(token.base != NULL);
+
+  if (span_eq(token, "const"))
+    return true;
+  if (span_eq(token, "extern"))
+    return true;
+  if (span_eq(token, "inline"))
+    return true;
+  if (span_eq(token, "__inline__")) // GCC extension
+    return true;
+  if (span_eq(token, "register"))
+    return true;
+  if (span_eq(token, "restrict"))
+    return true;
+  if (span_eq(token, "__restrict__")) // GCC extension
+    return true;
+  if (span_eq(token, "static"))
+    return true;
+  if (span_eq(token, "volatile"))
+    return true;
+  if (span_eq(token, "_Atomic"))
+    return true;
+  if (span_eq(token, "_Noreturn"))
+    return true;
+  if (span_eq(token, "_Thread_local"))
+    return true;
+  if (span_eq(token, "__thread")) // GCC extension
+    return true;
+
+  return false;
+}
+
 /// is this something like “struct” that precedes a type definition?
 static bool is_leader(span_t token) {
 
@@ -174,11 +209,13 @@ static bool peek(scanner_t s, const char *expected) {
 
   assert(s.base != NULL && "corrupted scanner state");
   assert(s.offset <= s.size && "corrupted scanner state");
+  assert(s.offset < s.size && "peeking an exhausted scanner");
   assert(expected != NULL);
   assert(strlen(expected) > 0);
   assert(strchr(expected, '\n') == NULL && "line adjustment not supported");
   assert(strchr(expected, '\r') == NULL && "line adjustment not supported");
 
+  eat_one(&s);
   eat_ws(&s);
 
   return eat_if(&s, expected);
@@ -213,6 +250,12 @@ static const span_t *get_active_parent(const parent_t *parents) {
 
   return NULL;
 }
+
+/// is this an identifier starter?
+static bool isid0(int c) { return isalpha(c) || c == '_'; }
+
+/// is this an identifier continuer?
+static bool isid(int c) { return isid0(c) || isdigit(c); }
 
 int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
                   const char **argv) {
@@ -263,22 +306,30 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
   while (s.offset < s.size) {
     char c = s.base[s.offset];
 
-    // is this character eligible to be part of a symbol?
-    if (isalpha(c) || c == '_' || (pending.base != NULL && isdigit(c))) {
+    // is this the start of a new identifier?
+    if (pending.base == NULL && isid0(c)) {
 
-      // if we are starting a new symbol, note its position
-      if (pending.base == NULL) {
-        pending_lineno = s.lineno;
-        pending_colno = s.colno;
-        pending = (span_t){.base = &s.base[s.offset]};
-      }
-
-      ++pending.size;
+      // note its position
+      assert(pending.base == NULL);
+      pending_lineno = s.lineno;
+      pending_colno = s.colno;
+      pending = (span_t){.base = &s.base[s.offset]};
     }
 
-    // is this terminating the current symbol?
+    // is this part of the current identifier?
+    if (pending.base != NULL && isid(c))
+      ++pending.size;
+
+    // is this the end of the current identifier?
     if (pending.base != NULL &&
-        ((!isalnum(c) && c != '_') || s.offset + 1 == s.size)) {
+        (s.offset + 1 == s.size || !isid(s.base[s.offset + 1]))) {
+
+      // if this is a qualifier, ignore it, including leaving `last` intact
+      if (is_qualifier(pending)) {
+        pending = (span_t){0};
+        eat_one(&s);
+        continue;
+      }
 
       if (!is_keyword(pending)) {
 
@@ -333,6 +384,9 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
       last = pending;
       pending = (span_t){0};
+
+      eat_one(&s);
+      continue;
     }
 
     // if this is the start of a line comment, drain it
