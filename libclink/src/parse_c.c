@@ -328,7 +328,7 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
           // is this a function call?
         } else if (get_active_parent(&parent) != NULL && !is_type(pending) &&
-                   eat_if(&s, "(")) {
+                   peek(s, "(")) {
           symbol.category = CLINK_FUNCTION_CALL;
 
           // otherwise consider this a reference
