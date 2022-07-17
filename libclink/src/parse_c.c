@@ -362,7 +362,7 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
     // TODO: newline escapes
     if (eat_if(&s, "//")) {
       for (bool seen_newline = false; s.offset < s.size && !seen_newline;) {
-        seen_newline = s.base[s.offset] == '\n';
+        seen_newline = s.base[s.offset] == '\n' || s.base[s.offset] == '\r';
         eat_one(&s);
       }
       continue;
