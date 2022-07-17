@@ -1,19 +1,12 @@
-// a test that running `touch filename` via libclink’s run() function does what
-// we expect
-
-// force assertions on
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
-#include "run.h"
-#include <assert.h>
+#include "../../libclink/src/run.h"
+#include "../test.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-int main(void) {
+TEST("running `touch filename` via libclink’s run() function does what we "
+     "expect") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -24,27 +17,27 @@ int main(void) {
   char *path = NULL;
   {
     int r = asprintf(&path, "%s/tmp.XXXXXX", tmp);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // create a temporary directory to work in
   {
     char *r = mkdtemp(path);
-    assert(r != NULL);
+    ASSERT_NOT_NULL(r);
   }
 
   // construct a path within the temporary directory to touch
   char *target = NULL;
   {
     int r = asprintf(&target, "%s/target", path);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // use run() to touch the target
   const char *args[] = {"touch", target, NULL};
   {
     int r = run(args);
-    assert(r == EXIT_SUCCESS);
+    ASSERT_EQ(r, EXIT_SUCCESS);
   }
 
   // read the target’s properties
@@ -58,8 +51,6 @@ int main(void) {
   free(path);
 
   // confirm the target did exist and was created empty
-  assert(r == 0);
-  assert(buf.st_size == 0);
-
-  return 0;
+  ASSERT_EQ(r, 0);
+  ASSERT_EQ(buf.st_size, 0);
 }

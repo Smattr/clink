@@ -1,30 +1,23 @@
-// test cases for ../../clink/src/join.c:join()
-
-// force assertions on
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
 #include "../../clink/src/path.h"
-#include <assert.h>
+#include "../test.h"
 #include <stdlib.h>
 #include <string.h>
 
-int main(void) {
+TEST("test cases for clink/src/join.c:join()") {
 
   // join with invalid parameters should fail
   {
     const char branch[] = "hello";
     const char stem[] = "world";
     char *result = NULL;
-    assert(join(NULL, stem, &result) != 0);
-    assert(join(branch, NULL, &result) != 0);
-    assert(join(branch, stem, NULL) != 0);
+    ASSERT_NE(join(NULL, stem, &result), 0);
+    ASSERT_NE(join(branch, NULL, &result), 0);
+    ASSERT_NE(join(branch, stem, NULL), 0);
   }
   {
     char *result = NULL;
-    assert(join("", "world", &result) != 0);
-    assert(join("hello", "", &result) != 0);
+    ASSERT_NE(join("", "world", &result), 0);
+    ASSERT_NE(join("hello", "", &result), 0);
   }
 
   // some simple join cases
@@ -32,32 +25,32 @@ int main(void) {
     const char branch[] = "hello";
     const char stem[] = "world";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "hello/world") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "hello/world");
     free(result);
   }
   {
     const char branch[] = "/hello";
     const char stem[] = "world";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "/hello/world") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "/hello/world");
     free(result);
   }
   {
     const char branch[] = "/hello";
     const char stem[] = "world/foo/bar";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "/hello/world/foo/bar") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "/hello/world/foo/bar");
     free(result);
   }
   {
     const char branch[] = "/hello";
     const char stem[] = "world/foo/bar";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "/hello/world/foo/bar") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "/hello/world/foo/bar");
     free(result);
   }
 
@@ -66,40 +59,40 @@ int main(void) {
     const char branch[] = "hello/";
     const char stem[] = "world";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "hello/world") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "hello/world");
     free(result);
   }
   {
     const char branch[] = "hello//";
     const char stem[] = "world";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "hello/world") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "hello/world");
     free(result);
   }
   {
     const char branch[] = "hello";
     const char stem[] = "/world";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "hello/world") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "hello/world");
     free(result);
   }
   {
     const char branch[] = "hello/";
     const char stem[] = "/world";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "hello/world") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "hello/world");
     free(result);
   }
   {
     const char branch[] = "hello//";
     const char stem[] = "//world";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "hello/world") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "hello/world");
     free(result);
   }
 
@@ -108,26 +101,24 @@ int main(void) {
     const char branch[] = "/";
     const char stem[] = "hello";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "/hello") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "/hello");
     free(result);
   }
   {
     const char branch[] = "/";
     const char stem[] = "hello/world";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "/hello/world") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "/hello/world");
     free(result);
   }
   {
     const char branch[] = "/";
     const char stem[] = "/hello";
     char *result = NULL;
-    assert(join(branch, stem, &result) == 0);
-    assert(strcmp(result, "/hello") == 0);
+    ASSERT_EQ(join(branch, stem, &result), 0);
+    ASSERT_STREQ(result, "/hello");
     free(result);
   }
-
-  return EXIT_SUCCESS;
 }

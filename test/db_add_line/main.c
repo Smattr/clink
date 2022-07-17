@@ -1,18 +1,12 @@
-// basic test of clink_db_add_line()
+#include "../test.h"
 
-// force assertions on
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
-#include <assert.h>
 #include <clink/db.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-int main(void) {
+TEST("clink_db_add_line()") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -23,20 +17,20 @@ int main(void) {
   char *path = NULL;
   {
     int r = asprintf(&path, "%s/tmp.XXXXXX", tmp);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // create a temporary directory to work in
   {
     char *r = mkdtemp(path);
-    assert(r != NULL);
+    ASSERT_NOT_NULL(r);
   }
 
   // construct a path within the temporary directory
   char *target = NULL;
   {
     int r = asprintf(&target, "%s/target", path);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // open it as a database
@@ -68,7 +62,5 @@ int main(void) {
   free(path);
 
   // confirm that the database was opened correctly
-  assert(rc == 0);
-
-  return 0;
+  ASSERT_EQ(rc, 0);
 }

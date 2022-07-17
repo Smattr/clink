@@ -1,27 +1,20 @@
-// test cases for ../../clink/src/disppath.c:disppath()
-
-// force assertions on
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
 #include "../../clink/src/path.h"
-#include <assert.h>
+#include "../test.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-int main(void) {
+TEST("test cases for clink/src/disppath.c:disppath()") {
 
   static const char target[] = "target";
 
   // disppath with invalid parameters should fail
   {
     char *out = NULL;
-    assert(disppath(NULL, &out) != 0);
-    assert(disppath(target, NULL) != 0);
+    ASSERT_NE(disppath(NULL, &out), 0);
+    ASSERT_NE(disppath(target, NULL), 0);
   }
 
   // find where we should be creating temporary files
@@ -33,25 +26,25 @@ int main(void) {
   char *path = NULL;
   {
     int r = asprintf(&path, "%s/tmp.XXXXXX", tmp);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // create a temporary directory to work in
   {
     char *r = mkdtemp(path);
-    assert(r != NULL);
+    ASSERT_NOT_NULL(r);
   }
 
   // change to this directory
   {
     int r = chdir(path);
-    assert(r == 0);
+    ASSERT_EQ(r, 0);
   }
 
   // create a temporary file within this temporary directory
   {
     FILE *f = fopen(target, "w");
-    assert(f != NULL);
+    ASSERT_NOT_NULL(f);
     fprintf(f, "hello world\n");
     (void)fclose(f);
   }
@@ -67,7 +60,7 @@ int main(void) {
   char *in2 = NULL;
   {
     int r = asprintf(&in2, "%s/%s", path, target);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
   char *out2 = NULL;
   int r2 = disppath(in2, &out2);
@@ -97,20 +90,18 @@ int main(void) {
   // move out of this directory so that we can then remove it
   {
     int r = chdir("/");
-    assert(r == 0);
+    ASSERT_EQ(r, 0);
   }
   (void)rmdir(path);
   free(path);
 
   // assert all our claims
-  assert(claim1_a);
-  assert(claim1_b);
-  assert(claim2_a);
-  assert(claim2_b);
-  assert(claim3_a);
-  assert(claim3_b);
-  assert(claim4_a);
-  assert(claim4_b);
-
-  return EXIT_SUCCESS;
+  ASSERT(claim1_a);
+  ASSERT(claim1_b);
+  ASSERT(claim2_a);
+  ASSERT(claim2_b);
+  ASSERT(claim3_a);
+  ASSERT(claim3_b);
+  ASSERT(claim4_a);
+  ASSERT(claim4_b);
 }

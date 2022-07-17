@@ -1,10 +1,4 @@
-// test looking up an included file by its final component works
-
-// force assertions on
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
+#include "../test.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <errno.h>
@@ -90,7 +84,7 @@ static int find(clink_db_t *db, const char *path) {
   return 0;
 }
 
-int main(void) {
+TEST("test looking up an included file by its final component works") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -101,20 +95,20 @@ int main(void) {
   char *path = NULL;
   {
     int r = asprintf(&path, "%s/tmp.XXXXXX", tmp);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // create a temporary directory to work in
   {
     char *r = mkdtemp(path);
-    assert(r != NULL);
+    ASSERT_NOT_NULL(r);
   }
 
   // construct a path within the temporary directory
   char *target = NULL;
   {
     int r = asprintf(&target, "%s/target", path);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // open it as a database
@@ -157,9 +151,7 @@ int main(void) {
   (void)rmdir(path);
   free(path);
 
-  assert(r1 == 0 && "failed to lookup include by full path");
-  assert(r2 == 0 && "failed to lookup include by stem");
-  assert(r3 == 0 && "failed to lookup include by suffix");
-
-  return EXIT_SUCCESS;
+  ASSERT_EQ(r1, 0); // failed to lookup include by full path
+  ASSERT_EQ(r2, 0); // failed to lookup include by stem
+  ASSERT_EQ(r3, 0); // failed to lookup include by suffix
 }

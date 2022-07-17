@@ -1,52 +1,44 @@
-// test cases for ../../clink/src/dirname.c:dirname()
-
-// force assertions on
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
 #include "../../clink/src/path.h"
-#include <assert.h>
+#include "../test.h"
 #include <stdlib.h>
-#include <string.h>
 
-int main(void) {
+TEST("test cases for clink/src/dirname.c:dirname()") {
 
   // dirname with invalid parameters should fail
   {
     const char in[] = "/hello/world";
     char *out = NULL;
-    assert(dirname(NULL, &out) != 0);
-    assert(dirname(in, NULL) != 0);
+    ASSERT_NE(dirname(NULL, &out), 0);
+    ASSERT_NE(dirname(in, NULL), 0);
   }
 
   // some simple dirname cases
   {
     const char in[] = "/hello/world";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/hello") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/hello");
     free(out);
   }
   {
     const char in[] = "hello/world";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "hello") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "hello");
     free(out);
   }
   {
     const char in[] = "/hello/world/foo/bar";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/hello/world/foo") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/hello/world/foo");
     free(out);
   }
   {
     const char in[] = "hello/world/foo/bar";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "hello/world/foo") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "hello/world/foo");
     free(out);
   }
 
@@ -54,36 +46,36 @@ int main(void) {
   {
     const char in[] = "/hello/world/";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/hello") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/hello");
     free(out);
   }
   {
     const char in[] = "/hello/world//";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/hello") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/hello");
     free(out);
   }
   {
     const char in[] = "hello/world/";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "hello") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "hello");
     free(out);
   }
   {
     const char in[] = "/hello/world/foo/bar/";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/hello/world/foo") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/hello/world/foo");
     free(out);
   }
   {
     const char in[] = "hello/world/foo/bar/";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "hello/world/foo") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "hello/world/foo");
     free(out);
   }
 
@@ -91,38 +83,36 @@ int main(void) {
   {
     const char in[] = "/hello";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/");
     free(out);
   }
   {
     const char in[] = "/hello/";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/");
     free(out);
   }
   {
     const char in[] = "/";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/");
     free(out);
   }
   {
     const char in[] = "//";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/");
     free(out);
   }
   {
     const char in[] = "///";
     char *out = NULL;
-    assert(dirname(in, &out) == 0);
-    assert(strcmp(out, "/") == 0);
+    ASSERT_EQ(dirname(in, &out), 0);
+    ASSERT_STREQ(out, "/");
     free(out);
   }
-
-  return EXIT_SUCCESS;
 }

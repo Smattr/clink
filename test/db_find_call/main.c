@@ -1,11 +1,4 @@
-// basic test of clink_db_find_call()
-
-// force assertions on
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
-#include <assert.h>
+#include "../test.h"
 #include <clink/db.h>
 #include <errno.h>
 #include <stdio.h>
@@ -13,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int main(void) {
+TEST("clink_db_find_call()") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -24,20 +17,20 @@ int main(void) {
   char *path = NULL;
   {
     int r = asprintf(&path, "%s/tmp.XXXXXX", tmp);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // create a temporary directory to work in
   {
     char *r = mkdtemp(path);
-    assert(r != NULL);
+    ASSERT_NOT_NULL(r);
   }
 
   // construct a path within the temporary directory
   char *target = NULL;
   {
     int r = asprintf(&target, "%s/target", path);
-    assert(r >= 0);
+    ASSERT_GE(r, 0);
   }
 
   // open it as a database
@@ -227,17 +220,15 @@ int main(void) {
   free(path);
 
   // confirm that the database was opened correctly
-  assert(rc == 0);
+  ASSERT_EQ(rc, 0);
 
   // confirm that lookup of a missing call worked as expected
-  assert(r1 == 0);
+  ASSERT_EQ(r1, 0);
 
   // confirm that lookup of a call that does exist works as expected
-  assert(r2 == 0);
+  ASSERT_EQ(r2, 0);
 
   // confirm that looking up calls in a function without calls worked as
   // expected
-  assert(r3 == 0);
-
-  return 0;
+  ASSERT_EQ(r3, 0);
 }
