@@ -64,6 +64,41 @@ static bool is_type(span_t token) {
   return false;
 }
 
+/// is this a type-like token we can safely ignore?
+static bool is_qualifier(span_t token) {
+
+  assert(token.base != NULL);
+
+  if (span_eq(token, "const"))
+    return true;
+  if (span_eq(token, "extern"))
+    return true;
+  if (span_eq(token, "inline"))
+    return true;
+  if (span_eq(token, "__inline__")) // GCC extension
+    return true;
+  if (span_eq(token, "register"))
+    return true;
+  if (span_eq(token, "restrict"))
+    return true;
+  if (span_eq(token, "__restrict__")) // GCC extension
+    return true;
+  if (span_eq(token, "static"))
+    return true;
+  if (span_eq(token, "volatile"))
+    return true;
+  if (span_eq(token, "_Atomic"))
+    return true;
+  if (span_eq(token, "_Noreturn"))
+    return true;
+  if (span_eq(token, "_Thread_local"))
+    return true;
+  if (span_eq(token, "__thread")) // GCC extension
+    return true;
+
+  return false;
+}
+
 /// is this something like “struct” that precedes a type definition?
 static bool is_leader(span_t token) {
 
@@ -288,6 +323,13 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
     // is this the end of the current identifier?
     if (pending.base != NULL &&
         (s.offset + 1 == s.size || !isid(s.base[s.offset + 1]))) {
+
+      // if this is a qualifier, ignore it, including leaving `last` intact
+      if (is_qualifier(pending)) {
+        pending = (span_t){0};
+        eat_one(&s);
+        continue;
+      }
 
       if (!is_keyword(pending)) {
 
