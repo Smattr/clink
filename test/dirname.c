@@ -1,5 +1,5 @@
-#include "../../clink/src/path.h"
-#include "../test.h"
+#include "../clink/src/path.h"
+#include "test.h"
 #include <stdlib.h>
 
 TEST("test cases for clink/src/dirname.c:dirname()") {

@@ -1,4 +1,4 @@
-#include "../test.h"
+#include "test.h"
 #include <clink/db.h>
 #include <errno.h>
 #include <stdio.h>
@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-TEST("clink_db_find_definition()") {
+TEST("clink_db_find_caller()") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -43,7 +43,7 @@ TEST("clink_db_find_definition()") {
   if (rc == 0) {
 
     clink_symbol_t symbol = {
-        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
+        .category = CLINK_FUNCTION_CALL, .lineno = 42, .colno = 10};
 
     symbol.name = (char *)"sym-name";
     symbol.path = (char *)"/foo/bar";
@@ -54,11 +54,11 @@ TEST("clink_db_find_definition()") {
       fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
   }
 
-  // add another new symbol that is not a definition
+  // add another new symbol that is not a call
   if (rc == 0) {
 
     clink_symbol_t symbol = {
-        .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
+        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
     symbol.name = (char *)"sym-name2";
     symbol.path = (char *)"/foo/bar";
@@ -72,10 +72,10 @@ TEST("clink_db_find_definition()") {
   int r1 = 0;
   do {
 
-    // lookup a definition that does not exist
+    // lookup a call that does not exist
     clink_iter_t *it = NULL;
-    if ((r1 = clink_db_find_definition(db, "foobar", &it))) {
-      fprintf(stderr, "clink_db_find_definition: %s\n", strerror(r1));
+    if ((r1 = clink_db_find_caller(db, "foobar", &it))) {
+      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r1));
       break;
     }
 
@@ -99,10 +99,10 @@ TEST("clink_db_find_definition()") {
   int r2 = 0;
   do {
 
-    // lookup a definition that exists
+    // lookup a call that exists
     clink_iter_t *it = NULL;
-    if ((r2 = clink_db_find_definition(db, "sym-name", &it))) {
-      fprintf(stderr, "clink_db_find_definition: %s\n", strerror(r2));
+    if ((r2 = clink_db_find_caller(db, "sym-name", &it))) {
+      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r2));
       break;
     }
 
@@ -114,9 +114,9 @@ TEST("clink_db_find_definition()") {
         break;
       }
 
-      if (sym->category != CLINK_DEFINITION) {
+      if (sym->category != CLINK_FUNCTION_CALL) {
         fprintf(stderr, "incorrect symbol category: %d != %d\n",
-                (int)sym->category, (int)CLINK_DEFINITION);
+                (int)sym->category, (int)CLINK_FUNCTION_CALL);
         r2 = -1;
       }
 
@@ -156,7 +156,7 @@ TEST("clink_db_find_definition()") {
       const clink_symbol_t *sym = NULL;
       int r = clink_iter_next_symbol(it, &sym);
       if (r == 0) {
-        fprintf(stderr, "iterator unexpectedly not empty\n");
+        fprintf(stderr, "iterator unexpectedly is non-empty\n");
         r2 = -1;
       } else if (r != ENOMSG) {
         fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
@@ -170,10 +170,10 @@ TEST("clink_db_find_definition()") {
   int r3 = 0;
   do {
 
-    // lookup something that exists but is not a definition
+    // lookup something that exists but is not a call
     clink_iter_t *it = NULL;
-    if ((r3 = clink_db_find_definition(db, "sym-name2", &it))) {
-      fprintf(stderr, "clink_db_find_definition: %s\n", strerror(r3));
+    if ((r3 = clink_db_find_caller(db, "sym-name2", &it))) {
+      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r3));
       break;
     }
 
@@ -182,7 +182,7 @@ TEST("clink_db_find_definition()") {
       const clink_symbol_t *sym = NULL;
       int r = clink_iter_next_symbol(it, &sym);
       if (r == 0) {
-        fprintf(stderr, "iterator unexpectedly not empty\n");
+        fprintf(stderr, "iterator unexpectedly is non-empty\n");
         r3 = -1;
       } else if (r != ENOMSG) {
         fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
@@ -213,6 +213,6 @@ TEST("clink_db_find_definition()") {
   // confirm that lookup of a symbol that does exist works as expected
   ASSERT_EQ(r2, 0);
 
-  // confirm that looking up a non-definition worked as expected
+  // confirm that looking up a non-call worked as expected
   ASSERT_EQ(r3, 0);
 }

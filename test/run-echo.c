@@ -1,5 +1,5 @@
-#include "../../libclink/src/run.h"
-#include "../test.h"
+#include "../libclink/src/run.h"
+#include "test.h"
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>

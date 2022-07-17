@@ -1,5 +1,5 @@
-#include "../../clink/src/path.h"
-#include "../test.h"
+#include "../clink/src/path.h"
+#include "test.h"
 #include <stddef.h>
 #include <unistd.h>
 

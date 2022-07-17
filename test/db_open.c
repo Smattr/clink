@@ -1,11 +1,11 @@
-#include "../test.h"
+#include "test.h"
 #include <clink/db.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-TEST("clink_db_add_symbol() without a parent") {
+TEST("clink_db_open()") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -37,20 +37,6 @@ TEST("clink_db_add_symbol() without a parent") {
   int rc = clink_db_open(&db, target);
   if (rc)
     fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
-
-  // add a new symbol
-  if (rc == 0) {
-
-    clink_symbol_t symbol = {
-        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
-
-    symbol.name = (char *)"sym-name";
-    symbol.path = (char *)"/foo/bar";
-
-    rc = clink_db_add_symbol(db, &symbol);
-    if (rc)
-      fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
-  }
 
   // close the database
   if (rc == 0)

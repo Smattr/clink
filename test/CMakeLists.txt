@@ -3,34 +3,34 @@ add_subdirectory(vim-open)
 
 add_executable(unit-tests
   main.c
-  db_add_line/main.c
-  db_add_record/main.c
-  db_add_symbol/main.c
-  db_add_symbol_no_parent/main.c
-  db_find_call/main.c
-  db_find_caller/main.c
-  db_find_definition/main.c
-  db_find_file/main.c
-  db_find_includer/main.c
-  db_find_includer_stem/main.c
-  db_find_record/main.c
-  db_find_symbol/main.c
-  db_open/main.c
-  db_remove/main.c
-  db_remove_empty/main.c
-  dirname/main.c
+  db_add_line.c
+  db_add_record.c
+  db_add_symbol.c
+  db_add_symbol_no_parent.c
+  db_find_call.c
+  db_find_caller.c
+  db_find_definition.c
+  db_find_file.c
+  db_find_includer.c
+  db_find_includer_stem.c
+  db_find_record.c
+  db_find_symbol.c
+  db_open.c
+  db_remove.c
+  db_remove_empty.c
+  dirname.c
   ../../clink/src/dirname.c
-  disppath/main.c
+  disppath.c
   ../../clink/src/disppath.c
   ../../clink/src/path.c
-  is_root/main.c
+  is_root.c
   ../../clink/src/is_root.c
-  join/main.c
+  join.c
   ../../clink/src/join.c
-  run-echo/main.c
+  run-echo.c
   ../../libclink/src/get_environ.c
   ../../libclink/src/run.c
-  run-touch/main.c
+  run-touch.c
 )
 
 target_link_libraries(unit-tests PRIVATE libclink)

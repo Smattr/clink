@@ -1,11 +1,11 @@
-#include "../test.h"
+#include "test.h"
 #include <clink/db.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-TEST("clink_db_add_record()") {
+TEST("clink_db_remove()") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -38,11 +38,24 @@ TEST("clink_db_add_record()") {
   if (rc)
     fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
 
-  // add a new record
+  // add a new symbol
   if (rc == 0) {
-    if ((rc = clink_db_add_record(db, "foo/bar.c", 42, 128)))
-      fprintf(stderr, "clink_db_add_record: %s\n", strerror(rc));
+
+    clink_symbol_t symbol = {
+        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
+
+    symbol.name = (char *)"sym-name";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent";
+
+    rc = clink_db_add_symbol(db, &symbol);
+    if (rc)
+      fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
   }
+
+  // remove the symbol we just added
+  if (rc == 0)
+    clink_db_remove(db, "/foo/bar");
 
   // close the database
   if (rc == 0)

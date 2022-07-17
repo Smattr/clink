@@ -1,11 +1,11 @@
-#include "../test.h"
+#include "test.h"
 #include <clink/db.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-TEST("clink_db_open()") {
+TEST("clink_db_remove() on an empty database") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -37,6 +37,10 @@ TEST("clink_db_open()") {
   int rc = clink_db_open(&db, target);
   if (rc)
     fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+
+  // remove on this empty database should work
+  if (rc == 0)
+    clink_db_remove(db, "hello-world");
 
   // close the database
   if (rc == 0)

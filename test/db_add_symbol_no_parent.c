@@ -1,11 +1,11 @@
-#include "../test.h"
+#include "test.h"
 #include <clink/db.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-TEST("clink_db_remove()") {
+TEST("clink_db_add_symbol() without a parent") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -46,16 +46,11 @@ TEST("clink_db_remove()") {
 
     symbol.name = (char *)"sym-name";
     symbol.path = (char *)"/foo/bar";
-    symbol.parent = (char *)"sym-parent";
 
     rc = clink_db_add_symbol(db, &symbol);
     if (rc)
       fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
   }
-
-  // remove the symbol we just added
-  if (rc == 0)
-    clink_db_remove(db, "/foo/bar");
 
   // close the database
   if (rc == 0)

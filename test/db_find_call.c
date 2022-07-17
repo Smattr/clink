@@ -1,4 +1,4 @@
-#include "../test.h"
+#include "test.h"
 #include <clink/db.h>
 #include <errno.h>
 #include <stdio.h>
@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-TEST("clink_db_find_caller()") {
+TEST("clink_db_find_call()") {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -69,13 +69,28 @@ TEST("clink_db_find_caller()") {
       fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
   }
 
+  // add another that is not a call with a different parent
+  if (rc == 0) {
+
+    clink_symbol_t symbol = {
+        .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
+
+    symbol.name = (char *)"sym-name3";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent3";
+
+    rc = clink_db_add_symbol(db, &symbol);
+    if (rc)
+      fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
+  }
+
   int r1 = 0;
   do {
 
-    // lookup a call that does not exist
+    // lookup calls in a function that does not exist
     clink_iter_t *it = NULL;
-    if ((r1 = clink_db_find_caller(db, "foobar", &it))) {
-      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r1));
+    if ((r1 = clink_db_find_call(db, "sym-parent2", &it))) {
+      fprintf(stderr, "clink_db_find_call: %s\n", strerror(r1));
       break;
     }
 
@@ -99,10 +114,10 @@ TEST("clink_db_find_caller()") {
   int r2 = 0;
   do {
 
-    // lookup a call that exists
+    // lookup a call in a function that does exist
     clink_iter_t *it = NULL;
-    if ((r2 = clink_db_find_caller(db, "sym-name", &it))) {
-      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r2));
+    if ((r2 = clink_db_find_call(db, "sym-parent", &it))) {
+      fprintf(stderr, "clink_db_find_call: %s\n", strerror(r2));
       break;
     }
 
@@ -170,10 +185,10 @@ TEST("clink_db_find_caller()") {
   int r3 = 0;
   do {
 
-    // lookup something that exists but is not a call
+    // lookup calls within a function that exists but contains no calls
     clink_iter_t *it = NULL;
-    if ((r3 = clink_db_find_caller(db, "sym-name2", &it))) {
-      fprintf(stderr, "clink_db_find_caller: %s\n", strerror(r3));
+    if ((r3 = clink_db_find_call(db, "sym-parent3", &it))) {
+      fprintf(stderr, "clink_db_find_call: %s\n", strerror(r3));
       break;
     }
 
@@ -207,12 +222,13 @@ TEST("clink_db_find_caller()") {
   // confirm that the database was opened correctly
   ASSERT_EQ(rc, 0);
 
-  // confirm that lookup of a missing symbol worked as expected
+  // confirm that lookup of a missing call worked as expected
   ASSERT_EQ(r1, 0);
 
-  // confirm that lookup of a symbol that does exist works as expected
+  // confirm that lookup of a call that does exist works as expected
   ASSERT_EQ(r2, 0);
 
-  // confirm that looking up a non-call worked as expected
+  // confirm that looking up calls in a function without calls worked as
+  // expected
   ASSERT_EQ(r3, 0);
 }

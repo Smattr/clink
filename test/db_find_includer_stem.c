@@ -1,4 +1,4 @@
-#include "../test.h"
+#include "test.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <errno.h>

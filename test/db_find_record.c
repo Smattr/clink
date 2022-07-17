@@ -1,4 +1,4 @@
-#include "../test.h"
+#include "test.h"
 #include <clink/db.h>
 #include <errno.h>
 #include <inttypes.h>
