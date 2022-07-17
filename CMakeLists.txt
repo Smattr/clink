@@ -37,30 +37,6 @@ add_subdirectory(clink)
 add_subdirectory(libclink)
 add_subdirectory(test)
 
-enable_testing()
-add_test(db_add_line test/db_add_line/db_add_line)
-add_test(db_add_record test/db_add_record/db_add_record)
-add_test(db_add_symbol test/db_add_symbol/db_add_symbol)
-add_test(db_add_symbol_no_parent
-  test/db_add_symbol_no_parent/db_add_symbol_no_parent)
-add_test(db_find_call test/db_find_call/db_find_call)
-add_test(db_find_caller test/db_find_caller/db_find_caller)
-add_test(db_find_definition test/db_find_definition/db_find_definition)
-add_test(db_find_file test/db_find_file/db_find_file)
-add_test(db_find_includer test/db_find_includer/db_find_includer)
-add_test(db_find_includer_stem test/db_find_includer_stem/db_find_includer_stem)
-add_test(db_find_record test/db_find_record/db_find_record)
-add_test(db_find_symbol test/db_find_symbol/db_find_symbol)
-add_test(db_open test/db_open/db_open)
-add_test(db_remove test/db_remove/db_remove)
-add_test(db_remove_empty test/db_remove_empty/db_remove_empty)
-add_test(dirname test/dirname/dirname)
-add_test(disppath test/disppath/disppath)
-add_test(is_root test/is_root/is_root)
-add_test(join test/join/join)
-add_test(run-echo test/run-echo/run-echo)
-add_test(run-touch test/run-touch/run-touch)
-
 find_program(CLANG_FORMAT
   NAMES
     clang-format
