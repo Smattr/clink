@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include "span.h"
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -26,6 +27,12 @@ static inline int sql_prepare(sqlite3 *db, const char *query,
 static inline int sql_bind_text(sqlite3_stmt *stmt, int index,
                                 const char *value) {
   int r = sqlite3_bind_text(stmt, index, value, -1, SQLITE_STATIC);
+  return sql_err_to_errno(r);
+}
+
+static inline int sql_bind_span(sqlite3_stmt *stmt, int index, span_t value) {
+  int r = sqlite3_bind_text(stmt, index, value.base, (int)value.size,
+                            SQLITE_STATIC);
   return sql_err_to_errno(r);
 }
 
