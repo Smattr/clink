@@ -57,11 +57,8 @@ static bool is_type(span_t token) {
   static const size_t LEADERS_LENGTH = sizeof(LEADERS) / sizeof(LEADERS[0]);
 
   for (size_t i = 0; i < LEADERS_LENGTH; ++i) {
-    if (token.size != strlen(LEADERS[i]))
-      continue;
-    if (strncmp(token.base, LEADERS[i], token.size) != 0)
-      continue;
-    return true;
+    if (span_eq(token, LEADERS[i]))
+      return true;
   }
 
   return false;
@@ -79,11 +76,8 @@ static bool is_leader(span_t token) {
   static const size_t LEADERS_LENGTH = sizeof(LEADERS) / sizeof(LEADERS[0]);
 
   for (size_t i = 0; i < LEADERS_LENGTH; ++i) {
-    if (token.size != strlen(LEADERS[i]))
-      continue;
-    if (strncmp(token.base, LEADERS[i], token.size) != 0)
-      continue;
-    return true;
+    if (span_eq(token, LEADERS[i]))
+      return true;
   }
 
   return false;
@@ -97,13 +91,9 @@ static bool is_keyword(span_t token) {
 
 #define KEYWORD(x)                                                             \
   do {                                                                         \
-    if (token.size != strlen(#x)) {                                            \
-      break;                                                                   \
+    if (span_eq(token, #x)) {                                                  \
+      return true;                                                             \
     }                                                                          \
-    if (strncmp(token.base, #x, token.size) != 0) {                            \
-      break;                                                                   \
-    }                                                                          \
-    return true;                                                               \
   } while (0);
 #define C99(x) KEYWORD(x)
 #define C11(x) KEYWORD(x)
