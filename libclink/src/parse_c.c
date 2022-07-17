@@ -174,11 +174,13 @@ static bool peek(scanner_t s, const char *expected) {
 
   assert(s.base != NULL && "corrupted scanner state");
   assert(s.offset <= s.size && "corrupted scanner state");
+  assert(s.offset < s.size && "peeking an exhausted scanner");
   assert(expected != NULL);
   assert(strlen(expected) > 0);
   assert(strchr(expected, '\n') == NULL && "line adjustment not supported");
   assert(strchr(expected, '\r') == NULL && "line adjustment not supported");
 
+  eat_one(&s);
   eat_ws(&s);
 
   return eat_if(&s, expected);
@@ -269,21 +271,23 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
   while (s.offset < s.size) {
     char c = s.base[s.offset];
 
-    // is this character eligible to be part of a symbol?
-    if (isid0(c) || (pending.base != NULL && isid(c))) {
+    // is this the start of a new identifier?
+    if (pending.base == NULL && isid0(c)) {
 
-      // if we are starting a new symbol, note its position
-      if (pending.base == NULL) {
-        pending_lineno = s.lineno;
-        pending_colno = s.colno;
-        pending = (span_t){.base = &s.base[s.offset]};
-      }
-
-      ++pending.size;
+      // note its position
+      assert(pending.base == NULL);
+      pending_lineno = s.lineno;
+      pending_colno = s.colno;
+      pending = (span_t){.base = &s.base[s.offset]};
     }
 
-    // is this terminating the current symbol?
-    if (pending.base != NULL && (!isid(c) || s.offset + 1 == s.size)) {
+    // is this part of the current identifier?
+    if (pending.base != NULL && isid(c))
+      ++pending.size;
+
+    // is this the end of the current identifier?
+    if (pending.base != NULL &&
+        (s.offset + 1 == s.size || !isid(s.base[s.offset + 1]))) {
 
       if (!is_keyword(pending)) {
 
@@ -338,6 +342,9 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
 
       last = pending;
       pending = (span_t){0};
+
+      eat_one(&s);
+      continue;
     }
 
     // if this is the start of a line comment, drain it
