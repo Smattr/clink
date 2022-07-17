@@ -38,12 +38,19 @@ int disppath(const char *path, char **display);
  */
 bool is_asm(const char *path);
 
-/** is this a path to a C/C++ file?
+/** is this a path to a C file?
  *
  * \param path Path to assess
- * \returns True if this is an C/C++ file
+ * \returns True if this is a C file
  */
 bool is_c(const char *path);
+
+/** is this a path to a C++ file?
+ *
+ * \param path Path to assess
+ * \returns True if this is a C++ file
+ */
+bool is_cxx(const char *path);
 
 /** is this a path to an MSVC Module-Definition file?
  *

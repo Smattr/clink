@@ -131,6 +131,7 @@ static void parse_args(int argc, char **argv) {
 
     case 129: // --debug
       option.debug = true;
+      clink_debug_on();
       break;
 
     case 130: // --nostdinc
