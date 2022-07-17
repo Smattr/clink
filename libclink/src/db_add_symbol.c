@@ -1,5 +1,7 @@
 #include "../../common/compiler.h"
+#include "add_symbol.h"
 #include "db.h"
+#include "span.h"
 #include "sql.h"
 #include <assert.h>
 #include <clink/db.h>
@@ -7,17 +9,11 @@
 #include <errno.h>
 #include <sqlite3.h>
 #include <stddef.h>
+#include <string.h>
 
-int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
-
-  if (UNLIKELY(db == NULL))
-    return EINVAL;
-
-  if (UNLIKELY(db->db == NULL))
-    return EINVAL;
-
-  if (UNLIKELY(symbol == NULL))
-    return EINVAL;
+int add_symbol(clink_db_t *db, clink_category_t category, span_t name,
+               const char *path, unsigned long lineno, unsigned long colno,
+               span_t parent) {
 
   // insert into the symbol table
 
@@ -32,26 +28,27 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   if (UNLIKELY((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
     goto done;
 
-  assert(symbol->name != NULL);
-  if (UNLIKELY((rc = sql_bind_text(s, 1, symbol->name))))
+  assert(name.base != NULL);
+  if (UNLIKELY((rc = sql_bind_span(s, 1, name))))
     goto done;
 
-  assert(symbol->path != NULL);
-  if (UNLIKELY((rc = sql_bind_text(s, 2, symbol->path))))
+  assert(path != NULL);
+  if (UNLIKELY((rc = sql_bind_text(s, 2, path))))
     goto done;
 
-  if (UNLIKELY((rc = sql_bind_int(s, 3, symbol->category))))
+  if (UNLIKELY((rc = sql_bind_int(s, 3, category))))
     goto done;
 
-  if (UNLIKELY((rc = sql_bind_int(s, 4, symbol->lineno))))
+  if (UNLIKELY((rc = sql_bind_int(s, 4, lineno))))
     goto done;
 
-  if (UNLIKELY((rc = sql_bind_int(s, 5, symbol->colno))))
+  if (UNLIKELY((rc = sql_bind_int(s, 5, colno))))
     goto done;
 
   {
-    const char *parent = symbol->parent == NULL ? "" : symbol->parent;
-    if (UNLIKELY((rc = sql_bind_text(s, 6, parent))))
+    if (parent.base == NULL)
+      parent = (span_t){.base = "", .size = 0};
+    if (UNLIKELY((rc = sql_bind_span(s, 6, parent))))
       goto done;
   }
 
@@ -68,4 +65,27 @@ done:
     sqlite3_finalize(s);
 
   return rc;
+}
+
+int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
+
+  if (UNLIKELY(db == NULL))
+    return EINVAL;
+
+  if (UNLIKELY(db->db == NULL))
+    return EINVAL;
+
+  if (UNLIKELY(symbol == NULL))
+    return EINVAL;
+
+  span_t name = {.base = symbol->name};
+  if (symbol->name != NULL)
+    name.size = strlen(symbol->name);
+
+  span_t parent = {.base = symbol->parent};
+  if (symbol->parent != NULL)
+    parent.size = strlen(symbol->parent);
+
+  return add_symbol(db, symbol->category, name, symbol->path, symbol->lineno,
+                    symbol->colno, parent);
 }
