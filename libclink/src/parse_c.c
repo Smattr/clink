@@ -214,6 +214,12 @@ static const span_t *get_active_parent(const parent_t *parents) {
   return NULL;
 }
 
+/// is this an identifier starter?
+static bool isid0(int c) { return isalpha(c) || c == '_'; }
+
+/// is this an identifier continuer?
+static bool isid(int c) { return isid0(c) || isdigit(c); }
+
 int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
                   const char **argv) {
 
@@ -264,7 +270,7 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
     char c = s.base[s.offset];
 
     // is this character eligible to be part of a symbol?
-    if (isalpha(c) || c == '_' || (pending.base != NULL && isdigit(c))) {
+    if (isid0(c) || (pending.base != NULL && isid(c))) {
 
       // if we are starting a new symbol, note its position
       if (pending.base == NULL) {
@@ -277,8 +283,7 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
     }
 
     // is this terminating the current symbol?
-    if (pending.base != NULL &&
-        ((!isalnum(c) && c != '_') || s.offset + 1 == s.size)) {
+    if (pending.base != NULL && (!isid(c) || s.offset + 1 == s.size)) {
 
       if (!is_keyword(pending)) {
 
