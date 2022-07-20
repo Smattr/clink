@@ -198,6 +198,9 @@ done:
     for (size_t i = 0; i < argc; ++i)
       free(argv[i]);
     free(argv);
+  } else {
+    option.cxx_argc = argc;
+    option.cxx_argv = argv;
   }
   for (size_t i = 0; i < system_len; ++i)
     free(system[i]);
