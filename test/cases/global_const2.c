@@ -1,2 +1,4 @@
-// CHECK: x|global_const2.c|DEFINITION|2|11|
+// RUN: clink --build-only --database {tmp} {__file__} >/dev/null
+// RUN: echo 'select * from symbols;' | sqlite3 {tmp}
+// CHECK: x|{__file__}|0|4|11|
 int const x;
