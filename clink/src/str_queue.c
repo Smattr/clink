@@ -24,11 +24,13 @@ static void check_invariant(const str_queue_t *sq) {
 
   // head should be within the allocated region
   assert(sq->head >= sq->base);
-  assert(sq->head <= sq->base + sq->capacity);
+  if (sq->capacity != 0)
+    assert(sq->head <= sq->base + sq->capacity);
 
   // tail should be within the allocated region
   assert(sq->tail >= sq->base);
-  assert(sq->tail <= sq->base + sq->capacity);
+  if (sq->capacity != 0)
+    assert(sq->tail <= sq->base + sq->capacity);
 
   // head should precede tail
   assert(sq->head <= sq->tail);
@@ -80,7 +82,7 @@ int str_queue_push(str_queue_t *sq, const char *str) {
     return rc;
 
   // do we need to expand the backing memory?
-  if (sq->tail == sq->base + sq->capacity) {
+  if (sq->capacity == 0 || sq->tail == sq->base + sq->capacity) {
     size_t new_capacity = sq->capacity * 2;
     if (new_capacity == 0)
       new_capacity = 4096 / sizeof(sq->base[0]);
