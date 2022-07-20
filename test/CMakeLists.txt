@@ -58,6 +58,12 @@ if(NOT SQLITE3)
   return()
 endif()
 
+find_program(VIM vim)
+if(NOT VIM)
+  message(WARNING "vim not found; disabling make check")
+  return()
+endif()
+
 add_custom_target(check
   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/unit-tests
   COMMAND env PATH=${CMAKE_BINARY_DIR}/clink:$ENV{PATH}
