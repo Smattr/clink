@@ -15,12 +15,9 @@ extern "C" {
  *
  * \param db Database to insert into
  * \param filename Path to source file to parse
- * \param argc Number of elements in argv
- * \param argv Arguments to pass to Clang
  * \returns 0 on success or an errno on failure
  */
-CLINK_API int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
-                            const char **argv);
+CLINK_API int clink_parse_c(clink_db_t *db, const char *filename);
 
 /** parse the given C++ file, inserting results into the given database
  *

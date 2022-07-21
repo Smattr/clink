@@ -192,8 +192,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       // C
     } else if (is_c(path)) {
       progress(thread_id, "parsing C file %s", display);
-      const char **argv = (const char **)option.cxx_argv;
-      rc = clink_parse_c(db, path, option.cxx_argc, argv);
+      rc = clink_parse_c(db, path);
 
       // DEF
     } else {

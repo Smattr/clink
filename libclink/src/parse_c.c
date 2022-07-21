@@ -230,16 +230,12 @@ static bool isid0(int c) { return isalpha(c) || c == '_'; }
 /// is this an identifier continuer?
 static bool isid(int c) { return isid0(c) || isdigit(c); }
 
-int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
-                  const char **argv) {
+int clink_parse_c(clink_db_t *db, const char *filename) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;
 
   if (UNLIKELY(filename == NULL))
-    return EINVAL;
-
-  if (UNLIKELY(argc > 0 && argv == NULL))
     return EINVAL;
 
   int rc = 0;
