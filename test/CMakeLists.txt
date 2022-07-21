@@ -1,4 +1,3 @@
-add_subdirectory(ls-includes)
 add_subdirectory(vim-open)
 
 add_executable(unit-tests

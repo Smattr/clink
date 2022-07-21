@@ -33,13 +33,6 @@ typedef struct {
   // colour terminal output on or off
   colour_t colour;
 
-  // arguments to pass to Clang when parsing C/C++
-  char **cxx_argv;
-  size_t cxx_argc;
-
-  // include standard system directories in the include path?
-  bool stdinc;
-
   // debug mode
   bool debug;
 
@@ -52,24 +45,6 @@ int set_db_path(void);
 
 // setup option.src after option parsing
 int set_src(void);
-
-/** setup flags for the C++ compiler
- *
- * This function assumes the caller wants system include directories enabled
- * (as if `-nostdinc` was not supplied). This may change in future.
- *
- * None of the data of the input array’s entries are modified, but the input
- * array’s entries themselves may be modified by taking ownership of their
- * memory and overwriting them with NULL. On success or failure, the caller
- * should assume they can do nothing with this array except free it and all its
- * entries.
- *
- * \param includes An array of paths to be passed to the compiler with the `-I`
- *   option.
- * \param includes_len The length of `includes`.
- * \return 0 on success or an errno on failure.
- */
-int set_cxx_flags(char **includes, size_t includes_len);
 
 // deallocate members of option
 void clean_up_options(void);
