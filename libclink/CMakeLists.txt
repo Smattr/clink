@@ -3,7 +3,6 @@ project(libclink LANGUAGES C)
 add_subdirectory(vimcat/libvimcat)
 
 add_library(libclink
-  src/compiler_includes.c
   src/db_add_line.c
   src/db_add_record.c
   src/db_add_symbol.c
