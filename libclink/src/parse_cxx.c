@@ -4,16 +4,12 @@
 #include <errno.h>
 #include <unistd.h>
 
-int clink_parse_cxx(clink_db_t *db, const char *filename, size_t argc,
-                    const char **argv) {
+int clink_parse_cxx(clink_db_t *db, const char *filename) {
 
   if (UNLIKELY(db == NULL))
     return EINVAL;
 
   if (UNLIKELY(filename == NULL))
-    return EINVAL;
-
-  if (UNLIKELY(argc > 0 && argv == NULL))
     return EINVAL;
 
   // check the file is readable
