@@ -19,6 +19,8 @@ def lit(tmp: Path, source: Path):
     "tmp":str(tmp / "tempfile"),
   }
 
+  xfail = None
+
   with open(source, "rt", encoding="utf-8") as f:
     for lineno, line in enumerate(f, 1):
 
@@ -35,20 +37,38 @@ def lit(tmp: Path, source: Path):
 
       # is this a command to be run?
       if directive == "RUN":
-        result = subprocess.check_output(content, stdin=subprocess.DEVNULL,
-                                         shell=True, cwd=tmp,
-                                         universal_newlines=True)
+        try:
+          result = subprocess.check_output(content, stdin=subprocess.DEVNULL,
+                                           shell=True, cwd=tmp,
+                                           universal_newlines=True)
+        except subprocess.CalledProcessError:
+          if xfail is None:
+            raise
+          pytest.xfail(xfail)
         output += result
 
       # is this a check of previous output?
       elif directive == "CHECK":
         output = output.lstrip()
-        assert output.startswith(content), \
-          f"{source}:{lineno}: failed CHECK: {content}"
+        try:
+          assert output.startswith(content), \
+            f"{source}:{lineno}: failed CHECK: {content}"
+        except AssertionError:
+          if xfail is None:
+            raise
+          pytest.xfail(xfail)
         output = output[len(content):]
+
+      # is this an indication this test is expected to fail?
+      elif directive == "XFAIL":
+        if eval(content):
+          xfail = f"{source}:{lineno}: XFAIL marker"
 
       else:
         pytest.fail(f'unrecognised directive "{directive}"')
+
+  if xfail:
+    raise RuntimeError(f"XPASS: {xfail}")
 
   assert saw_directive, "no directives recognised"
 
