@@ -107,13 +107,12 @@ static bool is_leader(span_t token) {
 
   assert(token.size > 0);
 
-  static const char *LEADERS[] = {"enum", "struct", "union"};
-  static const size_t LEADERS_LENGTH = sizeof(LEADERS) / sizeof(LEADERS[0]);
-
-  for (size_t i = 0; i < LEADERS_LENGTH; ++i) {
-    if (span_eq(token, LEADERS[i]))
-      return true;
-  }
+  if (span_eq(token, "enum"))
+    return true;
+  if (span_eq(token, "struct"))
+    return true;
+  if (span_eq(token, "union"))
+    return true;
 
   return false;
 }
