@@ -38,32 +38,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/// does this token indicate the next token is the name of a definition?
-static bool is_type(span_t token) {
-
-  if (token.base == NULL)
-    return false;
-
-  assert(token.size > 0);
-
-  // type leaders (type names, qualifiers, …)
-  static const char *LEADERS[] = {
-      "auto",       "bool",       "char",         "const",    "double",
-      "enum",       "extern",     "float",        "inline",   "int",
-      "long",       "register",   "restrict",     "short",    "signed",
-      "static",     "struct",     "union",        "unsigned", "void",
-      "volatile",   "_Atomic",    "_Bool",        "_Complex", "_Decimal128",
-      "_Decimal32", "_Decimal64", "_Thread_local"};
-  static const size_t LEADERS_LENGTH = sizeof(LEADERS) / sizeof(LEADERS[0]);
-
-  for (size_t i = 0; i < LEADERS_LENGTH; ++i) {
-    if (span_eq(token, LEADERS[i]))
-      return true;
-  }
-
-  return false;
-}
-
 /// is this a type-like token we can safely ignore?
 static bool is_qualifier(span_t token) {
 
@@ -112,6 +86,55 @@ static bool is_leader(span_t token) {
   if (span_eq(token, "struct"))
     return true;
   if (span_eq(token, "union"))
+    return true;
+
+  return false;
+}
+
+/// does this token indicate the next token is the name of a definition?
+static bool is_type(span_t token) {
+
+  if (token.base == NULL)
+    return false;
+
+  assert(token.size > 0);
+
+  // type leaders (type names, qualifiers, …)
+  if (is_qualifier(token))
+    return true;
+  if (is_leader(token))
+    return true;
+  if (span_eq(token, "auto"))
+    return true;
+  if (span_eq(token, "bool"))
+    return true;
+  if (span_eq(token, "char"))
+    return true;
+  if (span_eq(token, "double"))
+    return true;
+  if (span_eq(token, "float"))
+    return true;
+  if (span_eq(token, "int"))
+    return true;
+  if (span_eq(token, "long"))
+    return true;
+  if (span_eq(token, "short"))
+    return true;
+  if (span_eq(token, "signed"))
+    return true;
+  if (span_eq(token, "unsigned"))
+    return true;
+  if (span_eq(token, "void"))
+    return true;
+  if (span_eq(token, "_Bool"))
+    return true;
+  if (span_eq(token, "_Complex"))
+    return true;
+  if (span_eq(token, "_Decimal128"))
+    return true;
+  if (span_eq(token, "_Decimal32"))
+    return true;
+  if (span_eq(token, "_Decimal64"))
     return true;
 
   return false;
