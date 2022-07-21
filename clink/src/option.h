@@ -33,9 +33,6 @@ typedef struct {
   // colour terminal output on or off
   colour_t colour;
 
-  // include standard system directories in the include path?
-  bool stdinc;
-
   // debug mode
   bool debug;
 

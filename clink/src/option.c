@@ -19,7 +19,6 @@ option_t option = {
     .line_ui = false,
     .threads = 0,
     .colour = AUTO,
-    .stdinc = true,
     .debug = false,
 };
 
