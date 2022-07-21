@@ -41,10 +41,6 @@ static void xappend(char ***list, size_t *len, const char *item) {
   (*list)[*len - 1] = xstrdup(item);
 }
 
-/// list of user includes (`--include …` or `-I…`)
-static char **includes;
-static size_t includes_len;
-
 static void parse_args(int argc, char **argv) {
 
   while (true) {
@@ -56,7 +52,6 @@ static void parse_args(int argc, char **argv) {
         {"database",      required_argument, 0, 'f'},
         {"debug",         no_argument,       0, 129},
         {"help",          no_argument,       0, 'h'},
-        {"include",       required_argument, 0, 'I'},
         {"jobs",          required_argument, 0, 'j'},
         {"line-oriented", no_argument,       0, 'l'},
         {"no-build",      no_argument,       0, 'd'},
@@ -91,10 +86,6 @@ static void parse_args(int argc, char **argv) {
     case 'h': // --help
       help();
       exit(EXIT_SUCCESS);
-
-    case 'I': // --include
-      xappend(&includes, &includes_len, optarg);
-      break;
 
     case 'j': // --jobs
       if (strcmp(optarg, "auto") == 0) {
@@ -191,19 +182,6 @@ int main(int argc, char **argv) {
     goto done;
   }
   assert(option.src != NULL && option.src_len > 0);
-
-  // setup `-I`/`-isystem` options
-  rc = set_cxx_flags(includes, includes_len);
-  // we do not need the includes collection any more
-  for (size_t i = 0; i < includes_len; ++i)
-    free(includes[i]);
-  free(includes);
-  includes = NULL;
-  includes_len = 0;
-  if (UNLIKELY(rc)) {
-    fprintf(stderr, "failed to set CXX flags: %s\n", strerror(rc));
-    goto done;
-  }
 
   if (option.update_database) {
     for (size_t i = 0; i < option.src_len; ++i) {
