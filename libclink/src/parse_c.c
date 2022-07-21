@@ -91,55 +91,6 @@ static bool is_leader(span_t token) {
   return false;
 }
 
-/// does this token indicate the next token is the name of a definition?
-static bool is_type(span_t token) {
-
-  if (token.base == NULL)
-    return false;
-
-  assert(token.size > 0);
-
-  // type leaders (type names, qualifiers, …)
-  if (is_qualifier(token))
-    return true;
-  if (is_leader(token))
-    return true;
-  if (span_eq(token, "auto"))
-    return true;
-  if (span_eq(token, "bool"))
-    return true;
-  if (span_eq(token, "char"))
-    return true;
-  if (span_eq(token, "double"))
-    return true;
-  if (span_eq(token, "float"))
-    return true;
-  if (span_eq(token, "int"))
-    return true;
-  if (span_eq(token, "long"))
-    return true;
-  if (span_eq(token, "short"))
-    return true;
-  if (span_eq(token, "signed"))
-    return true;
-  if (span_eq(token, "unsigned"))
-    return true;
-  if (span_eq(token, "void"))
-    return true;
-  if (span_eq(token, "_Bool"))
-    return true;
-  if (span_eq(token, "_Complex"))
-    return true;
-  if (span_eq(token, "_Decimal128"))
-    return true;
-  if (span_eq(token, "_Decimal32"))
-    return true;
-  if (span_eq(token, "_Decimal64"))
-    return true;
-
-  return false;
-}
-
 /// is this token a keyword?
 static bool is_keyword(span_t token) {
 
@@ -361,7 +312,7 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
           category = CLINK_DEFINITION;
 
           // is this some other kind of definition?
-        } else if (last.base != NULL && !is_type(pending)) {
+        } else if (last.base != NULL) {
           category = CLINK_DEFINITION;
 
           // if this is a function definition, consider this our parent for any
@@ -372,8 +323,7 @@ int clink_parse_c(clink_db_t *db, const char *filename, size_t argc,
           }
 
           // is this a function call?
-        } else if (get_active_parent(&parent) != NULL && !is_type(pending) &&
-                   peek(s, "(")) {
+        } else if (get_active_parent(&parent) != NULL && peek(s, "(")) {
           category = CLINK_FUNCTION_CALL;
 
           // otherwise consider this a reference
