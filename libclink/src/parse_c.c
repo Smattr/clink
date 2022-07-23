@@ -44,6 +44,20 @@ typedef enum {
   C23, // GNU C23C
 } lang_t;
 
+/// is this a character that prevents the prior symbol applying (e.g. as a
+/// qualifier) to the next symbol?
+static bool is_blocker(lang_t lang, char c) {
+
+  if (isspace(c))
+    return false;
+
+  // allow for pointer definitions
+  if (lang == C23 && c == '*')
+    return false;
+
+  return true;
+}
+
 /// is this a pre-processor directive?
 static bool is_directive(lang_t lang, span_t token) {
 
@@ -478,9 +492,8 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
     }
 
     // if this is inter-symbol punctuation, treat it as separating any modifier
-    // from what it could potentially apply to, with an exception for '*' to
-    // account for pointers
-    if (pending.base == NULL && !isspace(c) && (lang != C23 || c != '*'))
+    // from what it could potentially apply to
+    if (pending.base == NULL && is_blocker(lang, c))
       last = (span_t){0};
 
     // if this is a character literal, drain it
