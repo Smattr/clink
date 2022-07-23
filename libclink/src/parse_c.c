@@ -286,7 +286,10 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
 
       if (!is_keyword(pending)) {
 
-        clink_category_t category;
+        // reference is the default category if we cannot more precisely
+        // identify what type of symbol this is
+        clink_category_t category = CLINK_REFERENCE;
+
         // is this an enum/struct/union definition?
         if (is_leader(last) && peek(*s, "{")) {
           category = CLINK_DEFINITION;
@@ -306,9 +309,6 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
         } else if (get_active_parent(&parent) != NULL && peek(*s, "(")) {
           category = CLINK_FUNCTION_CALL;
 
-          // otherwise consider this a reference
-        } else {
-          category = CLINK_REFERENCE;
         }
 
         span_t symbol_parent = {0};
