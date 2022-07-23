@@ -8,8 +8,6 @@
 #define BAZ /* a comment
                some more lines */ our_ref
 
-// XFAIL: True
-
 // RUN: clink --build-only --database {tmp} {__file__} >/dev/null
 
 // RUN: echo 'select * from symbols where name = "ref";' | sqlite3 {tmp}

@@ -38,10 +38,55 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/// is this a type-like token we can safely ignore?
-static bool is_qualifier(span_t token) {
+/// language being processed
+typedef enum {
+  CPP, // C pre-processor
+  C23, // GNU C23C
+} lang_t;
+
+/// is this a pre-processor directive?
+static bool is_directive(lang_t lang, span_t token) {
 
   assert(token.base != NULL);
+
+  if (lang != CPP)
+    return false;
+
+  if (span_eq(token, "define"))
+    return true;
+  if (span_eq(token, "elif"))
+    return true;
+  if (span_eq(token, "else"))
+    return true;
+  if (span_eq(token, "endif"))
+    return true;
+  if (span_eq(token, "error"))
+    return true;
+  if (span_eq(token, "if"))
+    return true;
+  if (span_eq(token, "ifdef"))
+    return true;
+  if (span_eq(token, "ifndef"))
+    return true;
+  if (span_eq(token, "include"))
+    return true;
+  if (span_eq(token, "line"))
+    return true;
+  if (span_eq(token, "pragma"))
+    return true;
+  if (span_eq(token, "undef"))
+    return true;
+
+  return false;
+}
+
+/// is this a type-like token we can safely ignore?
+static bool is_qualifier(lang_t lang, span_t token) {
+
+  assert(token.base != NULL);
+
+  if (lang == CPP)
+    return false;
 
   if (span_eq(token, "const"))
     return true;
@@ -74,19 +119,21 @@ static bool is_qualifier(span_t token) {
 }
 
 /// is this something like “struct” that precedes a type definition?
-static bool is_leader(span_t token) {
+static bool is_leader(lang_t lang, span_t token) {
 
   if (token.base == NULL)
     return false;
 
   assert(token.size > 0);
 
-  if (span_eq(token, "enum"))
-    return true;
-  if (span_eq(token, "struct"))
-    return true;
-  if (span_eq(token, "union"))
-    return true;
+  if (lang == C23) {
+    if (span_eq(token, "enum"))
+      return true;
+    if (span_eq(token, "struct"))
+      return true;
+    if (span_eq(token, "union"))
+      return true;
+  }
 
   return false;
 }
@@ -156,6 +203,20 @@ static void eat_ws(scanner_t *s) {
     eat_one(s);
 }
 
+static bool isspace_not_eol(char c) {
+  return isspace(c) && c != '\n' && c != '\r';
+}
+
+/// advance over white space until the end of the line
+static void eat_ws_to_eol(scanner_t *s) {
+
+  assert(s->base != NULL && "corrupted scanner state");
+  assert(s->offset <= s->size && "corrupted scanner state");
+
+  while (s->offset < s->size && isspace_not_eol(s->base[s->offset]))
+    eat_one(s);
+}
+
 /// advance and return true if the expected text is next
 static bool eat_if(scanner_t *s, const char *expected) {
 
@@ -203,6 +264,19 @@ static bool peek(scanner_t s, const char *expected) {
   return eat_if(&s, expected);
 }
 
+/// check if the current characters are optional white space then the expected
+static bool at(scanner_t s, const char *expected) {
+
+  assert(s.base != NULL && "corrupted scanner state");
+  assert(s.offset <= s.size && "corrupted scanner state");
+  assert(s.offset < s.size && "examining an exhausted scanner");
+  assert(expected != NULL);
+  assert(strlen(expected) > 0);
+
+  eat_ws_to_eol(&s);
+  return eat_if(&s, expected);
+}
+
 /// state capturing our idea of the current semantic parent
 typedef struct {
   size_t bracing;      ///< levels of '{' we are deep
@@ -239,11 +313,16 @@ static bool isid0(int c) { return isalpha(c) || c == '_'; }
 /// is this an identifier continuer?
 static bool isid(int c) { return isid0(c) || isdigit(c); }
 
-static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
+static int parse(lang_t lang, clink_db_t *db, const char *filename,
+                 scanner_t *s) {
 
   assert(db != NULL);
   assert(filename != NULL);
   assert(s != NULL);
+
+  // pre-processor parsing should only be invoked if we saw a directive
+  if (lang == CPP)
+    assert(at(*s, "#"));
 
   // state capturing function definition we may be within
   parent_t parent = {0};
@@ -256,7 +335,20 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
   unsigned long pending_lineno;
   unsigned long pending_colno;
 
+  // have we seen a pre-processor directive yet? (only relevant for CPP)
+  bool seen_directive = false;
+
   while (s->offset < s->size) {
+
+    // if we are at the beginning of a line and see a pre-processor directive,
+    // invoke the pre-processor parser
+    if (lang != CPP && s->colno == 1 && at(*s, "#")) {
+      int rc = parse(CPP, db, filename, s);
+      if (rc != 0)
+        return rc;
+      continue;
+    }
+
     char c = s->base[s->offset];
 
     // is this the start of a new identifier?
@@ -278,7 +370,7 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
         (s->offset + 1 == s->size || !isid(s->base[s->offset + 1]))) {
 
       // if this is a qualifier, ignore it, including leaving `last` intact
-      if (is_qualifier(pending)) {
+      if (is_qualifier(lang, pending)) {
         pending = (span_t){0};
         eat_one(s);
         continue;
@@ -298,7 +390,7 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
         }
 
         // is this an enum/struct/union definition?
-        if (is_leader(last) && peek(*s, "{")) {
+        if (is_leader(lang, last) && peek(*s, "{")) {
           category = CLINK_DEFINITION;
 
           // is this some other kind of definition?
@@ -307,35 +399,54 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
 
           // if this is a function definition, consider this our parent for any
           // upcoming symbols
-          if (parent.bracing == 0 && peek(*s, "(")) {
+          if (lang == C23 && parent.bracing == 0 && peek(*s, "(")) {
             DEBUG("entering parent \"%.*s\"", (int)pending.size, pending.base);
             parent.brace_parent = parent.paren_parent = pending;
+          }
+
+          // for the pre-processor, the first token we see after #define is the
+          // parent
+          if (lang == CPP && parent.brace_parent.base == NULL &&
+              span_eq(last, "define")) {
+            DEBUG("entering parent \"%.*s\"", (int)pending.size, pending.base);
+            parent.brace_parent = parent.paren_parent = pending;
+            // pretend we are already in a braced scope to activate this parent
+            assert(parent.bracing == 0);
+            ++parent.bracing;
           }
 
           // is this a function call?
         } else if (get_active_parent(&parent) != NULL && peek(*s, "(")) {
           category = CLINK_FUNCTION_CALL;
-
         }
 
-        DEBUG(
-            "recognised %s:%lu:%lu: %s with name \"%.*s\" and parent \"%.*s\"",
-            filename, pending_lineno, pending_colno,
-            category == CLINK_DEFINITION      ? "definition"
-            : category == CLINK_FUNCTION_CALL ? "function call"
-                                              : "reference",
-            (int)pending.size, pending.base,
-            (int)(symbol_parent.base == NULL ? strlen("<none>")
-                                             : symbol_parent.size),
-            symbol_parent.base == NULL ? "<none>" : symbol_parent.base);
+        if (seen_directive || !is_directive(lang, pending)) {
+          DEBUG("%s parser recognised %s:%lu:%lu: %s with name \"%.*s\" and "
+                "parent \"%.*s\"",
+                lang == CPP ? "CPP" : "C23", filename, pending_lineno,
+                pending_colno,
+                category == CLINK_DEFINITION      ? "definition"
+                : category == CLINK_FUNCTION_CALL ? "function call"
+                                                  : "reference",
+                (int)pending.size, pending.base,
+                (int)(symbol_parent.base == NULL ? strlen("<none>")
+                                                 : symbol_parent.size),
+                symbol_parent.base == NULL ? "<none>" : symbol_parent.base);
 
-        int rc = add_symbol(db, category, pending, filename, pending_lineno,
-                            pending_colno, symbol_parent);
-        if (rc != 0)
-          return rc;
+          int rc = add_symbol(db, category, pending, filename, pending_lineno,
+                              pending_colno, symbol_parent);
+          if (rc != 0)
+            return rc;
+        }
       }
 
-      last = pending;
+      if (lang == CPP && seen_directive) {
+        last = (span_t){0};
+      } else {
+        last = pending;
+        seen_directive = true;
+      }
+
       pending = (span_t){0};
 
       eat_one(s);
@@ -348,6 +459,11 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
       for (bool seen_newline = false; s->offset < s->size && !seen_newline;) {
         seen_newline = s->base[s->offset] == '\n' || s->base[s->offset] == '\r';
         eat_one(s);
+      }
+      if (lang == CPP) {
+        DEBUG("leaving CPP parser following // comment on line %zu",
+              s->lineno - 1);
+        return 0;
       }
       continue;
     }
@@ -364,7 +480,7 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
     // if this is inter-symbol punctuation, treat it as separating any modifier
     // from what it could potentially apply to, with an exception for '*' to
     // account for pointers
-    if (pending.base == NULL && !isspace(c) && c != '*')
+    if (pending.base == NULL && !isspace(c) && (lang != C23 || c != '*'))
       last = (span_t){0};
 
     // if this is a character literal, drain it
@@ -395,30 +511,40 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
       continue;
     }
 
-    // are we entering a function (overly broad match, but OK)?
-    if (c == '{')
-      ++parent.bracing;
+    if (lang != CPP) {
+      // are we entering a function (overly broad match, but OK)?
+      if (c == '{')
+        ++parent.bracing;
 
-    // are we leaving a function?
-    if (c == '}' && parent.bracing > 0) {
-      --parent.bracing;
-      if (parent.bracing == 0) {
-        if (parent.brace_parent.base != NULL)
-          DEBUG("leaving parent \"%.*s\"", (int)parent.brace_parent.size,
-                parent.brace_parent.base);
-        parent.brace_parent = (span_t){0};
+      // are we leaving a function?
+      if (c == '}' && parent.bracing > 0) {
+        --parent.bracing;
+        if (parent.bracing == 0) {
+          if (parent.brace_parent.base != NULL)
+            DEBUG("leaving parent \"%.*s\"", (int)parent.brace_parent.size,
+                  parent.brace_parent.base);
+          parent.brace_parent = (span_t){0};
+        }
+      }
+
+      // are we entering a function’s argument list (overly broad match, but
+      // OK)?
+      if (c == '(')
+        ++parent.parens;
+
+      // are we leaving a function’s argument list?
+      if (c == ')' && parent.parens > 0) {
+        --parent.parens;
+        if (parent.parens == 0)
+          parent.paren_parent = (span_t){0};
       }
     }
 
-    // are we entering a function’s argument list (overly broad match, but OK)?
-    if (c == '(')
-      ++parent.parens;
-
-    // are we leaving a function’s argument list?
-    if (c == ')' && parent.parens > 0) {
-      --parent.parens;
-      if (parent.parens == 0)
-        parent.paren_parent = (span_t){0};
+    // does this end the current C pre-processor line?
+    if (lang == CPP && (eat_if(s, "\r\n") || eat_if(s, "\n"))) {
+      DEBUG("leaving CPP parser following newline ending line %zu\n",
+            s->lineno - 1);
+      return 0;
     }
 
     eat_one(s);
@@ -458,7 +584,7 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
     goto done;
   }
 
-  rc = parse(db, filename, &s);
+  rc = parse(C23, db, filename, &s);
   if (rc != 0)
     goto done;
 
