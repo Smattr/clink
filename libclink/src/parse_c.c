@@ -290,6 +290,13 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
         // identify what type of symbol this is
         clink_category_t category = CLINK_REFERENCE;
 
+        span_t symbol_parent = {0};
+        {
+          const span_t *p = get_active_parent(&parent);
+          if (p != NULL)
+            symbol_parent = *p;
+        }
+
         // is this an enum/struct/union definition?
         if (is_leader(last) && peek(*s, "{")) {
           category = CLINK_DEFINITION;
@@ -309,13 +316,6 @@ static int parse(clink_db_t *db, const char *filename, scanner_t *s) {
         } else if (get_active_parent(&parent) != NULL && peek(*s, "(")) {
           category = CLINK_FUNCTION_CALL;
 
-        }
-
-        span_t symbol_parent = {0};
-        {
-          const span_t *p = get_active_parent(&parent);
-          if (p != NULL)
-            symbol_parent = *p;
         }
 
         DEBUG(
