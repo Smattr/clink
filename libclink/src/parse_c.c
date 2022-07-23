@@ -163,8 +163,6 @@ static bool eat_if(scanner_t *s, const char *expected) {
   assert(s->offset <= s->size && "corrupted scanner state");
   assert(expected != NULL);
   assert(strlen(expected) > 0);
-  assert(strchr(expected, '\n') == NULL && "line adjustment not supported");
-  assert(strchr(expected, '\r') == NULL && "line adjustment not supported");
 
   if (s->size - s->offset < strlen(expected))
     return false;
@@ -173,7 +171,20 @@ static bool eat_if(scanner_t *s, const char *expected) {
     return false;
 
   s->offset += strlen(expected);
-  s->colno += strlen(expected);
+
+  for (size_t i = 0; i < strlen(expected); ++i) {
+    if (strncmp(&expected[i], "\r\n", strlen("\r\n")) == 0) {
+      ++i;
+      ++s->lineno;
+      s->colno = 1;
+    } else if (expected[i] == '\n') {
+      ++s->lineno;
+      s->colno = 1;
+    } else {
+      ++s->colno;
+    }
+  }
+
   return true;
 }
 
