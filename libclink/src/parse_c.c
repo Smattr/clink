@@ -196,8 +196,6 @@ static bool peek(scanner_t s, const char *expected) {
   assert(s.offset < s.size && "peeking an exhausted scanner");
   assert(expected != NULL);
   assert(strlen(expected) > 0);
-  assert(strchr(expected, '\n') == NULL && "line adjustment not supported");
-  assert(strchr(expected, '\r') == NULL && "line adjustment not supported");
 
   eat_one(&s);
   eat_ws(&s);
