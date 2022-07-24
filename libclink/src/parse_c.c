@@ -352,6 +352,9 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
   // have we seen a pre-processor directive yet? (only relevant for CPP)
   bool seen_directive = false;
 
+  // do we think we are on the LHS of an expression?
+  bool is_lhs = true;
+
   while (s->offset < s->size) {
 
     // if we are at the beginning of a line and see a pre-processor directive,
@@ -408,7 +411,7 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
           category = CLINK_DEFINITION;
 
           // is this some other kind of definition?
-        } else if (last.base != NULL) {
+        } else if (last.base != NULL && is_lhs) {
           category = CLINK_DEFINITION;
 
           // if this is a function definition, consider this our parent for any
@@ -551,6 +554,13 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
         if (parent.parens == 0)
           parent.paren_parent = (span_t){0};
       }
+    }
+
+    // update our guess of which side of the containing expression we are on
+    if (c == '=') {
+      is_lhs = false;
+    } else if (c == ';') {
+      is_lhs = true;
     }
 
     // does this end the current C pre-processor line?
