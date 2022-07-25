@@ -629,7 +629,7 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
     }
 
     // does this end the current C pre-processor line?
-    if (lang == CPP && (eat_if(s, "\r\n") || eat_if(s, "\n"))) {
+    if (lang == CPP && eat_eol(s)) {
       DEBUG("leaving CPP parser following newline ending line %zu\n",
             s->lineno - 1);
       return 0;

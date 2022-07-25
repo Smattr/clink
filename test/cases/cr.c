@@ -4,8 +4,6 @@
 
 #define baz quxint quz;
 
-// XFAIL: True
-
 // RUN: clink --build-only --database={tmp} --debug {__file__} >/dev/null
 
 // RUN: echo 'select * from symbols where name = "FOO";' | sqlite3 {tmp}
