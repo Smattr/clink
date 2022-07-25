@@ -41,7 +41,7 @@
 /// language being processed
 typedef enum {
   CPP, // C pre-processor
-  C23, // GNU C23C
+  C23, // GNU C23
 } lang_t;
 
 /// is this a character that prevents the prior symbol applying (e.g. as a
