@@ -494,6 +494,35 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
       continue;
     }
 
+    // is this the argument to a pre-processor #include?
+    if (lang == CPP && pending.base == NULL && last.base != NULL &&
+        span_eq(last, "include")) {
+      if (eat_if(s, "\"") || eat_if(s, "<")) {
+        unsigned long line = s->lineno;
+        unsigned long col = s->colno;
+        assert(s->offset > 0);
+        const char *ender = s->base[s->offset - 1] == '"' ? "\"" : ">";
+        span_t path = {.base = &s->base[s->offset]};
+        while (!eat_if(s, ender)) {
+          if (s->offset == s->size)
+            break;
+          if (s->base[s->offset] == '\n' || s->base[s->offset] == '\r')
+            break;
+          eat_one(s);
+          ++path.size;
+        }
+        const span_t no_parent = {0};
+        DEBUG("CPP parser recognised %s:%lu:%lu: include with name \"%.*s\"",
+              filename, line, col, (int)path.size, path.base);
+        int rc =
+            add_symbol(db, CLINK_INCLUDE, path, filename, line, col, no_parent);
+        if (rc != 0)
+          return rc;
+        last = (span_t){0};
+        continue;
+      }
+    }
+
     // if this is inter-symbol punctuation, treat it as separating any modifier
     // from what it could potentially apply to
     if (pending.base == NULL && is_blocker(lang, c))
