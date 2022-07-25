@@ -41,7 +41,7 @@
 /// language being processed
 typedef enum {
   CPP, // C pre-processor
-  C23, // GNU C23C
+  C23, // GNU C23
 } lang_t;
 
 /// is this a character that prevents the prior symbol applying (e.g. as a
@@ -184,12 +184,14 @@ static bool is_keyword(span_t token) {
   return false;
 }
 
-/// advance one character
-static void eat_one(scanner_t *s) {
+/// advance and return true if the next character(s) are an end of line
+static bool eat_eol(scanner_t *s) {
 
   assert(s->base != NULL && "corrupted scanner state");
   assert(s->offset <= s->size && "corrupted scanner state");
-  assert(s->offset < s->size && "advancing an exhausted scanner");
+
+  if (s->offset == s->size)
+    return false;
 
   if (s->base[s->offset] == '\r') {
     if (s->offset + 1 < s->size && s->base[s->offset + 1] == '\n') {
@@ -198,12 +200,31 @@ static void eat_one(scanner_t *s) {
     }
     ++s->lineno;
     s->colno = 1;
-  } else if (s->base[s->offset] == '\n') {
+    ++s->offset;
+    return true;
+  }
+
+  if (s->base[s->offset] == '\n') {
     ++s->lineno;
     s->colno = 1;
-  } else {
-    ++s->colno;
+    ++s->offset;
+    return true;
   }
+
+  return false;
+}
+
+/// advance one character
+static void eat_one(scanner_t *s) {
+
+  assert(s->base != NULL && "corrupted scanner state");
+  assert(s->offset <= s->size && "corrupted scanner state");
+  assert(s->offset < s->size && "advancing an exhausted scanner");
+
+  if (eat_eol(s))
+    return;
+
+  ++s->colno;
   ++s->offset;
 }
 
@@ -238,6 +259,14 @@ static bool eat_if(scanner_t *s, const char *expected) {
   assert(s->offset <= s->size && "corrupted scanner state");
   assert(expected != NULL);
   assert(strlen(expected) > 0);
+
+#ifndef NDEBUG
+  for (size_t i = 0; i < strlen(expected); ++i) {
+    if (expected[i] == '\r')
+      assert(i + 1 != strlen(expected) && expected[i + 1] == '\n' &&
+             "orphaned CR in expected text");
+  }
+#endif
 
   if (s->size - s->offset < strlen(expected))
     return false;
@@ -372,7 +401,6 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
     if (pending.base == NULL && isid0(c)) {
 
       // note its position
-      assert(pending.base == NULL);
       pending_lineno = s->lineno;
       pending_colno = s->colno;
       pending = (span_t){.base = &s->base[s->offset]};
@@ -600,7 +628,7 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
     }
 
     // does this end the current C pre-processor line?
-    if (lang == CPP && (eat_if(s, "\r\n") || eat_if(s, "\n"))) {
+    if (lang == CPP && eat_eol(s)) {
       DEBUG("leaving CPP parser following newline ending line %zu\n",
             s->lineno - 1);
       return 0;
