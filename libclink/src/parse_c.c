@@ -457,11 +457,18 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
         }
       }
 
-      if (lang == CPP && seen_directive) {
-        last = (span_t){0};
+      if (lang == CPP) {
+        // only allow application of the first directive we see, and only the
+        // directives we interpret semantically
+        bool known = span_eq(pending, "define") || span_eq(pending, "include");
+        if (!seen_directive && known) {
+          last = pending;
+        } else {
+          last = (span_t){0};
+        }
+        seen_directive = true;
       } else {
         last = pending;
-        seen_directive = true;
       }
 
       pending = (span_t){0};
