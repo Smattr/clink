@@ -401,7 +401,6 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
     if (pending.base == NULL && isid0(c)) {
 
       // note its position
-      assert(pending.base == NULL);
       pending_lineno = s->lineno;
       pending_colno = s->colno;
       pending = (span_t){.base = &s->base[s->offset]};
