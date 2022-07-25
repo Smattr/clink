@@ -124,9 +124,15 @@ static void parse_args(int argc, char **argv) {
       clink_debug_on();
       break;
 
-    case 'V': // --version
-      fprintf(stderr, "clink version %s\n", clink_version());
+    case 'V': { // --version
+      clink_version_info_t version = clink_version_info();
+      fprintf(stderr, "clink version %s\n", version.version);
+      fprintf(stderr, " assertions: %s\n",
+              version.with_assertions ? "enabled" : "disabled");
+      fprintf(stderr, " optimisations: %s\n",
+              version.with_optimisations ? "enabled" : "disabled");
       exit(EXIT_SUCCESS);
+    }
 
     default:
       exit(EXIT_FAILURE);
