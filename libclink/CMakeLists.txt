@@ -28,6 +28,7 @@ add_library(libclink
   src/run.c
   src/sql.c
   src/symbol.c
+  src/version_info.c
   src/vim_open.c
   src/vim_read.c
   src/vim_read_into.c
