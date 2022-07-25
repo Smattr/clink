@@ -184,12 +184,14 @@ static bool is_keyword(span_t token) {
   return false;
 }
 
-/// advance one character
-static void eat_one(scanner_t *s) {
+/// advance and return true if the next character(s) are an end of line
+static bool eat_eol(scanner_t *s) {
 
   assert(s->base != NULL && "corrupted scanner state");
   assert(s->offset <= s->size && "corrupted scanner state");
-  assert(s->offset < s->size && "advancing an exhausted scanner");
+
+  if (s->offset == s->size)
+    return false;
 
   if (s->base[s->offset] == '\r') {
     if (s->offset + 1 < s->size && s->base[s->offset + 1] == '\n') {
@@ -198,12 +200,31 @@ static void eat_one(scanner_t *s) {
     }
     ++s->lineno;
     s->colno = 1;
-  } else if (s->base[s->offset] == '\n') {
+    ++s->offset;
+    return true;
+  }
+
+  if (s->base[s->offset] == '\n') {
     ++s->lineno;
     s->colno = 1;
-  } else {
-    ++s->colno;
+    ++s->offset;
+    return true;
   }
+
+  return false;
+}
+
+/// advance one character
+static void eat_one(scanner_t *s) {
+
+  assert(s->base != NULL && "corrupted scanner state");
+  assert(s->offset <= s->size && "corrupted scanner state");
+  assert(s->offset < s->size && "advancing an exhausted scanner");
+
+  if (eat_eol(s))
+    return;
+
+  ++s->colno;
   ++s->offset;
 }
 
