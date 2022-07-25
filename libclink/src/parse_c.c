@@ -260,6 +260,14 @@ static bool eat_if(scanner_t *s, const char *expected) {
   assert(expected != NULL);
   assert(strlen(expected) > 0);
 
+#ifndef NDEBUG
+  for (size_t i = 0; i < strlen(expected); ++i) {
+    if (expected[i] == '\r')
+      assert(i + 1 != strlen(expected) && expected[i + 1] == '\n' &&
+             "orphaned CR in expected text");
+  }
+#endif
+
   if (s->size - s->offset < strlen(expected))
     return false;
 
