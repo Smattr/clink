@@ -163,6 +163,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         if (hash == (uint64_t)st.st_size) {
           if (timestamp == (uint64_t)st.st_mtime) {
             DEBUG("skipping unmodified file %s", path);
+            increment();
             continue;
           }
         }
