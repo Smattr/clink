@@ -153,10 +153,12 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     // see if we know of this file
     uint64_t hash = 0;
     uint64_t timestamp = 0;
-    if (clink_db_find_record(db, path, &hash, &timestamp) == 0) {
+    {
+      bool has_record = clink_db_find_record(db, path, &hash, &timestamp) == 0;
       // stat the file to see if it has changed
       struct stat st;
-      if (stat(path, &st) == 0) {
+      bool has_file = stat(path, &st) == 0;
+      if (has_record && has_file) {
         // if it has not changed since last update, skip it
         if (hash == (uint64_t)st.st_size) {
           if (timestamp == (uint64_t)st.st_mtime) {
@@ -164,6 +166,10 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
             continue;
           }
         }
+      }
+      if (has_file) {
+        hash = (uint64_t)st.st_size;
+        timestamp = (uint64_t)st.st_mtime;
       }
     }
 
