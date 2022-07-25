@@ -33,6 +33,16 @@ if(HAS_WARNING_POINTER_ARITH)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wpointer-arith")
 endif()
 
+# enable LTO in release builds
+include(CheckIPOSupported)
+check_ipo_supported(RESULT HAVE_IPO)
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR
+   CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+  if(HAVE_IPO)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+  endif()
+endif()
+
 add_subdirectory(clink)
 add_subdirectory(libclink)
 add_subdirectory(test)
