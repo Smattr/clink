@@ -58,7 +58,7 @@ find_program(GIT git)
 find_program(XARGS xargs)
 if(CLANG_FORMAT AND GIT AND XARGS)
   add_custom_target(format
-    COMMAND ${GIT} ls-files -z '**/*.c' '**/*.h' |
+    COMMAND ${GIT} ls-files -z -- ':!:test/cases' '**/*.c' '**/*.h' |
       ${XARGS} -0 -- ${CLANG_FORMAT} -i --style=file
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "clang-formatting sources")
