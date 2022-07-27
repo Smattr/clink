@@ -4,8 +4,8 @@
 #define BAR something
 #define BAZ(x) something_else(x)
 
-// RUN: clink --build-only --database {tmp} {__file__} >/dev/null
-// RUN: echo 'select * from symbols where category = 0 order by name;' | sqlite3 {tmp}
-// CHECK: BAR|{__file__}|0|4|9|
-// CHECK: BAZ|{__file__}|0|5|9|
-// CHECK: FOO|{__file__}|0|3|9|
+// RUN: clink --build-only --database {%t} {%s} >/dev/null
+// RUN: echo 'select * from symbols where category = 0 order by name;' | sqlite3 {%t}
+// CHECK: BAR|{%s}|0|4|9|
+// CHECK: BAZ|{%s}|0|5|9|
+// CHECK: FOO|{%s}|0|3|9|

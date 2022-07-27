@@ -2,6 +2,6 @@
 
 #undef FOO
 
-// RUN: clink --build-only --database {tmp} --debug {__file__} >/dev/null
-// RUN: echo 'select * from symbols;' | sqlite3 {tmp}
-// CHECK: FOO|{__file__}|2|3|8|
+// RUN: clink --build-only --database {%t} --debug {%s} >/dev/null
+// RUN: echo 'select * from symbols;' | sqlite3 {%t}
+// CHECK: FOO|{%s}|2|3|8|

@@ -1,4 +1,4 @@
-#include "../../common/compiler.h"
+#include "debug.h"
 #include <clink/c.h>
 #include <clink/generic.h>
 #include <errno.h>
@@ -6,14 +6,14 @@
 
 int clink_parse_cxx(clink_db_t *db, const char *filename) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(filename == NULL))
+  if (ERROR(filename == NULL))
     return EINVAL;
 
   // check the file is readable
-  if (access(filename, R_OK) < 0)
+  if (ERROR(access(filename, R_OK) < 0))
     return errno;
 
   static const char *KEYWORDS[] = {

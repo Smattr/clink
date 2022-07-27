@@ -15,8 +15,9 @@ def lit(tmp: Path, source: Path):
   output = ""
 
   context = {
-    "__file__":str(source),
-    "tmp":str(tmp / "tempfile"),
+    "%s":str(source),
+    "%S":str(source.parent),
+    "%t":str(tmp / "tempfile"),
   }
 
   xfail = None
@@ -75,7 +76,7 @@ def lit(tmp: Path, source: Path):
 
 # find our associated test cases
 root = Path(__file__).parent / "cases"
-cases = sorted(x.name for x in root.iterdir() if x.suffix in ".c")
+cases = sorted(x.name for x in root.iterdir() if x.suffix == ".c")
 
 @pytest.mark.parametrize("case", cases)
 def test_case(tmp_path: Path, case: str):

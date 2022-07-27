@@ -1,5 +1,5 @@
-#include "../../common/compiler.h"
 #include "db.h"
+#include "debug.h"
 #include "iter.h"
 #include "sql.h"
 #include <clink/db.h>
@@ -46,10 +46,10 @@ static void state_free(state_t **ss) {
 
 static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
 
-  if (UNLIKELY(it == NULL))
+  if (ERROR(it == NULL))
     return EINVAL;
 
-  if (UNLIKELY(yielded == NULL))
+  if (ERROR(yielded == NULL))
     return EINVAL;
 
   state_t *s = it->state;
@@ -63,7 +63,7 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
 
   // extract the next result
   int rc = sqlite3_step(s->stmt);
-  if (UNLIKELY(rc != SQLITE_ROW && rc != SQLITE_DONE))
+  if (ERROR(rc != SQLITE_ROW && rc != SQLITE_DONE))
     return sql_err_to_errno(rc);
 
   // did we just exhaust this iterator?
@@ -97,16 +97,16 @@ static void my_free(clink_iter_t *it) {
 
 int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(name == NULL))
+  if (ERROR(name == NULL))
     return EINVAL;
 
-  if (UNLIKELY(strcmp(name, "") == 0))
+  if (ERROR(strcmp(name, "") == 0))
     return EINVAL;
 
-  if (UNLIKELY(it == NULL))
+  if (ERROR(it == NULL))
     return EINVAL;
 
   static const char QUERY[] =
@@ -121,31 +121,31 @@ int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
 
   // allocate state for our iterator
   state_t *s = calloc(1, sizeof(*s));
-  if (UNLIKELY(s == NULL)) {
+  if (ERROR(s == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   // save the name of the called function for later symbol construction
   s->name = strdup(name);
-  if (UNLIKELY(s->name == NULL)) {
+  if (ERROR(s->name == NULL)) {
     rc = ENOMEM;
     goto done;
   }
 
   // create a query to lookup calls in the database
-  if (UNLIKELY((rc = sql_prepare(db->db, QUERY, &s->stmt))))
+  if (ERROR((rc = sql_prepare(db->db, QUERY, &s->stmt))))
     goto done;
 
   // bind the where clause to our given call
-  if (UNLIKELY((rc = sql_bind_text(s->stmt, 1, s->name))))
+  if (ERROR((rc = sql_bind_text(s->stmt, 1, s->name))))
     goto done;
-  if (UNLIKELY((rc = sql_bind_int(s->stmt, 2, CLINK_FUNCTION_CALL))))
+  if (ERROR((rc = sql_bind_int(s->stmt, 2, CLINK_FUNCTION_CALL))))
     goto done;
 
   // create an iterator for stepping through our query
   i = calloc(1, sizeof(*i));
-  if (UNLIKELY(i == NULL)) {
+  if (ERROR(i == NULL)) {
     rc = ENOMEM;
     goto done;
   }

@@ -1,5 +1,5 @@
 #include "iter.h"
-#include "../../common/compiler.h"
+#include "debug.h"
 #include <clink/iter.h>
 #include <clink/symbol.h>
 #include <errno.h>
@@ -7,13 +7,13 @@
 
 int clink_iter_next_str(clink_iter_t *it, const char **yielded) {
 
-  if (UNLIKELY(it == NULL))
+  if (ERROR(it == NULL))
     return EINVAL;
 
-  if (UNLIKELY(yielded == NULL))
+  if (ERROR(yielded == NULL))
     return EINVAL;
 
-  if (UNLIKELY(it->next_str == NULL))
+  if (ERROR(it->next_str == NULL))
     return EINVAL;
 
   return it->next_str(it, yielded);
@@ -21,13 +21,13 @@ int clink_iter_next_str(clink_iter_t *it, const char **yielded) {
 
 int clink_iter_next_symbol(clink_iter_t *it, const clink_symbol_t **yielded) {
 
-  if (UNLIKELY(it == NULL))
+  if (ERROR(it == NULL))
     return EINVAL;
 
-  if (UNLIKELY(yielded == NULL))
+  if (ERROR(yielded == NULL))
     return EINVAL;
 
-  if (UNLIKELY(it->next_symbol == NULL))
+  if (ERROR(it->next_symbol == NULL))
     return EINVAL;
 
   return it->next_symbol(it, yielded);
