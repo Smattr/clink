@@ -31,7 +31,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
   int rc = 0;
   int f = -1;
-  struct stat st;
+  size_t size = 0;
   uint8_t *base = MAP_FAILED;
   char *pending = NULL;
   size_t pending_length = 0;
@@ -43,16 +43,18 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
     goto done;
   }
 
+  struct stat st;
   if (ERROR(fstat(f, &st) < 0)) {
     rc = errno;
     goto done;
   }
+  size = (size_t)st.st_size;
 
   // if this is a zero-sized file, nothing to be done
   if (st.st_size == 0)
     goto done;
 
-  base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, f, 0);
+  base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, f, 0);
   if (ERROR(base == MAP_FAILED)) {
     rc = errno;
     goto done;
@@ -83,7 +85,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
   for (size_t j = 0;; ++j) {
 
-    int c = j < (size_t)st.st_size ? base[j] : EOF;
+    int c = j < size ? base[j] : EOF;
 
     // is this character eligible to be part of a symbol?
     if (isalpha(c) || c == '_' || (has_pending && isdigit(c))) {
@@ -178,7 +180,7 @@ done:
     (void)fclose(buffer);
   free(pending);
   if (base != MAP_FAILED)
-    (void)munmap(base, st.st_size);
+    (void)munmap(base, size);
   if (f >= 0)
     (void)close(f);
 
