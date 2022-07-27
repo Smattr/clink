@@ -15,8 +15,8 @@ def lit(tmp: Path, source: Path):
   output = ""
 
   context = {
-    "__file__":str(source),
-    "tmp":str(tmp / "tempfile"),
+    "%s":str(source),
+    "%t":str(tmp / "tempfile"),
   }
 
   xfail = None

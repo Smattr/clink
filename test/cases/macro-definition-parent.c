@@ -8,13 +8,13 @@
 #define BAZ /* a comment
                some more lines */ our_ref
 
-// RUN: clink --build-only --database {tmp} {__file__} >/dev/null
+// RUN: clink --build-only --database {%t} {%s} >/dev/null
 
-// RUN: echo 'select * from symbols where name = "ref";' | sqlite3 {tmp}
-// CHECK: ref|{__file__}|2|4|13|FOO
+// RUN: echo 'select * from symbols where name = "ref";' | sqlite3 {%t}
+// CHECK: ref|{%s}|2|4|13|FOO
 
-// RUN: echo 'select * from symbols where name = "a_call";' | sqlite3 {tmp}
-// CHECK: a_call|{__file__}|1|6|13|BAR
+// RUN: echo 'select * from symbols where name = "a_call";' | sqlite3 {%t}
+// CHECK: a_call|{%s}|1|6|13|BAR
 
-// RUN: echo 'select * from symbols where name = "our_ref";' | sqlite3 {tmp}
-// CHECK: our_ref|{__file__}|2|9|35|BAZ
+// RUN: echo 'select * from symbols where name = "our_ref";' | sqlite3 {%t}
+// CHECK: our_ref|{%s}|2|9|35|BAZ

@@ -8,6 +8,6 @@ void foo(void) {
 
 // XFAIL: True
 
-// RUN: clink --build-only --database {tmp} --debug {__file__} >/dev/null
-// RUN: echo 'select * from symbols where name = "y";' | sqlite3 {tmp}
-// CHECK: y|{__file__}|2|6|9|foo
+// RUN: clink --build-only --database {%t} --debug {%s} >/dev/null
+// RUN: echo 'select * from symbols where name = "y";' | sqlite3 {%t}
+// CHECK: y|{%s}|2|6|9|foo

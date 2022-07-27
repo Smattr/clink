@@ -4,10 +4,10 @@ void foo(void) {
   int x = 42;
 }
 
-// RUN: clink --build-only --database={tmp} --debug {__file__} >/dev/null
-// RUN: clink --build-only --colour=never --database={tmp} --debug --jobs=1 {__file__} 2>&1 | grep --colour=never "skipping unmodified file {__file__}"
-// CHECK: 0: skipping unmodified file {__file__}
+// RUN: clink --build-only --database={%t} --debug {%s} >/dev/null
+// RUN: clink --build-only --colour=never --database={%t} --debug --jobs=1 {%s} 2>&1 | grep --colour=never "skipping unmodified file {%s}"
+// CHECK: 0: skipping unmodified file {%s}
 
 // doing this a third time should also hit the cache
-// RUN: clink --build-only --colour=never --database={tmp} --debug --jobs=1 {__file__} 2>&1 | grep --colour=never "skipping unmodified file {__file__}"
-// CHECK: 0: skipping unmodified file {__file__}
+// RUN: clink --build-only --colour=never --database={%t} --debug --jobs=1 {%s} 2>&1 | grep --colour=never "skipping unmodified file {%s}"
+// CHECK: 0: skipping unmodified file {%s}
