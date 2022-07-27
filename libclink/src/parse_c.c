@@ -22,6 +22,7 @@
 
 #include "add_symbol.h"
 #include "debug.h"
+#include "isid.h"
 #include "scanner.h"
 #include "span.h"
 #include <assert.h>
@@ -348,12 +349,6 @@ static const span_t *get_active_parent(const parent_t *parents) {
 
   return NULL;
 }
-
-/// is this an identifier starter?
-static bool isid0(int c) { return isalpha(c) || c == '_'; }
-
-/// is this an identifier continuer?
-static bool isid(int c) { return isid0(c) || isdigit(c); }
 
 static int parse(lang_t lang, clink_db_t *db, const char *filename,
                  scanner_t *s) {
