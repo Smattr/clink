@@ -16,6 +16,7 @@ def lit(tmp: Path, source: Path):
 
   context = {
     "%s":str(source),
+    "%S":str(source.parent),
     "%t":str(tmp / "tempfile"),
   }
 
