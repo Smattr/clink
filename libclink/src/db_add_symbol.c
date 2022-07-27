@@ -1,6 +1,6 @@
-#include "../../common/compiler.h"
 #include "add_symbol.h"
 #include "db.h"
+#include "debug.h"
 #include "span.h"
 #include "sql.h"
 #include <assert.h>
@@ -25,36 +25,36 @@ int add_symbol(clink_db_t *db, clink_category_t category, span_t name,
   int rc = 0;
 
   sqlite3_stmt *s = NULL;
-  if (UNLIKELY((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
+  if (ERROR((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
     goto done;
 
   assert(name.base != NULL);
-  if (UNLIKELY((rc = sql_bind_span(s, 1, name))))
+  if (ERROR((rc = sql_bind_span(s, 1, name))))
     goto done;
 
   assert(path != NULL);
-  if (UNLIKELY((rc = sql_bind_text(s, 2, path))))
+  if (ERROR((rc = sql_bind_text(s, 2, path))))
     goto done;
 
-  if (UNLIKELY((rc = sql_bind_int(s, 3, category))))
+  if (ERROR((rc = sql_bind_int(s, 3, category))))
     goto done;
 
-  if (UNLIKELY((rc = sql_bind_int(s, 4, lineno))))
+  if (ERROR((rc = sql_bind_int(s, 4, lineno))))
     goto done;
 
-  if (UNLIKELY((rc = sql_bind_int(s, 5, colno))))
+  if (ERROR((rc = sql_bind_int(s, 5, colno))))
     goto done;
 
   {
     if (parent.base == NULL)
       parent = (span_t){.base = "", .size = 0};
-    if (UNLIKELY((rc = sql_bind_span(s, 6, parent))))
+    if (ERROR((rc = sql_bind_span(s, 6, parent))))
       goto done;
   }
 
   {
     int r = sqlite3_step(s);
-    if (UNLIKELY(r != SQLITE_DONE)) {
+    if (ERROR(r != SQLITE_DONE)) {
       rc = sql_err_to_errno(r);
       goto done;
     }
@@ -69,13 +69,13 @@ done:
 
 int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(db->db == NULL))
+  if (ERROR(db->db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(symbol == NULL))
+  if (ERROR(symbol == NULL))
     return EINVAL;
 
   span_t name = {.base = symbol->name};

@@ -1,4 +1,5 @@
 #include "../../common/compiler.h"
+#include "debug.h"
 #include <clink/generic.h>
 #include <ctype.h>
 #include <errno.h>
@@ -16,16 +17,16 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
                         const char **keywords, size_t keywords_length,
                         const char **defn_leaders, size_t defn_leaders_length) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(filename == NULL))
+  if (ERROR(filename == NULL))
     return EINVAL;
 
-  if (UNLIKELY(keywords == NULL && keywords_length > 0))
+  if (ERROR(keywords == NULL && keywords_length > 0))
     return EINVAL;
 
-  if (UNLIKELY(defn_leaders == NULL && defn_leaders_length > 0))
+  if (ERROR(defn_leaders == NULL && defn_leaders_length > 0))
     return EINVAL;
 
   int rc = 0;
@@ -37,24 +38,24 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   FILE *buffer = NULL;
 
   f = open(filename, O_RDONLY);
-  if (f < 0) {
+  if (ERROR(f < 0)) {
     rc = errno;
     goto done;
   }
 
-  if (fstat(f, &st) < 0) {
+  if (ERROR(fstat(f, &st) < 0)) {
     rc = errno;
     goto done;
   }
 
   base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, f, 0);
-  if (base == MAP_FAILED) {
+  if (ERROR(base == MAP_FAILED)) {
     rc = errno;
     goto done;
   }
 
   buffer = open_memstream(&pending, &pending_length);
-  if (UNLIKELY(buffer == NULL)) {
+  if (ERROR(buffer == NULL)) {
     rc = errno;
     goto done;
   }
@@ -90,7 +91,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
         has_pending = true;
       }
 
-      if (UNLIKELY(putc(c, buffer) == EOF)) {
+      if (ERROR(putc(c, buffer) == EOF)) {
         rc = ENOMEM;
         goto done;
       }

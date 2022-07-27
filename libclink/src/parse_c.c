@@ -20,7 +20,6 @@
 ///     is no good reason I did not reuse it. I was simply curious how hard it
 ///     would be to write one from scratch.
 
-#include "../../common/compiler.h"
 #include "add_symbol.h"
 #include "debug.h"
 #include "scanner.h"
@@ -642,10 +641,10 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
 
 int clink_parse_c(clink_db_t *db, const char *filename) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(filename == NULL))
+  if (ERROR(filename == NULL))
     return EINVAL;
 
   int rc = 0;
@@ -653,20 +652,20 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
   scanner_t s = {.base = MAP_FAILED, .lineno = 1, .colno = 1};
 
   fd = open(filename, O_RDONLY);
-  if (fd < 0) {
+  if (ERROR(fd < 0)) {
     rc = errno;
     goto done;
   }
 
   struct stat st;
-  if (fstat(fd, &st) < 0) {
+  if (ERROR(fstat(fd, &st) < 0)) {
     rc = errno;
     goto done;
   }
   s.size = (size_t)st.st_size;
 
   s.base = mmap(NULL, s.size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (s.base == MAP_FAILED) {
+  if (ERROR(s.base == MAP_FAILED)) {
     rc = errno;
     goto done;
   }

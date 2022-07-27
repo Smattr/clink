@@ -1,14 +1,14 @@
-#include "../../common/compiler.h"
+#include "debug.h"
 #include <clink/def.h>
 #include <clink/generic.h>
 #include <errno.h>
 
 int clink_parse_def(clink_db_t *db, const char *filename) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(filename == NULL))
+  if (ERROR(filename == NULL))
     return EINVAL;
 
   // The keywords in the Module-Definition language, according to Microsoft.

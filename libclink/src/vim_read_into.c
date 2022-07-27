@@ -1,4 +1,4 @@
-#include "../../common/compiler.h"
+#include "debug.h"
 #include <assert.h>
 #include <clink/db.h>
 #include <clink/vim.h>
@@ -23,10 +23,10 @@ static int insert(void *state, const char *line) {
 
 int clink_vim_read_into(clink_db_t *db, const char *filename) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(filename == NULL))
+  if (ERROR(filename == NULL))
     return EINVAL;
 
   state_t s = {.db = db, .filename = filename};

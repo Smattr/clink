@@ -1,4 +1,4 @@
-#include "../../common/compiler.h"
+#include "debug.h"
 #include "re.h"
 #include <assert.h>
 #include <clink/asm.h>
@@ -108,7 +108,7 @@ static int add_symbol(const state_t *s, clink_category_t cat, const char *line,
                            .parent = (char *)parent};
 
   symbol.name = strndup(line + m->rm_so, m->rm_eo - m->rm_so);
-  if (UNLIKELY(symbol.name == NULL)) {
+  if (ERROR(symbol.name == NULL)) {
     rc = ENOMEM;
     goto done;
   }
@@ -151,7 +151,7 @@ static int parse(state_t *s) {
       int r = regexec(&s->define, line, m_len, m, 0);
       if (r == 0) { // match
         rc = add_symbol(s, CLINK_DEFINITION, line, &m[1], NULL);
-      } else if (r != REG_NOMATCH) { // error
+      } else if (ERROR(r != REG_NOMATCH)) { // error
         rc = re_err_to_errno(r);
       }
       if (rc != 0)
@@ -170,7 +170,7 @@ static int parse(state_t *s) {
         --m[1].rm_eo;
 
         rc = add_symbol(s, CLINK_INCLUDE, line, &m[1], NULL);
-      } else if (r != REG_NOMATCH) { // error
+      } else if (ERROR(r != REG_NOMATCH)) { // error
         rc = re_err_to_errno(r);
       }
       if (rc != 0)
@@ -183,16 +183,16 @@ static int parse(state_t *s) {
       size_t m_len = sizeof(m) / sizeof(m[0]);
       int r = regexec(&s->function, line, m_len, m, 0);
       if (r == 0) { // match
-        if ((rc = add_symbol(s, CLINK_DEFINITION, line, &m[1], NULL)))
+        if (ERROR((rc = add_symbol(s, CLINK_DEFINITION, line, &m[1], NULL))))
           break;
 
         // save the context we  are now assumed to be within
         free(parent);
         parent = strndup(line + m[1].rm_so, m[1].rm_eo - m[1].rm_so);
-        if (parent == NULL)
+        if (ERROR(parent == NULL))
           rc = ENOMEM;
 
-      } else if (r != REG_NOMATCH) { // error
+      } else if (ERROR(r != REG_NOMATCH)) { // error
         rc = re_err_to_errno(r);
       }
       if (rc != 0)
@@ -206,7 +206,7 @@ static int parse(state_t *s) {
       int r = regexec(&s->call, line, m_len, m, 0);
       if (r == 0) { // match
         rc = add_symbol(s, CLINK_FUNCTION_CALL, line, &m[2], parent);
-      } else if (r != REG_NOMATCH) { // error
+      } else if (ERROR(r != REG_NOMATCH)) { // error
         rc = re_err_to_errno(r);
       }
       if (rc != 0)
@@ -245,10 +245,10 @@ static void state_free(state_t *s) {
 
 int clink_parse_asm(clink_db_t *db, const char *filename) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(filename == NULL))
+  if (ERROR(filename == NULL))
     return EINVAL;
 
   int rc = 0;
@@ -262,28 +262,28 @@ int clink_parse_asm(clink_db_t *db, const char *filename) {
   }
 
   // construct regex for recognising a #define
-  if (UNLIKELY((rc = regcomp(&s.define, DEFINE, REG_EXTENDED)))) {
+  if (ERROR((rc = regcomp(&s.define, DEFINE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
   s.define_valid = true;
 
   // construct regex for recognising a #include
-  if (UNLIKELY((rc = regcomp(&s.include, INCLUDE, REG_EXTENDED)))) {
+  if (ERROR((rc = regcomp(&s.include, INCLUDE, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
   s.include_valid = true;
 
   // construct regex for recognising a function definition
-  if (UNLIKELY((rc = regcomp(&s.function, FUNCTION, REG_EXTENDED)))) {
+  if (ERROR((rc = regcomp(&s.function, FUNCTION, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }
   s.function_valid = true;
 
   // construct regex for recognising a branch
-  if (UNLIKELY((rc = regcomp(&s.call, CALL, REG_EXTENDED)))) {
+  if (ERROR((rc = regcomp(&s.call, CALL, REG_EXTENDED)))) {
     rc = re_err_to_errno(rc);
     goto done;
   }

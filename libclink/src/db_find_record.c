@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "db.h"
+#include "debug.h"
 #include "sql.h"
 #include <clink/db.h>
 #include <errno.h>
@@ -10,13 +11,13 @@
 int clink_db_find_record(clink_db_t *db, const char *path, uint64_t *hash,
                          uint64_t *timestamp) {
 
-  if (UNLIKELY(db == NULL))
+  if (ERROR(db == NULL))
     return EINVAL;
 
-  if (UNLIKELY(path == NULL))
+  if (ERROR(path == NULL))
     return EINVAL;
 
-  if (UNLIKELY(strcmp(path, "") == 0))
+  if (ERROR(strcmp(path, "") == 0))
     return EINVAL;
 
   static const char QUERY[] =
@@ -25,10 +26,10 @@ int clink_db_find_record(clink_db_t *db, const char *path, uint64_t *hash,
   int rc = 0;
   sqlite3_stmt *s = NULL;
 
-  if (UNLIKELY((rc = sql_prepare(db->db, QUERY, &s))))
+  if (ERROR((rc = sql_prepare(db->db, QUERY, &s))))
     goto done;
 
-  if (UNLIKELY((rc = sql_bind_text(s, 1, path))))
+  if (ERROR((rc = sql_bind_text(s, 1, path))))
     goto done;
 
   {
