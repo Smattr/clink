@@ -474,8 +474,7 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
                                                  : symbol_parent.size),
                 symbol_parent.base == NULL ? "<none>" : symbol_parent.base);
 
-          int rc = add_symbol(db, category, pending, filename, pending.lineno,
-                              pending.colno, symbol_parent);
+          int rc = add_symbol(db, category, pending, filename, symbol_parent);
           if (rc != 0)
             return rc;
         }
@@ -545,8 +544,7 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
         const span_t no_parent = {0};
         DEBUG("CPP parser recognised %s:%lu:%lu: include with name \"%.*s\"",
               filename, path.lineno, path.colno, (int)path.size, path.base);
-        int rc = add_symbol(db, CLINK_INCLUDE, path, filename, path.lineno,
-                            path.colno, no_parent);
+        int rc = add_symbol(db, CLINK_INCLUDE, path, filename, no_parent);
         if (rc != 0)
           return rc;
         last = (span_t){0};
