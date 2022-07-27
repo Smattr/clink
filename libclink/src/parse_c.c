@@ -664,6 +664,10 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
   }
   s.size = (size_t)st.st_size;
 
+  // if this is a zero-sized file, nothing to be done
+  if (s.size == 0)
+    goto done;
+
   s.base = mmap(NULL, s.size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (ERROR(s.base == MAP_FAILED)) {
     rc = errno;
