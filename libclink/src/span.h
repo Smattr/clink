@@ -7,8 +7,10 @@
 
 /// a non-owning string reference
 typedef struct {
-  const char *base; ///< start of the range
-  size_t size;      ///< number of bytes in the range
+  const char *base;     ///< start of the range
+  size_t size;          ///< number of bytes in the range
+  unsigned long lineno; ///< originating source line number
+  unsigned long colno;  ///< originating source column number
 } span_t;
 
 static inline bool span_eq(span_t a, const char *b) {
