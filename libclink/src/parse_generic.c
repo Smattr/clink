@@ -1,14 +1,13 @@
-#include "../../common/compiler.h"
+#include "add_symbol.h"
 #include "debug.h"
+#include "isid.h"
+#include "span.h"
 #include <clink/generic.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -31,11 +30,8 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
   int rc = 0;
   int f = -1;
-  struct stat st;
-  uint8_t *base = MAP_FAILED;
-  char *pending = NULL;
-  size_t pending_length = 0;
-  FILE *buffer = NULL;
+  size_t size = 0;
+  char *base = MAP_FAILED;
 
   f = open(filename, O_RDONLY);
   if (ERROR(f < 0)) {
@@ -43,71 +39,55 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
     goto done;
   }
 
+  struct stat st;
   if (ERROR(fstat(f, &st) < 0)) {
     rc = errno;
     goto done;
   }
+  size = (size_t)st.st_size;
 
   // if this is a zero-sized file, nothing to be done
   if (st.st_size == 0)
     goto done;
 
-  base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, f, 0);
+  base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, f, 0);
   if (ERROR(base == MAP_FAILED)) {
     rc = errno;
     goto done;
   }
 
-  buffer = open_memstream(&pending, &pending_length);
-  if (ERROR(buffer == NULL)) {
-    rc = errno;
-    goto done;
-  }
-
-  // do we have a non-empty pending symbol in the buffer
-  bool has_pending = false;
+  // a symbol we are accruing
+  span_t pending = {0};
 
   // current line and column position
   unsigned lineno = 1;
   unsigned colno = 1;
 
-  // a symbol we will update and reuse as we parse
-  clink_symbol_t symbol = {
-      .path = (char *)filename, .lineno = lineno, .colno = colno};
-
-  // was the last character we read '\r'?
-  bool last_cr = false;
-
   // was the last token we read a definition leader?
   bool last_defn_leader = false;
 
-  for (size_t j = 0;; ++j) {
+  for (size_t j = 0; j < size;) {
 
-    int c = j < (size_t)st.st_size ? base[j] : EOF;
+    int c = base[j];
 
-    // is this character eligible to be part of a symbol?
-    if (isalpha(c) || c == '_' || (has_pending && isdigit(c))) {
+    // is this the start of a new identifier?
+    if (pending.base == NULL && isid0(c)) {
 
-      // if we are starting a new symbol, note its position
-      if (!has_pending) {
-        symbol.lineno = lineno;
-        symbol.colno = colno;
-        has_pending = true;
-      }
+      // note its position
+      pending = (span_t){.base = &base[j], .lineno = lineno, .colno = colno};
+    }
 
-      if (ERROR(putc(c, buffer) == EOF)) {
-        rc = ENOMEM;
-        goto done;
-      }
+    // is this part of the current identifier?
+    if (pending.base != NULL && isid(c))
+      ++pending.size;
 
-      // otherwise consider it to terminate the current symbol
-    } else if (has_pending) {
-      (void)fflush(buffer);
+    // is this the end of the current identifier?
+    if (pending.base != NULL && (j + 1 == size || !isid(base[j + 1]))) {
 
       // is this one of the restricted keywords?
       bool is_keyword = false;
       for (size_t i = 0; i < keywords_length; ++i) {
-        if (strcmp(pending, keywords[i]) == 0) {
+        if (span_eq(pending, keywords[i])) {
           is_keyword = true;
           break;
         }
@@ -116,7 +96,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
       // is this a definition leader?
       bool is_defn_leader = false;
       for (size_t i = 0; i < defn_leaders_length; ++i) {
-        if (strcmp(pending, defn_leaders[i]) == 0) {
+        if (span_eq(pending, defn_leaders[i])) {
           is_defn_leader = true;
           break;
         }
@@ -124,14 +104,15 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
       // if it is not a keyword, insert it
       if (!is_keyword) {
-        symbol.name = pending;
+
         // assume a definition leader itself cannot be a definition
+        clink_category_t category = CLINK_REFERENCE;
         if (last_defn_leader && !is_defn_leader) {
-          symbol.category = CLINK_DEFINITION;
-        } else {
-          symbol.category = CLINK_REFERENCE;
+          category = CLINK_DEFINITION;
         }
-        if ((rc = clink_db_add_symbol(db, &symbol)))
+
+        const span_t no_parent = {0};
+        if ((rc = add_symbol(db, category, pending, filename, no_parent)))
           goto done;
       }
 
@@ -139,46 +120,36 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
       // keywords and non-keywords can be definition leaders.
       last_defn_leader = is_defn_leader;
 
-      has_pending = false;
-      memset(pending, 0, strlen(pending));
-      rewind(buffer);
+      pending = (span_t){0};
 
-      // if this is something other than whitespace, it separates a definition
-      // leader from anything it could apply to
-    } else if (!isspace(c)) {
-      last_defn_leader = false;
+      ++colno;
+      ++j;
+      continue;
     }
 
-    // are we done?
-    if (c == EOF)
-      break;
+    // if this is something other than whitespace, it separates a definition
+    // leader from anything it could apply to
+    if (!isspace(c))
+      last_defn_leader = false;
 
     // update our position tracking
     if (c == '\r') {
+      if (j + 1 < size && base[j + 1] == '\n') // Windows line ending
+        ++j;
       ++lineno;
       colno = 1;
-      last_cr = true;
+    } else if (c == '\n') {
+      ++lineno;
+      colno = 1;
     } else {
-      if (c == '\n') {
-        if (last_cr) {
-          // Windows line ending; do nothing
-        } else {
-          ++lineno;
-          colno = 1;
-        }
-      } else {
-        ++colno;
-      }
-      last_cr = false;
+      ++colno;
     }
+    ++j;
   }
 
 done:
-  if (LIKELY(buffer != NULL))
-    (void)fclose(buffer);
-  free(pending);
   if (base != MAP_FAILED)
-    (void)munmap(base, st.st_size);
+    (void)munmap(base, size);
   if (f >= 0)
     (void)close(f);
 

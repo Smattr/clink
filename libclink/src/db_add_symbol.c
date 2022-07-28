@@ -12,8 +12,7 @@
 #include <string.h>
 
 int add_symbol(clink_db_t *db, clink_category_t category, span_t name,
-               const char *path, unsigned long lineno, unsigned long colno,
-               span_t parent) {
+               const char *path, span_t parent) {
 
   // insert into the symbol table
 
@@ -39,10 +38,10 @@ int add_symbol(clink_db_t *db, clink_category_t category, span_t name,
   if (ERROR((rc = sql_bind_int(s, 3, category))))
     goto done;
 
-  if (ERROR((rc = sql_bind_int(s, 4, lineno))))
+  if (ERROR((rc = sql_bind_int(s, 4, name.lineno))))
     goto done;
 
-  if (ERROR((rc = sql_bind_int(s, 5, colno))))
+  if (ERROR((rc = sql_bind_int(s, 5, name.colno))))
     goto done;
 
   {
@@ -78,7 +77,8 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   if (ERROR(symbol == NULL))
     return EINVAL;
 
-  span_t name = {.base = symbol->name};
+  span_t name = {
+      .base = symbol->name, .lineno = symbol->lineno, .colno = symbol->colno};
   if (symbol->name != NULL)
     name.size = strlen(symbol->name);
 
@@ -86,6 +86,5 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   if (symbol->parent != NULL)
     parent.size = strlen(symbol->parent);
 
-  return add_symbol(db, symbol->category, name, symbol->path, symbol->lineno,
-                    symbol->colno, parent);
+  return add_symbol(db, symbol->category, name, symbol->path, parent);
 }

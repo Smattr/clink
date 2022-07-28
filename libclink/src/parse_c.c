@@ -22,6 +22,7 @@
 
 #include "add_symbol.h"
 #include "debug.h"
+#include "isid.h"
 #include "scanner.h"
 #include "span.h"
 #include <assert.h>
@@ -349,12 +350,6 @@ static const span_t *get_active_parent(const parent_t *parents) {
   return NULL;
 }
 
-/// is this an identifier starter?
-static bool isid0(int c) { return isalpha(c) || c == '_'; }
-
-/// is this an identifier continuer?
-static bool isid(int c) { return isid0(c) || isdigit(c); }
-
 static int parse(lang_t lang, clink_db_t *db, const char *filename,
                  scanner_t *s) {
 
@@ -374,8 +369,6 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
 
   // a symbol currently being accrued
   span_t pending = {0};
-  unsigned long pending_lineno;
-  unsigned long pending_colno;
 
   // have we seen a pre-processor directive yet? (only relevant for CPP)
   bool seen_directive = false;
@@ -400,9 +393,8 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
     if (pending.base == NULL && isid0(c)) {
 
       // note its position
-      pending_lineno = s->lineno;
-      pending_colno = s->colno;
-      pending = (span_t){.base = &s->base[s->offset]};
+      pending = (span_t){
+          .base = &s->base[s->offset], .lineno = s->lineno, .colno = s->colno};
     }
 
     // is this part of the current identifier?
@@ -467,8 +459,8 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
         if (seen_directive || !is_directive(lang, pending)) {
           DEBUG("%s parser recognised %s:%lu:%lu: %s with name \"%.*s\" and "
                 "parent \"%.*s\"",
-                lang == CPP ? "CPP" : "C23", filename, pending_lineno,
-                pending_colno,
+                lang == CPP ? "CPP" : "C23", filename, pending.lineno,
+                pending.colno,
                 category == CLINK_DEFINITION      ? "definition"
                 : category == CLINK_FUNCTION_CALL ? "function call"
                                                   : "reference",
@@ -477,8 +469,7 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
                                                  : symbol_parent.size),
                 symbol_parent.base == NULL ? "<none>" : symbol_parent.base);
 
-          int rc = add_symbol(db, category, pending, filename, pending_lineno,
-                              pending_colno, symbol_parent);
+          int rc = add_symbol(db, category, pending, filename, symbol_parent);
           if (rc != 0)
             return rc;
         }
@@ -532,11 +523,11 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
     if (lang == CPP && pending.base == NULL && last.base != NULL &&
         span_eq(last, "include")) {
       if (eat_if(s, "\"") || eat_if(s, "<")) {
-        unsigned long line = s->lineno;
-        unsigned long col = s->colno;
         assert(s->offset > 0);
         const char *ender = s->base[s->offset - 1] == '"' ? "\"" : ">";
-        span_t path = {.base = &s->base[s->offset]};
+        span_t path = {.base = &s->base[s->offset],
+                       .lineno = s->lineno,
+                       .colno = s->colno};
         while (!eat_if(s, ender)) {
           if (s->offset == s->size)
             break;
@@ -547,9 +538,8 @@ static int parse(lang_t lang, clink_db_t *db, const char *filename,
         }
         const span_t no_parent = {0};
         DEBUG("CPP parser recognised %s:%lu:%lu: include with name \"%.*s\"",
-              filename, line, col, (int)path.size, path.base);
-        int rc =
-            add_symbol(db, CLINK_INCLUDE, path, filename, line, col, no_parent);
+              filename, path.lineno, path.colno, (int)path.size, path.base);
+        int rc = add_symbol(db, CLINK_INCLUDE, path, filename, no_parent);
         if (rc != 0)
           return rc;
         last = (span_t){0};
