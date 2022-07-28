@@ -7,20 +7,20 @@ clink \- C/C++/assembly code navigator
 Clink is a replacement for Cscope that uses libclang, features syntax
 highlighting, multicore support, and more.
 .SH OPTIONS
-\fB--build-only\fR, \fB-b\fR
+\fB-b\fR, \fB--build-only\fR
 .RS
 Exit after constructing or updating the symbol database. That is, do not load a
 user interface.
 .RE
 .PP
-\fB--colour\fR \fIwhen\fR, \fB--color\fR \fIwhen\fR
+\fB--colour=\fR\fIwhen\fR, \fB--color=\fR\fIwhen\fR
 .RS
 Enable or disable the use of ANSI colour codes. Possible values of \fIwhen\fR
 are "always" (enable), "never" (disable), and "auto" (decide based on whether
 stdout is a TTY).
 .RE
 .PP
-\fB--database\fR \fIFILE\fR, \fB-f\fR \fIFILE\fR
+\fB-f\fR \fIFILE\fR, \fB--database=\fR\fIFILE\fR
 .RS
 Open or create the symbol database at path \fIFILE\fR. Without this option,
 Clink will default to opening the file .clink.db in the current directory or any
@@ -39,12 +39,12 @@ Enable Clink debugging mode. This is intended for debugging problems within
 Clink itself.
 .RE
 .PP
-\fB--help\fR, \fB-h\fR
+\fB-h\fR, \fB--help\fR
 .RS
 Display this help information.
 .RE
 .PP
-\fB--jobs\fR \fINUM\fR, \fB-j\fR \fINUM\fR
+\fB-j\fR \fINUM\fR, \fB--jobs=\fR\fINUM\fR
 .RS
 Use the given number of threads when performing multithreaded operations. You
 can also pass the special value "auto" (the default) which uses the number of
@@ -59,12 +59,12 @@ information it needs. It is missing all other functions and is not intended for
 interactive use by a human.
 .RE
 .PP
-\fB--no-build\fR, \fB-d\fR
+\fB-d\fR, \fB--no-build\fR
 .RS
 Do not update the database.
 .RE
 .PP
-\fB--version\fR, \fB-V\fR
+\fB-V\fR, \fB--version\fR
 .RS
 Print the current version and exit.
 .RE
