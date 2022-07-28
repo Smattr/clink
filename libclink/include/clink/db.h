@@ -140,6 +140,17 @@ CLINK_API int clink_db_find_record(clink_db_t *db, const char *path,
 CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *name,
                                    clink_iter_t **it);
 
+/** retrieve a highlighted line from the database
+ *
+ * \param db Database to search
+ * \param path Path to file whose content to retrieve
+ * \param lineno Line number of the line to retrieve
+ * \param content [out] Highlighted line content on success
+ * \returns 0 on success or an errno on failure.
+ */
+CLINK_API int clink_db_get_content(clink_db_t *db, const char *path,
+                                   unsigned long lineno, char **content);
+
 /** close a Clink symbol database
  *
  * \param db Database to close

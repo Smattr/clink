@@ -7,20 +7,20 @@ clink \- C/C++/assembly code navigator
 Clink is a replacement for Cscope that uses libclang, features syntax
 highlighting, multicore support, and more.
 .SH OPTIONS
-\fB--build-only\fR, \fB-b\fR
+\fB-b\fR, \fB--build-only\fR
 .RS
 Exit after constructing or updating the symbol database. That is, do not load a
 user interface.
 .RE
 .PP
-\fB--colour\fR \fIwhen\fR, \fB--color\fR \fIwhen\fR
+\fB--colour=\fR\fIwhen\fR, \fB--color=\fR\fIwhen\fR
 .RS
 Enable or disable the use of ANSI colour codes. Possible values of \fIwhen\fR
 are "always" (enable), "never" (disable), and "auto" (decide based on whether
 stdout is a TTY).
 .RE
 .PP
-\fB--database\fR \fIFILE\fR, \fB-f\fR \fIFILE\fR
+\fB-f\fR \fIFILE\fR, \fB--database=\fR\fIFILE\fR
 .RS
 Open or create the symbol database at path \fIFILE\fR. Without this option,
 Clink will default to opening the file .clink.db in the current directory or any
@@ -39,13 +39,12 @@ Enable Clink debugging mode. This is intended for debugging problems within
 Clink itself.
 .RE
 .PP
-\fB--help\fR, \fB-h\fR
+\fB-h\fR, \fB--help\fR
 .RS
 Display this help information.
 .RE
 .PP
-.PP
-\fB--jobs\fR \fINUM\fR, \fB-j\fR \fINUM\fR
+\fB-j\fR \fINUM\fR, \fB--jobs=\fR\fINUM\fR
 .RS
 Use the given number of threads when performing multithreaded operations. You
 can also pass the special value "auto" (the default) which uses the number of
@@ -60,12 +59,40 @@ information it needs. It is missing all other functions and is not intended for
 interactive use by a human.
 .RE
 .PP
-\fB--no-build\fR, \fB-d\fR
+\fB-d\fR, \fB--no-build\fR
 .RS
 Do not update the database.
 .RE
 .PP
-\fB--version\fR, \fB-V\fR
+\fB-s\fR \fIMODE\fR, \fB--syntax-highlighting=\fR\fIMODE\fR
+.RS
+Control when Vim syntax highlighting is performed. \fIMODE\fR can be:
+.RS
+.IP \[bu] 2
+\fBauto\fR Select one of the other two modes below based on how many files need
+to be scanned. Currently there is a hard coded limit; if there are 100 or more
+files to scan, \fBlazy\fR will be picked. Otherwise \fBeager\fR.
+.IP \[bu]
+\fBeager\fR Perform highlighting during database construction. This means
+building the database will be slower, but once the database is built, searching
+it will be faster.
+.IP \[bu]
+\fBlazy\fR Perform highlighting during searching. This means building the
+database will be faster, but searching may take longer as it syntax highlights
+the results.
+.RE
+.PP
+The default is \fBauto\fR. Note that if a search needs to perform highlighting,
+it saves the results to the database. So future searches that return results in
+the same file(s) will be fast.
+.PP
+This is a per-run setting, not a per-database setting. So, for example it is
+possible to pick \fBlazy\fR when first building the database and then use
+\fBeager\fR on future runs where only files that have changed (most likely the
+ones you are actively working on) will be eagerly highlighted.
+.RE
+.PP
+\fB-V\fR, \fB--version\fR
 .RS
 Print the current version and exit.
 .RE

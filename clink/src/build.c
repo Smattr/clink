@@ -212,18 +212,20 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     if (LIKELY(rc == 0)) {
 
-      progress(thread_id, "syntax highlighting %s", display);
+      if (option.highlighting == EAGER) {
+        progress(thread_id, "syntax highlighting %s", display);
 
-      if (UNLIKELY((rc = clink_vim_read_into(db, path)))) {
+        if (UNLIKELY((rc = clink_vim_read_into(db, path)))) {
 
-        // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
-        // cryptically. If it looks like this happened, give the user a less
-        // confusing message.
-        if (sigint_pending()) {
-          error(thread_id, "failed to read %s: received SIGINT", display);
+          // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to
+          // fail cryptically. If it looks like this happened, give the user a
+          // less confusing message.
+          if (sigint_pending()) {
+            error(thread_id, "failed to read %s: received SIGINT", display);
 
-        } else {
-          error(thread_id, "failed to read %s: %s", display, strerror(rc));
+          } else {
+            error(thread_id, "failed to read %s: %s", display, strerror(rc));
+          }
         }
       }
 
@@ -378,6 +380,12 @@ int build(clink_db_t *db) {
 
   // learn how many files we just enqueued
   total_files = file_queue_size(q);
+
+  // select a highlighting mode, if necessary
+  if (option.highlighting == BEHAVIOUR_AUTO) {
+    static const size_t LARGE = 100; // a heuristic for when things get annoying
+    option.highlighting = total_files >= LARGE ? LAZY : EAGER;
+  }
 
   // suppress SIGINT, so that we do not get interrupted midway through a
   // database write and corrupt it
