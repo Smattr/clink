@@ -1,0 +1,8 @@
+/// test basic DEF file parsing
+
+LIBRARY foo
+EXPORTS bar @1
+
+// RUN: clink --build-only --database={%t} --debug {%s} >/dev/null
+// RUN: echo 'select * from symbols where name = "bar" and line = 4;' | sqlite3 {%t}
+// CHECK: bar|{%s}|2|4|9|
