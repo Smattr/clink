@@ -2,6 +2,7 @@
 #include "../../common/compiler.h"
 #include "colour.h"
 #include "option.h"
+#include "set.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <ctype.h>
@@ -86,6 +87,11 @@ static int format_results(clink_iter_t *it) {
 
   int rc = 0;
 
+  // track which files we have attempted to syntax-highlight
+  set_t *highlighted = NULL;
+  if (UNLIKELY((rc = set_new(&highlighted))))
+    goto done;
+
   while (true) {
 
     // retrieve the next symbol
@@ -132,14 +138,19 @@ static int format_results(clink_iter_t *it) {
     // if the context is missing (can happen if it was delayed), highlight the
     // file now
     if (target->context == NULL) {
-      int r = clink_vim_read_into(database, target->path);
-      // if highlighting fails, we just ignore it and continue on without
-      // context
+      // if we have not tried highlighting, try it now
+      const char *path = target->path;
+      int r = set_add(highlighted, &path);
       if (r == 0) {
-        // also ignore failure here and continue
-        (void)clink_db_get_content(database, target->path, target->lineno,
-                                   &target->context);
+        // ignore non-fatal failure of highlighting
+        (void)clink_vim_read_into(database, target->path);
+      } else if (r != EALREADY) {
+        rc = r;
+        break;
       }
+      // also ignore failure here and continue
+      (void)clink_db_get_content(database, target->path, target->lineno,
+                                 &target->context);
     }
 
     // strip leading white space from the context for neater output
@@ -149,6 +160,9 @@ static int format_results(clink_iter_t *it) {
     }
   }
 
+done:
+
+  set_free(&highlighted);
   clink_iter_free(&it);
 
   return rc;
