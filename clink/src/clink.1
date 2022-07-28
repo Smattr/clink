@@ -69,6 +69,10 @@ Do not update the database.
 Control when Vim syntax highlighting is performed. \fIMODE\fR can be:
 .RS
 .IP \[bu] 2
+\fBauto\fR Select one of the other two modes below based on how many files need
+to be scanned. Currently there is a hard coded limit; if there are 100 or more
+files to scan, \fBlazy\fR will be picked. Otherwise \fBeager\fR.
+.IP \[bu]
 \fBeager\fR Perform highlighting during database construction. This means
 building the database will be slower, but once the database is built, searching
 it will be faster.
@@ -78,7 +82,7 @@ database will be faster, but searching may take longer as it syntax highlights
 the results.
 .RE
 .PP
-The default is \fBlazy\fR. Note that if a search needs to perform highlighting,
+The default is \fBauto\fR. Note that if a search needs to perform highlighting,
 it saves the results to the database. So future searches that return results in
 the same file(s) will be fast.
 .PP

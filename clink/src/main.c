@@ -107,7 +107,9 @@ static void parse_args(int argc, char **argv) {
       break;
 
     case 's': // --syntax-highlighting
-      if (strcmp(optarg, "eager") == 0) {
+      if (strcmp(optarg, "auto") == 0) {
+        option.highlighting = BEHAVIOUR_AUTO;
+      } else if (strcmp(optarg, "eager") == 0) {
         option.highlighting = EAGER;
       } else if (strcmp(optarg, "lazy") == 0) {
         option.highlighting = LAZY;

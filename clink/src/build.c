@@ -381,6 +381,12 @@ int build(clink_db_t *db) {
   // learn how many files we just enqueued
   total_files = file_queue_size(q);
 
+  // select a highlighting mode, if necessary
+  if (option.highlighting == BEHAVIOUR_AUTO) {
+    static const size_t LARGE = 100; // a heuristic for when things get annoying
+    option.highlighting = total_files >= LARGE ? LAZY : EAGER;
+  }
+
   // suppress SIGINT, so that we do not get interrupted midway through a
   // database write and corrupt it
   if (UNLIKELY((rc = sigint_block()))) {

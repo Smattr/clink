@@ -10,8 +10,9 @@ typedef enum {
 } colour_t;
 
 typedef enum {
-  LAZY,  ///< do action on-demand, when its results are needed
-  EAGER, ///< do action upfront
+  BEHAVIOUR_AUTO, ///< pick `LAZY` or `EAGER` based on amount of work
+  LAZY,           ///< do action on-demand, when its results are needed
+  EAGER,          ///< do action upfront
 } behaviour_t;
 
 typedef struct {

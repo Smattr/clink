@@ -20,7 +20,7 @@ option_t option = {
     .threads = 0,
     .colour = AUTO,
     .debug = false,
-    .highlighting = LAZY,
+    .highlighting = BEHAVIOUR_AUTO,
 };
 
 int set_db_path(void) {
