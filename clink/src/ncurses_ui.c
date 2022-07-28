@@ -129,6 +129,19 @@ static int format_results(clink_iter_t *it) {
       break;
     ++results.count;
 
+    // if the context is missing (can happen if it was delayed), highlight the
+    // file now
+    if (target->context == NULL) {
+      int r = clink_vim_read_into(database, target->path);
+      // if highlighting fails, we just ignore it and continue on without
+      // context
+      if (r == 0) {
+        // also ignore failure here and continue
+        (void)clink_db_get_content(database, target->path, target->lineno,
+                                   &target->context);
+      }
+    }
+
     // strip leading white space from the context for neater output
     if (target->context != NULL) {
       while (isspace(target->context[0]))
