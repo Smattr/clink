@@ -62,7 +62,7 @@ static void parse_args(int argc, char **argv) {
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bdf:hj:ls:", opts, &index);
+    int c = getopt_long(argc, argv, "bdf:hj:ls:V", opts, &index);
 
     if (c == -1)
       break;
