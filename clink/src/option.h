@@ -9,6 +9,11 @@ typedef enum {
   NEVER,
 } colour_t;
 
+typedef enum {
+  LAZY,  ///< do action on-demand, when its results are needed
+  EAGER, ///< do action upfront
+} behaviour_t;
+
 typedef struct {
 
   // path to database if it was set on the command line
@@ -35,6 +40,9 @@ typedef struct {
 
   // debug mode
   bool debug;
+
+  // which strategy to apply to syntax highlighting
+  behaviour_t highlighting;
 
 } option_t;
 

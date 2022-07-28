@@ -20,6 +20,7 @@ option_t option = {
     .threads = 0,
     .colour = AUTO,
     .debug = false,
+    .highlighting = LAZY,
 };
 
 int set_db_path(void) {

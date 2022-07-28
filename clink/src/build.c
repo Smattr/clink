@@ -212,18 +212,20 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     if (LIKELY(rc == 0)) {
 
-      progress(thread_id, "syntax highlighting %s", display);
+      if (option.highlighting == EAGER) {
+        progress(thread_id, "syntax highlighting %s", display);
 
-      if (UNLIKELY((rc = clink_vim_read_into(db, path)))) {
+        if (UNLIKELY((rc = clink_vim_read_into(db, path)))) {
 
-        // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to fail
-        // cryptically. If it looks like this happened, give the user a less
-        // confusing message.
-        if (sigint_pending()) {
-          error(thread_id, "failed to read %s: received SIGINT", display);
+          // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to
+          // fail cryptically. If it looks like this happened, give the user a
+          // less confusing message.
+          if (sigint_pending()) {
+            error(thread_id, "failed to read %s: received SIGINT", display);
 
-        } else {
-          error(thread_id, "failed to read %s: %s", display, strerror(rc));
+          } else {
+            error(thread_id, "failed to read %s: %s", display, strerror(rc));
+          }
         }
       }
 

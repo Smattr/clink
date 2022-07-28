@@ -64,6 +64,30 @@ interactive use by a human.
 Do not update the database.
 .RE
 .PP
+\fB-s\fR \fIMODE\fR, \fB--syntax-highlighting=\fR\fIMODE\fR
+.RS
+Control when Vim syntax highlighting is performed. \fIMODE\fR can be:
+.RS
+.IP \[bu] 2
+\fBeager\fR Perform highlighting during database construction. This means
+building the database will be slower, but once the database is built, searching
+it will be faster.
+.IP \[bu]
+\fBlazy\fR Perform highlighting during searching. This means building the
+database will be faster, but searching may take longer as it syntax highlights
+the results.
+.RE
+.PP
+The default is \fBlazy\fR. Note that if a search needs to perform highlighting,
+it saves the results to the database. So future searches that return results in
+the same file(s) will be fast.
+.PP
+This is a per-run setting, not a per-database setting. So, for example it is
+possible to pick \fBlazy\fR when first building the database and then use
+\fBeager\fR on future runs where only files that have changed (most likely the
+ones you are actively working on) will be eagerly highlighted.
+.RE
+.PP
 \fB-V\fR, \fB--version\fR
 .RS
 Print the current version and exit.

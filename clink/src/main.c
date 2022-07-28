@@ -46,22 +46,23 @@ static void parse_args(int argc, char **argv) {
   while (true) {
     static const struct option opts[] = {
         // clang-format off
-        {"build-only",    no_argument,       0, 'b'},
-        {"color",         required_argument, 0, 128},
-        {"colour",        required_argument, 0, 128},
-        {"database",      required_argument, 0, 'f'},
-        {"debug",         no_argument,       0, 129},
-        {"help",          no_argument,       0, 'h'},
-        {"jobs",          required_argument, 0, 'j'},
-        {"line-oriented", no_argument,       0, 'l'},
-        {"no-build",      no_argument,       0, 'd'},
-        {"version",       no_argument,       0, 'V'},
+        {"build-only",          no_argument,       0, 'b'},
+        {"color",               required_argument, 0, 128},
+        {"colour",              required_argument, 0, 128},
+        {"database",            required_argument, 0, 'f'},
+        {"debug",               no_argument,       0, 129},
+        {"help",                no_argument,       0, 'h'},
+        {"jobs",                required_argument, 0, 'j'},
+        {"line-oriented",       no_argument,       0, 'l'},
+        {"no-build",            no_argument,       0, 'd'},
+        {"syntax-highlighting", required_argument, 0, 's'},
+        {"version",             no_argument,       0, 'V'},
         {0, 0, 0, 0},
         // clang-format on
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bdf:hI:j:l", opts, &index);
+    int c = getopt_long(argc, argv, "bdf:hI:j:ls:", opts, &index);
 
     if (c == -1)
       break;
@@ -103,6 +104,17 @@ static void parse_args(int argc, char **argv) {
     case 'l':
       option.ncurses_ui = false;
       option.line_ui = true;
+      break;
+
+    case 's': // --syntax-highlighting
+      if (strcmp(optarg, "eager") == 0) {
+        option.highlighting = EAGER;
+      } else if (strcmp(optarg, "lazy") == 0) {
+        option.highlighting = LAZY;
+      } else {
+        fprintf(stderr, "illegal value to --syntax-highlighting: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
       break;
 
     case 128: // --colour
