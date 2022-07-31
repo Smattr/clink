@@ -25,6 +25,7 @@ add_library(libclink
   src/parse_generic.c
   src/parse_c.c
   src/parse_cxx.c
+  src/parse_with_clang.c
   src/re.c
   src/run.c
   src/sql.c
