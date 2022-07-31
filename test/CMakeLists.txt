@@ -1,3 +1,4 @@
+add_subdirectory(libclang-ls)
 add_subdirectory(vim-open)
 
 add_executable(unit-tests
