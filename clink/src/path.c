@@ -44,7 +44,8 @@ bool is_c(const char *path) { return has_ext(path, "c") || has_ext(path, "h"); }
 
 bool is_cxx(const char *path) {
   return has_ext(path, "c++") || has_ext(path, "cpp") || has_ext(path, "cxx") ||
-         has_ext(path, "cc") || has_ext(path, "h") || has_ext(path, "hpp");
+         has_ext(path, "cc") || has_ext(path, "h") || has_ext(path, "hh") ||
+         has_ext(path, "hpp");
 }
 
 bool is_def(const char *path) { return has_ext(path, "def"); }
