@@ -155,8 +155,22 @@ static int format_results(clink_iter_t *it) {
 
     // strip leading white space from the context for neater output
     if (target->context != NULL) {
-      while (isspace(target->context[0]))
-        memmove(target->context, target->context + 1, strlen(target->context));
+      for (char *p = target->context; *p != '\0';) {
+        if (isspace(*p)) {
+          memmove(p, p + 1, strlen(p));
+        } else if (*p == '\033') { // CSI
+          // skip over it to the terminator
+          for (char *q = p + 1; *q != '\0'; ++q) {
+            if (*q == 'm') {
+              p = q;
+              break;
+            }
+          }
+          ++p;
+        } else { // non-white-space content
+          break;
+        }
+      }
     }
   }
 
