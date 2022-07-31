@@ -142,6 +142,9 @@ int main(int argc, char **argv) {
   unsigned options = 0;
   options |= CXTranslationUnit_DetailedPreprocessingRecord;
   options |= CXTranslationUnit_KeepGoing;
+#if CINDEX_VERSION_MINOR >= 60
+  options |= CXTranslationUnit_RetainExcludedConditionalBlocks;
+#endif
   enum CXErrorCode err = clang_parseTranslationUnit2(
       index, NULL, (const char *const *)argv, argc, NULL, 0, options, &tu);
   if (err != CXError_Success) {
