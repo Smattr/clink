@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static CXTranslationUnit tu;
+
 static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
                                      CXClientData state) {
 
@@ -23,7 +25,6 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   // we do not need any state
   (void)state;
 
-  enum CXChildVisitResult rc = CXChildVisit_Break;
   CXString filestr = {0};
   CXString kindstr = {0};
   CXString textstr = {0};
@@ -54,8 +55,6 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   printf("%s:%u:%u: %s with text «%s»\n", filename, lineno, colno, kindcstr,
          textcstr);
 
-  rc = CXChildVisit_Recurse;
-
   if (textstr.data != NULL)
     clang_disposeString(textstr);
   if (kindstr.data != NULL)
@@ -63,7 +62,56 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   if (filestr.data != NULL)
     clang_disposeString(filestr);
 
-  return rc;
+  // if this is a macro expansion, tokenise its contained content
+  if (kind == CXCursor_MacroExpansion) {
+
+    CXSourceRange range = clang_getCursorExtent(cursor);
+    CXToken *tokens = NULL;
+    unsigned tokens_len = 0;
+    clang_tokenize(tu, range, &tokens, &tokens_len);
+
+    for (unsigned i = 0; i < tokens_len; ++i) {
+
+      loc = clang_getTokenLocation(tu, tokens[i]);
+      file = NULL;
+      clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
+      filename = "<none>";
+      if (file != NULL) {
+        filestr = clang_getFileName(file);
+        filename = clang_getCString(filestr);
+      }
+      printf(" %s:%u:%u: ", filename, lineno, colno);
+      if (filestr.data != NULL)
+        clang_disposeString(filestr);
+
+      CXTokenKind k = clang_getTokenKind(tokens[i]);
+      switch (k) {
+      case CXToken_Punctuation:
+        printf("CXToken_Punctuation");
+        break;
+      case CXToken_Keyword:
+        printf("CXToken_Keyword");
+        break;
+      case CXToken_Identifier:
+        printf("CXToken_Identifier");
+        break;
+      case CXToken_Literal:
+        printf("CXToken_Literal");
+        break;
+      case CXToken_Comment:
+        printf("CXToken_Comment");
+        break;
+      }
+
+      CXString tokenstr = clang_getTokenSpelling(tu, tokens[i]);
+      printf(" with text «%s»\n", clang_getCString(tokenstr));
+      clang_disposeString(tokenstr);
+    }
+
+    clang_disposeTokens(tu, tokens, tokens_len);
+  }
+
+  return CXChildVisit_Recurse;
 }
 static const char *strcxerror(enum CXErrorCode err) {
   switch (err) {
@@ -94,7 +142,6 @@ int main(int argc, char **argv) {
   unsigned options = 0;
   options |= CXTranslationUnit_DetailedPreprocessingRecord;
   options |= CXTranslationUnit_KeepGoing;
-  CXTranslationUnit tu = NULL;
   enum CXErrorCode err = clang_parseTranslationUnit2(
       index, NULL, (const char *const *)argv, argc, NULL, 0, options, &tu);
   if (err != CXError_Success) {
