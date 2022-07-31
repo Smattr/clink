@@ -64,6 +64,10 @@ set_target_properties(libclink PROPERTIES PREFIX "")
 
 target_link_libraries(libclink PRIVATE libvimcat)
 
+find_package(LIBCLANG REQUIRED)
+target_include_directories(libclink PRIVATE SYSTEM ${LIBCLANG_INCLUDE_DIRS})
+target_link_libraries(libclink PRIVATE ${LIBCLANG_LIBRARIES})
+
 find_package(SQLite3 REQUIRED)
 target_include_directories(libclink PRIVATE SYSTEM ${SQLite3_INCLUDE_DIRS})
 target_link_libraries(libclink PRIVATE ${SQLite3_LIBRARIES})
