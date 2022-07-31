@@ -55,6 +55,10 @@ static void parse_args(int argc, char **argv) {
         {"jobs",                required_argument, 0, 'j'},
         {"line-oriented",       no_argument,       0, 'l'},
         {"no-build",            no_argument,       0, 'd'},
+        {"parse-asm",           required_argument, 0, 130},
+        {"parse-c",             required_argument, 0, 131},
+        {"parse-cxx",           required_argument, 0, 132},
+        {"parse-def",           required_argument, 0, 133},
         {"syntax-highlighting", required_argument, 0, 's'},
         {"version",             no_argument,       0, 'V'},
         {0, 0, 0, 0},
@@ -135,6 +139,50 @@ static void parse_args(int argc, char **argv) {
     case 129: // --debug
       option.debug = true;
       clink_debug_on();
+      break;
+
+    case 130: // --parse-asm
+      if (strcmp(optarg, "generic") == 0) {
+        option.parse_asm = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_asm = OFF;
+      } else {
+        fprintf(stderr, "illegaly value to --parse-asm: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+      break;
+
+    case 131: // --parse-c
+      if (strcmp(optarg, "generic") == 0) {
+        option.parse_c = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_c = OFF;
+      } else {
+        fprintf(stderr, "illegaly value to --parse-c: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+      break;
+
+    case 132: // --parse-cxx
+      if (strcmp(optarg, "generic") == 0) {
+        option.parse_cxx = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_cxx = OFF;
+      } else {
+        fprintf(stderr, "illegaly value to --parse-cxx: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+      break;
+
+    case 133: // --parse-def
+      if (strcmp(optarg, "generic") == 0) {
+        option.parse_def = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_def = OFF;
+      } else {
+        fprintf(stderr, "illegaly value to --parse-def: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
       break;
 
     case 'V': { // --version

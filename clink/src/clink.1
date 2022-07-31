@@ -64,6 +64,37 @@ interactive use by a human.
 Do not update the database.
 .RE
 .PP
+\fB--parse-asm=\fR\fIMODE\fR
+.br
+\fB--parse-c=\fR\fIMODE\fR
+.br
+\fB--parse-cxx=\fR\fIMODE\fR
+.br
+\fB--parse-def=\fR\fIMODE\fR
+.RS
+Control which source code formats are considered for parsing and how they are
+parsed. The following table describes what source code format each of these
+options control and what values \fIMODE\fR can be.
+.PP
+.TS
+allbox center; l l l .
+option	format	modes
+=
+\fB--parse-asm\fR	assembly code	\fBoff\fR, \fBgeneric\fR
+\fB--parse-c\fR	C source code (.c, .h files)	\fBoff\fR, \fBgeneric\fR
+\fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBoff\fR, \fBgeneric\fR
+\fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR
+.TE
+The mode \fBgeneric\fR selects a parser that has limited semantic understanding
+and cannot infer things like complex definitions. But it can be useful when you
+do not have full compiler flags for your sources and so Clang cannot effectively
+parse them.
+.PP
+Note that the definition of C and C++ files overlap in the table above, .h files
+are considered both C and C++. If either \fB--parse-c\fR or \fB--parse-cxx\fR
+are \fBgeneric\fR, parsing of .h files will be enabled.
+.RE
+.PP
 \fB-s\fR \fIMODE\fR, \fB--syntax-highlighting=\fR\fIMODE\fR
 .RS
 Control when Vim syntax highlighting is performed. \fIMODE\fR can be:

@@ -80,16 +80,16 @@ bool is_source(const char *path) {
   if (path == NULL)
     return false;
 
-  if (is_asm(path))
+  if (is_asm(path) && option.parse_asm != OFF)
     return true;
 
-  if (is_def(path))
+  if (is_def(path) && option.parse_def != OFF)
     return true;
 
-  if (is_c(path))
+  if (is_c(path) && option.parse_c != OFF)
     return true;
 
-  if (is_cxx(path))
+  if (is_cxx(path) && option.parse_cxx != OFF)
     return true;
 
   return false;

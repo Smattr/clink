@@ -15,6 +15,12 @@ typedef enum {
   EAGER,          ///< do action upfront
 } behaviour_t;
 
+typedef enum {
+  CLANG,   ///< libclang-based parser
+  GENERIC, ///< generic parser
+  OFF,     ///< skip parsing
+} parser_t;
+
 typedef struct {
 
   // path to database if it was set on the command line
@@ -44,6 +50,12 @@ typedef struct {
 
   // which strategy to apply to syntax highlighting
   behaviour_t highlighting;
+
+  // how to parse each file type
+  parser_t parse_asm;
+  parser_t parse_c;
+  parser_t parse_cxx;
+  parser_t parse_def;
 
 } option_t;
 

@@ -21,6 +21,10 @@ option_t option = {
     .colour = AUTO,
     .debug = false,
     .highlighting = BEHAVIOUR_AUTO,
+    .parse_asm = GENERIC,
+    .parse_def = GENERIC,
+    .parse_c = GENERIC,
+    .parse_cxx = GENERIC,
 };
 
 int set_db_path(void) {
