@@ -94,8 +94,7 @@ static int push_dir(file_queue_t *fq, const char *path) {
     }
 
     // if this is a file eligible for parsing, enqueue it
-    if (is_file(sub) &&
-        (is_asm(sub) || is_c(sub) || is_cxx(sub) || is_def(sub))) {
+    if (is_file(sub) && is_source(sub)) {
       int r = push_file(fq, sub);
       free(sub);
       if (r != 0 && r != EALREADY)
@@ -122,8 +121,7 @@ int file_queue_push(file_queue_t *fq, const char *path) {
     return errno;
 
   // do not allow queueing files that are not ASM/C/C++/DEF for parsing
-  if (is_file(path) &&
-      !(is_asm(path) || is_c(path) || is_cxx(path) || is_def(path)))
+  if (is_file(path) && !is_source(path))
     return EINVAL;
 
   return is_dir(path) ? push_dir(fq, path) : push_file(fq, path);
