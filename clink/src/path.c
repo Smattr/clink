@@ -1,4 +1,5 @@
 #include "path.h"
+#include "option.h"
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -72,4 +73,24 @@ bool is_file(const char *path) {
     return false;
 
   return S_ISREG(buf.st_mode);
+}
+
+bool is_source(const char *path) {
+
+  if (path == NULL)
+    return false;
+
+  if (is_asm(path))
+    return true;
+
+  if (is_def(path))
+    return true;
+
+  if (is_c(path))
+    return true;
+
+  if (is_cxx(path))
+    return true;
+
+  return false;
 }
