@@ -257,6 +257,13 @@ static int init(CXIndex *index, CXTranslationUnit *tu, const char *filename,
   assert(filename != NULL);
   assert(argc == 0 || argv != NULL);
 
+  // if the caller did not provide any arguments, fall back on some defaults
+  if (argc == 0) {
+    static const char *DEFAULT[] = {"clang", NULL};
+    argv = DEFAULT;
+    argc = sizeof(DEFAULT) / sizeof(DEFAULT[0]) - 1;
+  }
+
   // create a Clang index
   static const int excludePCH = 0;
   static const int displayDiagnostics = 0;
