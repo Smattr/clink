@@ -57,6 +57,10 @@ typedef struct {
   parser_t parse_cxx;
   parser_t parse_def;
 
+  // arguments to pass to Clang
+  size_t clang_argc;
+  char **clang_argv;
+
 } option_t;
 
 extern option_t option;
@@ -66,6 +70,14 @@ int set_db_path(void);
 
 // setup option.src after option parsing
 int set_src(void);
+
+/** setup flags for Clang
+ *
+ * This function assumes the caller wants system include directories enabled.
+ *
+ * \return 0 on success or an errno on failure.
+ */
+int set_clang_flags(void);
 
 // deallocate members of option
 void clean_up_options(void);

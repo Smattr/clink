@@ -192,8 +192,10 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
       // C++ with libclang
     } else if (is_cxx(path) && option.parse_cxx == CLANG) {
+      assert(option.clang_argc > 0 && option.clang_argv != NULL);
       progress(thread_id, "Clang-parsing C++ file %s", display);
-      rc = clink_parse_with_clang(db, path, 0, NULL);
+      const char **argv = (const char **)option.clang_argv;
+      rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
 
       // C++ with generic parser
     } else if (is_cxx(path) && option.parse_cxx == GENERIC) {
@@ -202,8 +204,10 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
       // C with libclang
     } else if (is_c(path) && option.parse_c == CLANG) {
+      assert(option.clang_argc > 0 && option.clang_argv != NULL);
       progress(thread_id, "Clang-parsing C file %s", display);
-      rc = clink_parse_with_clang(db, path, 0, NULL);
+      const char **argv = (const char **)option.clang_argv;
+      rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
 
       // C with generic parser
     } else if (is_c(path) && option.parse_c == GENERIC) {

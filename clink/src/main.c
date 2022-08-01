@@ -249,6 +249,17 @@ int main(int argc, char **argv) {
   }
   assert(option.src != NULL && option.src_len > 0);
 
+  // setup Clang command line
+  if (option.update_database) {
+    if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
+      rc = set_clang_flags();
+      if (UNLIKELY(rc)) {
+        fprintf(stderr, "failed to set Clang flags: %s\n", strerror(rc));
+        goto done;
+      }
+    }
+  }
+
   if (option.update_database) {
     for (size_t i = 0; i < option.src_len; ++i) {
 
