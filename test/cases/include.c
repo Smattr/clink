@@ -4,4 +4,4 @@
 
 // RUN: clink --build-only --database {%t} --debug {%s} >/dev/null
 // RUN: echo 'select * from symbols;' | sqlite3 {%t}
-// CHECK: foo.h|{%s}|3|3|11|
+// CHECK: foo.h|{%s}|3|3|1|

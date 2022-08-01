@@ -153,7 +153,9 @@ static void parse_args(int argc, char **argv) {
       break;
 
     case 131: // --parse-c
-      if (strcmp(optarg, "generic") == 0) {
+      if (strcmp(optarg, "clang") == 0) {
+        option.parse_c = CLANG;
+      } else if (strcmp(optarg, "generic") == 0) {
         option.parse_c = GENERIC;
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_c = OFF;
@@ -164,7 +166,9 @@ static void parse_args(int argc, char **argv) {
       break;
 
     case 132: // --parse-cxx
-      if (strcmp(optarg, "generic") == 0) {
+      if (strcmp(optarg, "clang") == 0) {
+        option.parse_c = CLANG;
+      } else if (strcmp(optarg, "generic") == 0) {
         option.parse_cxx = GENERIC;
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_cxx = OFF;

@@ -16,6 +16,7 @@ void foo(void) {
   }
 }
 
+// XFAIL: True
 // RUN: clink --build-only --database {%t} {%s} >/dev/null
 // RUN: echo 'select * from symbols where category = 1 order by name;' | sqlite3 {%t}
 // CHECK: f|{%s}|1|11|7|foo

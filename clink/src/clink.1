@@ -77,13 +77,13 @@ parsed. The following table describes what source code format each of these
 options control and what values \fIMODE\fR can be.
 .PP
 .TS
-allbox center; l l l .
-option	format	modes
+allbox center; l l l l .
+option	format	modes	default
 =
-\fB--parse-asm\fR	assembly code	\fBoff\fR, \fBgeneric\fR
-\fB--parse-c\fR	C source code (.c, .h files)	\fBoff\fR, \fBgeneric\fR
-\fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBoff\fR, \fBgeneric\fR
-\fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR
+\fB--parse-asm\fR	assembly code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB--parse-c\fR	C source code (.c, .h files)	\fBoff\fR, \fBclang\fR, \fBgeneric\fR	\fBclang\fR
+\fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBoff\fR, \fBclang\fR, \fBgeneric\fR	\fBclang\fR
+\fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 .TE
 The mode \fBgeneric\fR selects a parser that has limited semantic understanding
 and cannot infer things like complex definitions. But it can be useful when you
@@ -91,8 +91,8 @@ do not have full compiler flags for your sources and so Clang cannot effectively
 parse them.
 .PP
 Note that the definition of C and C++ files overlap in the table above, .h files
-are considered both C and C++. If either \fB--parse-c\fR or \fB--parse-cxx\fR
-are \fBgeneric\fR, parsing of .h files will be enabled.
+are considered both C and C++. If \fB--parse-c\fR and \fB--parse-cxx\fR are both
+set to non-\fBoff\fR modes, the \fB--parse-cxx\fR mode will apply to .h files.
 .RE
 .PP
 \fB-s\fR \fIMODE\fR, \fB--syntax-highlighting=\fR\fIMODE\fR

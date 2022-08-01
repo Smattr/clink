@@ -190,14 +190,24 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       progress(thread_id, "parsing asm file %s", display);
       rc = clink_parse_asm(db, path);
 
-      // C++
-    } else if (is_cxx(path)) {
-      progress(thread_id, "parsing C++ file %s", display);
+      // C++ with libclang
+    } else if (is_cxx(path) && option.parse_cxx == CLANG) {
+      progress(thread_id, "Clang-parsing C++ file %s", display);
+      rc = clink_parse_with_clang(db, path, 0, NULL);
+
+      // C++ with generic parser
+    } else if (is_cxx(path) && option.parse_cxx == GENERIC) {
+      progress(thread_id, "generic-parsing C++ file %s", display);
       rc = clink_parse_cxx(db, path);
 
-      // C
-    } else if (is_c(path)) {
-      progress(thread_id, "parsing C file %s", display);
+      // C with libclang
+    } else if (is_c(path) && option.parse_c == CLANG) {
+      progress(thread_id, "Clang-parsing C file %s", display);
+      rc = clink_parse_with_clang(db, path, 0, NULL);
+
+      // C with generic parser
+    } else if (is_c(path) && option.parse_c == GENERIC) {
+      progress(thread_id, "generic-parsing C file %s", display);
       rc = clink_parse_c(db, path);
 
       // DEF
