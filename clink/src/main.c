@@ -196,6 +196,8 @@ static void parse_args(int argc, char **argv) {
               version.with_assertions ? "enabled" : "disabled");
       fprintf(stderr, " optimisations: %s\n",
               version.with_optimisations ? "enabled" : "disabled");
+      fprintf(stderr, " using libclang %u.%u\n", version.libclang_major_version,
+              version.libclang_minor_version);
       exit(EXIT_SUCCESS);
     }
 
