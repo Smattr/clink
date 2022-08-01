@@ -133,6 +133,11 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
 
   int rc = 0;
 
+  // ignore anything not from the main file
+  CXSourceLocation loc = clang_getCursorLocation(cursor);
+  if (!clang_Location_isFromMainFile(loc))
+    return CXChildVisit_Continue;
+
   // retrieve the type of this symbol
   enum CXCursorKind kind = clang_getCursorKind(cursor);
   clink_category_t category = CLINK_REFERENCE;
@@ -200,7 +205,6 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
 
   // retrieve its location
   {
-    CXSourceLocation loc = clang_getCursorLocation(cursor);
     unsigned lineno, colno;
     CXFile file = NULL;
     clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
