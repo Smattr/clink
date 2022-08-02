@@ -4,6 +4,7 @@ add_executable(clink
   src/compile_commands_close.c
   src/compile_commands_find.c
   src/compile_commands_open.c
+  src/cwd.c
   src/dirname.c
   src/disppath.c
   src/file_queue.c
