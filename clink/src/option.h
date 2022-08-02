@@ -1,5 +1,6 @@
 #pragma once
 
+#include "compile_commands.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -61,12 +62,18 @@ typedef struct {
   size_t clang_argc;
   char **clang_argv;
 
+  // compile_commands.json database
+  compile_commands_t compile_commands;
+
 } option_t;
 
 extern option_t option;
 
 // setup option.database_path after option parsing
 int set_db_path(void);
+
+// setup option.compile_commands after option parsing
+int set_compile_commands(void);
 
 // setup option.src after option parsing
 int set_src(void);

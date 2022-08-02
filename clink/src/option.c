@@ -1,5 +1,6 @@
 #include "option.h"
 #include "../../common/compiler.h"
+#include "compile_commands.h"
 #include "path.h"
 #include <assert.h>
 #include <clink/clink.h>
@@ -29,6 +30,7 @@ option_t option = {
     .parse_def = GENERIC,
     .clang_argc = 0,
     .clang_argv = NULL,
+    .compile_commands = {0},
 };
 
 int set_db_path(void) {
@@ -199,6 +201,54 @@ done:
   return rc;
 }
 
+int set_compile_commands(void) {
+
+  assert(option.database_path != NULL);
+
+  // if the user has manually set compile command, we are done
+  if (option.compile_commands.db != NULL)
+    return 0;
+
+  int rc = 0;
+  char *dir = NULL;
+  char *joined = NULL;
+
+  // obtain the directory containing our database
+  rc = dirname(option.database_path, &dir);
+  if (rc != 0)
+    goto done;
+
+  // see if there is a usable compile_commands.json here
+  {
+    int r = compile_commands_open(&option.compile_commands, dir);
+    if (r == 0)
+      goto done;
+    if (option.debug)
+      fprintf(stderr, "failed to open %s/compile_commands.json\n", dir);
+  }
+
+  // try a build subdirectory
+  rc = join(dir, "build", &joined);
+  if (rc != 0)
+    goto done;
+  {
+    int r = compile_commands_open(&option.compile_commands, joined);
+    if (r == 0)
+      goto done;
+    if (option.debug)
+      fprintf(stderr, "failed to open %s/compile_commands.json\n", joined);
+  }
+
+  // nothing usable found
+  rc = ENOMSG;
+
+done:
+  free(joined);
+  free(dir);
+
+  return rc;
+}
+
 void clean_up_options(void) {
 
   free(option.database_path);
@@ -215,4 +265,7 @@ void clean_up_options(void) {
   free(option.clang_argv);
   option.clang_argv = NULL;
   option.clang_argc = 0;
+
+  if (option.compile_commands.db != 0)
+    compile_commands_close(&option.compile_commands);
 }

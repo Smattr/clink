@@ -46,21 +46,23 @@ static void parse_args(int argc, char **argv) {
   while (true) {
     static const struct option opts[] = {
         // clang-format off
-        {"build-only",          no_argument,       0, 'b'},
-        {"color",               required_argument, 0, 128},
-        {"colour",              required_argument, 0, 128},
-        {"database",            required_argument, 0, 'f'},
-        {"debug",               no_argument,       0, 129},
-        {"help",                no_argument,       0, 'h'},
-        {"jobs",                required_argument, 0, 'j'},
-        {"line-oriented",       no_argument,       0, 'l'},
-        {"no-build",            no_argument,       0, 'd'},
-        {"parse-asm",           required_argument, 0, 130},
-        {"parse-c",             required_argument, 0, 131},
-        {"parse-cxx",           required_argument, 0, 132},
-        {"parse-def",           required_argument, 0, 133},
-        {"syntax-highlighting", required_argument, 0, 's'},
-        {"version",             no_argument,       0, 'V'},
+        {"build-only",           no_argument,       0, 'b'},
+        {"color",                required_argument, 0, 128},
+        {"colour",               required_argument, 0, 128},
+        {"compile-commands",     required_argument, 0, 129},
+        {"compile-commands-dir", required_argument, 0, 129},
+        {"database",             required_argument, 0, 'f'},
+        {"debug",                no_argument,       0, 130},
+        {"help",                 no_argument,       0, 'h'},
+        {"jobs",                 required_argument, 0, 'j'},
+        {"line-oriented",        no_argument,       0, 'l'},
+        {"no-build",             no_argument,       0, 'd'},
+        {"parse-asm",            required_argument, 0, 131},
+        {"parse-c",              required_argument, 0, 132},
+        {"parse-cxx",            required_argument, 0, 133},
+        {"parse-def",            required_argument, 0, 134},
+        {"syntax-highlighting",  required_argument, 0, 's'},
+        {"version",              no_argument,       0, 'V'},
         {0, 0, 0, 0},
         // clang-format on
     };
@@ -136,12 +138,24 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
-    case 129: // --debug
+    case 129: { // --compile-commands
+      if (option.compile_commands.db != NULL)
+        compile_commands_close(&option.compile_commands);
+      int rc = compile_commands_open(&option.compile_commands, optarg);
+      if (rc != 0) {
+        fprintf(stderr, "failed to open compile commands directory %s: %s\n",
+                optarg, strerror(rc));
+        exit(EXIT_FAILURE);
+      }
+      break;
+    }
+
+    case 130: // --debug
       option.debug = true;
       clink_debug_on();
       break;
 
-    case 130: // --parse-asm
+    case 131: // --parse-asm
       if (strcmp(optarg, "generic") == 0) {
         option.parse_asm = GENERIC;
       } else if (strcmp(optarg, "off") == 0) {
@@ -152,7 +166,7 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
-    case 131: // --parse-c
+    case 132: // --parse-c
       if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
       } else if (strcmp(optarg, "generic") == 0) {
@@ -165,7 +179,7 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
-    case 132: // --parse-cxx
+    case 133: // --parse-cxx
       if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
       } else if (strcmp(optarg, "generic") == 0) {
@@ -178,7 +192,7 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
-    case 133: // --parse-def
+    case 134: // --parse-def
       if (strcmp(optarg, "generic") == 0) {
         option.parse_def = GENERIC;
       } else if (strcmp(optarg, "off") == 0) {
@@ -259,6 +273,17 @@ int main(int argc, char **argv) {
         fprintf(stderr, "failed to set Clang flags: %s\n", strerror(rc));
         goto done;
       }
+    }
+  }
+
+  // setup out connection to compile_commands.json
+  if (option.update_database) {
+    if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
+      int r = set_compile_commands();
+      // ignore failure here
+      if (option.debug && r != 0)
+        fprintf(stderr, "setting up compile commands failed: %s\n",
+                strerror(r));
     }
   }
 

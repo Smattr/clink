@@ -20,6 +20,16 @@ are "always" (enable), "never" (disable), and "auto" (decide based on whether
 stdout is a TTY).
 .RE
 .PP
+\fB--compile-commands=\fR\fIDIR\fR, \fB--compile-commands-dir=\fR\fIDIR\fR
+.RS
+Set a location to a directory containing a compile commands database, as used by
+\fBclangd\fR. When using libclang to parse either C or C++
+(\fB--parse-c=clang\fR, \fB--parse-cxx=clang\fR), this database will be used to
+determine the flags your sources were built with. If this option is not given,
+a compile commands database will be looked for adjacent to your Clink database
+or in an adjacent \fBbuild\fR subdirectory.
+.RE
+.PP
 \fB-f\fR \fIFILE\fR, \fB--database=\fR\fIFILE\fR
 .RS
 Open or create the symbol database at path \fIFILE\fR. Without this option,
