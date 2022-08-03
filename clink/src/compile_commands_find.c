@@ -4,6 +4,7 @@
 #include <clang-c/CXCompilationDatabase.h>
 #include <errno.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,16 +36,31 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // take the first and ignore the rest
   CXCompileCommand cmd = clang_CompileCommands_getCommand(cmds, 0);
 
-  // extract the arguments, with a trailing NULL
+  // hot many arguments do we have?
   size_t num_args = clang_CompileCommand_getNumArgs(cmd);
   assert(num_args > 0);
-  assert(num_args < SIZE_MAX - 1);
-  av = calloc(num_args + 1, sizeof(av[0]));
+  assert(num_args < SIZE_MAX);
+
+  // only accept the command if its last parameter is the source itself
+  {
+    CXString last = clang_CompileCommand_getArg(cmd, (unsigned)num_args - 1);
+    const char *laststr = clang_getCString(last);
+    assert(laststr != NULL);
+    bool matches = strcmp(laststr, source) == 0;
+    clang_disposeString(last);
+    if (!matches) {
+      rc = ENOMSG;
+      goto done;
+    }
+  }
+
+  // extract the arguments with a trailing NULL
+  av = calloc(num_args, sizeof(av[0]));
   if (UNLIKELY(av == NULL)) {
     rc = ENOMEM;
     goto done;
   }
-  ac = num_args;
+  ac = num_args - 1;
   for (size_t i = 0; i < ac; ++i) {
     CXString arg = clang_CompileCommand_getArg(cmd, (unsigned)i);
     const char *argstr = clang_getCString(arg);
