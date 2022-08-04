@@ -46,17 +46,23 @@ static void parse_args(int argc, char **argv) {
   while (true) {
     static const struct option opts[] = {
         // clang-format off
-        {"build-only",          no_argument,       0, 'b'},
-        {"color",               required_argument, 0, 128},
-        {"colour",              required_argument, 0, 128},
-        {"database",            required_argument, 0, 'f'},
-        {"debug",               no_argument,       0, 129},
-        {"help",                no_argument,       0, 'h'},
-        {"jobs",                required_argument, 0, 'j'},
-        {"line-oriented",       no_argument,       0, 'l'},
-        {"no-build",            no_argument,       0, 'd'},
-        {"syntax-highlighting", required_argument, 0, 's'},
-        {"version",             no_argument,       0, 'V'},
+        {"build-only",           no_argument,       0, 'b'},
+        {"color",                required_argument, 0, 128},
+        {"colour",               required_argument, 0, 128},
+        {"compile-commands",     required_argument, 0, 129},
+        {"compile-commands-dir", required_argument, 0, 129},
+        {"database",             required_argument, 0, 'f'},
+        {"debug",                no_argument,       0, 130},
+        {"help",                 no_argument,       0, 'h'},
+        {"jobs",                 required_argument, 0, 'j'},
+        {"line-oriented",        no_argument,       0, 'l'},
+        {"no-build",             no_argument,       0, 'd'},
+        {"parse-asm",            required_argument, 0, 131},
+        {"parse-c",              required_argument, 0, 132},
+        {"parse-cxx",            required_argument, 0, 133},
+        {"parse-def",            required_argument, 0, 134},
+        {"syntax-highlighting",  required_argument, 0, 's'},
+        {"version",              no_argument,       0, 'V'},
         {0, 0, 0, 0},
         // clang-format on
     };
@@ -132,9 +138,69 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
-    case 129: // --debug
+    case 129: { // --compile-commands
+      if (option.compile_commands.db != NULL)
+        compile_commands_close(&option.compile_commands);
+      int rc = compile_commands_open(&option.compile_commands, optarg);
+      if (rc != 0) {
+        fprintf(stderr, "failed to open compile commands directory %s: %s\n",
+                optarg, strerror(rc));
+        exit(EXIT_FAILURE);
+      }
+      break;
+    }
+
+    case 130: // --debug
       option.debug = true;
       clink_debug_on();
+      break;
+
+    case 131: // --parse-asm
+      if (strcmp(optarg, "generic") == 0) {
+        option.parse_asm = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_asm = OFF;
+      } else {
+        fprintf(stderr, "illegaly value to --parse-asm: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+      break;
+
+    case 132: // --parse-c
+      if (strcmp(optarg, "clang") == 0) {
+        option.parse_c = CLANG;
+      } else if (strcmp(optarg, "generic") == 0) {
+        option.parse_c = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_c = OFF;
+      } else {
+        fprintf(stderr, "illegaly value to --parse-c: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+      break;
+
+    case 133: // --parse-cxx
+      if (strcmp(optarg, "clang") == 0) {
+        option.parse_c = CLANG;
+      } else if (strcmp(optarg, "generic") == 0) {
+        option.parse_cxx = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_cxx = OFF;
+      } else {
+        fprintf(stderr, "illegaly value to --parse-cxx: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+      break;
+
+    case 134: // --parse-def
+      if (strcmp(optarg, "generic") == 0) {
+        option.parse_def = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_def = OFF;
+      } else {
+        fprintf(stderr, "illegaly value to --parse-def: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
       break;
 
     case 'V': { // --version
@@ -144,6 +210,8 @@ static void parse_args(int argc, char **argv) {
               version.with_assertions ? "enabled" : "disabled");
       fprintf(stderr, " optimisations: %s\n",
               version.with_optimisations ? "enabled" : "disabled");
+      fprintf(stderr, " using libclang %u.%u\n", version.libclang_major_version,
+              version.libclang_minor_version);
       exit(EXIT_SUCCESS);
     }
 
@@ -196,6 +264,28 @@ int main(int argc, char **argv) {
     goto done;
   }
   assert(option.src != NULL && option.src_len > 0);
+
+  // setup Clang command line
+  if (option.update_database) {
+    if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
+      rc = set_clang_flags();
+      if (UNLIKELY(rc)) {
+        fprintf(stderr, "failed to set Clang flags: %s\n", strerror(rc));
+        goto done;
+      }
+    }
+  }
+
+  // setup out connection to compile_commands.json
+  if (option.update_database) {
+    if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
+      int r = set_compile_commands();
+      // ignore failure here
+      if (option.debug && r != 0)
+        fprintf(stderr, "setting up compile commands failed: %s\n",
+                strerror(r));
+    }
+  }
 
   if (option.update_database) {
     for (size_t i = 0; i < option.src_len; ++i) {

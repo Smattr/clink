@@ -1,3 +1,5 @@
+add_subdirectory(libclang-ls)
+add_subdirectory(ls-includes)
 add_subdirectory(vim-open)
 
 add_executable(unit-tests
@@ -20,8 +22,8 @@ add_executable(unit-tests
   dirname.c
   ../../clink/src/dirname.c
   disppath.c
+  ../../clink/src/cwd.c
   ../../clink/src/disppath.c
-  ../../clink/src/path.c
   is_root.c
   ../../clink/src/is_root.c
   join.c

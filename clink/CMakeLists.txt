@@ -1,6 +1,10 @@
 add_executable(clink
   src/build.c
   src/colour.c
+  src/compile_commands_close.c
+  src/compile_commands_find.c
+  src/compile_commands_open.c
+  src/cwd.c
   src/dirname.c
   src/disppath.c
   src/file_queue.c
@@ -28,6 +32,10 @@ set(CURSES_NEED_NCURSES True)
 find_package(Curses REQUIRED)
 target_include_directories(clink PRIVATE SYSTEM ${CURSES_INCLUDE_DIRS})
 target_link_libraries(clink PRIVATE ${CURSES_LIBRARIES})
+
+find_package(LIBCLANG REQUIRED)
+target_include_directories(clink PRIVATE SYSTEM ${LIBCLANG_INCLUDE_DIRS})
+target_link_libraries(clink PRIVATE ${LIBCLANG_LIBRARIES})
 
 find_package(SQLite3 REQUIRED)
 target_include_directories(clink PRIVATE SYSTEM ${SQLite3_INCLUDE_DIRS})

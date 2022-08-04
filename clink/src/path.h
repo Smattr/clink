@@ -80,6 +80,13 @@ bool is_file(const char *path);
  */
 bool is_root(const char *path);
 
+/** is this a source language we recognise?
+ *
+ * \param path Path to assess
+ * \returns True if this is a file of an enabled source language
+ */
+bool is_source(const char *path);
+
 /** concatenate two paths
  *
  * \param branch Start of the new path

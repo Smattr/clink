@@ -1,25 +1,11 @@
 #include "path.h"
+#include "option.h"
 #include <ctype.h>
-#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
-
-int cwd(char **wd) {
-
-  if (wd == NULL)
-    return EINVAL;
-
-  char *w = getcwd(NULL, 0);
-  if (w == NULL)
-    return errno;
-
-  *wd = w;
-  return 0;
-}
 
 /// does this path have the given file extension?
 static bool has_ext(const char *path, const char *ext) {
@@ -44,7 +30,8 @@ bool is_c(const char *path) { return has_ext(path, "c") || has_ext(path, "h"); }
 
 bool is_cxx(const char *path) {
   return has_ext(path, "c++") || has_ext(path, "cpp") || has_ext(path, "cxx") ||
-         has_ext(path, "cc") || has_ext(path, "h") || has_ext(path, "hpp");
+         has_ext(path, "cc") || has_ext(path, "h") || has_ext(path, "hh") ||
+         has_ext(path, "hpp");
 }
 
 bool is_def(const char *path) { return has_ext(path, "def"); }
@@ -71,4 +58,24 @@ bool is_file(const char *path) {
     return false;
 
   return S_ISREG(buf.st_mode);
+}
+
+bool is_source(const char *path) {
+
+  if (path == NULL)
+    return false;
+
+  if (is_asm(path) && option.parse_asm != OFF)
+    return true;
+
+  if (is_def(path) && option.parse_def != OFF)
+    return true;
+
+  if (is_c(path) && option.parse_c != OFF)
+    return true;
+
+  if (is_cxx(path) && option.parse_cxx != OFF)
+    return true;
+
+  return false;
 }

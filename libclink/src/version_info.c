@@ -1,3 +1,4 @@
+#include <clang-c/Index.h>
 #include <clink/version.h>
 #include <stdbool.h>
 
@@ -9,5 +10,7 @@ clink_version_info_t clink_version_info(void) {
 #ifdef __OPTIMIZE__
   version.with_optimisations = true;
 #endif
+  version.libclang_major_version = CINDEX_VERSION_MAJOR;
+  version.libclang_minor_version = CINDEX_VERSION_MINOR;
   return version;
 }

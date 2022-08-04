@@ -1,24 +1,22 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include "option.h"
 #include <errno.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-
-extern FILE *clink_debug INTERNAL;
 
 /// emit a debug message
 #define DEBUG(args...)                                                         \
   do {                                                                         \
-    if (UNLIKELY(clink_debug != NULL)) {                                       \
+    if (UNLIKELY(option.debug)) {                                              \
       const char *name_ = strrchr(__FILE__, '/');                              \
-      flockfile(clink_debug);                                                  \
-      fprintf(clink_debug, "[CLINK] libclink/src%s:%d: ", name_, __LINE__);    \
-      fprintf(clink_debug, args);                                              \
-      fprintf(clink_debug, "\n");                                              \
-      funlockfile(clink_debug);                                                \
+      flockfile(stderr);                                                       \
+      fprintf(stderr, "[CLINK] clink/src%s:%d: ", name_, __LINE__);            \
+      fprintf(stderr, args);                                                   \
+      fprintf(stderr, "\n");                                                   \
+      funlockfile(stderr);                                                     \
     }                                                                          \
   } while (0)
 

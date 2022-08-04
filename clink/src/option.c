@@ -1,10 +1,14 @@
 #include "option.h"
+#include "../../common/compiler.h"
+#include "compile_commands.h"
+#include "debug.h"
 #include "path.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +25,13 @@ option_t option = {
     .colour = AUTO,
     .debug = false,
     .highlighting = BEHAVIOUR_AUTO,
+    .parse_asm = GENERIC,
+    .parse_c = CLANG,
+    .parse_cxx = CLANG,
+    .parse_def = GENERIC,
+    .clang_argc = 0,
+    .clang_argv = NULL,
+    .compile_commands = {0},
 };
 
 int set_db_path(void) {
@@ -134,6 +145,109 @@ done:
   return rc;
 }
 
+int set_clang_flags(void) {
+
+  int rc = 0;
+
+  // retrieve the default include paths to specify as system directories
+  char **system = NULL;
+  size_t system_len = 0;
+  if (UNLIKELY((rc = clink_compiler_includes(NULL, &system, &system_len))))
+    return rc;
+
+  // ensure calculating the allocation below will not overflow
+  if (UNLIKELY(SIZE_MAX / 2 - 2 < system_len))
+    return EOVERFLOW;
+
+  // allocate space for the system directories with a prefix
+  assert(option.clang_argv == NULL && "setting up Clang arguments twice");
+  size_t argc = 2 * system_len + 1;
+  char **argv = calloc(argc + 1, sizeof(argv[0]));
+  if (UNLIKELY(argv == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
+  // name the compiler itself to satisfy libclang
+  argv[0] = strdup("clang");
+  if (UNLIKELY(argv[0] == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
+  // copy in the system paths, taking ownership
+  for (size_t i = 0; i < system_len; ++i) {
+    argv[1 + i * 2] = strdup("-isystem");
+    if (UNLIKELY(argv[1 + i * 2] == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+    argv[1 + i * 2 + 1] = system[i];
+    system[i] = NULL;
+  }
+
+done:
+  if (rc) {
+    for (size_t i = 0; i < argc; ++i)
+      free(argv[i]);
+    free(argv);
+  } else {
+    option.clang_argc = argc;
+    option.clang_argv = argv;
+  }
+  for (size_t i = 0; i < system_len; ++i)
+    free(system[i]);
+  free(system);
+
+  return rc;
+}
+
+int set_compile_commands(void) {
+
+  assert(option.database_path != NULL);
+
+  // if the user has manually set compile command, we are done
+  if (option.compile_commands.db != NULL)
+    return 0;
+
+  int rc = 0;
+  char *dir = NULL;
+  char *joined = NULL;
+
+  // obtain the directory containing our database
+  rc = dirname(option.database_path, &dir);
+  if (rc != 0)
+    goto done;
+
+  // see if there is a usable compile_commands.json here
+  {
+    int r = compile_commands_open(&option.compile_commands, dir);
+    if (r == 0)
+      goto done;
+    DEBUG("failed to open %s/compile_commands.json", dir);
+  }
+
+  // try a build subdirectory
+  rc = join(dir, "build", &joined);
+  if (rc != 0)
+    goto done;
+  {
+    int r = compile_commands_open(&option.compile_commands, joined);
+    if (r == 0)
+      goto done;
+    DEBUG("failed to open %s/compile_commands.json", joined);
+  }
+
+  // nothing usable found
+  rc = ENOMSG;
+
+done:
+  free(joined);
+  free(dir);
+
+  return rc;
+}
+
 void clean_up_options(void) {
 
   free(option.database_path);
@@ -144,4 +258,13 @@ void clean_up_options(void) {
   free(option.src);
   option.src = NULL;
   option.src_len = 0;
+
+  for (size_t i = 0; i < option.clang_argc; ++i)
+    free(option.clang_argv[i]);
+  free(option.clang_argv);
+  option.clang_argv = NULL;
+  option.clang_argc = 0;
+
+  if (option.compile_commands.db != 0)
+    compile_commands_close(&option.compile_commands);
 }

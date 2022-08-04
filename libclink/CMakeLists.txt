@@ -3,6 +3,7 @@ project(libclink LANGUAGES C)
 add_subdirectory(vimcat/libvimcat)
 
 add_library(libclink
+  src/compiler_includes.c
   src/db_add_line.c
   src/db_add_record.c
   src/db_add_symbol.c
@@ -25,6 +26,7 @@ add_library(libclink
   src/parse_generic.c
   src/parse_c.c
   src/parse_cxx.c
+  src/parse_with_clang.c
   src/re.c
   src/run.c
   src/sql.c
@@ -63,6 +65,10 @@ target_include_directories(libclink
 set_target_properties(libclink PROPERTIES PREFIX "")
 
 target_link_libraries(libclink PRIVATE libvimcat)
+
+find_package(LIBCLANG REQUIRED)
+target_include_directories(libclink PRIVATE SYSTEM ${LIBCLANG_INCLUDE_DIRS})
+target_link_libraries(libclink PRIVATE ${LIBCLANG_LIBRARIES})
 
 find_package(SQLite3 REQUIRED)
 target_include_directories(libclink PRIVATE SYSTEM ${SQLite3_INCLUDE_DIRS})

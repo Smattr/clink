@@ -20,6 +20,16 @@ are "always" (enable), "never" (disable), and "auto" (decide based on whether
 stdout is a TTY).
 .RE
 .PP
+\fB--compile-commands=\fR\fIDIR\fR, \fB--compile-commands-dir=\fR\fIDIR\fR
+.RS
+Set a location to a directory containing a compile commands database, as used by
+\fBclangd\fR. When using libclang to parse either C or C++
+(\fB--parse-c=clang\fR, \fB--parse-cxx=clang\fR), this database will be used to
+determine the flags your sources were built with. If this option is not given,
+a compile commands database will be looked for adjacent to your Clink database
+or in an adjacent \fBbuild\fR subdirectory.
+.RE
+.PP
 \fB-f\fR \fIFILE\fR, \fB--database=\fR\fIFILE\fR
 .RS
 Open or create the symbol database at path \fIFILE\fR. Without this option,
@@ -62,6 +72,37 @@ interactive use by a human.
 \fB-d\fR, \fB--no-build\fR
 .RS
 Do not update the database.
+.RE
+.PP
+\fB--parse-asm=\fR\fIMODE\fR
+.br
+\fB--parse-c=\fR\fIMODE\fR
+.br
+\fB--parse-cxx=\fR\fIMODE\fR
+.br
+\fB--parse-def=\fR\fIMODE\fR
+.RS
+Control which source code formats are considered for parsing and how they are
+parsed. The following table describes what source code format each of these
+options control and what values \fIMODE\fR can be.
+.PP
+.TS
+allbox center; l l l l .
+option	format	modes	default
+=
+\fB--parse-asm\fR	assembly code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB--parse-c\fR	C source code (.c, .h files)	\fBoff\fR, \fBclang\fR, \fBgeneric\fR	\fBclang\fR
+\fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBoff\fR, \fBclang\fR, \fBgeneric\fR	\fBclang\fR
+\fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+.TE
+The mode \fBgeneric\fR selects a parser that has limited semantic understanding
+and cannot infer things like complex definitions. But it can be useful when you
+do not have full compiler flags for your sources and so Clang cannot effectively
+parse them.
+.PP
+Note that the definition of C and C++ files overlap in the table above, .h files
+are considered both C and C++. If \fB--parse-c\fR and \fB--parse-cxx\fR are both
+set to non-\fBoff\fR modes, the \fB--parse-cxx\fR mode will apply to .h files.
 .RE
 .PP
 \fB-s\fR \fIMODE\fR, \fB--syntax-highlighting=\fR\fIMODE\fR

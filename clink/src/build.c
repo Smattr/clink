@@ -1,5 +1,6 @@
 #include "build.h"
 #include "../../common/compiler.h"
+#include "compile_commands.h"
 #include "file_queue.h"
 #include "option.h"
 #include "path.h"
@@ -190,14 +191,68 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       progress(thread_id, "parsing asm file %s", display);
       rc = clink_parse_asm(db, path);
 
-      // C++
-    } else if (is_cxx(path)) {
-      progress(thread_id, "parsing C++ file %s", display);
+      // C++ with libclang
+    } else if (is_cxx(path) && option.parse_cxx == CLANG) {
+      progress(thread_id, "Clang-parsing C++ file %s", display);
+
+      // if we have a compile commands database, use it
+      if (option.compile_commands.db != NULL) {
+        do {
+          size_t argc = 0;
+          char **argv = NULL;
+          rc = compile_commands_find(&option.compile_commands, path, &argc,
+                                     &argv);
+          if (UNLIKELY(rc != 0))
+            break;
+          const char **av = (const char **)argv;
+          rc = clink_parse_with_clang(db, path, argc, av);
+
+          for (size_t i = 0; i < argc; ++i)
+            free(argv[i]);
+          free(argv);
+        } while (0);
+
+      } else {
+        assert(option.clang_argc > 0 && option.clang_argv != NULL);
+        const char **argv = (const char **)option.clang_argv;
+        rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
+      }
+
+      // C++ with generic parser
+    } else if (is_cxx(path) && option.parse_cxx == GENERIC) {
+      progress(thread_id, "generic-parsing C++ file %s", display);
       rc = clink_parse_cxx(db, path);
 
-      // C
-    } else if (is_c(path)) {
-      progress(thread_id, "parsing C file %s", display);
+      // C with libclang
+    } else if (is_c(path) && option.parse_c == CLANG) {
+      progress(thread_id, "Clang-parsing C file %s", display);
+
+      // if we have a compile commands database, use it
+      if (option.compile_commands.db != NULL) {
+        do {
+          size_t argc = 0;
+          char **argv = NULL;
+          rc = compile_commands_find(&option.compile_commands, path, &argc,
+                                     &argv);
+          if (UNLIKELY(rc != 0))
+            break;
+          const char **av = (const char **)argv;
+          rc = clink_parse_with_clang(db, path, argc, av);
+
+          for (size_t i = 0; i < argc; ++i)
+            free(argv[i]);
+          free(argv);
+        } while (0);
+
+      } else {
+        assert(option.clang_argc > 0 && option.clang_argv != NULL);
+        const char **argv = (const char **)option.clang_argv;
+        rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
+      }
+
+      // C with generic parser
+    } else if (is_c(path) && option.parse_c == GENERIC) {
+      progress(thread_id, "generic-parsing C file %s", display);
       rc = clink_parse_c(db, path);
 
       // DEF

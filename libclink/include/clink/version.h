@@ -25,6 +25,10 @@ typedef struct {
                                    ///< assertions enabled?
   unsigned with_optimisations : 1; ///< was -O1 or higher compiler optimisation
                                    ///< used?
+  unsigned libclang_major_version; ///< major version number of libclang we were
+                                   ///< built against
+  unsigned libclang_minor_version; ///< minor version number of libclang we were
+                                   ///< built against
 } clink_version_info_t;
 
 /** return extended version information of this library
