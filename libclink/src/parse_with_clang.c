@@ -192,7 +192,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     break;
 
   default: // something irrelevant
-    return CXChildVisit_Continue;
+    return CXChildVisit_Recurse;
   }
 
   // retrieve the name of this thing
