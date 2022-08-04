@@ -7,8 +7,6 @@
 FILE *clink_debug;
 
 FILE *clink_set_debug(FILE *stream) {
-  (void)vimcat_set_debug(stream);
-
   FILE *old = clink_debug;
   clink_debug = stream;
   return old;
