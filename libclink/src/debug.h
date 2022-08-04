@@ -7,18 +7,18 @@
 #include <stdio.h>
 #include <string.h>
 
-extern FILE *debug INTERNAL;
+extern FILE *clink_debug INTERNAL;
 
 /// emit a debug message
 #define DEBUG(args...)                                                         \
   do {                                                                         \
-    if (UNLIKELY(debug != NULL)) {                                             \
+    if (UNLIKELY(clink_debug != NULL)) {                                       \
       const char *name_ = strrchr(__FILE__, '/');                              \
-      flockfile(debug);                                                        \
-      fprintf(debug, "[CLINK] libclink/src%s:%d: ", name_, __LINE__);          \
-      fprintf(debug, args);                                                    \
-      fprintf(debug, "\n");                                                    \
-      funlockfile(debug);                                                      \
+      flockfile(clink_debug);                                                  \
+      fprintf(clink_debug, "[CLINK] libclink/src%s:%d: ", name_, __LINE__);    \
+      fprintf(clink_debug, args);                                              \
+      fprintf(clink_debug, "\n");                                              \
+      funlockfile(clink_debug);                                                \
     }                                                                          \
   } while (0)
 
