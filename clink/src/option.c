@@ -1,6 +1,7 @@
 #include "option.h"
 #include "../../common/compiler.h"
 #include "compile_commands.h"
+#include "debug.h"
 #include "path.h"
 #include <assert.h>
 #include <clink/clink.h>
@@ -223,8 +224,7 @@ int set_compile_commands(void) {
     int r = compile_commands_open(&option.compile_commands, dir);
     if (r == 0)
       goto done;
-    if (option.debug)
-      fprintf(stderr, "failed to open %s/compile_commands.json\n", dir);
+    DEBUG("failed to open %s/compile_commands.json", dir);
   }
 
   // try a build subdirectory
@@ -235,8 +235,7 @@ int set_compile_commands(void) {
     int r = compile_commands_open(&option.compile_commands, joined);
     if (r == 0)
       goto done;
-    if (option.debug)
-      fprintf(stderr, "failed to open %s/compile_commands.json\n", joined);
+    DEBUG("failed to open %s/compile_commands.json", joined);
   }
 
   // nothing usable found
