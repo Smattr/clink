@@ -17,32 +17,23 @@ static void deinit(CXTranslationUnit tu, CXIndex index) {
   clang_disposeIndex(index);
 }
 
-// determine if this cursor is a definition
-static bool is_definition(CXCursor cursor) {
+// determine if this cursor can be a semantic parent of something else
+static bool is_parent(CXCursor cursor) {
   switch (clang_getCursorKind(cursor)) {
   case CXCursor_StructDecl:
   case CXCursor_UnionDecl:
   case CXCursor_ClassDecl:
   case CXCursor_EnumDecl:
-  case CXCursor_FieldDecl:
-  case CXCursor_EnumConstantDecl:
   case CXCursor_FunctionDecl:
-  case CXCursor_VarDecl:
-  case CXCursor_ParmDecl:
   case CXCursor_TypedefDecl:
   case CXCursor_CXXMethod:
   case CXCursor_Namespace:
   case CXCursor_Constructor:
   case CXCursor_Destructor:
   case CXCursor_ConversionFunction:
-  case CXCursor_TemplateTypeParameter:
-  case CXCursor_NonTypeTemplateParameter:
-  case CXCursor_TemplateTemplateParameter:
   case CXCursor_FunctionTemplate:
   case CXCursor_ClassTemplate:
   case CXCursor_ClassTemplatePartialSpecialization:
-  case CXCursor_NamespaceAlias:
-  case CXCursor_TypeAliasDecl:
   case CXCursor_MacroDefinition:
     return true;
   default:
@@ -96,7 +87,7 @@ static int visit_children(state_t *state, CXCursor cursor) {
   CXString text = {0};
 
   // if this node is a definition, it can serve as a semantic parent to children
-  if (is_definition(cursor)) {
+  if (is_parent(cursor)) {
 
     // extract its name
     text = clang_getCursorSpelling(cursor);
