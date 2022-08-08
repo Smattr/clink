@@ -20,17 +20,17 @@ add_executable(unit-tests
   db_remove.c
   db_remove_empty.c
   dirname.c
-  ../../clink/src/dirname.c
+  ../clink/src/dirname.c
   disppath.c
-  ../../clink/src/cwd.c
-  ../../clink/src/disppath.c
+  ../clink/src/cwd.c
+  ../clink/src/disppath.c
   is_root.c
-  ../../clink/src/is_root.c
+  ../clink/src/is_root.c
   join.c
-  ../../clink/src/join.c
+  ../clink/src/join.c
   run-echo.c
-  ../../libclink/src/get_environ.c
-  ../../libclink/src/run.c
+  ../libclink/src/get_environ.c
+  ../libclink/src/run.c
   run-touch.c
 )
 
