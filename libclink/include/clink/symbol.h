@@ -42,7 +42,7 @@ typedef struct {
  *
  * \param dst [out] Output copy on success
  * \param src Input symbol to copy
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_symbol_copy(clink_symbol_t *__restrict__ dst,
                                 const clink_symbol_t *__restrict__ src);

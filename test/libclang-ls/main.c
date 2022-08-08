@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 
   // create a Clang index
   static const int excludePCH = 0;
-  static const int displayDiagnostics = 0;
+  static const int displayDiagnostics = 1;
   CXIndex index = clang_createIndex(excludePCH, displayDiagnostics);
 
   // ask Clang to parse what the user gave us

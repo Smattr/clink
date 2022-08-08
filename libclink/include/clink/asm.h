@@ -40,7 +40,7 @@ extern "C" {
  *
  * \param db Database to insert into
  * \param filename Path to source file to parse
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_parse_asm(clink_db_t *db, const char *filename);
 

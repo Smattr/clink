@@ -7,7 +7,7 @@ typedef struct set set_t;
 /** create a new string set
  *
  * \param s [out] An initialised set on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 int set_new(set_t **s);
 
@@ -16,7 +16,7 @@ int set_new(set_t **s);
  * \param s Set to operate on
  * \param item [inout] String to add. On success or `EALREADY`, this points to
  *   the allocated copy of the string present in the set.
- * \returns 0 on success if the string was not already present in the set,
+ * \return 0 on success if the string was not already present in the set,
  *   `EALREADY` if the string was already in the set, or an errno on failure
  */
 int set_add(set_t *s, const char **item);

@@ -20,7 +20,7 @@ typedef struct clink_iter clink_iter_t;
  *
  * \param it The iterator structure to operate on
  * \param yielded [out] The next string in the iterator on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_iter_next_str(clink_iter_t *it, const char **yielded);
 
@@ -31,7 +31,7 @@ CLINK_API int clink_iter_next_str(clink_iter_t *it, const char **yielded);
  *
  * \param it The iterator structure to operate on
  * \param yielded [out] The next symbol in the iterator on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_iter_next_symbol(clink_iter_t *it,
                                      const clink_symbol_t **yielded);

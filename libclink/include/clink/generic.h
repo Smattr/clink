@@ -25,7 +25,7 @@ extern "C" {
  * \param defn_leaders A list of words that indicate the next symbol is a
  *   definition
  * \param defn_leaders_length The number of entries in `defn_leaders`
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_parse_generic(clink_db_t *db, const char *filename,
                                   const char **keywords, size_t keywords_length,

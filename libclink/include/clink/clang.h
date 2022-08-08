@@ -13,7 +13,7 @@ extern "C" {
  * \param filename Path to source file to parse
  * \param argc Number of Clang command line arguments
  * \param argv Clang commang line arguments
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_parse_with_clang(clink_db_t *db, const char *filename,
                                      size_t argc, const char **argv);
