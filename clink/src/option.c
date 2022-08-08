@@ -222,8 +222,10 @@ int set_compile_commands(void) {
   // see if there is a usable compile_commands.json here
   {
     int r = compile_commands_open(&option.compile_commands, dir);
-    if (r == 0)
+    if (r == 0) {
+      DEBUG("using %s/compile_commands.json compilation database", dir);
       goto done;
+    }
     DEBUG("failed to open %s/compile_commands.json", dir);
   }
 
@@ -233,8 +235,10 @@ int set_compile_commands(void) {
     goto done;
   {
     int r = compile_commands_open(&option.compile_commands, joined);
-    if (r == 0)
+    if (r == 0) {
+      DEBUG("using %s/compile_commands.json compilation database", joined);
       goto done;
+    }
     DEBUG("failed to open %s/compile_commands.json", joined);
   }
 
