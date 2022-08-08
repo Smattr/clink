@@ -9,7 +9,7 @@ typedef struct file_queue file_queue_t;
 /** create a new queue
  *
  * \param fq [out] Created queue on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 int file_queue_new(file_queue_t **fq);
 
@@ -17,7 +17,7 @@ int file_queue_new(file_queue_t **fq);
  *
  * \param fq Queue to operate on
  * \param path File or directory to add
- * \returns 0 on success if the string was added, EALREADY if the path had
+ * \return 0 on success if the string was added, EALREADY if the path had
  *   already been in the queue previously, or another errno on failure
  */
 int file_queue_push(file_queue_t *fq, const char *path);
@@ -25,7 +25,7 @@ int file_queue_push(file_queue_t *fq, const char *path);
 /** retrieve the number of elements in a queue
  *
  * \param fq Queue to inspect
- * \returns Number of elements in this queue
+ * \return Number of elements in this queue
  */
 size_t file_queue_size(const file_queue_t *fq);
 
@@ -33,7 +33,7 @@ size_t file_queue_size(const file_queue_t *fq);
  *
  * \param fq Queue to operate on
  * \param path [out] File that was popped
- * \returns 0 if an entry was popped, ENOMSG if the queue was empty, or an errno
+ * \return 0 if an entry was popped, ENOMSG if the queue was empty, or an errno
  *   on failure
  */
 int file_queue_pop(file_queue_t *fq, const char **path);

@@ -12,7 +12,7 @@
 
 /** configure Ncurses colour pairs for use later
  *
- * \returns 0 on success, non-zero on failure
+ * \return 0 on success, non-zero on failure
  */
 int init_ncurses_colours(void);
 
@@ -20,20 +20,20 @@ int init_ncurses_colours(void);
  *
  * \param s String to output
  * \param stream Stream to print to
- * \returns 0 on success
+ * \return 0 on success
  */
 int printf_bw(const char *s, FILE *stream);
 
 /** output a string using Ncurses, stripping ANSI codes
  *
  * \param s String to output
- * \returns 0 on success
+ * \return 0 on success
  */
 void printw_bw(const char *s);
 
 /** output a string using Ncurses, translating ANSI codes to Ncurses colours
  *
  * \param s String to output
- * \returns 0 on success
+ * \return 0 on success
  */
 void printw_colour(const char *s);

@@ -9,6 +9,6 @@
  * intended to be used by a human.
  *
  * \param db Database for searching
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 int line_ui(clink_db_t *db);

@@ -17,7 +17,7 @@ extern "C" {
  *
  * \param The stream to write debug messages to or `NULL` to suppress debugging
  *   output
- * \returns The previous stream set for debug messages
+ * \return The previous stream set for debug messages
  */
 CLINK_API FILE *clink_set_debug(FILE *stream);
 

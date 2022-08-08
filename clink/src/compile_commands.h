@@ -22,7 +22,7 @@ typedef struct {
  *
  * \param cc [out] Created handle on success
  * \param directory Path to a directory containing a compile_commands.json
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 int compile_commands_open(compile_commands_t *cc, const char *directory);
 

@@ -18,7 +18,7 @@ typedef struct clink_db clink_db_t;
  *
  * \param db [out] Handle to the opened database on success
  * \param path Path to the database file to open
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_open(clink_db_t **db, const char *path);
 
@@ -34,7 +34,7 @@ CLINK_API int clink_db_open(clink_db_t **db, const char *path);
  * \param path Path of the subject to store information about
  * \param hash Some hash digest of the subject
  * \param timestamp Last modification time of the subject
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_add_record(clink_db_t *db, const char *path,
                                   uint64_t hash, uint64_t timestamp);
@@ -43,7 +43,7 @@ CLINK_API int clink_db_add_record(clink_db_t *db, const char *path,
  *
  * \param db Database to operate on
  * \param symbol Symbol to add
- * \returns 0 on success or a SQLite error code on failure
+ * \return 0 on success or a SQLite error code on failure
  */
 CLINK_API int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol);
 
@@ -53,7 +53,7 @@ CLINK_API int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol);
  * \param path Path of the file this line came from
  * \param lineno Line number within the file this came from
  * \param line Content of the line itself
- * \returns 0 on success or a SQLite error code on failure
+ * \return 0 on success or a SQLite error code on failure
  */
 CLINK_API int clink_db_add_line(clink_db_t *db, const char *path,
                                 unsigned long lineno, const char *line);
@@ -70,7 +70,7 @@ CLINK_API void clink_db_remove(clink_db_t *db, const char *path);
  * \param db Database to search
  * \param name Symbol name of the containing function to lookup
  * \param it [out] Created symbol iterator on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_find_call(clink_db_t *db, const char *name,
                                  clink_iter_t **it);
@@ -80,7 +80,7 @@ CLINK_API int clink_db_find_call(clink_db_t *db, const char *name,
  * \param db Database to search
  * \param name Symbol name of the function being called to lookup
  * \param it [out] Created symbol iterator on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_find_caller(clink_db_t *db, const char *name,
                                    clink_iter_t **it);
@@ -90,7 +90,7 @@ CLINK_API int clink_db_find_caller(clink_db_t *db, const char *name,
  * \param db Database to search
  * \param name Symbol name of the definition to lookup
  * \param it [out] Created symbol iterator on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_find_definition(clink_db_t *db, const char *name,
                                        clink_iter_t **it);
@@ -100,7 +100,7 @@ CLINK_API int clink_db_find_definition(clink_db_t *db, const char *name,
  * \param db Database to search
  * \param name Filename to lookup
  * \param it [out] Created string iterator on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_find_file(clink_db_t *db, const char *name,
                                  clink_iter_t **it);
@@ -110,7 +110,7 @@ CLINK_API int clink_db_find_file(clink_db_t *db, const char *name,
  * \param db Database to search
  * \param name Filename of the function being #included
  * \param it [out] Created symbol iterator on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_find_includer(clink_db_t *db, const char *name,
                                      clink_iter_t **it);
@@ -124,7 +124,7 @@ CLINK_API int clink_db_find_includer(clink_db_t *db, const char *name,
  * \param path Path to subject to lookup
  * \param hash [out] Hash digest of the subject if a record was found
  * \param timestamp [out] Modification time of the subject if a record was found
- * \returns 0 if a record was found, ENOENT if no record was found, or another
+ * \return 0 if a record was found, ENOENT if no record was found, or another
  *   errno on failure
  */
 CLINK_API int clink_db_find_record(clink_db_t *db, const char *path,
@@ -135,7 +135,7 @@ CLINK_API int clink_db_find_record(clink_db_t *db, const char *path,
  * \param db Database to search
  * \param name Name of the symbol to lookup
  * \param it [out] Created symbol iterator on success
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *name,
                                    clink_iter_t **it);
@@ -146,7 +146,7 @@ CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *name,
  * \param path Path to file whose content to retrieve
  * \param lineno Line number of the line to retrieve
  * \param content [out] Highlighted line content on success
- * \returns 0 on success or an errno on failure.
+ * \return 0 on success or an errno on failure.
  */
 CLINK_API int clink_db_get_content(clink_db_t *db, const char *path,
                                    unsigned long lineno, char **content);

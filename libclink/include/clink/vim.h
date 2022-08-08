@@ -15,7 +15,7 @@ extern "C" {
  * \param filename File to open with Vim
  * \param lineno Line number to position cursor at within the file
  * \param colno Column number to position cursor at within the file
- * \returns Vim’s exit status
+ * \return Vim’s exit status
  */
 CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
                              unsigned long colno);
@@ -29,7 +29,7 @@ CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
  * \param filename Source file to read
  * \param callback Handler for highlighted lines
  * \param state State to pass as first parameter to the callback
- * \returns 0 on success, an errno on failure, or the last non-zero return from
+ * \return 0 on success, an errno on failure, or the last non-zero return from
  *   the caller’s callback if there was one
  */
 CLINK_API int clink_vim_read(const char *filename,
@@ -44,7 +44,7 @@ CLINK_API int clink_vim_read(const char *filename,
  *
  * \param db Database to insert into
  * \param filename Source file to read
- * \returns 0 on success or an errno on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_vim_read_into(clink_db_t *db, const char *filename);
 
