@@ -97,8 +97,10 @@ static int visit_children(state_t *state, CXCursor cursor) {
     bool ok_parent = ctext != NULL && strcmp(ctext, "") != 0;
 
     // save it for use
-    if (ok_parent)
+    if (ok_parent) {
       parent = ctext;
+      DEBUG("setting parent %s for recursion", parent);
+    }
   }
 
   // state for descendants of this cursor to see
@@ -183,6 +185,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     break;
 
   default: // something irrelevant
+    DEBUG("recursing past irrelevant cursor %d", (int)kind);
     return CXChildVisit_Recurse;
   }
 
@@ -214,6 +217,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   }
 
 done:
+  DEBUG("processed symbol %s, rc = %d", name == NULL ? "<unnamed>" : name, rc);
   clang_disposeString(text);
 
   // abort visitation if we have seen an error
@@ -222,8 +226,10 @@ done:
 
   // recurse into the children
   rc = visit_children(state, cursor);
-  if (rc)
+  if (rc) {
+    DEBUG("visiting children failed, rc = %d", rc);
     return CXChildVisit_Break;
+  }
 
   return CXChildVisit_Continue;
 }
