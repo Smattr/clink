@@ -197,20 +197,49 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
       // if we have a compile commands database, use it
       if (option.compile_commands.db != NULL) {
+
+        size_t argc = 0;
+        char **argv = NULL;
+        const char **av = NULL;
+
         do {
-          size_t argc = 0;
-          char **argv = NULL;
+
+          // get the compilation command for this source
           rc = compile_commands_find(&option.compile_commands, path, &argc,
                                      &argv);
           if (UNLIKELY(rc != 0))
             break;
-          const char **av = (const char **)argv;
-          rc = clink_parse_with_clang(db, path, argc, av);
+          assert(argc > 0);
 
-          for (size_t i = 0; i < argc; ++i)
-            free(argv[i]);
-          free(argv);
+          // create space to hold an argv[0] and the union of both flags
+          size_t ac = argc + option.clang_argc - 1;
+          assert(ac > 0);
+          av = calloc(ac, sizeof(av[0]));
+          if (UNLIKELY(av == NULL)) {
+            rc = ENOMEM;
+            break;
+          }
+
+          // insert the system includes prior to the rest of the options
+          // because, unlike the compiler, libclang does not know these itself
+          for (size_t i = 0; i < ac; ++i) {
+            if (i == 0) {
+              av[i] = argv[0];
+            } else if (i < option.clang_argc) {
+              av[i] = option.clang_argv[i];
+            } else {
+              av[i] = argv[i - option.clang_argc + 1];
+            }
+          }
+
+          rc = clink_parse_with_clang(db, path, ac, av);
+
         } while (0);
+
+        free(av);
+        for (size_t i = 0; i < argc; ++i)
+          free(argv[i]);
+        free(argv);
 
       } else {
         assert(option.clang_argc > 0 && option.clang_argv != NULL);
@@ -229,20 +258,49 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
       // if we have a compile commands database, use it
       if (option.compile_commands.db != NULL) {
+
+        size_t argc = 0;
+        char **argv = NULL;
+        const char **av = NULL;
+
         do {
-          size_t argc = 0;
-          char **argv = NULL;
+
+          // get the compilation command for this source
           rc = compile_commands_find(&option.compile_commands, path, &argc,
                                      &argv);
           if (UNLIKELY(rc != 0))
             break;
-          const char **av = (const char **)argv;
+          assert(argc > 0);
+
+          // create space to hold an argv[0] and the union of both flags
+          size_t ac = argc + option.clang_argc - 1;
+          assert(ac > 0);
+          av = calloc(ac, sizeof(av[0]));
+          if (UNLIKELY(av == NULL)) {
+            rc = ENOMEM;
+            break;
+          }
+
+          // insert the system includes prior to the rest of the options
+          // because, unlike the compiler, libclang does not know these itself
+          for (size_t i = 0; i < ac; ++i) {
+            if (i == 0) {
+              av[i] = argv[0];
+            } else if (i < option.clang_argc) {
+              av[i] = option.clang_argv[i];
+            } else {
+              av[i] = argv[i - option.clang_argc + 1];
+            }
+          }
+
           rc = clink_parse_with_clang(db, path, argc, av);
 
-          for (size_t i = 0; i < argc; ++i)
-            free(argv[i]);
-          free(argv);
         } while (0);
+
+        free(av);
+        for (size_t i = 0; i < argc; ++i)
+          free(argv[i]);
+        free(argv);
 
       } else {
         assert(option.clang_argc > 0 && option.clang_argv != NULL);
