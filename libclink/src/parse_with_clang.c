@@ -189,6 +189,8 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     return CXChildVisit_Recurse;
   }
 
+  CXString filename = {0};
+
   // retrieve the name of this thing
   CXString text = clang_getCursorSpelling(cursor);
   const char *name = clang_getCString(text);
@@ -207,17 +209,17 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     if (file == NULL)
       goto done;
 
-    CXString filename = clang_getFileName(file);
+    filename = clang_getFileName(file);
     const char *fname = clang_getCString(filename);
 
     // add this symbol to the database
     rc = add_symbol(state, category, name, fname, lineno, colno);
-
-    clang_disposeString(filename);
   }
 
 done:
   DEBUG("processed symbol %s, rc = %d", name == NULL ? "<unnamed>" : name, rc);
+  if (filename.data != NULL)
+    clang_disposeString(filename);
   clang_disposeString(text);
 
   // abort visitation if we have seen an error
