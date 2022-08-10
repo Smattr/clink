@@ -250,6 +250,56 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     } else {
       // add this symbol to the database
       rc = add_symbol(state, category, name, fname, lineno, colno);
+      if (ERROR(rc != 0))
+        goto done;
+
+      // see if we can parent any prior macro expansions
+      if (is_parent(cursor)) {
+
+        // what is the start and end of this function etc?
+        CXSourceRange range = clang_getCursorExtent(cursor);
+        CXSourceLocation start = clang_getRangeStart(range);
+        CXSourceLocation end = clang_getRangeEnd(range);
+
+        // extract start into usable numbers
+        CXFile start_file = NULL;
+        unsigned start_lineno, start_colno;
+        clang_getSpellingLocation(start, &start_file, &start_lineno,
+                                  &start_colno, NULL);
+
+        // extract end into usable numbers
+        CXFile end_file = NULL;
+        unsigned end_lineno, end_colno;
+        clang_getSpellingLocation(end, &end_file, &end_lineno, &end_colno,
+                                  NULL);
+
+        // see which macros we can re-parent
+        for (size_t i = 0; i < st->macro_expansions_length; ++i) {
+          clink_symbol_t symbol = st->macro_expansions[i];
+          if (symbol.lineno < start_lineno)
+            continue;
+          if (symbol.lineno == start_lineno && symbol.colno < start_colno)
+            continue;
+          if (symbol.lineno > end_lineno)
+            continue;
+          if (symbol.lineno == end_lineno && symbol.colno > end_colno)
+            continue;
+
+          symbol.parent = (char *)name;
+          symbol.path = (char *)fname;
+          rc = clink_db_add_symbol(st->db, &symbol);
+          if (ERROR(rc != 0))
+            goto done;
+
+          // remove this pending macro expansion
+          clink_symbol_clear(&st->macro_expansions[i]);
+          for (size_t j = i; j + 1 < st->macro_expansions_length; ++j)
+            st->macro_expansions[j] = st->macro_expansions[j + 1];
+          --st->macro_expansions_length;
+
+          --i;
+        }
+      }
     }
   }
 
