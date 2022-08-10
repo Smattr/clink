@@ -16,6 +16,44 @@
 
 static CXTranslationUnit tu;
 
+/// print a cursor and its position
+static void print(FILE *stream, CXCursor cursor) {
+
+  assert(stream != NULL);
+
+  // get the location of the cursor
+  CXSourceLocation loc = clang_getCursorLocation(cursor);
+  unsigned lineno, colno;
+  CXFile file = NULL;
+  clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
+  const char *filename = "<none>";
+  CXString filestr = {0};
+  if (file != NULL) {
+    filestr = clang_getFileName(file);
+    filename = clang_getCString(filestr);
+  }
+
+  // retrieve the type of this symbol
+  enum CXCursorKind kind = clang_getCursorKind(cursor);
+  CXString kindstr = clang_getCursorKindSpelling(kind);
+  assert(kindstr.data != NULL);
+  const char *kindcstr = clang_getCString(kindstr);
+  assert(kindcstr != NULL);
+
+  // retrieve the text of this node
+  CXString textstr = clang_getCursorSpelling(cursor);
+  assert(textstr.data != NULL);
+  const char *textcstr = clang_getCString(textstr);
+
+  fprintf(stream, "%s:%u:%u: %s with text «%s»", filename, lineno, colno,
+          kindcstr, textcstr);
+
+  clang_disposeString(textstr);
+  clang_disposeString(kindstr);
+  if (filestr.data != NULL)
+    clang_disposeString(filestr);
+}
+
 static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
                                      CXClientData state) {
 
@@ -25,44 +63,11 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   // we do not need any state
   (void)state;
 
-  CXString filestr = {0};
-  CXString kindstr = {0};
-  CXString textstr = {0};
-
-  // get the location of the cursor
-  CXSourceLocation loc = clang_getCursorLocation(cursor);
-  unsigned lineno, colno;
-  CXFile file = NULL;
-  clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
-  const char *filename = "<none>";
-  if (file != NULL) {
-    filestr = clang_getFileName(file);
-    filename = clang_getCString(filestr);
-  }
-
-  // retrieve the type of this symbol
-  enum CXCursorKind kind = clang_getCursorKind(cursor);
-  kindstr = clang_getCursorKindSpelling(kind);
-  assert(kindstr.data != NULL);
-  const char *kindcstr = clang_getCString(kindstr);
-  assert(kindcstr != NULL);
-
-  // retrieve the text of this node
-  textstr = clang_getCursorSpelling(cursor);
-  assert(textstr.data != NULL);
-  const char *textcstr = clang_getCString(textstr);
-
-  printf("%s:%u:%u: %s with text «%s»\n", filename, lineno, colno, kindcstr,
-         textcstr);
-
-  if (textstr.data != NULL)
-    clang_disposeString(textstr);
-  if (kindstr.data != NULL)
-    clang_disposeString(kindstr);
-  if (filestr.data != NULL)
-    clang_disposeString(filestr);
+  print(stdout, cursor);
+  printf("\n");
 
   // if this is a macro expansion, tokenise its contained content
+  enum CXCursorKind kind = clang_getCursorKind(cursor);
   if (kind == CXCursor_MacroExpansion) {
 
     CXSourceRange range = clang_getCursorExtent(cursor);
@@ -72,10 +77,12 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
 
     for (unsigned i = 0; i < tokens_len; ++i) {
 
-      loc = clang_getTokenLocation(tu, tokens[i]);
-      file = NULL;
+      CXSourceLocation loc = clang_getTokenLocation(tu, tokens[i]);
+      CXFile file = NULL;
+      unsigned lineno, colno;
       clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
-      filename = "<none>";
+      const char *filename = "<none>";
+      CXString filestr = {0};
       if (file != NULL) {
         filestr = clang_getFileName(file);
         filename = clang_getCString(filestr);

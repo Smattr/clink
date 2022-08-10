@@ -51,6 +51,10 @@ typedef struct {
   /// named parent of the current context during traversal
   const char *current_parent;
 
+  /// macro expansions we have seen but postponed defining
+  clink_symbol_t *macro_expansions;
+  size_t macro_expansions_length;
+
   /// status of our Clang traversal (0 OK, non-zero on error)
   int rc;
 
@@ -189,6 +193,8 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     return CXChildVisit_Recurse;
   }
 
+  CXString filename = {0};
+
   // retrieve the name of this thing
   CXString text = clang_getCursorSpelling(cursor);
   const char *name = clang_getCString(text);
@@ -207,17 +213,100 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     if (file == NULL)
       goto done;
 
-    CXString filename = clang_getFileName(file);
+    filename = clang_getFileName(file);
     const char *fname = clang_getCString(filename);
 
-    // add this symbol to the database
-    rc = add_symbol(state, category, name, fname, lineno, colno);
+    // Macro expansions are typically discovered in the first phase,
+    // preprocessing when we have no known parent. So if we are in that
+    // situation, save the information for this symbol and we will recover it
+    // later when we come across its parent.
+    state_t *st = state;
+    if (kind == CXCursor_MacroExpansion && st->current_parent == NULL) {
 
-    clang_disposeString(filename);
+      // construct a partially populated symbol
+      clink_symbol_t symbol = {.category = category,
+                               .name = strdup(name),
+                               .lineno = lineno,
+                               .colno = colno};
+      if (ERROR(symbol.name == NULL)) {
+        rc = ENOMEM;
+        goto done;
+      }
+
+      // expand our collection of accrued macro expansions
+      size_t len = st->macro_expansions_length + 1;
+      clink_symbol_t *macros =
+          realloc(st->macro_expansions, len * sizeof(macros[0]));
+      if (ERROR(macros == NULL)) {
+        clink_symbol_clear(&symbol);
+        rc = ENOMEM;
+        goto done;
+      }
+
+      macros[len - 1] = symbol;
+      st->macro_expansions = macros;
+      st->macro_expansions_length = len;
+
+    } else {
+      // add this symbol to the database
+      rc = add_symbol(state, category, name, fname, lineno, colno);
+      if (ERROR(rc != 0))
+        goto done;
+
+      // see if we can parent any prior macro expansions
+      if (is_parent(cursor)) {
+
+        // what is the start and end of this function etc?
+        CXSourceRange range = clang_getCursorExtent(cursor);
+        CXSourceLocation start = clang_getRangeStart(range);
+        CXSourceLocation end = clang_getRangeEnd(range);
+
+        // extract start into usable numbers
+        CXFile start_file = NULL;
+        unsigned start_lineno, start_colno;
+        clang_getSpellingLocation(start, &start_file, &start_lineno,
+                                  &start_colno, NULL);
+
+        // extract end into usable numbers
+        CXFile end_file = NULL;
+        unsigned end_lineno, end_colno;
+        clang_getSpellingLocation(end, &end_file, &end_lineno, &end_colno,
+                                  NULL);
+
+        // see which macros we can re-parent
+        for (size_t i = 0; i < st->macro_expansions_length; ++i) {
+          clink_symbol_t symbol = st->macro_expansions[i];
+          if (symbol.lineno < start_lineno)
+            continue;
+          if (symbol.lineno == start_lineno && symbol.colno < start_colno)
+            continue;
+          if (symbol.lineno > end_lineno)
+            continue;
+          if (symbol.lineno == end_lineno && symbol.colno > end_colno)
+            continue;
+
+          symbol.parent = (char *)name;
+          symbol.path = (char *)fname;
+          rc = clink_db_add_symbol(st->db, &symbol);
+          if (ERROR(rc != 0))
+            goto done;
+
+          // remove this pending macro expansion
+          clink_symbol_clear(&st->macro_expansions[i]);
+          for (size_t j = i; j + 1 < st->macro_expansions_length; ++j)
+            st->macro_expansions[j] = st->macro_expansions[j + 1];
+          --st->macro_expansions_length;
+
+          --i;
+        }
+      }
+    }
   }
 
 done:
   DEBUG("processed symbol %s, rc = %d", name == NULL ? "<unnamed>" : name, rc);
+  if (filename.data != NULL)
+    clang_disposeString(filename);
   clang_disposeString(text);
 
   // abort visitation if we have seen an error
@@ -320,8 +409,23 @@ int clink_parse_with_clang(clink_db_t *db, const char *filename, size_t argc,
   // traverse from the root node
   (void)clang_visitChildren(root, visit, &state);
   rc = state.rc;
+  if (rc != 0)
+    goto done;
+
+  // process any unparented macro expansions
+  for (size_t i = 0; i < state.macro_expansions_length; ++i) {
+    clink_symbol_t s = state.macro_expansions[i];
+    s.path = (char *)filename;
+    rc = clink_db_add_symbol(db, &s);
+    if (ERROR(rc != 0))
+      goto done;
+  }
 
 done:
+  for (size_t i = 0; i < state.macro_expansions_length; ++i)
+    clink_symbol_clear(&state.macro_expansions[i]);
+  free(state.macro_expansions);
+
   deinit(tu, index);
 
   return rc;
