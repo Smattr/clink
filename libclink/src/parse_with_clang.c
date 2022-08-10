@@ -51,6 +51,10 @@ typedef struct {
   /// named parent of the current context during traversal
   const char *current_parent;
 
+  /// macro expansions we have seen but postponed defining
+  clink_symbol_t *macro_expansions;
+  size_t macro_expansions_length;
+
   /// status of our Clang traversal (0 OK, non-zero on error)
   int rc;
 
@@ -212,8 +216,41 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     filename = clang_getFileName(file);
     const char *fname = clang_getCString(filename);
 
-    // add this symbol to the database
-    rc = add_symbol(state, category, name, fname, lineno, colno);
+    // Macro expansions are typically discovered in the first phase,
+    // preprocessing when we have no known parent. So if we are in that
+    // situation, save the information for this symbol and we will recover it
+    // later when we come across its parent.
+    state_t *st = state;
+    if (kind == CXCursor_MacroExpansion && st->current_parent == NULL) {
+
+      // construct a partially populated symbol
+      clink_symbol_t symbol = {.category = category,
+                               .name = strdup(name),
+                               .lineno = lineno,
+                               .colno = colno};
+      if (ERROR(symbol.name == NULL)) {
+        rc = ENOMEM;
+        goto done;
+      }
+
+      // expand our collection of accrued macro expansions
+      size_t len = st->macro_expansions_length + 1;
+      clink_symbol_t *macros =
+          realloc(st->macro_expansions, len * sizeof(macros[0]));
+      if (ERROR(macros == NULL)) {
+        clink_symbol_clear(&symbol);
+        rc = ENOMEM;
+        goto done;
+      }
+
+      macros[len - 1] = symbol;
+      st->macro_expansions = macros;
+      st->macro_expansions_length = len;
+
+    } else {
+      // add this symbol to the database
+      rc = add_symbol(state, category, name, fname, lineno, colno);
+    }
   }
 
 done:
@@ -322,8 +359,23 @@ int clink_parse_with_clang(clink_db_t *db, const char *filename, size_t argc,
   // traverse from the root node
   (void)clang_visitChildren(root, visit, &state);
   rc = state.rc;
+  if (rc != 0)
+    goto done;
+
+  // process any unparented macro expansions
+  for (size_t i = 0; i < state.macro_expansions_length; ++i) {
+    clink_symbol_t s = state.macro_expansions[i];
+    s.path = (char *)filename;
+    rc = clink_db_add_symbol(db, &s);
+    if (ERROR(rc != 0))
+      goto done;
+  }
 
 done:
+  for (size_t i = 0; i < state.macro_expansions_length; ++i)
+    clink_symbol_clear(&state.macro_expansions[i]);
+  free(state.macro_expansions);
+
   deinit(tu, index);
 
   return rc;
