@@ -66,9 +66,9 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   print(stdout, cursor);
   printf("\n");
 
-  // if this is a macro expansion, tokenise its contained content
+  // if this is a macro, tokenise its contained content
   enum CXCursorKind kind = clang_getCursorKind(cursor);
-  if (kind == CXCursor_MacroExpansion) {
+  if (kind == CXCursor_MacroDefinition || kind == CXCursor_MacroExpansion) {
 
     CXSourceRange range = clang_getCursorExtent(cursor);
     CXToken *tokens = NULL;
