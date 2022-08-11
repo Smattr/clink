@@ -77,6 +77,97 @@ static int add_symbol(state_t *state, clink_category_t category,
   return state->rc;
 }
 
+/** add all tokens within the given cursor as references
+ *
+ * This is useful for processing a region of the source file Clang has no
+ * semantic understanding of. The prime example is a macro definition. The
+ * contents of something like this may have some inferred meaning to a human
+ * reader, but have no exact meaning to the compiler except as interpreted at a
+ * macro expansion site.
+ *
+ * This function filters out only identifiers, as punctuation, comments, etc are
+ * not relevant.
+ *
+ * \param db Database to insert into
+ * \param path Originating ource file path
+ * \param parent Name of semantic parent, can be `NULL`
+ * \param cursor Cursor to tokenize
+ * \return 0 on success or an errno on failure
+ */
+static int add_tokens(clink_db_t *db, const char *path, const char *parent,
+                      CXCursor cursor) {
+
+  assert(db != NULL);
+  assert(path != NULL);
+
+  CXTranslationUnit tu = clang_Cursor_getTranslationUnit(cursor);
+
+  int rc = 0;
+
+  // find all the tokens covered by this cursor
+  CXSourceRange range = clang_getCursorExtent(cursor);
+  CXToken *tokens = NULL;
+  unsigned tokens_len = 0;
+  clang_tokenize(tu, range, &tokens, &tokens_len);
+
+  for (unsigned i = 0; i < tokens_len; ++i) {
+
+    // we expect the first token to be the parent itself, so skip it
+    if (i == 0) {
+#ifndef NDEBUG
+      {
+        // retrieve the name of the parent
+        CXString name = clang_getCursorSpelling(cursor);
+        const char *namecstr = clang_getCString(name);
+
+        // get the text of this token
+        CXString text = clang_getTokenSpelling(tu, tokens[i]);
+        const char *textcstr = clang_getCString(text);
+
+        assert(strcmp(namecstr, textcstr) == 0 &&
+               "first token is not parent’s name");
+
+        clang_disposeString(text);
+        clang_disposeString(name);
+      }
+#endif
+      continue;
+    }
+
+    // skip anything that is not an identifier
+    CXTokenKind kind = clang_getTokenKind(tokens[i]);
+    if (kind != CXToken_Identifier)
+      continue;
+
+    // get the position of this token
+    CXSourceLocation loc = clang_getTokenLocation(tu, tokens[i]);
+    unsigned lineno, colno;
+    clang_getSpellingLocation(loc, NULL, &lineno, &colno, NULL);
+
+    // get the text of this token
+    CXString text = clang_getTokenSpelling(tu, tokens[i]);
+    const char *textcstr = clang_getCString(text);
+
+    clink_symbol_t symbol = {.category = CLINK_REFERENCE,
+                             .name = (char *)textcstr,
+                             .path = (char *)path,
+                             .lineno = lineno,
+                             .colno = colno,
+                             .parent = (char *)parent};
+    rc = clink_db_add_symbol(db, &symbol);
+
+    clang_disposeString(text);
+
+    if (ERROR(rc != 0))
+      goto done;
+  }
+
+done:
+  clang_disposeTokens(tu, tokens, tokens_len);
+
+  return rc;
+}
+
 static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
                                      CXClientData data);
 
@@ -299,6 +390,16 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
 
           --i;
         }
+      }
+
+      // If this is a macro definition, it will have been discovered in the
+      // initial preprocessing phase. We get no semantic information about its
+      // “children” because they are just lexical tokens. So tokenize it and
+      // treat each seen identifier as a reference.
+      if (kind == CXCursor_MacroDefinition) {
+        rc = add_tokens(st->db, fname, name, cursor);
+        if (ERROR(rc != 0))
+          goto done;
       }
     }
   }
