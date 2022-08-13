@@ -1,16 +1,13 @@
 #include "add_symbol.h"
 #include "debug.h"
 #include "isid.h"
+#include "mmap.h"
 #include "span.h"
 #include <clink/generic.h>
 #include <ctype.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 int clink_parse_generic(clink_db_t *db, const char *filename,
                         const char **keywords, size_t keywords_length,
@@ -29,32 +26,18 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
     return EINVAL;
 
   int rc = 0;
-  int f = -1;
-  size_t size = 0;
-  char *base = MAP_FAILED;
+  mmap_t mapped = {0};
 
-  f = open(filename, O_RDONLY);
-  if (ERROR(f < 0)) {
-    rc = errno;
+  rc = mmap_open(&mapped, filename);
+  if (ERROR(rc != 0))
     goto done;
-  }
-
-  struct stat st;
-  if (ERROR(fstat(f, &st) < 0)) {
-    rc = errno;
-    goto done;
-  }
-  size = (size_t)st.st_size;
 
   // if this is a zero-sized file, nothing to be done
-  if (st.st_size == 0)
+  if (mapped.size == 0)
     goto done;
 
-  base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, f, 0);
-  if (ERROR(base == MAP_FAILED)) {
-    rc = errno;
-    goto done;
-  }
+  const char *base = mapped.base;
+  size_t size = mapped.size;
 
   // a symbol we are accruing
   span_t pending = {0};
@@ -148,10 +131,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   }
 
 done:
-  if (base != MAP_FAILED)
-    (void)munmap(base, size);
-  if (f >= 0)
-    (void)close(f);
+  mmap_close(mapped);
 
   return rc;
 }
