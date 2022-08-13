@@ -21,14 +21,17 @@ add_library(libclink
   src/debug.c
   src/get_environ.c
   src/iter.c
+  src/mmap.c
   src/parse_asm.c
   src/parse_def.c
   src/parse_generic.c
   src/parse_c.c
+  src/parse_cpp.c
   src/parse_cxx.c
   src/parse_with_clang.c
   src/re.c
   src/run.c
+  src/scanner.c
   src/sql.c
   src/symbol.c
   src/version_info.c
