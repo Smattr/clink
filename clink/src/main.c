@@ -171,7 +171,7 @@ static void parse_args(int argc, char **argv) {
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_asm = OFF;
       } else {
-        fprintf(stderr, "illegaly value to --parse-asm: %s\n", optarg);
+        fprintf(stderr, "illegal value to --parse-asm: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
@@ -184,7 +184,7 @@ static void parse_args(int argc, char **argv) {
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_c = OFF;
       } else {
-        fprintf(stderr, "illegaly value to --parse-c: %s\n", optarg);
+        fprintf(stderr, "illegal value to --parse-c: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
@@ -197,7 +197,7 @@ static void parse_args(int argc, char **argv) {
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_cxx = OFF;
       } else {
-        fprintf(stderr, "illegaly value to --parse-cxx: %s\n", optarg);
+        fprintf(stderr, "illegal value to --parse-cxx: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
@@ -208,7 +208,7 @@ static void parse_args(int argc, char **argv) {
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_def = OFF;
       } else {
-        fprintf(stderr, "illegaly value to --parse-def: %s\n", optarg);
+        fprintf(stderr, "illegal value to --parse-def: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
