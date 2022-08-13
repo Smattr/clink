@@ -29,6 +29,8 @@ typedef struct {
                                    ///< built against
   unsigned libclang_minor_version; ///< minor version number of libclang we were
                                    ///< built against
+  const char *llvm_version; ///< version of libclang-containing LLVM we were
+                            ///< built against
 } clink_version_info_t;
 
 /** return extended version information of this library

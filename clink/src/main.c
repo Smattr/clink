@@ -44,23 +44,33 @@ static void xappend(char ***list, size_t *len, const char *item) {
 static void parse_args(int argc, char **argv) {
 
   while (true) {
+    enum {
+      OPT_COLOUR = 128,
+      OPT_COMPILE_COMMANDS,
+      OPT_DEBUG,
+      OPT_PARSE_ASM,
+      OPT_PARSE_C,
+      OPT_PARSE_CXX,
+      OPT_PARSE_DEF,
+    };
+
     static const struct option opts[] = {
         // clang-format off
         {"build-only",           no_argument,       0, 'b'},
-        {"color",                required_argument, 0, 128},
-        {"colour",               required_argument, 0, 128},
-        {"compile-commands",     required_argument, 0, 129},
-        {"compile-commands-dir", required_argument, 0, 129},
+        {"color",                required_argument, 0, OPT_COLOUR},
+        {"colour",               required_argument, 0, OPT_COLOUR},
+        {"compile-commands",     required_argument, 0, OPT_COMPILE_COMMANDS},
+        {"compile-commands-dir", required_argument, 0, OPT_COMPILE_COMMANDS},
         {"database",             required_argument, 0, 'f'},
-        {"debug",                no_argument,       0, 130},
+        {"debug",                no_argument,       0, OPT_DEBUG},
         {"help",                 no_argument,       0, 'h'},
         {"jobs",                 required_argument, 0, 'j'},
         {"line-oriented",        no_argument,       0, 'l'},
         {"no-build",             no_argument,       0, 'd'},
-        {"parse-asm",            required_argument, 0, 131},
-        {"parse-c",              required_argument, 0, 132},
-        {"parse-cxx",            required_argument, 0, 133},
-        {"parse-def",            required_argument, 0, 134},
+        {"parse-asm",            required_argument, 0, OPT_PARSE_ASM},
+        {"parse-c",              required_argument, 0, OPT_PARSE_C},
+        {"parse-cxx",            required_argument, 0, OPT_PARSE_CXX},
+        {"parse-def",            required_argument, 0, OPT_PARSE_DEF},
         {"syntax-highlighting",  required_argument, 0, 's'},
         {"version",              no_argument,       0, 'V'},
         {0, 0, 0, 0},
@@ -125,7 +135,7 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
-    case 128: // --colour
+    case OPT_COLOUR: // --colour
       if (strcmp(optarg, "auto") == 0) {
         option.colour = AUTO;
       } else if (strcmp(optarg, "always") == 0) {
@@ -138,7 +148,7 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
-    case 129: { // --compile-commands
+    case OPT_COMPILE_COMMANDS: { // --compile-commands
       if (option.compile_commands.db != NULL)
         compile_commands_close(&option.compile_commands);
       int rc = compile_commands_open(&option.compile_commands, optarg);
@@ -150,23 +160,23 @@ static void parse_args(int argc, char **argv) {
       break;
     }
 
-    case 130: // --debug
+    case OPT_DEBUG: // --debug
       option.debug = true;
       clink_debug_on();
       break;
 
-    case 131: // --parse-asm
+    case OPT_PARSE_ASM: // --parse-asm
       if (strcmp(optarg, "generic") == 0) {
         option.parse_asm = GENERIC;
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_asm = OFF;
       } else {
-        fprintf(stderr, "illegaly value to --parse-asm: %s\n", optarg);
+        fprintf(stderr, "illegal value to --parse-asm: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
 
-    case 132: // --parse-c
+    case OPT_PARSE_C: // --parse-c
       if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
       } else if (strcmp(optarg, "generic") == 0) {
@@ -174,12 +184,12 @@ static void parse_args(int argc, char **argv) {
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_c = OFF;
       } else {
-        fprintf(stderr, "illegaly value to --parse-c: %s\n", optarg);
+        fprintf(stderr, "illegal value to --parse-c: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
 
-    case 133: // --parse-cxx
+    case OPT_PARSE_CXX: // --parse-cxx
       if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
       } else if (strcmp(optarg, "generic") == 0) {
@@ -187,18 +197,18 @@ static void parse_args(int argc, char **argv) {
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_cxx = OFF;
       } else {
-        fprintf(stderr, "illegaly value to --parse-cxx: %s\n", optarg);
+        fprintf(stderr, "illegal value to --parse-cxx: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
 
-    case 134: // --parse-def
+    case OPT_PARSE_DEF: // --parse-def
       if (strcmp(optarg, "generic") == 0) {
         option.parse_def = GENERIC;
       } else if (strcmp(optarg, "off") == 0) {
         option.parse_def = OFF;
       } else {
-        fprintf(stderr, "illegaly value to --parse-def: %s\n", optarg);
+        fprintf(stderr, "illegal value to --parse-def: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
@@ -212,6 +222,7 @@ static void parse_args(int argc, char **argv) {
               version.with_optimisations ? "enabled" : "disabled");
       fprintf(stderr, " using libclang %u.%u\n", version.libclang_major_version,
               version.libclang_minor_version);
+      fprintf(stderr, " using LLVM %s\n", version.llvm_version);
       exit(EXIT_SUCCESS);
     }
 
