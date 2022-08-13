@@ -256,6 +256,11 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
       }
 
+      // parse with the preprocessor
+      if (rc == 0) {
+        rc = clink_parse_cpp(db, path);
+      }
+
       // C++ with generic parser
     } else if (is_cxx(path) && option.parse_cxx == GENERIC) {
       progress(thread_id, "generic-parsing C++ file %s", display);
@@ -273,6 +278,11 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         assert(option.clang_argc > 0 && option.clang_argv != NULL);
         const char **argv = (const char **)option.clang_argv;
         rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
+      }
+
+      // parse with the preprocessor
+      if (rc == 0) {
+        rc = clink_parse_cpp(db, path);
       }
 
       // C with generic parser

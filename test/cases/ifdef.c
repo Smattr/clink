@@ -8,8 +8,6 @@
 #elif QUUZ
 #endif
 
-// XFAIL: True
-
 // RUN: clink --build-only --database {%t} --debug {%s} >/dev/null
 
 // can we recognise a reference in an ifdef?
