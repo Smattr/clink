@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-/// state for a generialised lexical scanner
+/// state for a generalised lexical scanner
 typedef struct {
   const char *base;     ///< start of the input
   size_t size;          ///< number of bytes in the input

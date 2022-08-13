@@ -65,9 +65,12 @@ if(NOT VIM)
   return()
 endif()
 
+find_package(LIBCLANG REQUIRED)
+
 add_custom_target(check
   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/unit-tests
-  COMMAND env PATH=${CMAKE_BINARY_DIR}/clink:$ENV{PATH}
+  COMMAND env LLVM_VERSION=${LIBCLANG_LLVM_VERSION}
+    PATH=${CMAKE_BINARY_DIR}/clink:$ENV{PATH}
     ${Python3_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}/integration.py
     --verbose
 )
