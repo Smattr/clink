@@ -70,6 +70,8 @@ set_target_properties(libclink PROPERTIES PREFIX "")
 target_link_libraries(libclink PRIVATE libvimcat)
 
 find_package(LIBCLANG REQUIRED)
+target_compile_definitions(libclink
+  PRIVATE -DLLVM_VERSION="${LIBCLANG_LLVM_VERSION}")
 target_include_directories(libclink SYSTEM PRIVATE ${LIBCLANG_INCLUDE_DIRS})
 target_link_libraries(libclink PRIVATE ${LIBCLANG_LIBRARIES})
 
