@@ -30,6 +30,7 @@ add_library(libclink
   src/parse_with_clang.c
   src/re.c
   src/run.c
+  src/scanner.c
   src/sql.c
   src/symbol.c
   src/version_info.c
