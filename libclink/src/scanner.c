@@ -1,4 +1,5 @@
 #include "scanner.h"
+#include "isid.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
@@ -32,6 +33,38 @@ bool eat_eol(scanner_t *s) {
   }
 
   return false;
+}
+
+bool eat_id(scanner_t *s, const char *expected) {
+
+  assert(s->base != NULL && "corrupted scanner state");
+  assert(s->offset <= s->size && "corrupted scanner state");
+  assert(expected != NULL);
+  assert(strlen(expected) > 0);
+
+#ifndef NDEBUG
+  for (size_t i = 0; i < strlen(expected); ++i) {
+    if (i == 0) {
+      assert(isid0(expected[i]) &&
+             "non-identifier character in expected identifier");
+    } else {
+      assert(isid(expected[i]) &&
+             "non-identifier character in expected identifier");
+    }
+  }
+#endif
+
+  // speculatively advance the scanner over the expected text
+  scanner_t spec = *s;
+  if (!eat_if(&spec, expected))
+    return false;
+
+  // now we should be at the end of a word
+  if (spec.offset < spec.size && isid(spec.base[spec.offset]))
+    return false;
+
+  *s = spec;
+  return true;
 }
 
 bool eat_if(scanner_t *s, const char *expected) {

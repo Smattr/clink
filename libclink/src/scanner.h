@@ -16,6 +16,9 @@ typedef struct {
 /// advance and return true if the next character(s) are an end of line
 INTERNAL bool eat_eol(scanner_t *s);
 
+/// advance and return true if the expected identifier is next
+INTERNAL bool eat_id(scanner_t *s, const char *expected);
+
 /// advance and return true if the expected text is next
 INTERNAL bool eat_if(scanner_t *s, const char *expected);
 
