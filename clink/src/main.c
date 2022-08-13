@@ -222,6 +222,7 @@ static void parse_args(int argc, char **argv) {
               version.with_optimisations ? "enabled" : "disabled");
       fprintf(stderr, " using libclang %u.%u\n", version.libclang_major_version,
               version.libclang_minor_version);
+      fprintf(stderr, " using LLVM %s\n", version.llvm_version);
       exit(EXIT_SUCCESS);
     }
 
