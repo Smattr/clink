@@ -27,6 +27,21 @@ CLINK_API int clink_parse_c(clink_db_t *db, const char *filename);
  */
 CLINK_API int clink_parse_cxx(clink_db_t *db, const char *filename);
 
+/** parse the given source with a C preprocessor
+ *
+ * This implementation of the C preprocessor is extremely limited. It can only
+ * recognise `#if`, `#elif`, `#else`, `#ifdef`, `#ifndef`, and `#undef`. It is
+ * designed to process the directives that Libclang does not represent in its
+ * AST. That is, this is intended to be used in combination with
+ * `clink_parse_with_clang` to produce a more complete understanding of a source
+ * file.
+ *
+ * \param db Database to insert into
+ * \param filename Path to source file to parse
+ * \return 0 on success or an errno on failure
+ */
+CLINK_API int clink_parse_cpp(clink_db_t *db, const char *filename);
+
 /** get the built-in list of #include paths the compiler knows
  *
  * If you pass NULL as the compiler path, this will default to the environment
