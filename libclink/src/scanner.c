@@ -82,8 +82,14 @@ void eat_one(scanner_t *s) {
   if (eat_eol(s))
     return;
 
+  bool is_escape = s->base[s->offset] == '\\';
+
   ++s->colno;
   ++s->offset;
+
+  // handle escaped newlines such that the caller can remain oblivious
+  if (is_escape)
+    (void)eat_eol(s);
 }
 
 void eat_ws(scanner_t *s) {
