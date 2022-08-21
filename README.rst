@@ -33,14 +33,12 @@ Building Clink
 .. code-block:: sh
 
   # download Clink
-  git clone https://github.com/Smattr/clink
+  git clone --recurse-submodules https://github.com/Smattr/clink
   cd clink
 
   # configure and compile
-  mkdir build
-  cd build
-  cmake ..
-  cmake --build .
+  cmake -B build
+  cmake --build build
 
 Notes for devs
 --------------
