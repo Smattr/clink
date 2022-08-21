@@ -34,6 +34,8 @@ static int parse(clink_db_t *db, const char *filename, scanner_t s) {
       DEBUG("entering preprocessor state on line %lu", s.lineno);
       in_preproc = true;
     } while (0);
+    if (s.offset >= s.size)
+      break;
 
     // do we have a symbol?
     if (in_preproc && isid0(s.base[s.offset])) {
