@@ -109,13 +109,13 @@ void printw_colour(const char *s) {
   static const char UTF8_REPLACEMENT = '?';
 
   // a partial ANSI code we have parsed
-  unsigned code;
+  unsigned code = 0;
 
   // pending attributes that we have accrued while parsing
-  bool bold;
-  bool underline;
-  short fg;
-  short bg;
+  bool bold = false;
+  bool underline = false;
+  short fg = COLOR_WHITE;
+  short bg = COLOR_BLACK;
 
   for (; *s != '\0'; ++s) {
 
