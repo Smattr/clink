@@ -75,7 +75,8 @@ static void my_free(clink_iter_t *it) {
   if (it == NULL)
     return;
 
-  state_free((state_t **)&it->state);
+  state_t *s = it->state;
+  state_free(&s);
 }
 
 int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
