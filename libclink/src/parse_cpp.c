@@ -19,23 +19,23 @@ static int parse(clink_db_t *db, const char *filename, scanner_t s) {
   while (s.offset < s.size) {
 
     // can we enter preprocessor directive state?
-    if (!in_preproc) {
-      do {
-        if (s.colno != 1)
-          break;
-        eat_ws(&s);
-        if (!eat_if(&s, "#"))
-          break;
-        eat_ws_to_eol(&s);
-        if (!(eat_id(&s, "ifdef") || eat_id(&s, "if") || eat_id(&s, "elif") ||
-              eat_id(&s, "ifndef") || eat_id(&s, "undef")))
-          break;
-        DEBUG("entering preprocessor state on line %lu", s.lineno);
-        in_preproc = true;
-      } while (0);
+    do {
       if (in_preproc)
-        continue;
-    }
+        break;
+      if (s.colno != 1)
+        break;
+      eat_ws(&s);
+      if (!eat_if(&s, "#"))
+        break;
+      eat_ws_to_eol(&s);
+      if (!(eat_id(&s, "ifdef") || eat_id(&s, "if") || eat_id(&s, "elif") ||
+            eat_id(&s, "ifndef") || eat_id(&s, "undef")))
+        break;
+      DEBUG("entering preprocessor state on line %lu", s.lineno);
+      in_preproc = true;
+    } while (0);
+    if (s.offset >= s.size)
+      break;
 
     // do we have a symbol?
     if (in_preproc && isid0(s.base[s.offset])) {
