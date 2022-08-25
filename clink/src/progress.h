@@ -23,6 +23,15 @@ int progress_init(size_t count);
 __attribute__((format(printf, 2, 3))) void
 progress_status(unsigned long thread_id, const char *fmt, ...);
 
+/** show a warning on behalf of a thread
+ *
+ * \param thread_id Thread that experienced the warning
+ * \param fmt A printf-style format string describing the warning message
+ * \param ... Parameters to accompany the format string
+ */
+__attribute__((format(printf, 2, 3))) void
+progress_warn(unsigned long thread_id, const char *fmt, ...);
+
 /** show an error message on behalf of a thread
  *
  * \param thread_id Thread that experienced the error

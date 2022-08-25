@@ -66,6 +66,31 @@ static void update(unsigned long thread_id, char *line) {
   funlockfile(stdout);
 }
 
+/** reconstruct the progress output that may have been overwritten
+ *
+ * Assumes that we are either single-threaded or the caller has flockfile-d
+ * stdout.
+ */
+static void refresh(void) {
+  assert(status != NULL);
+
+  // if smart progress is disabled, also disable refresh
+  if (!smart_progress())
+    return;
+
+  // move up to the first line
+  printf("\033[%luA\033[K", option.threads + 1);
+
+  // reshow all the status lines
+  for (unsigned long i = 0; i < option.threads; ++i) {
+    assert(status[i] != NULL);
+    printf("%lu: %s\033[K\n", i, status[i]);
+  }
+
+  // reshow the progress
+  printf("%zu / %zu (0.00%%)\n", done, total);
+}
+
 void progress_status(unsigned long thread_id, const char *fmt, ...) {
 
   char *buffer = NULL;
@@ -79,6 +104,40 @@ void progress_status(unsigned long thread_id, const char *fmt, ...) {
   }
 
   update(thread_id, buffer);
+}
+
+void progress_warn(unsigned long thread_id, const char *fmt, ...) {
+
+  flockfile(stdout);
+
+  // move to the first line
+  if (smart_progress())
+    printf("\033[%luA\033[K", option.threads + 1);
+
+  // “warning: [thread <x>] ”
+  if (option.colour == ALWAYS)
+    printf("\033[33m");
+  printf("warning: ");
+  if (option.colour == ALWAYS)
+    printf("\033[0m");
+  if (option.debug)
+    printf("[thread %lu] ", thread_id);
+
+  // show the warning itself
+  va_list ap;
+  va_start(ap, fmt);
+  vprintf(fmt, ap);
+  va_end(ap);
+
+  // move down to compensate for the upcoming `refresh` call
+  if (smart_progress()) {
+    for (unsigned long i = 0; i < option.threads + 2; ++i)
+      printf("\n");
+  }
+
+  refresh();
+
+  funlockfile(stdout);
 }
 
 void progress_error(unsigned long thread_id, const char *fmt, ...) {
