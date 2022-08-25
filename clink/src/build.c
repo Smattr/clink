@@ -391,6 +391,13 @@ int build(clink_db_t *db) {
     goto done;
   }
 
+  // notify the user if we cannot leverage Clang fully
+  if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
+    if (option.compile_commands.db == NULL)
+      fprintf(stderr, "warning: a compile_commands.json database was not found "
+                      "so C/C++ parsing will not be fully accurate\n");
+  }
+
   progress_init(total_files);
 
   if (UNLIKELY((rc = option.threads > 1 ? mt_process(db, q)
