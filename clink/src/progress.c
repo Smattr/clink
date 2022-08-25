@@ -200,11 +200,7 @@ int progress_init(size_t count) {
   total = count;
 
   // set up progress output table
-  if (smart_progress()) {
-    for (unsigned long i = 0; i < option.threads; ++i)
-      printf("%lu:\n", i);
-    printf("%zu / %zu (0.00%%)\n", done, total);
-  }
+  refresh();
 
 done:
   if (rc != 0) {
