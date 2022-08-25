@@ -4,121 +4,26 @@
 #include "file_queue.h"
 #include "option.h"
 #include "path.h"
+#include "progress.h"
 #include "sigint.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
-#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
-
-/// Is stdout a tty? Initialised in build().
-static bool tty;
-
-/// total number of files we have to parse
-static size_t total_files;
-
-/// number of files we have completed parsing
-static size_t done_files;
-
-/// use ANSI codes to move the cursor around to generate smoother progress
-/// output?
-static bool smart_progress(void) {
-
-  // do not play ANSI tricks if we are debugging
-  if (UNLIKELY(option.debug))
-    return false;
-
-  // also do not do it if we are piped into something else
-  if (!tty)
-    return false;
-
-  // also not if we are using the line-oriented interface because we assume we
-  // are being called by Vim that does not expect this progress output
-  if (option.line_ui)
-    return false;
-
-  return true;
-}
-
-/// print progress indication
-__attribute__((format(printf, 2, 3))) static void
-progress(unsigned long thread_id, const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  flockfile(stdout);
-
-  // move up to this thread’s progress line
-  if (smart_progress())
-    printf("\033[%luA\033[K", option.threads - thread_id + 1);
-
-  printf("%lu: ", thread_id);
-  vprintf(fmt, ap);
-  printf("\n");
-
-  // move back to the bottom
-  if (smart_progress()) {
-    printf("\033[%luB", option.threads - thread_id);
-    fflush(stdout);
-  }
-
-  funlockfile(stdout);
-  va_end(ap);
-}
-
-/// print an error message
-__attribute__((format(printf, 2, 3))) static void error(unsigned long thread_id,
-                                                        const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  flockfile(stdout);
-  if (smart_progress())
-    printf("\033[%luA\033[K", option.threads - thread_id + 1);
-  printf("%lu: ", thread_id);
-  if (option.colour == ALWAYS)
-    printf("\033[31m"); // red
-  vprintf(fmt, ap);
-  if (option.colour == ALWAYS)
-    printf("\033[0m"); // reset
-  printf("\n");
-  if (smart_progress()) {
-    printf("\033[%luB", option.threads - thread_id);
-    fflush(stdout);
-  }
-  funlockfile(stdout);
-  va_end(ap);
-}
-
-/// increment the progress counter
-static void increment(void) {
-
-  flockfile(stdout);
-
-  // move up to the line the progress is on
-  if (smart_progress())
-    printf("\033[1A\033[K");
-
-  // print a progress update
-  ++done_files;
-  printf("%zu / %zu (%.02f%%)\n", done_files, total_files,
-         (double)done_files / total_files * 100);
-
-  funlockfile(stdout);
-}
 
 /// Debug printf. This is implemented as a macro to avoid expensive varargs
 /// handling when we are not in debug mode.
 #define DEBUG(args...)                                                         \
   do {                                                                         \
     if (UNLIKELY(option.debug)) {                                              \
-      progress(thread_id, args);                                               \
+      progress_status(thread_id, args);                                        \
     }                                                                          \
   } while (0)
 
@@ -190,13 +95,13 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     // if we have exhausted the work queue, we are done
     if (rc == ENOMSG) {
-      progress(thread_id, " ");
+      progress_status(thread_id, " ");
       rc = 0;
       break;
     }
 
     if (UNLIKELY(rc)) {
-      error(thread_id, "failed to pop work queue: %s", strerror(rc));
+      progress_error(thread_id, "failed to pop work queue: %s", strerror(rc));
       break;
     }
 
@@ -215,7 +120,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
         if (hash == (uint64_t)st.st_size) {
           if (timestamp == (uint64_t)st.st_mtime) {
             DEBUG("skipping unmodified file %s", path);
-            increment();
+            progress_increment();
             continue;
           }
         }
@@ -229,7 +134,8 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     // generate a friendlier name for the source path
     char *display = NULL;
     if (UNLIKELY((rc = disppath(path, &display)))) {
-      error(thread_id, "failed to make %s relative: %s", path, strerror(rc));
+      progress_error(thread_id, "failed to make %s relative: %s", path,
+                     strerror(rc));
       break;
     }
 
@@ -239,12 +145,12 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     // assembly
     if (is_asm(path)) {
 
-      progress(thread_id, "parsing asm file %s", display);
+      progress_status(thread_id, "parsing asm file %s", display);
       rc = clink_parse_asm(db, path);
 
       // C++ with libclang
     } else if (is_cxx(path) && option.parse_cxx == CLANG) {
-      progress(thread_id, "Clang-parsing C++ file %s", display);
+      progress_status(thread_id, "Clang-parsing C++ file %s", display);
 
       // if we have a compile commands database, use it
       if (option.compile_commands.db != NULL) {
@@ -263,12 +169,12 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
       // C++ with generic parser
     } else if (is_cxx(path) && option.parse_cxx == GENERIC) {
-      progress(thread_id, "generic-parsing C++ file %s", display);
+      progress_status(thread_id, "generic-parsing C++ file %s", display);
       rc = clink_parse_cxx(db, path);
 
       // C with libclang
     } else if (is_c(path) && option.parse_c == CLANG) {
-      progress(thread_id, "Clang-parsing C file %s", display);
+      progress_status(thread_id, "Clang-parsing C file %s", display);
 
       // if we have a compile commands database, use it
       if (option.compile_commands.db != NULL) {
@@ -287,23 +193,24 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
       // C with generic parser
     } else if (is_c(path) && option.parse_c == GENERIC) {
-      progress(thread_id, "generic-parsing C file %s", display);
+      progress_status(thread_id, "generic-parsing C file %s", display);
       rc = clink_parse_c(db, path);
 
       // DEF
     } else {
       assert(is_def(path));
-      progress(thread_id, "parsing DEF file %s", display);
+      progress_status(thread_id, "parsing DEF file %s", display);
       rc = clink_parse_def(db, path);
     }
 
     if (UNLIKELY(rc))
-      error(thread_id, "failed to parse %s: %s", display, strerror(rc));
+      progress_error(thread_id, "failed to parse %s: %s", display,
+                     strerror(rc));
 
     if (LIKELY(rc == 0)) {
 
       if (option.highlighting == EAGER) {
-        progress(thread_id, "syntax highlighting %s", display);
+        progress_status(thread_id, "syntax highlighting %s", display);
 
         if (UNLIKELY((rc = clink_vim_read_into(db, path)))) {
 
@@ -311,10 +218,12 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
           // fail cryptically. If it looks like this happened, give the user a
           // less confusing message.
           if (sigint_pending()) {
-            error(thread_id, "failed to read %s: received SIGINT", display);
+            progress_error(thread_id, "failed to read %s: received SIGINT",
+                           display);
 
           } else {
-            error(thread_id, "failed to read %s: %s", display, strerror(rc));
+            progress_error(thread_id, "failed to read %s: %s", display,
+                           strerror(rc));
           }
         }
       }
@@ -330,11 +239,11 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       break;
 
     // bump the progress counter
-    increment();
+    progress_increment();
 
     // check if we have been SIGINTed and should finish up
     if (UNLIKELY(sigint_pending())) {
-      progress(thread_id, "saw SIGINT; exiting...");
+      progress_status(thread_id, "saw SIGINT; exiting...");
       break;
     }
   }
@@ -442,8 +351,6 @@ int build(clink_db_t *db) {
 
   assert(db != NULL);
 
-  tty = isatty(STDOUT_FILENO);
-
   int rc = 0;
 
   // setup a work queue to manage our tasks
@@ -469,7 +376,7 @@ int build(clink_db_t *db) {
   }
 
   // learn how many files we just enqueued
-  total_files = file_queue_size(q);
+  size_t total_files = file_queue_size(q);
 
   // select a highlighting mode, if necessary
   if (option.highlighting == BEHAVIOUR_AUTO) {
@@ -484,12 +391,7 @@ int build(clink_db_t *db) {
     goto done;
   }
 
-  // set up progress output table
-  if (smart_progress()) {
-    for (unsigned long i = 0; i < option.threads; ++i)
-      printf("%lu:\n", i);
-    printf("0 / %zu (0.00%%)\n", total_files);
-  }
+  progress_init(total_files);
 
   if (UNLIKELY((rc = option.threads > 1 ? mt_process(db, q)
                                         : process(0, NULL, db, q))))
