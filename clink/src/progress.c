@@ -78,9 +78,6 @@ static void refresh(void) {
   if (!smart_progress())
     return;
 
-  // move up to the first line
-  printf("\033[%luA\033[K", option.threads + 1);
-
   // reshow all the status lines
   for (unsigned long i = 0; i < option.threads; ++i) {
     assert(status[i] != NULL);
@@ -128,12 +125,7 @@ void progress_warn(unsigned long thread_id, const char *fmt, ...) {
   va_start(ap, fmt);
   vprintf(fmt, ap);
   va_end(ap);
-
-  // move down to compensate for the upcoming `refresh` call
-  if (smart_progress()) {
-    for (unsigned long i = 0; i < option.threads + 2; ++i)
-      printf("\n");
-  }
+  printf("\n");
 
   refresh();
 
