@@ -398,13 +398,17 @@ int build(clink_db_t *db) {
                       "so C/C++ parsing will not be fully accurate\n");
   }
 
-  progress_init(total_files);
+  if (UNLIKELY((rc = progress_init(total_files)))) {
+    fprintf(stderr, "failed to setup progress output: %s\n", strerror(rc));
+    goto done;
+  }
 
   if (UNLIKELY((rc = option.threads > 1 ? mt_process(db, q)
                                         : process(0, NULL, db, q))))
     goto done;
 
 done:
+  progress_free();
   (void)sigint_unblock();
   file_queue_free(&q);
 

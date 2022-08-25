@@ -10,8 +10,9 @@
  * This function needs to be called before any other functions in this header.
  *
  * \param count Total number of items the caller needs to process
+ * \return 0 on success or an errno on failure
  */
-void progress_init(size_t count);
+int progress_init(size_t count);
 
 /** show an informational message on behalf of a thread
  *
@@ -37,3 +38,10 @@ progress_error(unsigned long thread_id, const char *fmt, ...);
  * `count` passed in `progress_init`.
  */
 void progress_increment(void);
+
+/** indicate progress is complete or has fatally errored
+ *
+ * After calling this it is invalid to call any other progress function until
+ * calling `progress_init` again.
+ */
+void progress_free(void);

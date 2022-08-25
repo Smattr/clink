@@ -2,9 +2,12 @@
 #include "../../common/compiler.h"
 #include "option.h"
 #include <assert.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /// total number of items we have to process
@@ -15,6 +18,9 @@ static size_t done;
 
 /// Is stdout a tty? Initialised in progress_init().
 static bool tty;
+
+/// last output line for each thread
+static char **status;
 
 /// use ANSI codes to move the cursor around to generate smoother progress
 /// output?
@@ -36,18 +42,20 @@ static bool smart_progress(void) {
   return true;
 }
 
-void progress_status(unsigned long thread_id, const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
+static void update(unsigned long thread_id, char *line) {
+  assert(line != NULL);
+
   flockfile(stdout);
+
+  // save this status line
+  free(status[thread_id]);
+  status[thread_id] = line;
 
   // move up to this thread’s progress line
   if (smart_progress())
     printf("\033[%luA\033[K", option.threads - thread_id + 1);
 
-  printf("%lu: ", thread_id);
-  vprintf(fmt, ap);
-  printf("\n");
+  printf("%lu: %s\n", thread_id, status[thread_id]);
 
   // move back to the bottom
   if (smart_progress()) {
@@ -56,28 +64,49 @@ void progress_status(unsigned long thread_id, const char *fmt, ...) {
   }
 
   funlockfile(stdout);
+}
+
+void progress_status(unsigned long thread_id, const char *fmt, ...) {
+
+  char *buffer = NULL;
+  va_list ap;
+  va_start(ap, fmt);
+  int rc = vasprintf(&buffer, fmt, ap);
   va_end(ap);
+  if (UNLIKELY(rc < 0)) {
+    // no error reporting
+    return;
+  }
+
+  update(thread_id, buffer);
 }
 
 void progress_error(unsigned long thread_id, const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  flockfile(stdout);
-  if (smart_progress())
-    printf("\033[%luA\033[K", option.threads - thread_id + 1);
-  printf("%lu: ", thread_id);
-  if (option.colour == ALWAYS)
-    printf("\033[31m"); // red
-  vprintf(fmt, ap);
-  if (option.colour == ALWAYS)
-    printf("\033[0m"); // reset
-  printf("\n");
-  if (smart_progress()) {
-    printf("\033[%luB", option.threads - thread_id);
-    fflush(stdout);
+
+  char *base = NULL;
+  size_t size = 0;
+  FILE *buffer = open_memstream(&base, &size);
+  if (UNLIKELY(buffer == NULL)) {
+    // no error reporting
+    return;
   }
-  funlockfile(stdout);
-  va_end(ap);
+
+  if (option.colour == ALWAYS)
+    fprintf(buffer, "\033[31m"); // red
+
+  {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(buffer, fmt, ap);
+    va_end(ap);
+  }
+
+  if (option.colour == ALWAYS)
+    fprintf(buffer, "\033[0m"); // reset
+
+  (void)fclose(buffer);
+
+  update(thread_id, base);
 }
 
 void progress_increment(void) {
@@ -96,8 +125,25 @@ void progress_increment(void) {
   funlockfile(stdout);
 }
 
-void progress_init(size_t count) {
+int progress_init(size_t count) {
   tty = isatty(STDOUT_FILENO);
+
+  int rc = 0;
+
+  // allocate memory to track status updates
+  assert(status == NULL && "duplicate progress_init()");
+  status = calloc(option.threads, sizeof(status[0]));
+  if (UNLIKELY(status == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+  for (unsigned long i = 0; i < option.threads; ++i) {
+    status[i] = strdup("");
+    if (UNLIKELY(status[i] == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
+  }
 
   done = 0;
   total = count;
@@ -108,4 +154,24 @@ void progress_init(size_t count) {
       printf("%lu:\n", i);
     printf("%zu / %zu (0.00%%)\n", done, total);
   }
+
+done:
+  if (rc != 0) {
+    if (status != NULL) {
+      for (unsigned long i = 0; i < option.threads; ++i)
+        free(status[i]);
+    }
+    free(status);
+  }
+
+  return rc;
+}
+
+void progress_free(void) {
+  if (status != NULL) {
+    for (unsigned long i = 0; i < option.threads; ++i)
+      free(status[i]);
+  }
+  free(status);
+  status = NULL;
 }
