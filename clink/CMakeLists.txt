@@ -17,6 +17,7 @@ add_executable(clink
   src/option.c
   src/path.c
   src/progress.c
+  src/screen.c
   src/set.c
   src/sigint.c
   src/str_queue.c
@@ -28,11 +29,6 @@ target_link_libraries(clink PRIVATE libclink)
 
 find_package(Threads REQUIRED)
 target_link_libraries(clink PRIVATE ${CMAKE_THREAD_LIBS_INIT})
-
-set(CURSES_NEED_NCURSES True)
-find_package(Curses REQUIRED)
-target_include_directories(clink SYSTEM PRIVATE ${CURSES_INCLUDE_DIRS})
-target_link_libraries(clink PRIVATE ${CURSES_LIBRARIES})
 
 find_package(LIBCLANG REQUIRED)
 target_include_directories(clink SYSTEM PRIVATE ${LIBCLANG_INCLUDE_DIRS})
