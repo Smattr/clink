@@ -821,6 +821,10 @@ int ncurses_ui(clink_db_t *db) {
 break2:
 
   endwin();
+  free(right);
+  right = NULL;
+  free(left);
+  left = NULL;
 
   return rc;
 }
