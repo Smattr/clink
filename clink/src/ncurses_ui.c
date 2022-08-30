@@ -430,7 +430,6 @@ static int handle_input(void) {
   case 4: // Ctrl-D
     state = ST_EXITING;
     return 0;
-    break;
 
   case 10: // enter
     if (strlen(left) > 0 || strlen(right) > 0) {
