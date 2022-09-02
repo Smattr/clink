@@ -2,11 +2,11 @@
 #include "../../common/compiler.h"
 #include "colour.h"
 #include "option.h"
+#include "screen.h"
 #include "set.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <ctype.h>
-#include <curses.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -14,12 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-static struct sigaction original_sigtstp_handler;
-static struct sigaction original_sigwinch_handler;
-
-/// did we successfully enable colour mode in Ncurses?
-static bool colour;
 
 /// which Clink prompt is the cursor currently on?
 static size_t prompt_index;
@@ -234,6 +228,16 @@ static int find_includer(const char *query) {
   return format_results(it);
 }
 
+static void move(size_t row, size_t column) {
+  printf("\033[%zu;%zuH", row, column);
+  fflush(stdout);
+}
+
+static void clrtoeol(void) {
+  printf("\033[K");
+  fflush(stdout);
+}
+
 static const struct searcher {
   const char *prompt;
   int (*handler)(const char *query);
@@ -248,19 +252,21 @@ static const struct searcher {
 static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
 
 static void print_menu(void) {
-  move(LINES - FUNCTIONS_SZ, 0);
-  for (size_t i = 0; i < FUNCTIONS_SZ; ++i)
-    printw("%s: \n", functions[i].prompt);
+  for (size_t i = 0; i < FUNCTIONS_SZ; ++i) {
+    move(screen_get_rows() - FUNCTIONS_SZ + 1 + i, 1);
+    printf("%s:", functions[i].prompt);
+  }
+  fflush(stdout);
 }
 
 static size_t offset_x(size_t index) {
   assert(index < FUNCTIONS_SZ);
-  return strlen(functions[index].prompt) + strlen(": ");
+  return 1 + strlen(functions[index].prompt) + strlen(": ");
 }
 
 static size_t offset_y(size_t index) {
   assert(index < FUNCTIONS_SZ);
-  return LINES - FUNCTIONS_SZ + index;
+  return screen_get_rows() - FUNCTIONS_SZ + index + 1;
 }
 
 static const char HOTKEYS[] =
@@ -272,11 +278,13 @@ static char hotkey(unsigned index) {
   return -1;
 }
 
-static size_t usable_rows(void) { return (size_t)LINES - FUNCTIONS_SZ - 2 - 1; }
+static size_t usable_rows(void) {
+  return screen_get_rows() - FUNCTIONS_SZ - 2 - 1;
+}
 
 static void pad(size_t width) {
   for (size_t i = 0; i < width; ++i)
-    printw(" ");
+    printf(" ");
 }
 
 static size_t digit_count(unsigned long num) {
@@ -299,9 +307,11 @@ static int print_results(void) {
   // the column headings, excluding the initial hotkey column
   static const char *HEADINGS[COLUMN_COUNT] = {"File", "Function", "Line", ""};
 
+  size_t rows = screen_get_rows();
+
   // the number of rows we can fit is the number of lines on the screen with
   // some room extracted for the column headings, menu and status
-  if ((size_t)LINES < FUNCTIONS_SZ + 2 + 1 + 1)
+  if (rows < FUNCTIONS_SZ + 2 + 1 + 1)
     return -1;
   size_t row_count = usable_rows();
   if (row_count > results.count - from_row) {
@@ -329,46 +339,46 @@ static int print_results(void) {
   }
 
   // print column headings
-  move(0, 0);
-  printw("  ");
+  move(1, 1);
+  printf("  ");
   for (size_t i = 0; i < COLUMN_COUNT; ++i) {
-    printw("%s ", HEADINGS[i]);
+    printf("%s ", HEADINGS[i]);
     size_t padding = widths[i] - strlen(HEADINGS[i]);
     pad(padding);
   }
   clrtoeol();
 
   // print the rows
-  for (size_t i = 0; i < LINES - FUNCTIONS_SZ - 1 - 1; ++i) {
-    move(1 + i, 0);
+  for (size_t i = 0; i < rows - FUNCTIONS_SZ - 1 - 1; ++i) {
+    move(2 + i, 1);
     if (i < row_count) {
-      printw("%c ", hotkey(i));
+      printf("%c ", hotkey(i));
       for (size_t j = 0; j < COLUMN_COUNT; ++j) {
         const clink_symbol_t *sym = &results.rows[i + from_row];
         size_t padding = widths[j] + 1;
         switch (j) {
         case 0: // file
           padding -= strlen(sym->path);
-          printw("%s", sym->path);
+          printf("%s", sym->path);
           pad(padding);
           break;
         case 1: // function
           padding -= sym->parent == NULL ? 0 : strlen(sym->parent);
           if (sym->parent != NULL)
-            printw("%s", sym->parent);
+            printf("%s", sym->parent);
           pad(padding);
           break;
         case 2: // line
           padding -= digit_count(sym->lineno) + 1;
           pad(padding);
-          printw("%lu ", sym->lineno);
+          printf("%lu ", sym->lineno);
           break;
         case 3: // context
           if (sym->context != NULL) {
-            if (colour) {
-              printw_colour(sym->context);
+            if (option.colour == ALWAYS) {
+              printf("%s", sym->context);
             } else {
-              printw_bw(sym->context);
+              printf_bw(sym->context, stdout);
             }
           }
           break;
@@ -379,22 +389,23 @@ static int print_results(void) {
   }
 
   // print footer
-  move(LINES - FUNCTIONS_SZ - 1, 0);
-  printw("* ");
+  move(rows - FUNCTIONS_SZ, 1);
+  printf("* ");
   if (results.count == 0) {
-    printw("No results");
+    printf("No results");
   } else {
-    printw("Lines %zu-%zu of %zu", from_row + 1, from_row + row_count,
+    printf("Lines %zu-%zu of %zu", from_row + 1, from_row + row_count,
            results.count);
     if (from_row + row_count < results.count) {
-      printw(", %zu more - press the space bar to display more",
+      printf(", %zu more - press the space bar to display more",
              results.count - from_row - row_count);
     } else if (from_row > 0) {
-      printw(", press the space bar to display the first lines again");
+      printf(", press the space bar to display the first lines again");
     }
   }
-  printw(" *");
+  printf(" *");
   clrtoeol();
+  fflush(stdout);
 
   return 0;
 }
@@ -406,7 +417,8 @@ static void move_to_line_no_blank(size_t target) {
 
   // paste the previous contents into the new line
   move(y, x);
-  printw("%s%s", left, right);
+  printf("%s%s", left, right);
+  fflush(stdout);
   x += strlen(left);
 }
 
@@ -419,20 +431,30 @@ static void move_to_line(size_t target) {
   move_to_line_no_blank(target);
 }
 
+static void refresh(void) {
+  screen_clear();
+  print_menu();
+  if (results.count > 0)
+    print_results();
+}
+
 static int handle_input(void) {
 
-  echo();
-
+  move_to_line(prompt_index);
   move(y, x);
-  int c = getch();
+  event_t e = screen_read();
 
-  switch (c) {
-  case 4: // Ctrl-D
+  if (e.type == EVENT_KEYPRESS && e.value == 0x4) { // Ctrl-D
     state = ST_EXITING;
     return 0;
-    break;
+  }
 
-  case 10: // enter
+  if (e.type == EVENT_SIGNAL && e.value == SIGINT) {
+    state = ST_EXITING;
+    return 0;
+  }
+
+  if (e.type == EVENT_KEYPRESS && e.value == 0xa) { // Enter
     if (strlen(left) > 0 || strlen(right) > 0) {
       char *query = NULL;
       if (UNLIKELY(asprintf(&query, "%s%s", left, right) < 0))
@@ -446,27 +468,29 @@ static int handle_input(void) {
       if (results.count > 0)
         state = ST_ROWSELECT;
     }
-    break;
+    return 0;
+  }
 
-  case 23: { // Ctrl-W
+  if (e.type == EVENT_KEYPRESS && e.value == 0x17) { // Ctrl-W
     while (strlen(left) > 0 && isspace(left[strlen(left) - 1]))
       left[strlen(left) - 1] = '\0';
     while (strlen(left) > 0 && !isspace(left[strlen(left) - 1]))
       left[strlen(left) - 1] = '\0';
-    move(y, offset_x(prompt_index));
-    printw("%s%s", left, right);
-    clrtoeol();
-    x = offset_x(prompt_index) + strlen(left);
-    move(y, x);
-    break;
+    return 0;
   }
 
-  case '\t':
+  if (e.type == EVENT_KEYPRESS && e.value == 0xb) { // Ctrl-K
+    right[0] = '\0';
+    return 0;
+  }
+
+  if (e.type == EVENT_KEYPRESS && e.value == '\t') {
     if (results.count > 0)
       state = ST_ROWSELECT;
-    break;
+    return 0;
+  }
 
-  case KEY_LEFT:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x445b1b) { // ←
     if (strlen(left) > 0) {
 
       // expand right if necessary
@@ -487,9 +511,10 @@ static int handle_input(void) {
 
       x--;
     }
-    break;
+    return 0;
+  }
 
-  case KEY_RIGHT:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x435b1b) { // →
     if (strlen(right) > 0) {
 
       // expand left if necessary
@@ -509,19 +534,22 @@ static int handle_input(void) {
 
       x++;
     }
-    break;
+    return 0;
+  }
 
-  case KEY_UP:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x415b1b) { // ↑
     if (prompt_index > 0)
       move_to_line(prompt_index - 1);
-    break;
+    return 0;
+  }
 
-  case KEY_DOWN:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x425b1b) { // ↓
     if (prompt_index < FUNCTIONS_SZ - 1)
       move_to_line(prompt_index + 1);
-    break;
+    return 0;
+  }
 
-  case KEY_HOME:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x7e315b1b) { // Home
 
     // expand right if necessary
     while (strlen(left) + strlen(right) > right_size - 1) {
@@ -542,9 +570,10 @@ static int handle_input(void) {
     left[0] = '\0';
 
     x = offset_x(prompt_index);
-    break;
+    return 0;
+  }
 
-  case KEY_END:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x7e345b1b) { // End
 
     // expand left if necessary
     while (strlen(left) + strlen(right) > left_size - 1) {
@@ -562,45 +591,53 @@ static int handle_input(void) {
     right[0] = '\0';
 
     x = offset_x(prompt_index) + strlen(left);
-    break;
+    return 0;
+  }
 
-  case KEY_PPAGE:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x7e355b1b) { // Page Up
     move_to_line(0);
-    break;
+    return 0;
+  }
 
-  case KEY_NPAGE:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x7e365b1b) { // Page Down
     move_to_line(FUNCTIONS_SZ - 1);
-    break;
+    return 0;
+  }
 
-  case 127: // Backspace on macOS
-  case KEY_BACKSPACE:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x7f) { // Backspace
     if (strlen(left) > 0) {
       left[strlen(left) - 1] = '\0';
       x--;
     }
-    move(y, x);
-    printw("%s", right);
-    clrtoeol();
-    break;
+    return 0;
+  }
 
-  case KEY_DC:
-    if (strlen(right) > 0) {
+  if (e.type == EVENT_KEYPRESS && e.value == 0x7e335b1b) { // Delete
+    if (strlen(right) > 0)
       memmove(right, right + 1, strlen(right) + 1);
-      printw("%s", right);
-      clrtoeol();
-    }
-    break;
+    return 0;
+  }
 
-  case KEY_RESIZE:
-    endwin();
-    clear();
-    print_menu();
-    if (results.count > 0)
-      print_results();
-    move_to_line_no_blank(prompt_index);
-    break;
+  if (e.type == EVENT_SIGNAL && e.value == SIGWINCH) {
+    refresh();
+    return 0;
+  }
 
-  default:
+  if (e.type == EVENT_SIGNAL && e.value == SIGTSTP) {
+    screen_free();
+
+    // re-signal ourself now the `SIGTSTP` handler is reset
+    (void)kill(0, SIGTSTP);
+
+    int rc = screen_init();
+    if (UNLIKELY(rc != 0))
+      return rc;
+
+    refresh();
+    return 0;
+  }
+
+  if (e.type == EVENT_KEYPRESS && e.value <= 127 && !iscntrl((int)e.value)) {
     x++;
 
     // expand left if necessary
@@ -614,20 +651,30 @@ static int handle_input(void) {
 
     // append the new character
     size_t end = strlen(left);
-    left[end] = c;
+    left[end] = (char)e.value;
     left[end + 1] = '\0';
 
-    if (strlen(right) > 0)
-      printw("%s", right);
+    return 0;
   }
 
   return 0;
 }
 
+/// `isalnum` that ignores locale
+static bool my_isalnum(uint32_t value) {
+  if (value > 127)
+    return false;
+  if (isdigit((int)value))
+    return true;
+  if (value >= 'a' && value <= 'z')
+    return true;
+  if (value >= 'A' && value <= 'Z')
+    return true;
+  return false;
+}
+
 static int handle_select(void) {
   assert(state == ST_ROWSELECT);
-
-  noecho();
 
   assert(select_index >= from_row);
   if (select_index - from_row + 1 > usable_rows()) {
@@ -635,95 +682,69 @@ static int handle_select(void) {
     // window resized while we were not in select mode.
     select_index = from_row;
   }
-  move(select_index - from_row + 1, 0);
-  int c = getch();
+  move(select_index - from_row + 2, 1);
+  event_t e = screen_read();
 
-  switch (c) {
-
-  case 4: //* Ctrl-D
+  if (e.type == EVENT_KEYPRESS && e.value == 0x04) { // Ctrl-D
     state = ST_EXITING;
     return 0;
+  }
 
-    /* XXX: egregious abuse of interstice to provide a parameter for
-     * function-like label hotkey_select below. At least we can use scoping to
-     * contain the damage.
-     */
-    {
-      UNREACHABLE();
-      int base;
+  if (e.type == EVENT_SIGNAL && e.value == SIGINT) {
+    state = ST_EXITING;
+    return 0;
+  }
 
-    case '0' ... '9':
-      base = '0';
-      goto hotkey_select;
+  if (e.type == EVENT_KEYPRESS && my_isalnum(e.value)) {
 
-    case 'a' ... 'z':
-      base = 'a' - 10 /* '0' - '9' */;
-      goto hotkey_select;
-
-    case 'A' ... 'Z':
-      base = 'A' - 10 /* '0' - '9' */ - 26 /* 'a' - 'z' */;
-      goto hotkey_select;
-
-    hotkey_select:
-      if (from_row + c - base < results.count) {
-        select_index = from_row + c - base;
-        goto enter;
-      }
-      break;
+    size_t index;
+    if (isdigit((int)e.value)) {
+      index = (size_t)e.value - '0';
+    } else if (e.value >= 'a' && e.value <= 'z') {
+      index = 10 + (size_t)e.value - 'a';
+    } else {
+      assert(e.value >= 'A' && e.value <= 'Z');
+      index = 10 + 26 + (size_t)e.value - 'A';
     }
 
-  case 10: { /* enter */
+    if (from_row + index < results.count) {
+      select_index = from_row + index;
+      goto enter;
+    }
+    return 0;
+  }
+
+  if (e.type == EVENT_KEYPRESS && e.value == 0xa) { // Enter
   enter:
-    def_prog_mode();
-    endwin();
-
-    // Restore the SIGTSTP handler we had prior to starting up ncurses.
-    // Ncurses registers a SIGTSTP handler that it leaves in place until
-    // process exit. This means that when we exec Vim below, if the user
-    // suspends Vim (^Z) the SIGTSTP to Clink is masked by the ncurses
-    // handler. A consequence of this is that the Clink menu is not
-    // repainted when Vim exits. By restoring the original handler, we
-    // can claw our way back to regular TTY behaviour.
-    struct sigaction curses_tstp;
-    int read_tstp = sigaction(SIGTSTP, &original_sigtstp_handler, &curses_tstp);
-
-    // Blasted ncurses does the same thing with the SIGWINCH handler. As a
-    // result, resizing the terminal window while Vim is open causes ncurses
-    // to take incorrect actions. Vim notices the window has resized but that
-    // it is missing a SIGWINCH, realises someone else is driving the boat and
-    // freaks out and quits.
-    struct sigaction curses_winch;
-    int read_winch =
-        sigaction(SIGWINCH, &original_sigwinch_handler, &curses_winch);
+    screen_free();
 
     int rc = clink_vim_open(results.rows[select_index].path,
                             results.rows[select_index].lineno,
                             results.rows[select_index].colno);
+    if (rc != 0)
+      return rc;
 
-    reset_prog_mode();
-
-    // restore ncurses’ handlers
-    if (LIKELY(read_tstp == 0))
-      (void)sigaction(SIGTSTP, &curses_tstp, NULL);
-    if (LIKELY(read_winch == 0))
-      (void)sigaction(SIGWINCH, &curses_winch, NULL);
+    if ((rc = screen_init()))
+      return rc;
 
     refresh();
-    return rc;
+    return 0;
   }
 
-  case KEY_UP:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x415b1b) { // ↑
     if (select_index - from_row > 0)
       select_index--;
-    break;
+    return 0;
+  }
 
-  case KEY_DOWN:
+  if (e.type == EVENT_KEYPRESS && e.value == 0x425b1b) { // ↓
     if (select_index < results.count - 1 &&
         select_index - from_row + 1 < usable_rows())
       select_index++;
-    break;
+    return 0;
+  }
 
-  case ' ':
+  if (e.type == EVENT_KEYPRESS && e.value == ' ') {
     if (from_row + usable_rows() < results.count) {
       from_row += usable_rows();
     } else {
@@ -731,24 +752,36 @@ static int handle_select(void) {
     }
     select_index = from_row;
     print_results();
-    break;
+    return 0;
+  }
 
-  case '\t':
+  if (e.type == EVENT_KEYPRESS && e.value == '\t') {
     state = ST_INPUT;
-    break;
+    return 0;
+  }
 
-  case KEY_RESIZE:
-    endwin();
-    clear();
-    print_menu();
-    move_to_line_no_blank(prompt_index);
-    print_results();
+  if (e.type == EVENT_SIGNAL && e.value == SIGWINCH) {
+    refresh();
     assert(select_index >= from_row);
     if (select_index - from_row + 1 > usable_rows()) {
       // the selected row was just made offscreen by a window resize
       select_index = from_row;
     }
-    break;
+    return 0;
+  }
+
+  if (e.type == EVENT_SIGNAL && e.value == SIGTSTP) {
+    screen_free();
+
+    // re-signal ourself now the `SIGTSTP` handler is reset
+    (void)kill(0, SIGTSTP);
+
+    int rc = screen_init();
+    if (UNLIKELY(rc != 0))
+      return rc;
+
+    refresh();
+    return 0;
   }
 
   return 0;
@@ -759,45 +792,30 @@ int ncurses_ui(clink_db_t *db) {
   // save database pointer
   database = db;
 
+  int rc = 0;
+
   // setup our initial (empty) accrued text at the prompt
   left = calloc(1, BUFSIZ);
-  if (UNLIKELY(left == NULL))
-    return ENOMEM;
+  if (UNLIKELY(left == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
   left_size = BUFSIZ;
 
   right = calloc(1, BUFSIZ);
   if (UNLIKELY(right == NULL)) {
-    free(left);
-    return ENOMEM;
+    rc = ENOMEM;
+    goto done;
   }
   right_size = BUFSIZ;
 
-  // Save any registered SIGTSTP handler, that we will need to temporarily
-  // restore later. There is most likely no handler (SIG_DFL) at this point,
-  // but future-proof this against us registering handlers elsewhere in Clink.
-  (void)sigaction(SIGTSTP, NULL, &original_sigtstp_handler);
+  // initialise screen
+  if ((rc = screen_init()))
+    goto done;
 
-  // We also need to stash the SIGWINCH handler. See earlier in this file where
-  // we open Vim for an explanation of these shenanigans.
-  (void)sigaction(SIGWINCH, NULL, &original_sigwinch_handler);
-
-  // initialise Ncurses
-  (void)initscr();
-  if (option.colour == ALWAYS) {
-    if (has_colors())
-      colour = init_ncurses_colours() == 0;
-  }
-
-  keypad(stdscr, TRUE);
-  (void)cbreak();
-
-  // these need to come after ncurses init
-  x = offset_x(0);
-  y = offset_y(0);
-  print_menu();
+  x = 1;
+  y = 1;
   refresh();
-
-  int rc = 0;
 
   while (true) {
 
@@ -812,16 +830,19 @@ int ncurses_ui(clink_db_t *db) {
       break;
 
     case ST_EXITING:
-      goto break2;
+      goto done;
     }
 
     if (rc)
       break;
   }
 
-break2:
-
-  endwin();
+done:
+  screen_free();
+  free(right);
+  right = NULL;
+  free(left);
+  left = NULL;
 
   return rc;
 }
