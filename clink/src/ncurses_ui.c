@@ -830,14 +830,13 @@ int ncurses_ui(clink_db_t *db) {
       break;
 
     case ST_EXITING:
-      goto break2;
+      goto done;
     }
 
     if (rc)
       break;
   }
 
-break2:
 done:
   screen_free();
   free(right);
