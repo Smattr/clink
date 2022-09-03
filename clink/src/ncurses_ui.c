@@ -70,6 +70,35 @@ static bool are_duplicates(const clink_symbol_t *a, const clink_symbol_t *b) {
   return true;
 }
 
+static void move(size_t row, size_t column) {
+  printf("\033[%zu;%zuH", row, column);
+  fflush(stdout);
+}
+
+static void clrtoeol(void) {
+  printf("\033[K");
+  fflush(stdout);
+}
+
+static int find_symbol(const char *query);
+static int find_definition(const char *query);
+static int find_call(const char *query);
+static int find_caller(const char *query);
+static int find_includer(const char *query);
+
+static const struct searcher {
+  const char *prompt;
+  int (*handler)(const char *query);
+} functions[] = {
+    {"Find this C symbol", find_symbol},
+    {"Find this definition", find_definition},
+    {"Find functions called by this function", find_call},
+    {"Find functions calling this function", find_caller},
+    {"Find files #including this file", find_includer},
+};
+
+static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
+
 static int format_results(clink_iter_t *it) {
 
   // free any previous results
@@ -227,29 +256,6 @@ static int find_includer(const char *query) {
 
   return format_results(it);
 }
-
-static void move(size_t row, size_t column) {
-  printf("\033[%zu;%zuH", row, column);
-  fflush(stdout);
-}
-
-static void clrtoeol(void) {
-  printf("\033[K");
-  fflush(stdout);
-}
-
-static const struct searcher {
-  const char *prompt;
-  int (*handler)(const char *query);
-} functions[] = {
-    {"Find this C symbol", find_symbol},
-    {"Find this definition", find_definition},
-    {"Find functions called by this function", find_call},
-    {"Find functions calling this function", find_caller},
-    {"Find files #including this file", find_includer},
-};
-
-static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
 
 static void print_menu(void) {
   for (size_t i = 0; i < FUNCTIONS_SZ; ++i) {
