@@ -47,8 +47,6 @@ Notes for devs
 
 * The on-disk database format is extremely bloated. As with performance, I have
   put no effort into optimising this yet and easy wins abound.
-* C/C++ parsing is imprecise and really needs compilation database support to
-  improve, https://github.com/Smattr/clink/issues/46.
 * Vim integration is currently hard coded. I didn’t make this parametric or
   implement any abstraction for this because Vim is my unabashed weapon of
   choice. If you want support for another editor, please ask me and I’ll
