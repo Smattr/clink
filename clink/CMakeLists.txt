@@ -20,6 +20,7 @@ add_executable(clink
   src/screen.c
   src/set.c
   src/sigint.c
+  src/spinner.c
   src/str_queue.c
   ${CMAKE_CURRENT_BINARY_DIR}/manpage.c)
 

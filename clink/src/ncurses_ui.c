@@ -4,6 +4,7 @@
 #include "option.h"
 #include "screen.h"
 #include "set.h"
+#include "spinner.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <ctype.h>
@@ -165,8 +166,19 @@ static int format_results(clink_iter_t *it) {
       const char *path = target->path;
       int r = set_add(highlighted, &path);
       if (r == 0) {
+        // note to the user what we are doing
+        size_t rows = screen_get_rows();
+        move(rows - FUNCTIONS_SZ, 1);
+        printf("   syntax highlighting %s…", target->path);
+        fflush(stdout);
+        (void)spinner_on(rows - FUNCTIONS_SZ, 2);
+
         // ignore non-fatal failure of highlighting
         (void)clink_vim_read_into(database, target->path);
+
+        spinner_off();
+        move(rows - FUNCTIONS_SZ, 1);
+        clrtoeol();
       } else if (r != EALREADY) {
         rc = r;
         break;
