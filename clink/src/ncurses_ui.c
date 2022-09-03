@@ -568,8 +568,6 @@ static int handle_input(void) {
 
       // remove it from the left side
       left[strlen(left) - len] = '\0';
-
-      x--;
     }
     return 0;
   }
@@ -605,8 +603,6 @@ static int handle_input(void) {
 
       // remove it from the right side
       memmove(right, right + len, strlen(right) - len + 1);
-
-      x++;
     }
     return 0;
   }
@@ -643,7 +639,6 @@ static int handle_input(void) {
     // clear the text we just transferred
     left[0] = '\0';
 
-    x = offset_x(prompt_index);
     return 0;
   }
 
@@ -664,7 +659,6 @@ static int handle_input(void) {
     // clear the text we just transferred
     right[0] = '\0';
 
-    x = offset_x(prompt_index) + strlen(left);
     return 0;
   }
 
@@ -689,7 +683,6 @@ static int handle_input(void) {
         ++len;
 
       left[strlen(left) - len] = '\0';
-      x--;
     }
     return 0;
   }
@@ -737,8 +730,6 @@ static int handle_input(void) {
 
   if (e.type == EVENT_KEYPRESS) {
     size_t len = utf8_charlen(e.value);
-    if (len > 0)
-      x++;
 
     // expand left if necessary
     if (strlen(left) + len >= left_size) {
