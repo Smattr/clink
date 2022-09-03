@@ -145,3 +145,6 @@ void run_cleanups(void);
     run_cleanups();                                                            \
     abort();                                                                   \
   } while (0)
+
+/// create a dynamic string which will be freed on exit
+__attribute__((format(printf, 1, 2))) char *aprintf(const char *fmt, ...);

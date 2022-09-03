@@ -3,6 +3,7 @@ add_subdirectory(ls-includes)
 add_subdirectory(vim-open)
 
 add_executable(unit-tests
+  aprintf.c
   main.c
   cleanup.c
   db_add_line.c
