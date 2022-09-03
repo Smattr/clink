@@ -410,6 +410,35 @@ static int print_results(void) {
   return 0;
 }
 
+/** `strlen`, accounting for UTF-8 characters
+ *
+ * This function assumes the input is valid UTF-8.
+ *
+ * \param s String to measure
+ * \return Number of UTF-8 characters in `s`
+ */
+static size_t utf8_strlen(const char *s) {
+  assert(s != NULL);
+  size_t length = 0;
+  while (*s != '\0') {
+    if ((((uint8_t)*s) >> 7) == 0) {
+      ++length;
+      ++s;
+    } else if ((((uint8_t)*s) >> 5) == 0b110) {
+      ++length;
+      s += 2;
+    } else if ((((uint8_t)*s) >> 4) == 0b1110) {
+      ++length;
+      s += 3;
+    } else {
+      assert((((uint8_t)*s) >> 3) == 0b11110);
+      ++length;
+      s += 4;
+    }
+  }
+  return length;
+}
+
 static void move_to_line_no_blank(size_t target) {
   prompt_index = target;
   x = offset_x(prompt_index);
@@ -419,7 +448,7 @@ static void move_to_line_no_blank(size_t target) {
   move(y, x);
   printf("%s%s", left, right);
   fflush(stdout);
-  x += strlen(left);
+  x += utf8_strlen(left);
 }
 
 static void move_to_line(size_t target) {
@@ -436,6 +465,30 @@ static void refresh(void) {
   print_menu();
   if (results.count > 0)
     print_results();
+}
+
+/// how many valid printable UTF-8 bytes in this key pressed?
+static size_t utf8_charlen(uint32_t key) {
+  if (key <= 127) {
+    if (iscntrl((int)key))
+      return 0;
+    return 1;
+  }
+  const uint8_t bytes[] = {key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff,
+                           key >> 24};
+  if (bytes[1] >> 6 != 0b10)
+    return 0;
+  if (bytes[0] >> 5 == 0b110)
+    return 2;
+  if (bytes[2] >> 6 != 0b10)
+    return 0;
+  if (bytes[0] >> 4 == 0b1110)
+    return 3;
+  if (bytes[3] >> 6 != 0b10)
+    return 0;
+  if (bytes[0] >> 3 == 0b11110)
+    return 4;
+  return 0;
 }
 
 static int handle_input(void) {
@@ -493,8 +546,15 @@ static int handle_input(void) {
   if (e.type == EVENT_KEYPRESS && e.value == 0x445b1b) { // ←
     if (strlen(left) > 0) {
 
+      // we assume `left` contains only valid UTF-8 characters, so we can find
+      // the start of the last character by scanning 0b10xxxxxx bytes
+      size_t len = 1;
+      while (len < strlen(left) &&
+             ((uint8_t)left[strlen(left) - len] >> 6) == 0b10)
+        ++len;
+
       // expand right if necessary
-      if (strlen(right) == right_size - 1) {
+      if (strlen(right) + len >= right_size) {
         char *r = realloc(right, right_size * 2);
         if (UNLIKELY(r == NULL))
           return ENOMEM;
@@ -503,11 +563,11 @@ static int handle_input(void) {
       }
 
       // insert the new character
-      memmove(right + 1, right, strlen(right) + 1);
-      right[0] = left[strlen(left) - 1];
+      memmove(right + len, right, strlen(right) + 1);
+      memcpy(right, left + strlen(left) - len, len);
 
       // remove it from the left side
-      left[strlen(left) - 1] = '\0';
+      left[strlen(left) - len] = '\0';
 
       x--;
     }
@@ -517,8 +577,22 @@ static int handle_input(void) {
   if (e.type == EVENT_KEYPRESS && e.value == 0x435b1b) { // →
     if (strlen(right) > 0) {
 
+      // we assume `right` contains only valid UTF-8 characters, so we can find
+      // the length of the first character by looking at its high bits
+      size_t len = 1;
+      if (((uint8_t)*right >> 5) == 0b110) {
+        assert(strlen(right) >= 2 && "corrupted UTF-8 accrued in `right`");
+        len = 2;
+      } else if (((uint8_t)*right >> 4) == 0b1110) {
+        assert(strlen(right) >= 3 && "corrupted UTF-8 accrued in `right`");
+        len = 3;
+      } else if (((uint8_t)*right >> 3) == 0b11110) {
+        assert(strlen(right) >= 4 && "corrupted UTF-8 accrued in `right`");
+        len = 4;
+      }
+
       // expand left if necessary
-      if (strlen(left) == left_size - 1) {
+      if (strlen(left) + len >= left_size) {
         char *l = realloc(left, left_size * 2);
         if (UNLIKELY(l == NULL))
           return ENOMEM;
@@ -527,10 +601,10 @@ static int handle_input(void) {
       }
 
       // insert the new character
-      strncat(left, right, 1);
+      strncat(left, right, len);
 
       // remove it from the right side
-      memmove(right, right + 1, strlen(right));
+      memmove(right, right + len, strlen(right) - len + 1);
 
       x++;
     }
@@ -552,7 +626,7 @@ static int handle_input(void) {
   if (e.type == EVENT_KEYPRESS && e.value == 0x7e315b1b) { // Home
 
     // expand right if necessary
-    while (strlen(left) + strlen(right) > right_size - 1) {
+    while (strlen(left) + strlen(right) >= right_size) {
       char *r = realloc(right, right_size * 2);
       if (UNLIKELY(r == NULL))
         return ENOMEM;
@@ -576,7 +650,7 @@ static int handle_input(void) {
   if (e.type == EVENT_KEYPRESS && e.value == 0x7e345b1b) { // End
 
     // expand left if necessary
-    while (strlen(left) + strlen(right) > left_size - 1) {
+    while (strlen(left) + strlen(right) >= left_size) {
       char *l = realloc(left, left_size * 2);
       if (UNLIKELY(l == NULL))
         return ENOMEM;
@@ -606,15 +680,39 @@ static int handle_input(void) {
 
   if (e.type == EVENT_KEYPRESS && e.value == 0x7f) { // Backspace
     if (strlen(left) > 0) {
-      left[strlen(left) - 1] = '\0';
+
+      // we assume `left` contains only valid UTF-8 characters, so we can find
+      // the start of the last character by scanning 0b10xxxxxx bytes
+      size_t len = 1;
+      while (len < strlen(left) &&
+             ((uint8_t)left[strlen(left) - len] >> 6) == 0b10)
+        ++len;
+
+      left[strlen(left) - len] = '\0';
       x--;
     }
     return 0;
   }
 
   if (e.type == EVENT_KEYPRESS && e.value == 0x7e335b1b) { // Delete
-    if (strlen(right) > 0)
-      memmove(right, right + 1, strlen(right));
+    if (strlen(right) > 0) {
+
+      // we assume `right` contains only valid UTF-8 characters, so we can find
+      // the length of the first character by looking at its high bits
+      size_t len = 1;
+      if (((uint8_t)*right >> 5) == 0b110) {
+        assert(strlen(right) >= 2 && "corrupted UTF-8 accrued in `right`");
+        len = 2;
+      } else if (((uint8_t)*right >> 4) == 0b1110) {
+        assert(strlen(right) >= 3 && "corrupted UTF-8 accrued in `right`");
+        len = 3;
+      } else if (((uint8_t)*right >> 3) == 0b11110) {
+        assert(strlen(right) >= 4 && "corrupted UTF-8 accrued in `right`");
+        len = 4;
+      }
+
+      memmove(right, right + len, strlen(right) - len + 1);
+    }
     return 0;
   }
 
@@ -637,11 +735,13 @@ static int handle_input(void) {
     return 0;
   }
 
-  if (e.type == EVENT_KEYPRESS && e.value <= 127 && !iscntrl((int)e.value)) {
-    x++;
+  if (e.type == EVENT_KEYPRESS) {
+    size_t len = utf8_charlen(e.value);
+    if (len > 0)
+      x++;
 
     // expand left if necessary
-    if (strlen(left) + 1 > left_size - 1) {
+    if (strlen(left) + len >= left_size) {
       char *l = realloc(left, left_size * 2);
       if (UNLIKELY(l == NULL))
         return ENOMEM;
@@ -651,8 +751,10 @@ static int handle_input(void) {
 
     // append the new character
     size_t end = strlen(left);
-    left[end] = (char)e.value;
-    left[end + 1] = '\0';
+    const char bytes[] = {e.value & 0xff, (e.value >> 8) & 0xff,
+                          (e.value >> 16) & 0xff, e.value >> 24};
+    memcpy(left + end, bytes, len);
+    left[end + len] = '\0';
 
     return 0;
   }

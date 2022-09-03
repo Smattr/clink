@@ -19,6 +19,8 @@ What does that mean?
 * **Syntax highlighting** – You’re probably used to looking at code in Vim with
   syntax highlighting, so Clink can ask Vim to highlight the snippets it shows
   you.
+* **UTF-8** – Ever wanted to search ``#include`` of a header whose path
+  contains non-ASCII characters? Now you can.
 * **Exact jumps** – Clink opens Vim not only at the right line, but at the right
   column for the entry you’ve asked for.
 * **MSVC DEFs file support** – Not too common nowadays, but still nice for
