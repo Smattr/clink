@@ -17,23 +17,8 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
     ASSERT_NE(disppath(target, NULL), 0);
   }
 
-  // find where we should be creating temporary files
-  const char *tmp = getenv("TMPDIR");
-  if (tmp == NULL)
-    tmp = "/tmp";
-
-  // construct a temporary path template
-  char *path = NULL;
-  {
-    int r = asprintf(&path, "%s/tmp.XXXXXX", tmp);
-    ASSERT_GE(r, 0);
-  }
-
-  // create a temporary directory to work in
-  {
-    char *r = mkdtemp(path);
-    ASSERT_NOT_NULL(r);
-  }
+  // construct a temporary directory
+  char *path = mktempd();
 
   // change to this directory
   {
@@ -81,14 +66,6 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
 
   // clean up temporary file
   (void)unlink(target);
-
-  // move out of this directory so that we can then remove it
-  {
-    int r = chdir("/");
-    ASSERT_EQ(r, 0);
-  }
-  (void)rmdir(path);
-  free(path);
 
   // assert all our claims
   ASSERT(claim1_a);
