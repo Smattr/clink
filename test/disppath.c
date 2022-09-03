@@ -57,17 +57,12 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
   free(out1);
 
   // the same if we provide a absolute path
-  char *in2 = NULL;
-  {
-    int r = asprintf(&in2, "%s/%s", path, target);
-    ASSERT_GE(r, 0);
-  }
+  char *in2 = aprintf("%s/%s", path, target);
   char *out2 = NULL;
   int r2 = disppath(in2, &out2);
   bool claim2_a = r2 == 0;
   bool claim2_b = strcmp(out2, "target") == 0;
   free(out2);
-  free(in2);
 
   // we should get an absolute path for something with a smaller common prefix
   char *out3 = NULL;
