@@ -530,7 +530,7 @@ static int handle_input(void) {
       strncat(left, right, 1);
 
       // remove it from the right side
-      memmove(right, right + 1, strlen(right) + 1);
+      memmove(right, right + 1, strlen(right));
 
       x++;
     }
@@ -614,7 +614,7 @@ static int handle_input(void) {
 
   if (e.type == EVENT_KEYPRESS && e.value == 0x7e335b1b) { // Delete
     if (strlen(right) > 0)
-      memmove(right, right + 1, strlen(right) + 1);
+      memmove(right, right + 1, strlen(right));
     return 0;
   }
 
