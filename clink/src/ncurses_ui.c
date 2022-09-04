@@ -536,6 +536,7 @@ static int handle_input(void) {
       if (UNLIKELY(asprintf(&query, "%s%s", left, right) < 0))
         return errno;
       int rc = functions[prompt_index].handler(query);
+      free(query);
       if (UNLIKELY(rc))
         return rc;
       from_row = 0;
