@@ -2,6 +2,7 @@
 #include "../../common/compiler.h"
 #include "colour.h"
 #include "option.h"
+#include "re.h"
 #include "screen.h"
 #include "set.h"
 #include "spinner.h"
@@ -535,6 +536,16 @@ static int handle_input(void) {
       char *query = NULL;
       if (UNLIKELY(asprintf(&query, "%s%s", left, right) < 0))
         return errno;
+      do { // check this is a valid regex before doing the lookup
+        int rc = re_check(query);
+        if (rc == 0)
+          break;
+        free(query);
+        move(screen_get_rows() - FUNCTIONS_SZ, 1);
+        PRINT_COLOUR("  \033[31;1mERROR\033[0m: ");
+        printf("%s", rc == EINVAL ? "invalid regex" : strerror(rc));
+        return 0;
+      } while (0);
       int rc = functions[prompt_index].handler(query);
       free(query);
       if (UNLIKELY(rc))
