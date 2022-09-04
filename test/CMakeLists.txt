@@ -5,6 +5,7 @@ add_subdirectory(vim-open)
 add_executable(unit-tests
   aprintf.c
   main.c
+  mkpath.c
   mktempd.c
   cleanup.c
 

@@ -151,3 +151,6 @@ __attribute__((format(printf, 1, 2))) char *aprintf(const char *fmt, ...);
 
 /// create a temporary directory, which will be removed on exit
 char *mktempd(void);
+
+/// create a unique path, which will be attempted to be removed on exit
+char *mkpath(void);
