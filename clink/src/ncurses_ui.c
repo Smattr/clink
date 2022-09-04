@@ -58,6 +58,24 @@ static results_t results;
 /// number of result columns excluding the hot key
 enum { COLUMN_COUNT = 4 };
 
+/// print something, updating the display immediately
+#define PRINT(args...)                                                         \
+  do {                                                                         \
+    printf(args);                                                              \
+    fflush(stdout);                                                            \
+  } while (0)
+
+/// print something, accounting for the possibility of stripping colours
+#define PRINT_COLOUR(str)                                                      \
+  do {                                                                         \
+    if (option.colour == ALWAYS) {                                             \
+      PRINT("%s", (str));                                                      \
+    } else {                                                                   \
+      printf_bw((str), stdout);                                                \
+      fflush(stdout);                                                          \
+    }                                                                          \
+  } while (0)
+
 /// will these two symbols appear identically in the results list?
 static bool are_duplicates(const clink_symbol_t *a, const clink_symbol_t *b) {
   if (LIKELY(strcmp(a->name, b->name) != 0))
@@ -72,14 +90,10 @@ static bool are_duplicates(const clink_symbol_t *a, const clink_symbol_t *b) {
 }
 
 static void move(size_t row, size_t column) {
-  printf("\033[%zu;%zuH", row, column);
-  fflush(stdout);
+  PRINT("\033[%zu;%zuH", row, column);
 }
 
-static void clrtoeol(void) {
-  printf("\033[K");
-  fflush(stdout);
-}
+static void clrtoeol(void) { PRINT("\033[K"); }
 
 static int find_symbol(const char *query);
 static int find_definition(const char *query);
@@ -169,8 +183,7 @@ static int format_results(clink_iter_t *it) {
         // note to the user what we are doing
         size_t rows = screen_get_rows();
         move(rows - FUNCTIONS_SZ, 1);
-        printf("   syntax highlighting %s…", target->path);
-        fflush(stdout);
+        PRINT("   syntax highlighting %s…", target->path);
         (void)spinner_on(rows - FUNCTIONS_SZ, 2);
 
         // ignore non-fatal failure of highlighting
@@ -272,9 +285,8 @@ static int find_includer(const char *query) {
 static void print_menu(void) {
   for (size_t i = 0; i < FUNCTIONS_SZ; ++i) {
     move(screen_get_rows() - FUNCTIONS_SZ + 1 + i, 1);
-    printf("%s:", functions[i].prompt);
+    PRINT("%s:", functions[i].prompt);
   }
-  fflush(stdout);
 }
 
 static size_t offset_x(size_t index) {
@@ -302,7 +314,7 @@ static size_t usable_rows(void) {
 
 static void pad(size_t width) {
   for (size_t i = 0; i < width; ++i)
-    printf(" ");
+    PRINT(" ");
 }
 
 static size_t digit_count(unsigned long num) {
@@ -358,9 +370,9 @@ static int print_results(void) {
 
   // print column headings
   move(1, 1);
-  printf("  ");
+  PRINT("  ");
   for (size_t i = 0; i < COLUMN_COUNT; ++i) {
-    printf("%s ", HEADINGS[i]);
+    PRINT("%s ", HEADINGS[i]);
     size_t padding = widths[i] - strlen(HEADINGS[i]);
     pad(padding);
   }
@@ -370,35 +382,30 @@ static int print_results(void) {
   for (size_t i = 0; i < rows - FUNCTIONS_SZ - 1 - 1; ++i) {
     move(2 + i, 1);
     if (i < row_count) {
-      printf("%c ", hotkey(i));
+      PRINT("%c ", hotkey(i));
       for (size_t j = 0; j < COLUMN_COUNT; ++j) {
         const clink_symbol_t *sym = &results.rows[i + from_row];
         size_t padding = widths[j] + 1;
         switch (j) {
         case 0: // file
           padding -= strlen(sym->path);
-          printf("%s", sym->path);
+          PRINT("%s", sym->path);
           pad(padding);
           break;
         case 1: // function
           padding -= sym->parent == NULL ? 0 : strlen(sym->parent);
           if (sym->parent != NULL)
-            printf("%s", sym->parent);
+            PRINT("%s", sym->parent);
           pad(padding);
           break;
         case 2: // line
           padding -= digit_count(sym->lineno) + 1;
           pad(padding);
-          printf("%lu ", sym->lineno);
+          PRINT("%lu ", sym->lineno);
           break;
         case 3: // context
-          if (sym->context != NULL) {
-            if (option.colour == ALWAYS) {
-              printf("%s", sym->context);
-            } else {
-              printf_bw(sym->context, stdout);
-            }
-          }
+          if (sym->context != NULL)
+            PRINT_COLOUR(sym->context);
           break;
         }
       }
@@ -408,22 +415,21 @@ static int print_results(void) {
 
   // print footer
   move(rows - FUNCTIONS_SZ, 1);
-  printf("* ");
+  PRINT("* ");
   if (results.count == 0) {
-    printf("No results");
+    PRINT("No results");
   } else {
-    printf("Lines %zu-%zu of %zu", from_row + 1, from_row + row_count,
-           results.count);
+    PRINT("Lines %zu-%zu of %zu", from_row + 1, from_row + row_count,
+          results.count);
     if (from_row + row_count < results.count) {
-      printf(", %zu more - press the space bar to display more",
-             results.count - from_row - row_count);
+      PRINT(", %zu more - press the space bar to display more",
+            results.count - from_row - row_count);
     } else if (from_row > 0) {
-      printf(", press the space bar to display the first lines again");
+      PRINT(", press the space bar to display the first lines again");
     }
   }
-  printf(" *");
+  PRINT(" *");
   clrtoeol();
-  fflush(stdout);
 
   return 0;
 }
@@ -464,8 +470,7 @@ static void move_to_line_no_blank(size_t target) {
 
   // paste the previous contents into the new line
   move(y, x);
-  printf("%s%s", left, right);
-  fflush(stdout);
+  PRINT("%s%s", left, right);
   x += utf8_strlen(left);
 }
 
