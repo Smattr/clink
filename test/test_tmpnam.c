@@ -8,13 +8,13 @@ static void my_unlink(void *arg) {
   (void)unlink(arg);
 }
 
-char *mkpath(void) {
+char *test_tmpnam(void) {
 
   // create a directory to contain this path
-  char *path = mktempd();
+  char *path = test_mkdtemp();
 
   // construct a path to something we know will not exist inside this
-  char *target = aprintf("%s/target", path);
+  char *target = test_asprintf("%s/target", path);
 
   // allocate a new cleanup action
   cleanup_t *c = calloc(1, sizeof(*c));

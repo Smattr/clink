@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *aprintf(const char *fmt, ...) {
+char *test_asprintf(const char *fmt, ...) {
 
   va_list ap;
   va_start(ap, fmt);

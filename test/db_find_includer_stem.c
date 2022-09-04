@@ -86,7 +86,7 @@ static int find(clink_db_t *db, const char *path) {
 TEST("test looking up an included file by its final component works") {
 
   // construct a unique path
-  char *target = mkpath();
+  char *target = test_tmpnam();
 
   // open it as a database
   clink_db_t *db = NULL;

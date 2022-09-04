@@ -7,7 +7,7 @@ TEST("running `touch filename` via libclink’s run() function does what we "
      "expect") {
 
   // construct a unique path to touch
-  char *target = mkpath();
+  char *target = test_tmpnam();
 
   // use run() to touch the target
   const char *args[] = {"touch", target, NULL};

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static void rm(void *arg) {
+static void my_rmdir(void *arg) {
   assert(arg != NULL);
   assert(access(arg, F_OK) == 0);
 
@@ -13,7 +13,7 @@ static void rm(void *arg) {
   (void)rmdir(arg);
 }
 
-char *mktempd(void) {
+char *test_mkdtemp(void) {
 
   // find where we should be creating temporary files
   const char *tmp = getenv("TMPDIR");
@@ -21,7 +21,7 @@ char *mktempd(void) {
     tmp = "/tmp";
 
   // construct a temporary path template
-  char *path = aprintf("%s/tmp.XXXXXX", tmp);
+  char *path = test_asprintf("%s/tmp.XXXXXX", tmp);
 
   // create the temporary directory
   {
@@ -36,7 +36,7 @@ char *mktempd(void) {
   ASSERT_NOT_NULL(c);
 
   // set it up to delete the directory we just created
-  c->function = rm;
+  c->function = my_rmdir;
   c->arg = path;
 
   // register it

@@ -10,7 +10,7 @@
 TEST("clink_db_find_record()") {
 
   // construct a unique path
-  char *target = mkpath();
+  char *target = test_tmpnam();
 
   // open it as a database
   clink_db_t *db = NULL;

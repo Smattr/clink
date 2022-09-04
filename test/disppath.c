@@ -18,7 +18,7 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
   }
 
   // construct a temporary directory
-  char *path = mktempd();
+  char *path = test_mkdtemp();
 
   // change to this directory
   {
@@ -42,7 +42,7 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
   free(out1);
 
   // the same if we provide a absolute path
-  char *in2 = aprintf("%s/%s", path, target);
+  char *in2 = test_asprintf("%s/%s", path, target);
   char *out2 = NULL;
   int r2 = disppath(in2, &out2);
   bool claim2_a = r2 == 0;

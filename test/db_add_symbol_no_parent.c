@@ -7,7 +7,7 @@
 TEST("clink_db_add_symbol() without a parent") {
 
   // construct a unique path
-  char *target = mkpath();
+  char *target = test_tmpnam();
 
   // open it as a database
   clink_db_t *db = NULL;

@@ -3,10 +3,10 @@ add_subdirectory(ls-includes)
 add_subdirectory(vim-open)
 
 add_executable(unit-tests
-  aprintf.c
   main.c
-  mkpath.c
-  mktempd.c
+  test_asprintf.c
+  test_mkdtemp.c
+  test_tmpnam.c
   cleanup.c
 
   db_add_line.c
