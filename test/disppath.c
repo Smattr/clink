@@ -17,23 +17,8 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
     ASSERT_NE(disppath(target, NULL), 0);
   }
 
-  // find where we should be creating temporary files
-  const char *tmp = getenv("TMPDIR");
-  if (tmp == NULL)
-    tmp = "/tmp";
-
-  // construct a temporary path template
-  char *path = NULL;
-  {
-    int r = asprintf(&path, "%s/tmp.XXXXXX", tmp);
-    ASSERT_GE(r, 0);
-  }
-
-  // create a temporary directory to work in
-  {
-    char *r = mkdtemp(path);
-    ASSERT_NOT_NULL(r);
-  }
+  // construct a temporary directory
+  char *path = test_mkdtemp();
 
   // change to this directory
   {
@@ -57,17 +42,12 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
   free(out1);
 
   // the same if we provide a absolute path
-  char *in2 = NULL;
-  {
-    int r = asprintf(&in2, "%s/%s", path, target);
-    ASSERT_GE(r, 0);
-  }
+  char *in2 = test_asprintf("%s/%s", path, target);
   char *out2 = NULL;
   int r2 = disppath(in2, &out2);
   bool claim2_a = r2 == 0;
   bool claim2_b = strcmp(out2, "target") == 0;
   free(out2);
-  free(in2);
 
   // we should get an absolute path for something with a smaller common prefix
   char *out3 = NULL;
@@ -86,14 +66,6 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
 
   // clean up temporary file
   (void)unlink(target);
-
-  // move out of this directory so that we can then remove it
-  {
-    int r = chdir("/");
-    ASSERT_EQ(r, 0);
-  }
-  (void)rmdir(path);
-  free(path);
 
   // assert all our claims
   ASSERT(claim1_a);

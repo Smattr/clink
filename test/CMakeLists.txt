@@ -4,6 +4,11 @@ add_subdirectory(vim-open)
 
 add_executable(unit-tests
   main.c
+  test_asprintf.c
+  test_mkdtemp.c
+  test_tmpnam.c
+  cleanup.c
+
   db_add_line.c
   db_add_record.c
   db_add_symbol.c

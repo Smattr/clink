@@ -2,10 +2,9 @@
 #include <assert.h>
 #include <clink/clink.h>
 #include <errno.h>
+#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 static const char PATH[] = "include/clink/clink.h";
 
@@ -86,30 +85,8 @@ static int find(clink_db_t *db, const char *path) {
 
 TEST("test looking up an included file by its final component works") {
 
-  // find where we should be creating temporary files
-  const char *tmp = getenv("TMPDIR");
-  if (tmp == NULL)
-    tmp = "/tmp";
-
-  // construct a temporary path template
-  char *path = NULL;
-  {
-    int r = asprintf(&path, "%s/tmp.XXXXXX", tmp);
-    ASSERT_GE(r, 0);
-  }
-
-  // create a temporary directory to work in
-  {
-    char *r = mkdtemp(path);
-    ASSERT_NOT_NULL(r);
-  }
-
-  // construct a path within the temporary directory
-  char *target = NULL;
-  {
-    int r = asprintf(&target, "%s/target", path);
-    ASSERT_GE(r, 0);
-  }
+  // construct a unique path
+  char *target = test_tmpnam();
 
   // open it as a database
   clink_db_t *db = NULL;
@@ -144,12 +121,6 @@ TEST("test looking up an included file by its final component works") {
   // close the database
   if (rc == 0)
     clink_db_close(&db);
-
-  // clean up
-  (void)unlink(target);
-  free(target);
-  (void)rmdir(path);
-  free(path);
 
   ASSERT_EQ(r1, 0); // failed to lookup include by full path
   ASSERT_EQ(r2, 0); // failed to lookup include by stem

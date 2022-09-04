@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
 
       if (pid == 0) {
         p->function();
+        run_cleanups();
         if (!has_assertion_) {
           fprintf(stderr, "failed\n    no assertions were executed\n");
           fflush(stderr);
