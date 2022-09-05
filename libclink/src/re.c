@@ -12,7 +12,7 @@ int re_err_to_errno(int err) {
   case REG_NOMATCH:
     return 0;
 
-#ifdef __linux__
+#ifdef REG_ESIZE
   case REG_ESIZE:
 #endif
   case REG_ESPACE:
