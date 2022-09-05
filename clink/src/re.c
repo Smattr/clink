@@ -9,7 +9,7 @@ int re_check(const char *pattern) {
     return EINVAL;
 
   regex_t regex;
-  int rc = regcomp(&regex, pattern, REG_EXTENDED);
+  int rc = regcomp(&regex, pattern, REG_EXTENDED | REG_NOSUB);
 
   switch (rc) {
 
