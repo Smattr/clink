@@ -118,7 +118,7 @@ int clink_db_find_file(clink_db_t *db, const char *name, clink_iter_t **it) {
   {
     char *name2 = NULL;
     if (ERROR(asprintf(&name2, "%%/%s", name) < 0)) {
-      rc = errno;
+      rc = ENOMEM;
       goto done;
     }
     if (ERROR((rc = sqlite3_bind_text(s->stmt, 2, name2, -1, free)))) {

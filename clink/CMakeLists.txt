@@ -17,6 +17,7 @@ add_executable(clink
   src/option.c
   src/path.c
   src/progress.c
+  src/re.c
   src/screen.c
   src/set.c
   src/sigint.c

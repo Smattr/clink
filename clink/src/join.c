@@ -32,7 +32,7 @@ int join(const char *branch, const char *stem, char **path) {
     ++suffix;
 
   if (asprintf(path, "%.*s/%s", (int)prefix_len, branch, suffix) < 0)
-    return errno;
+    return ENOMEM;
 
   return 0;
 }

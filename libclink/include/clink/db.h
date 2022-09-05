@@ -68,31 +68,31 @@ CLINK_API void clink_db_remove(clink_db_t *db, const char *path);
 /** find function calls within a given function in the database
  *
  * \param db Database to search
- * \param name Symbol name of the containing function to lookup
+ * \param regex Regular expression of a containing function to lookup
  * \param it [out] Created symbol iterator on success
  * \return 0 on success or an errno on failure
  */
-CLINK_API int clink_db_find_call(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_call(clink_db_t *db, const char *regex,
                                  clink_iter_t **it);
 
 /** find calls to a given function in the database
  *
  * \param db Database to search
- * \param name Symbol name of the function being called to lookup
+ * \param regex Regular expression of a function whose calls to lookup
  * \param it [out] Created symbol iterator on success
  * \return 0 on success or an errno on failure
  */
-CLINK_API int clink_db_find_caller(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_caller(clink_db_t *db, const char *regex,
                                    clink_iter_t **it);
 
 /** find a definition in the database
  *
  * \param db Database to search
- * \param name Symbol name of the definition to lookup
+ * \param regex Regular expression of a symbol to search for
  * \param it [out] Created symbol iterator on success
  * \return 0 on success or an errno on failure
  */
-CLINK_API int clink_db_find_definition(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_definition(clink_db_t *db, const char *regex,
                                        clink_iter_t **it);
 
 /** find a given file in the database
@@ -108,11 +108,11 @@ CLINK_API int clink_db_find_file(clink_db_t *db, const char *name,
 /** find #includes or a given file in the database
  *
  * \param db Database to search
- * \param name Filename of the function being #included
+ * \param regex Regular expressions of filename of the function being #included
  * \param it [out] Created symbol iterator on success
  * \return 0 on success or an errno on failure
  */
-CLINK_API int clink_db_find_includer(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_includer(clink_db_t *db, const char *regex,
                                      clink_iter_t **it);
 
 /** find a record in the given database
@@ -133,11 +133,11 @@ CLINK_API int clink_db_find_record(clink_db_t *db, const char *path,
 /** find a symbol in the database
  *
  * \param db Database to search
- * \param name Name of the symbol to lookup
+ * \param regex Regular expression of the symbol to lookup
  * \param it [out] Created symbol iterator on success
  * \return 0 on success or an errno on failure
  */
-CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *regex,
                                    clink_iter_t **it);
 
 /** retrieve a highlighted line from the database

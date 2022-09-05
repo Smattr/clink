@@ -14,13 +14,19 @@ add_executable(unit-tests
   db_add_symbol.c
   db_add_symbol_no_parent.c
   db_find_call.c
+  db_find_call_regex.c
   db_find_caller.c
+  db_find_caller_regex.c
   db_find_definition.c
+  db_find_definition_regex.c
+  db_find_definition_regex2.c
   db_find_file.c
   db_find_includer.c
+  db_find_includer_regex.c
   db_find_includer_stem.c
   db_find_record.c
   db_find_symbol.c
+  db_find_symbol_regex.c
   db_open.c
   db_remove.c
   db_remove_empty.c
