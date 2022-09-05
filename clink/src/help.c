@@ -45,7 +45,7 @@ int help(void) {
   // create a temporary path
   char *path = NULL;
   if (asprintf(&path, "%s/temp.XXXXXX", TMPDIR) < 0)
-    return errno;
+    return ENOMEM;
 
   // create a file there
   int fd = mkstemp(path);

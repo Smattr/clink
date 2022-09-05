@@ -535,7 +535,7 @@ static int handle_input(void) {
     if (strlen(left) > 0 || strlen(right) > 0) {
       char *query = NULL;
       if (UNLIKELY(asprintf(&query, "%s%s", left, right) < 0))
-        return errno;
+        return ENOMEM;
       do { // check this is a valid regex before doing the lookup
         int rc = re_check(query);
         if (rc == 0)
