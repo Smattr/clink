@@ -7,14 +7,16 @@
 #include <clink/symbol.h>
 #include <errno.h>
 #include <sqlite3.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /// state for our iterator
 typedef struct {
 
-  /// the name of the containing function we are searching
-  char *name;
+  /// the full regular expression pattern of the containing function we are
+  /// searching
+  char *pattern;
 
   /// SQL query we are executing
   sqlite3_stmt *stmt;
@@ -37,8 +39,8 @@ static void state_free(state_t **ss) {
     sqlite3_finalize(s->stmt);
   s->stmt = NULL;
 
-  free(s->name);
-  s->name = NULL;
+  free(s->pattern);
+  s->pattern = NULL;
 
   free(s);
   *ss = NULL;
@@ -79,8 +81,8 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
   s->last.path = (char *)sqlite3_column_text(s->stmt, 1);
   s->last.lineno = sqlite3_column_int64(s->stmt, 2);
   s->last.colno = sqlite3_column_int64(s->stmt, 3);
-  s->last.parent = s->name;
-  s->last.context = (char *)sqlite3_column_text(s->stmt, 4);
+  s->last.parent = (char *)sqlite3_column_text(s->stmt, 4);
+  s->last.context = (char *)sqlite3_column_text(s->stmt, 5);
 
   // yield it
   *yielded = &s->last;
@@ -96,26 +98,23 @@ static void my_free(clink_iter_t *it) {
   state_free(&s);
 }
 
-int clink_db_find_call(clink_db_t *db, const char *name, clink_iter_t **it) {
+int clink_db_find_call(clink_db_t *db, const char *regex, clink_iter_t **it) {
 
   if (ERROR(db == NULL))
     return EINVAL;
 
-  if (ERROR(name == NULL))
-    return EINVAL;
-
-  if (ERROR(strcmp(name, "") == 0))
+  if (ERROR(regex == NULL))
     return EINVAL;
 
   if (ERROR(it == NULL))
     return EINVAL;
 
   static const char QUERY[] =
-      "select symbols.name, symbols.path, "
-      "symbols.line, symbols.col, content.body from symbols left join content "
+      "select symbols.name, symbols.path, symbols.line, symbols.col, "
+      "symbols.parent, content.body from symbols left join content "
       "on "
       "symbols.path = content.path and symbols.line = content.line where "
-      "symbols.parent = @parent and symbols.category = @category order by "
+      "symbols.parent regexp @parent and symbols.category = @category order by "
       "symbols.path, symbols.line, symbols.col;";
 
   int rc = 0;
@@ -128,19 +127,16 @@ int clink_db_find_call(clink_db_t *db, const char *name, clink_iter_t **it) {
     goto done;
   }
 
-  // save the name of the containing function for later symbol construction
-  s->name = strdup(name);
-  if (ERROR(s->name == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-
   // create a query to lookup calls in the database
   if (ERROR((rc = sql_prepare(db->db, QUERY, &s->stmt))))
     goto done;
 
   // bind the where clause to our given function
-  if (ERROR((rc = sql_bind_text(s->stmt, 1, s->name))))
+  if (asprintf(&s->pattern, "^%s$", regex) < 0) {
+    rc = ENOMEM;
+    goto done;
+  }
+  if (ERROR((rc = sql_bind_text(s->stmt, 1, s->pattern))))
     goto done;
   if (ERROR((rc = sql_bind_int(s->stmt, 2, CLINK_FUNCTION_CALL))))
     goto done;

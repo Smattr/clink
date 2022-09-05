@@ -14,6 +14,7 @@ add_executable(unit-tests
   db_add_symbol.c
   db_add_symbol_no_parent.c
   db_find_call.c
+  db_find_call_regex.c
   db_find_caller.c
   db_find_definition.c
   db_find_definition_regex.c
