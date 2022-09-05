@@ -7,14 +7,15 @@
 #include <clink/symbol.h>
 #include <errno.h>
 #include <sqlite3.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /// state for our iterator
 typedef struct {
 
-  /// the name of the call we are searching for
-  char *name;
+  /// the full regular expression of the call we are searching for
+  char *pattern;
 
   /// SQL query we are executing
   sqlite3_stmt *stmt;
@@ -37,8 +38,8 @@ static void state_free(state_t **ss) {
     sqlite3_finalize(s->stmt);
   s->stmt = NULL;
 
-  free(s->name);
-  s->name = NULL;
+  free(s->pattern);
+  s->pattern = NULL;
 
   free(s);
   *ss = NULL;
@@ -75,12 +76,12 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
 
   // construct a symbol from the result
   s->last.category = CLINK_FUNCTION_CALL;
-  s->last.name = s->name;
-  s->last.path = (char *)sqlite3_column_text(s->stmt, 0);
-  s->last.lineno = sqlite3_column_int64(s->stmt, 1);
-  s->last.colno = sqlite3_column_int64(s->stmt, 2);
-  s->last.parent = (char *)sqlite3_column_text(s->stmt, 3);
-  s->last.context = (char *)sqlite3_column_text(s->stmt, 4);
+  s->last.name = (char *)sqlite3_column_text(s->stmt, 0);
+  s->last.path = (char *)sqlite3_column_text(s->stmt, 1);
+  s->last.lineno = sqlite3_column_int64(s->stmt, 2);
+  s->last.colno = sqlite3_column_int64(s->stmt, 3);
+  s->last.parent = (char *)sqlite3_column_text(s->stmt, 4);
+  s->last.context = (char *)sqlite3_column_text(s->stmt, 5);
 
   // yield it
   *yielded = &s->last;
@@ -96,25 +97,22 @@ static void my_free(clink_iter_t *it) {
   state_free(&s);
 }
 
-int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
+int clink_db_find_caller(clink_db_t *db, const char *regex, clink_iter_t **it) {
 
   if (ERROR(db == NULL))
     return EINVAL;
 
-  if (ERROR(name == NULL))
-    return EINVAL;
-
-  if (ERROR(strcmp(name, "") == 0))
+  if (ERROR(regex == NULL))
     return EINVAL;
 
   if (ERROR(it == NULL))
     return EINVAL;
 
   static const char QUERY[] =
-      "select symbols.path, symbols.line, symbols.col, "
+      "select symbols.name, symbols.path, symbols.line, symbols.col, "
       "symbols.parent, content.body from symbols left join content on "
       "symbols.path = content.path and symbols.line = content.line where "
-      "symbols.name = @name and symbols.category = @category order by "
+      "symbols.name regexp @name and symbols.category = @category order by "
       "symbols.path, symbols.line, symbols.col;";
 
   int rc = 0;
@@ -127,19 +125,16 @@ int clink_db_find_caller(clink_db_t *db, const char *name, clink_iter_t **it) {
     goto done;
   }
 
-  // save the name of the called function for later symbol construction
-  s->name = strdup(name);
-  if (ERROR(s->name == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-
   // create a query to lookup calls in the database
   if (ERROR((rc = sql_prepare(db->db, QUERY, &s->stmt))))
     goto done;
 
   // bind the where clause to our given call
-  if (ERROR((rc = sql_bind_text(s->stmt, 1, s->name))))
+  if (ERROR(asprintf(&s->pattern, "^%s$", regex) < 0)) {
+    rc = ENOMEM;
+    goto done;
+  }
+  if (ERROR((rc = sql_bind_text(s->stmt, 1, s->pattern))))
     goto done;
   if (ERROR((rc = sql_bind_int(s->stmt, 2, CLINK_FUNCTION_CALL))))
     goto done;

@@ -78,11 +78,11 @@ CLINK_API int clink_db_find_call(clink_db_t *db, const char *regex,
 /** find calls to a given function in the database
  *
  * \param db Database to search
- * \param name Symbol name of the function being called to lookup
+ * \param regex Regular expression of a function whose calls to lookup
  * \param it [out] Created symbol iterator on success
  * \return 0 on success or an errno on failure
  */
-CLINK_API int clink_db_find_caller(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_caller(clink_db_t *db, const char *regex,
                                    clink_iter_t **it);
 
 /** find a definition in the database
