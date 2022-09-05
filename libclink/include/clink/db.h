@@ -133,11 +133,11 @@ CLINK_API int clink_db_find_record(clink_db_t *db, const char *path,
 /** find a symbol in the database
  *
  * \param db Database to search
- * \param name Name of the symbol to lookup
+ * \param regex Regular expression of the symbol to lookup
  * \param it [out] Created symbol iterator on success
  * \return 0 on success or an errno on failure
  */
-CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *regex,
                                    clink_iter_t **it);
 
 /** retrieve a highlighted line from the database

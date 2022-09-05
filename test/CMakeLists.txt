@@ -26,6 +26,7 @@ add_executable(unit-tests
   db_find_includer_stem.c
   db_find_record.c
   db_find_symbol.c
+  db_find_symbol_regex.c
   db_open.c
   db_remove.c
   db_remove_empty.c
