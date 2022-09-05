@@ -1,5 +1,6 @@
 #include "db.h"
 #include "debug.h"
+#include "re.h"
 #include "sql.h"
 #include <assert.h>
 #include <clink/db.h>
@@ -79,8 +80,22 @@ int clink_db_open(clink_db_t **db, const char *path) {
     goto done;
   }
 
-  if (!exists)
-    rc = init(d->db);
+  if (!exists) {
+    if (ERROR(rc = init(d->db)))
+      goto done;
+  }
+
+  // install a SQLite user function that implements regex
+  {
+    int r = sqlite3_create_function(d->db, "regexp", 2,
+                                    SQLITE_UTF8 | SQLITE_DETERMINISTIC |
+                                        SQLITE_DIRECTONLY,
+                                    NULL, re_sqlite, NULL, NULL);
+    if (ERROR(r != SQLITE_OK)) {
+      rc = sql_err_to_errno(r);
+      goto done;
+    }
+  }
 
 done:
   if (rc) {
