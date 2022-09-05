@@ -22,6 +22,7 @@ add_executable(unit-tests
   db_find_definition_regex2.c
   db_find_file.c
   db_find_includer.c
+  db_find_includer_regex.c
   db_find_includer_stem.c
   db_find_record.c
   db_find_symbol.c

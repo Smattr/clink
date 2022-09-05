@@ -7,11 +7,15 @@
 #include <clink/symbol.h>
 #include <errno.h>
 #include <sqlite3.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /// state for our iterator
 typedef struct {
+
+  /// the full regular expression pattern of the filename we are searching
+  char *pattern;
 
   /// SQL query we are executing
   sqlite3_stmt *stmt;
@@ -33,6 +37,9 @@ static void state_free(state_t **ss) {
   if (s->stmt != NULL)
     sqlite3_finalize(s->stmt);
   s->stmt = NULL;
+
+  free(s->pattern);
+  s->pattern = NULL;
 
   free(s);
   *ss = NULL;
@@ -90,16 +97,13 @@ static void my_free(clink_iter_t *it) {
   state_free(&s);
 }
 
-int clink_db_find_includer(clink_db_t *db, const char *name,
+int clink_db_find_includer(clink_db_t *db, const char *regex,
                            clink_iter_t **it) {
 
   if (ERROR(db == NULL))
     return EINVAL;
 
-  if (ERROR(name == NULL))
-    return EINVAL;
-
-  if (ERROR(strcmp(name, "") == 0))
+  if (ERROR(regex == NULL))
     return EINVAL;
 
   if (ERROR(it == NULL))
@@ -110,7 +114,7 @@ int clink_db_find_includer(clink_db_t *db, const char *name,
       "symbols.col, symbols.parent, content.body from symbols left join "
       "content "
       "on symbols.path = content.path and symbols.line = content.line where "
-      "symbols.name like ('%' || @name) and symbols.category = @category order "
+      "symbols.name regexp @name and symbols.category = @category order "
       "by symbols.path, symbols.line, symbols.col;";
 
   int rc = 0;
@@ -127,8 +131,15 @@ int clink_db_find_includer(clink_db_t *db, const char *name,
   if (ERROR((rc = sql_prepare(db->db, QUERY, &s->stmt))))
     goto done;
 
+  // Set up the pattern we will search for. In contrast to the other find
+  // functions, we do not use a `^` anchor to allow arbitrary prefixes as well.
+  if (ERROR(asprintf(&s->pattern, "%s$", regex) < 0)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
   // bind the where clause to our given function
-  if (ERROR((rc = sql_bind_text(s->stmt, 1, name))))
+  if (ERROR((rc = sql_bind_text(s->stmt, 1, s->pattern))))
     goto done;
   if (ERROR((rc = sql_bind_int(s->stmt, 2, CLINK_INCLUDE))))
     goto done;

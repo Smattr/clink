@@ -108,11 +108,11 @@ CLINK_API int clink_db_find_file(clink_db_t *db, const char *name,
 /** find #includes or a given file in the database
  *
  * \param db Database to search
- * \param name Filename of the function being #included
+ * \param regex Regular expressions of filename of the function being #included
  * \param it [out] Created symbol iterator on success
  * \return 0 on success or an errno on failure
  */
-CLINK_API int clink_db_find_includer(clink_db_t *db, const char *name,
+CLINK_API int clink_db_find_includer(clink_db_t *db, const char *regex,
                                      clink_iter_t **it);
 
 /** find a record in the given database
