@@ -572,6 +572,11 @@ static int handle_input(void) {
     return 0;
   }
 
+  if (e.type == EVENT_KEYPRESS && e.value == 0x15) { // Ctrl-U
+    left[0] = '\0';
+    return 0;
+  }
+
   if (e.type == EVENT_KEYPRESS && e.value == '\t') {
     if (results.count > 0)
       state = ST_ROWSELECT;
@@ -654,7 +659,8 @@ static int handle_input(void) {
     return 0;
   }
 
-  if (e.type == EVENT_KEYPRESS && e.value == 0x7e315b1b) { // Home
+  if (e.type == EVENT_KEYPRESS && (e.value == 0x1 ||         // Ctrl-A
+                                   e.value == 0x7e315b1b)) { // Home
 
     // expand right if necessary
     while (strlen(left) + strlen(right) >= right_size) {
@@ -677,7 +683,8 @@ static int handle_input(void) {
     return 0;
   }
 
-  if (e.type == EVENT_KEYPRESS && e.value == 0x7e345b1b) { // End
+  if (e.type == EVENT_KEYPRESS && (e.value == 0x5 ||         // Ctrl-E
+                                   e.value == 0x7e345b1b)) { // End
 
     // expand left if necessary
     while (strlen(left) + strlen(right) >= left_size) {
@@ -707,7 +714,8 @@ static int handle_input(void) {
     return 0;
   }
 
-  if (e.type == EVENT_KEYPRESS && e.value == 0x7f) { // Backspace
+  if (e.type == EVENT_KEYPRESS && (e.value == 0x8 ||   // Ctrl-H
+                                   e.value == 0x7f)) { // Backspace
     if (strlen(left) > 0) {
 
       // we assume `left` contains only valid UTF-8 characters, so we can find
