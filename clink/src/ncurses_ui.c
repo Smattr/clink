@@ -38,11 +38,9 @@ static enum {
 
 /// text the user has entered to the left of the cursor
 static char *left;
-static size_t left_size;
 
 /// text the user has entered to the right of the cursor
 static char *right;
-static size_t right_size;
 
 /// database previously loaded
 static clink_db_t *database;
@@ -564,16 +562,28 @@ static int handle_input(void) {
       left[strlen(left) - 1] = '\0';
     while (strlen(left) > 0 && !isspace(left[strlen(left) - 1]))
       left[strlen(left) - 1] = '\0';
+    {
+      char *l = realloc(left, strlen(left) + 1);
+      if (UNLIKELY(l == NULL))
+        return ENOMEM;
+      left = l;
+    }
     return 0;
   }
 
   if (e.type == EVENT_KEYPRESS && e.value == 0xb) { // Ctrl-K
-    right[0] = '\0';
+    free(right);
+    right = strdup("");
+    if (UNLIKELY(right == NULL))
+      return ENOMEM;
     return 0;
   }
 
   if (e.type == EVENT_KEYPRESS && e.value == 0x15) { // Ctrl-U
-    left[0] = '\0';
+    free(left);
+    left = strdup("");
+    if (UNLIKELY(left == NULL))
+      return ENOMEM;
     return 0;
   }
 
@@ -593,13 +603,12 @@ static int handle_input(void) {
              ((uint8_t)left[strlen(left) - len] >> 6) == 0b10)
         ++len;
 
-      // expand right if necessary
-      if (strlen(right) + len >= right_size) {
-        char *r = realloc(right, right_size * 2);
+      // expand right
+      {
+        char *r = realloc(right, strlen(right) + len + 1);
         if (UNLIKELY(r == NULL))
           return ENOMEM;
         right = r;
-        right_size *= 2;
       }
 
       // insert the new character
@@ -608,6 +617,12 @@ static int handle_input(void) {
 
       // remove it from the left side
       left[strlen(left) - len] = '\0';
+      {
+        char *l = realloc(left, strlen(left) + 1);
+        if (UNLIKELY(l == NULL))
+          return ENOMEM;
+        left = l;
+      }
     }
     return 0;
   }
@@ -629,13 +644,12 @@ static int handle_input(void) {
         len = 4;
       }
 
-      // expand left if necessary
-      if (strlen(left) + len >= left_size) {
-        char *l = realloc(left, left_size * 2);
+      // expand left
+      {
+        char *l = realloc(left, strlen(left) + len + 1);
         if (UNLIKELY(l == NULL))
           return ENOMEM;
         left = l;
-        left_size *= 2;
       }
 
       // insert the new character
@@ -643,6 +657,12 @@ static int handle_input(void) {
 
       // remove it from the right side
       memmove(right, right + len, strlen(right) - len + 1);
+      {
+        char *r = realloc(right, strlen(right) + 1);
+        if (UNLIKELY(r == NULL))
+          return ENOMEM;
+        right = r;
+      }
     }
     return 0;
   }
@@ -662,13 +682,12 @@ static int handle_input(void) {
   if (e.type == EVENT_KEYPRESS && (e.value == 0x1 ||         // Ctrl-A
                                    e.value == 0x7e315b1b)) { // Home
 
-    // expand right if necessary
-    while (strlen(left) + strlen(right) >= right_size) {
-      char *r = realloc(right, right_size * 2);
+    // expand right
+    {
+      char *r = realloc(right, strlen(left) + strlen(right) + 1);
       if (UNLIKELY(r == NULL))
         return ENOMEM;
       right = r;
-      right_size *= 2;
     }
 
     // make room for text to be added
@@ -678,7 +697,10 @@ static int handle_input(void) {
     memcpy(right, left, strlen(left));
 
     // clear the text we just transferred
-    left[0] = '\0';
+    free(left);
+    left = strdup("");
+    if (UNLIKELY(left == NULL))
+      return ENOMEM;
 
     return 0;
   }
@@ -686,20 +708,22 @@ static int handle_input(void) {
   if (e.type == EVENT_KEYPRESS && (e.value == 0x5 ||         // Ctrl-E
                                    e.value == 0x7e345b1b)) { // End
 
-    // expand left if necessary
-    while (strlen(left) + strlen(right) >= left_size) {
-      char *l = realloc(left, left_size * 2);
+    // expand left
+    {
+      char *l = realloc(left, strlen(left) + strlen(right) + 1);
       if (UNLIKELY(l == NULL))
         return ENOMEM;
       left = l;
-      left_size *= 2;
     }
 
     // append the right hand text
     strcat(left, right);
 
     // clear the text we just transferred
-    right[0] = '\0';
+    free(right);
+    right = strdup("");
+    if (UNLIKELY(right == NULL))
+      return ENOMEM;
 
     return 0;
   }
@@ -726,6 +750,12 @@ static int handle_input(void) {
         ++len;
 
       left[strlen(left) - len] = '\0';
+      {
+        char *l = realloc(left, strlen(left) + 1);
+        if (UNLIKELY(l == NULL))
+          return ENOMEM;
+        left = l;
+      }
     }
     return 0;
   }
@@ -748,6 +778,12 @@ static int handle_input(void) {
       }
 
       memmove(right, right + len, strlen(right) - len + 1);
+      {
+        char *r = realloc(right, strlen(right) + 1);
+        if (UNLIKELY(r == NULL))
+          return ENOMEM;
+        right = r;
+      }
     }
     return 0;
   }
@@ -774,13 +810,12 @@ static int handle_input(void) {
   if (e.type == EVENT_KEYPRESS) {
     size_t len = utf8_charlen(e.value);
 
-    // expand left if necessary
-    if (strlen(left) + len >= left_size) {
-      char *l = realloc(left, left_size * 2);
+    // expand left
+    {
+      char *l = realloc(left, strlen(left) + len + 1);
       if (UNLIKELY(l == NULL))
         return ENOMEM;
       left = l;
-      left_size *= 2;
     }
 
     // append the new character
@@ -931,19 +966,17 @@ int ncurses_ui(clink_db_t *db) {
   int rc = 0;
 
   // setup our initial (empty) accrued text at the prompt
-  left = calloc(1, BUFSIZ);
+  left = strdup("");
   if (UNLIKELY(left == NULL)) {
     rc = ENOMEM;
     goto done;
   }
-  left_size = BUFSIZ;
 
-  right = calloc(1, BUFSIZ);
+  right = strdup("");
   if (UNLIKELY(right == NULL)) {
     rc = ENOMEM;
     goto done;
   }
-  right_size = BUFSIZ;
 
   // initialise screen
   if ((rc = screen_init()))
