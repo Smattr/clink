@@ -107,12 +107,7 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
   int rc = 0;
 
   // generate a friendlier name for the source path
-  char *display = NULL;
-  if (UNLIKELY((rc = disppath(cur_dir, path, &display)))) {
-    progress_error(thread_id, "failed to make %s relative: %s", path,
-                   strerror(rc));
-    goto done;
-  }
+  const char *display = disppath(cur_dir, path);
 
   if (use_clang(path)) {
     progress_status(thread_id, "Clang-parsing %s file %s", filetype(path),
@@ -198,8 +193,6 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
   }
 
 done:
-  free(display);
-
   return rc;
 }
 

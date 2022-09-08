@@ -32,16 +32,14 @@ static void *do_work(void *arg) {
       return (void *)(intptr_t)rc;
     }
 
-    // try to generate a friendly path
-    char *display_path = NULL;
-    (void)disppath(st->cur_dir, path, &display_path);
+    // generate a friendly path
+    const char *display_path = disppath(st->cur_dir, path);
 
     // Update what we are doing. Inline the move and `CLRTOEOL` so we can do
     // it all while holding the stdout lock and avoid racing with the
     // spinner.
-    PRINT("\033[%zu;4Hsyntax highlighting %s…%s", st->screen_row,
-          display_path ? display_path : path, CLRTOEOL);
-    free(display_path);
+    PRINT("\033[%zu;4Hsyntax highlighting %s…%s", st->screen_row, display_path,
+          CLRTOEOL);
 
     // ignore non-fatal failure of highlighting
     (void)clink_vim_read_into(st->db, path);
