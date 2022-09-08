@@ -24,6 +24,8 @@ int dirname(const char *path, char **dir);
 
 /** get a friendly-for-display path relative to the current directory
  *
+ * The input path is assumed to be absolute.
+ *
  * \param path Path to a file or directory
  * \param display [out] Path relative to the current directory, or a copy of the
  *   original path if this is not possible

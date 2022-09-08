@@ -8,13 +8,11 @@ int disppath(const char *path, char **display) {
   if (path == NULL)
     return EINVAL;
 
-  if (display == NULL)
+  if (path[0] != '/')
     return EINVAL;
 
-  // normalise the input path
-  char *a = realpath(path, NULL);
-  if (a == NULL)
-    return errno;
+  if (display == NULL)
+    return EINVAL;
 
   char *d = NULL;
 
@@ -25,7 +23,7 @@ int disppath(const char *path, char **display) {
     goto done;
 
   // if the given path was exactly the working directory, describe it as “.”
-  if (strcmp(wd, a) == 0) {
+  if (strcmp(wd, path) == 0) {
     d = strdup(".");
     if (d == NULL)
       rc = ENOMEM;
@@ -33,21 +31,20 @@ int disppath(const char *path, char **display) {
   }
 
   // if wd is a prefix of the path, take the suffix as the display
-  if (strncmp(wd, a, strlen(wd)) == 0 && a[strlen(wd)] == '/') {
-    d = strdup(&a[strlen(wd) + 1]);
+  if (strncmp(wd, path, strlen(wd)) == 0 && path[strlen(wd)] == '/') {
+    d = strdup(&path[strlen(wd) + 1]);
     if (d == NULL)
       rc = ENOMEM;
     goto done;
   }
 
   // otherwise just use the path itself
-  d = strdup(a);
+  d = strdup(path);
   if (d == NULL)
     rc = ENOMEM;
 
 done:
   free(wd);
-  free(a);
 
   if (rc == 0)
     *display = d;
