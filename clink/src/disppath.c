@@ -22,14 +22,6 @@ int disppath(const char *path, char **display) {
   if (rc)
     goto done;
 
-  // if the given path was exactly the working directory, describe it as “.”
-  if (strcmp(wd, path) == 0) {
-    d = strdup(".");
-    if (d == NULL)
-      rc = ENOMEM;
-    goto done;
-  }
-
   // if wd is a prefix of the path, take the suffix as the display
   if (strncmp(wd, path, strlen(wd)) == 0 && path[strlen(wd)] == '/') {
     d = strdup(&path[strlen(wd) + 1]);
