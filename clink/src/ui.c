@@ -219,7 +219,7 @@ static int format_results(clink_iter_t *it) {
   // highlight all the pending files
   {
     size_t rows = screen_get_rows();
-    rc = highlight(database, to_highlight, rows - FUNCTIONS_SZ);
+    rc = highlight(database, cur_dir, to_highlight, rows - FUNCTIONS_SZ);
     if (rc != 0)
       goto done;
   }
