@@ -187,21 +187,19 @@ static int format_results(clink_iter_t *it) {
       const char *path = target->path;
       int r = set_add(highlighted, &path);
       if (r == 0) {
-        // update what we are doing
-        spinner_off();
+        // Update what we are doing. Inline the move and `CLRTOEOL` so we can do
+        // it all while holding the stdout lock and avoid racing with the
+        // spinner.
         size_t rows = screen_get_rows();
-        move(rows - FUNCTIONS_SZ, 4);
-        PRINT("syntax highlighting %s…%s", target->path, CLRTOEOL);
-        (void)spinner_on(rows - FUNCTIONS_SZ, 2);
+        PRINT("\033[%zu;4Hsyntax highlighting %s…%s", rows - FUNCTIONS_SZ,
+              target->path, CLRTOEOL);
 
         // ignore non-fatal failure of highlighting
         (void)clink_vim_read_into(database, target->path);
 
         // update what we are doing
-        spinner_off();
-        move(rows - FUNCTIONS_SZ, 4);
-        PRINT("formatting results…%s", CLRTOEOL);
-        (void)spinner_on(rows - FUNCTIONS_SZ, 2);
+        PRINT("\033[%zu;4Hformatting results…%s", rows - FUNCTIONS_SZ,
+              CLRTOEOL);
       } else if (r != EALREADY) {
         rc = r;
         break;
