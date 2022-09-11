@@ -92,7 +92,7 @@ static void move(size_t row, size_t column) {
   PRINT("\033[%zu;%zuH", row, column);
 }
 
-static void clrtoeol(void) { PRINT("\033[K"); }
+static const char CLRTOEOL[] = "\033[K";
 
 static int find_symbol(const char *query);
 static int find_definition(const char *query);
@@ -119,8 +119,7 @@ static int format_results(clink_iter_t *it) {
   {
     size_t rows = screen_get_rows();
     move(rows - FUNCTIONS_SZ, 1);
-    PRINT("   formatting results…");
-    clrtoeol();
+    PRINT("   formatting results…%s", CLRTOEOL);
     (void)spinner_on(rows - FUNCTIONS_SZ, 2);
   }
 
@@ -192,8 +191,7 @@ static int format_results(clink_iter_t *it) {
         spinner_off();
         size_t rows = screen_get_rows();
         move(rows - FUNCTIONS_SZ, 4);
-        PRINT("syntax highlighting %s…", target->path);
-        clrtoeol();
+        PRINT("syntax highlighting %s…%s", target->path, CLRTOEOL);
         (void)spinner_on(rows - FUNCTIONS_SZ, 2);
 
         // ignore non-fatal failure of highlighting
@@ -202,8 +200,7 @@ static int format_results(clink_iter_t *it) {
         // update what we are doing
         spinner_off();
         move(rows - FUNCTIONS_SZ, 4);
-        PRINT("formatting results…");
-        clrtoeol();
+        PRINT("formatting results…%s", CLRTOEOL);
         (void)spinner_on(rows - FUNCTIONS_SZ, 2);
       } else if (r != EALREADY) {
         rc = r;
@@ -241,7 +238,7 @@ done:
   {
     size_t rows = screen_get_rows();
     move(rows - FUNCTIONS_SZ, 1);
-    clrtoeol();
+    PRINT("%s", CLRTOEOL);
   }
 
   set_free(&highlighted);
@@ -396,7 +393,7 @@ static int print_results(void) {
     size_t padding = widths[i] - strlen(HEADINGS[i]);
     pad(padding);
   }
-  clrtoeol();
+  PRINT("%s", CLRTOEOL);
 
   // print the rows
   for (size_t i = 0; i < rows - FUNCTIONS_SZ - 1 - 1; ++i) {
@@ -430,7 +427,7 @@ static int print_results(void) {
         }
       }
     }
-    clrtoeol();
+    PRINT("%s", CLRTOEOL);
   }
 
   // print footer
@@ -448,8 +445,7 @@ static int print_results(void) {
       PRINT(", press the space bar to display the first lines again");
     }
   }
-  PRINT(" *");
-  clrtoeol();
+  PRINT(" *%s", CLRTOEOL);
 
   return 0;
 }
@@ -498,7 +494,7 @@ static void move_to_line(size_t target) {
 
   // blank the current line
   move(y, offset_x(prompt_index));
-  clrtoeol();
+  PRINT("%s", CLRTOEOL);
 
   move_to_line_no_blank(target);
 }
