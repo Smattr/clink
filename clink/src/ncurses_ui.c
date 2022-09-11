@@ -92,7 +92,7 @@ static void move(size_t row, size_t column) {
   PRINT("\033[%zu;%zuH", row, column);
 }
 
-static void clrtoeol(void) { PRINT("\033[K"); }
+static const char CLRTOEOL[] = "\033[K";
 
 static int find_symbol(const char *query);
 static int find_definition(const char *query);
@@ -114,6 +114,14 @@ static const struct searcher {
 static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
 
 static int format_results(clink_iter_t *it) {
+
+  // note to the user what we are doing
+  {
+    size_t rows = screen_get_rows();
+    move(rows - FUNCTIONS_SZ, 1);
+    PRINT("   formatting results…%s", CLRTOEOL);
+    (void)spinner_on(rows - FUNCTIONS_SZ, 2);
+  }
 
   // free any previous results
   for (size_t i = 0; i < results.count; ++i)
@@ -179,18 +187,19 @@ static int format_results(clink_iter_t *it) {
       const char *path = target->path;
       int r = set_add(highlighted, &path);
       if (r == 0) {
-        // note to the user what we are doing
+        // Update what we are doing. Inline the move and `CLRTOEOL` so we can do
+        // it all while holding the stdout lock and avoid racing with the
+        // spinner.
         size_t rows = screen_get_rows();
-        move(rows - FUNCTIONS_SZ, 1);
-        PRINT("   syntax highlighting %s…", target->path);
-        (void)spinner_on(rows - FUNCTIONS_SZ, 2);
+        PRINT("\033[%zu;4Hsyntax highlighting %s…%s", rows - FUNCTIONS_SZ,
+              target->path, CLRTOEOL);
 
         // ignore non-fatal failure of highlighting
         (void)clink_vim_read_into(database, target->path);
 
-        spinner_off();
-        move(rows - FUNCTIONS_SZ, 1);
-        clrtoeol();
+        // update what we are doing
+        PRINT("\033[%zu;4Hformatting results…%s", rows - FUNCTIONS_SZ,
+              CLRTOEOL);
       } else if (r != EALREADY) {
         rc = r;
         break;
@@ -222,6 +231,13 @@ static int format_results(clink_iter_t *it) {
   }
 
 done:
+
+  spinner_off();
+  {
+    size_t rows = screen_get_rows();
+    move(rows - FUNCTIONS_SZ, 1);
+    PRINT("%s", CLRTOEOL);
+  }
 
   set_free(&highlighted);
   clink_iter_free(&it);
@@ -375,7 +391,7 @@ static int print_results(void) {
     size_t padding = widths[i] - strlen(HEADINGS[i]);
     pad(padding);
   }
-  clrtoeol();
+  PRINT("%s", CLRTOEOL);
 
   // print the rows
   for (size_t i = 0; i < rows - FUNCTIONS_SZ - 1 - 1; ++i) {
@@ -409,7 +425,7 @@ static int print_results(void) {
         }
       }
     }
-    clrtoeol();
+    PRINT("%s", CLRTOEOL);
   }
 
   // print footer
@@ -427,8 +443,7 @@ static int print_results(void) {
       PRINT(", press the space bar to display the first lines again");
     }
   }
-  PRINT(" *");
-  clrtoeol();
+  PRINT(" *%s", CLRTOEOL);
 
   return 0;
 }
@@ -477,7 +492,7 @@ static void move_to_line(size_t target) {
 
   // blank the current line
   move(y, offset_x(prompt_index));
-  clrtoeol();
+  PRINT("%s", CLRTOEOL);
 
   move_to_line_no_blank(target);
 }

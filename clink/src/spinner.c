@@ -45,12 +45,16 @@ static void *spin(void *ignored __attribute__((unused))) {
         break;
     }
 
+    // prevent anyone else interleaving stdout writes with us
+    flockfile(stdout);
+
     // move to where the progress spinner should go
     printf("\033[%zu;%zuH", spinner_row, spinner_column);
 
     // output the spinner itself
     printf("%s", STATES[state]);
     fflush(stdout);
+    funlockfile(stdout);
 
     state = (state + 1) % (sizeof(STATES) / sizeof(STATES[0]));
   }
