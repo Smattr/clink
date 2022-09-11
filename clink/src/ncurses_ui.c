@@ -115,6 +115,15 @@ static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
 
 static int format_results(clink_iter_t *it) {
 
+  // note to the user what we are doing
+  {
+    size_t rows = screen_get_rows();
+    move(rows - FUNCTIONS_SZ, 1);
+    PRINT("   formatting results…");
+    clrtoeol();
+    (void)spinner_on(rows - FUNCTIONS_SZ, 2);
+  }
+
   // free any previous results
   for (size_t i = 0; i < results.count; ++i)
     clink_symbol_clear(&results.rows[i]);
@@ -179,18 +188,23 @@ static int format_results(clink_iter_t *it) {
       const char *path = target->path;
       int r = set_add(highlighted, &path);
       if (r == 0) {
-        // note to the user what we are doing
+        // update what we are doing
+        spinner_off();
         size_t rows = screen_get_rows();
-        move(rows - FUNCTIONS_SZ, 1);
-        PRINT("   syntax highlighting %s…", target->path);
+        move(rows - FUNCTIONS_SZ, 4);
+        PRINT("syntax highlighting %s…", target->path);
+        clrtoeol();
         (void)spinner_on(rows - FUNCTIONS_SZ, 2);
 
         // ignore non-fatal failure of highlighting
         (void)clink_vim_read_into(database, target->path);
 
+        // update what we are doing
         spinner_off();
-        move(rows - FUNCTIONS_SZ, 1);
+        move(rows - FUNCTIONS_SZ, 4);
+        PRINT("formatting results…");
         clrtoeol();
+        (void)spinner_on(rows - FUNCTIONS_SZ, 2);
       } else if (r != EALREADY) {
         rc = r;
         break;
@@ -222,6 +236,13 @@ static int format_results(clink_iter_t *it) {
   }
 
 done:
+
+  spinner_off();
+  {
+    size_t rows = screen_get_rows();
+    move(rows - FUNCTIONS_SZ, 1);
+    clrtoeol();
+  }
 
   set_free(&highlighted);
   clink_iter_free(&it);
