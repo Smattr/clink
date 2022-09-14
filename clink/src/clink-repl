@@ -94,7 +94,7 @@ def find_symbol(db: sqlite3.Connection, name: str):
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+        print(f"{row[0]} {row[1] or name} {row[2]} {in_bw(row[3])}")
 
 
 def find_definition(db: sqlite3.Connection, name: str):
