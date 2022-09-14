@@ -8,6 +8,7 @@
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 static const char SYMBOLS_SCHEMA[] =
@@ -68,11 +69,17 @@ int clink_db_open(clink_db_t **db, const char *path) {
   if (ERROR(d == NULL))
     return ENOMEM;
 
-  int rc = 0;
-
   // check if the database file already exists, so we know whether to create the
   // database structure
   bool exists = !(access(path, R_OK | W_OK) == -1 && errno == ENOENT);
+
+  int rc = 0;
+
+  d->path = strdup(path);
+  if (ERROR(d->path == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
 
   int err = sqlite3_open(path, &d->db);
   if (err != SQLITE_OK) {
@@ -104,8 +111,11 @@ int clink_db_open(clink_db_t **db, const char *path) {
 
 done:
   if (rc) {
-    if (d != NULL && d->db != NULL)
-      (void)sqlite3_close(d->db);
+    if (d != NULL) {
+      if (d->db != NULL)
+        (void)sqlite3_close(d->db);
+      free(d->path);
+    }
     if (!exists)
       (void)unlink(path);
     free(d);
