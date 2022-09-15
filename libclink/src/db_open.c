@@ -87,10 +87,15 @@ int clink_db_open(clink_db_t **db, const char *path) {
 
   // install a SQLite user function that implements regex
   {
-    int r = sqlite3_create_function(d->db, "regexp", 2,
-                                    SQLITE_UTF8 | SQLITE_DETERMINISTIC |
-                                        SQLITE_DIRECTONLY,
-                                    NULL, re_sqlite, NULL, NULL);
+    int eTextRep = SQLITE_UTF8;
+#ifdef SQLITE_DETERMINISTIC
+    eTextRep |= SQLITE_DETERMINISTIC;
+#endif
+#ifdef SQLITE_DIRECTONLY
+    eTextRep |= SQLITE_DIRECTONLY;
+#endif
+    int r = sqlite3_create_function(d->db, "regexp", 2, eTextRep, NULL,
+                                    re_sqlite, NULL, NULL);
     if (ERROR(r != SQLITE_OK)) {
       rc = sql_err_to_errno(r);
       goto done;
