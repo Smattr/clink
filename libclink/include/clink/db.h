@@ -95,16 +95,6 @@ CLINK_API int clink_db_find_caller(clink_db_t *db, const char *regex,
 CLINK_API int clink_db_find_definition(clink_db_t *db, const char *regex,
                                        clink_iter_t **it);
 
-/** find a given file in the database
- *
- * \param db Database to search
- * \param name Filename to lookup
- * \param it [out] Created string iterator on success
- * \return 0 on success or an errno on failure
- */
-CLINK_API int clink_db_find_file(clink_db_t *db, const char *name,
-                                 clink_iter_t **it);
-
 /** find #includes or a given file in the database
  *
  * \param db Database to search

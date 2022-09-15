@@ -11,7 +11,6 @@ add_library(libclink
   src/db_find_call.c
   src/db_find_caller.c
   src/db_find_definition.c
-  src/db_find_file.c
   src/db_find_includer.c
   src/db_find_record.c
   src/db_find_symbol.c
