@@ -11,7 +11,6 @@ add_executable(clink
   src/help.c
   src/is_root.c
   src/join.c
-  src/line_ui.c
   src/main.c
   src/ncurses_ui.c
   src/option.c

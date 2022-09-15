@@ -20,7 +20,6 @@ option_t option = {
     .src_len = 0,
     .update_database = true,
     .ncurses_ui = true,
-    .line_ui = false,
     .threads = 0,
     .colour = AUTO,
     .debug = false,
