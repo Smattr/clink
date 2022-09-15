@@ -13,21 +13,7 @@ extern "C" {
 /// opaque type of an iterator
 typedef struct clink_iter clink_iter_t;
 
-/** yield the next string from an iterator
- *
- * The iterator passed to this function should be one that yields strings,
- * otherwise it will fail.
- *
- * \param it The iterator structure to operate on
- * \param yielded [out] The next string in the iterator on success
- * \return 0 on success or an errno on failure
- */
-CLINK_API int clink_iter_next_str(clink_iter_t *it, const char **yielded);
-
 /** yield the next symbol from an iterator
- *
- * The iterator passed to this function should be one that yields symbols,
- * otherwise it will fail.
  *
  * \param it The iterator structure to operate on
  * \param yielded [out] The next symbol in the iterator on success

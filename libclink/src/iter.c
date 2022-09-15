@@ -5,20 +5,6 @@
 #include <errno.h>
 #include <stdlib.h>
 
-int clink_iter_next_str(clink_iter_t *it, const char **yielded) {
-
-  if (ERROR(it == NULL))
-    return EINVAL;
-
-  if (ERROR(yielded == NULL))
-    return EINVAL;
-
-  if (ERROR(it->next_str == NULL))
-    return EINVAL;
-
-  return it->next_str(it, yielded);
-}
-
 int clink_iter_next_symbol(clink_iter_t *it, const clink_symbol_t **yielded) {
 
   if (ERROR(it == NULL))
