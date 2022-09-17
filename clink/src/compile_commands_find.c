@@ -36,7 +36,7 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // take the first and ignore the rest
   CXCompileCommand cmd = clang_CompileCommands_getCommand(cmds, 0);
 
-  // hot many arguments do we have?
+  // how many arguments do we have?
   size_t num_args = clang_CompileCommand_getNumArgs(cmd);
   assert(num_args > 0);
   assert(num_args < SIZE_MAX);
