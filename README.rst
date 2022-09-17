@@ -23,9 +23,9 @@ What does that mean?
   contains non-ASCII characters? Now you can.
 * **Exact jumps** – Clink opens Vim not only at the right line, but at the right
   column for the entry you’ve asked for.
-* **Extended regex supported in all fields** - Can’t remember the exact name of
-  a symbol? Want to search for multiple similar symbols at once? Clink has you
-  covered.
+* **Regex** - Can’t remember the exact name of a symbol? Want to search for
+  multiple similar symbols at once? Clink supports extended regex in all search
+  fields.
 * **Fewer features** – Cscope’s options to find files and regex text are now
   better served by any__ number__ of__ other__ tools__ and are not included in
   Clink.
