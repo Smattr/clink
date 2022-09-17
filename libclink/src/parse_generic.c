@@ -114,7 +114,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
     // if this is something other than whitespace, it separates a definition
     // leader from anything it could apply to
-    if (!isspace(c))
+    if (pending.base == NULL && !isspace(c))
       last_defn_leader = false;
 
     // update our position tracking
