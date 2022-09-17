@@ -13,8 +13,8 @@ What does that mean?
   understands your code (including macros) as well as your compiler does.
 * **Multicore support** – Parsing multiple, independent files trivially
   parallelises, so why be limited by one core?
-* **Assembly, MSVC DEFs file support** – Your code base is more than just C and
-  C++. Clink parses some other formats fuzzily and can maintain a call graph
+* **Assembly, MSVC DEFs, Python support** – Your code base is more than just C
+  and C++. Clink parses some other formats fuzzily and can maintain a call graph
   across language boundaries.
 * **Syntax highlighting** – You’re probably used to looking at code in Vim with
   syntax highlighting, so Clink can ask Vim to highlight the snippets it shows

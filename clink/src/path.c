@@ -60,6 +60,8 @@ bool is_file(const char *path) {
   return S_ISREG(buf.st_mode);
 }
 
+bool is_python(const char *path) { return has_ext(path, "py"); }
+
 bool is_source(const char *path) {
 
   if (path == NULL)
@@ -75,6 +77,9 @@ bool is_source(const char *path) {
     return true;
 
   if (is_cxx(path) && option.parse_cxx != OFF)
+    return true;
+
+  if (is_python(path) && option.parse_python != OFF)
     return true;
 
   return false;

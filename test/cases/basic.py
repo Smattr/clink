@@ -7,8 +7,6 @@ class Bar():
   def __init__():
     pass
 
-// XFAIL: True
-
 // RUN: clink --build-only --database {%t} --debug {%s} >/dev/null
 
 // RUN: echo 'select path, category, line, col from symbols where name = "foo" and line < 12;' | sqlite3 {%t}

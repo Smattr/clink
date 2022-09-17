@@ -213,10 +213,15 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       rc = clink_parse_c(db, path);
 
       // DEF
-    } else {
-      assert(is_def(path));
+    } else if (is_def(path)) {
       progress_status(thread_id, "parsing DEF file %s", display);
       rc = clink_parse_def(db, path);
+
+      // Python
+    } else {
+      assert(is_python(path));
+      progress_status(thread_id, "parsing Python file %s", display);
+      rc = clink_parse_python(db, path);
     }
 
     if (UNLIKELY(rc))

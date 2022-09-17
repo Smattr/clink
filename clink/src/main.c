@@ -51,6 +51,7 @@ static void parse_args(int argc, char **argv) {
       OPT_PARSE_C,
       OPT_PARSE_CXX,
       OPT_PARSE_DEF,
+      OPT_PARSE_PYTHON,
     };
 
     static const struct option opts[] = {
@@ -69,6 +70,7 @@ static void parse_args(int argc, char **argv) {
         {"parse-c",              required_argument, 0, OPT_PARSE_C},
         {"parse-cxx",            required_argument, 0, OPT_PARSE_CXX},
         {"parse-def",            required_argument, 0, OPT_PARSE_DEF},
+        {"parse-python",         required_argument, 0, OPT_PARSE_PYTHON},
         {"syntax-highlighting",  required_argument, 0, 's'},
         {"version",              no_argument,       0, 'V'},
         {0, 0, 0, 0},
@@ -201,6 +203,17 @@ static void parse_args(int argc, char **argv) {
         option.parse_def = OFF;
       } else {
         fprintf(stderr, "illegal value to --parse-def: %s\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+      break;
+
+    case OPT_PARSE_PYTHON: // --parse-python
+      if (strcmp(optarg, "generic") == 0) {
+        option.parse_python = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_python = OFF;
+      } else {
+        fprintf(stderr, "illegal value to --parse-python: %s\n", optarg);
         exit(EXIT_FAILURE);
       }
       break;
