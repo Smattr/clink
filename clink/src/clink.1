@@ -87,6 +87,7 @@ option	format	modes	default
 \fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBoff\fR, \fBclang\fR, \fBgeneric\fR	\fBclang\fR
 \fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 .TE
+.PP
 The mode \fBgeneric\fR selects a parser that has limited semantic understanding
 and cannot infer things like complex definitions. But it can be useful when you
 do not have full compiler flags for your sources and so Clang cannot effectively
