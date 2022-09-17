@@ -495,6 +495,9 @@ int clink_parse_with_clang(clink_db_t *db, const char *filename, size_t argc,
 
   int rc = 0;
 
+  // state for the traversal
+  state_t state = {.db = db};
+
   // initialise Clang
   CXIndex index;
   CXTranslationUnit tu = NULL;
@@ -503,9 +506,6 @@ int clink_parse_with_clang(clink_db_t *db, const char *filename, size_t argc,
 
   // get a top level cursor
   CXCursor root = clang_getTranslationUnitCursor(tu);
-
-  // state for the traversal
-  state_t state = {.db = db};
 
   // traverse from the root node
   (void)clang_visitChildren(root, visit, &state);
