@@ -152,15 +152,23 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     } else if (is_cxx(path) && option.parse_cxx == CLANG) {
       progress_status(thread_id, "Clang-parsing C++ file %s", display);
 
-      // if we have a compile commands database, use it
-      if (option.compile_commands.db != NULL) {
-        rc = parse_with_comp_db(db, path);
+      do {
+        // if we have a compile commands database, use it
+        if (option.compile_commands.db != NULL) {
+          rc = parse_with_comp_db(db, path);
+          if (rc == 0 || rc != ENOMSG)
+            break;
 
-      } else {
+          progress_warn(thread_id,
+                        "no compile_commands.json entry found for %s", path);
+        }
+
+        // if we do not have a compile commands database or no entry was found
+        // for this path, parse with our default arguments
         assert(option.clang_argc > 0 && option.clang_argv != NULL);
         const char **argv = (const char **)option.clang_argv;
         rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
-      }
+      } while (0);
 
       // parse with the preprocessor
       if (rc == 0) {
@@ -176,15 +184,23 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     } else if (is_c(path) && option.parse_c == CLANG) {
       progress_status(thread_id, "Clang-parsing C file %s", display);
 
-      // if we have a compile commands database, use it
-      if (option.compile_commands.db != NULL) {
-        rc = parse_with_comp_db(db, path);
+      do {
+        // if we have a compile commands database, use it
+        if (option.compile_commands.db != NULL) {
+          rc = parse_with_comp_db(db, path);
+          if (rc == 0 || rc != ENOMSG)
+            break;
 
-      } else {
+          progress_warn(thread_id,
+                        "no compile_commands.json entry found for %s", path);
+        }
+
+        // if we do not have a compile commands database or no entry was found
+        // for this path, parse with our default arguments
         assert(option.clang_argc > 0 && option.clang_argv != NULL);
         const char **argv = (const char **)option.clang_argv;
         rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
-      }
+      } while (0);
 
       // parse with the preprocessor
       if (rc == 0) {
