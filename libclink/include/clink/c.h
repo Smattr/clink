@@ -13,6 +13,10 @@ extern "C" {
 
 /** parse the given C file, inserting results into the given database
  *
+ * This parsing interface is extremely limited, capable only of heuristically
+ * recognising definitions and references. Callers likely want
+ * \p clink_parse_with_clang instead.
+ *
  * \param db Database to insert into
  * \param filename Path to source file to parse
  * \return 0 on success or an errno on failure

@@ -1,5 +1,6 @@
 #include "debug.h"
 #include <clink/c.h>
+#include <clink/db.h>
 #include <clink/generic.h>
 #include <errno.h>
 #include <unistd.h>
@@ -45,6 +46,10 @@ int clink_parse_cxx(clink_db_t *db, const char *filename) {
   static const size_t DEFN_LEADERS_LENGTH =
       sizeof(DEFN_LEADERS) / sizeof(DEFN_LEADERS[0]);
 
-  return clink_parse_generic(db, filename, KEYWORDS, KEYWORDS_LENGTH,
-                             DEFN_LEADERS, DEFN_LEADERS_LENGTH);
+  static const clink_lang_t CXX = {.keywords = KEYWORDS,
+                                   .keywords_length = KEYWORDS_LENGTH,
+                                   .defn_leaders = DEFN_LEADERS,
+                                   .defn_leaders_length = DEFN_LEADERS_LENGTH};
+
+  return clink_parse_generic(db, filename, &CXX);
 }

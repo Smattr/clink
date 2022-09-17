@@ -28,6 +28,7 @@ option_t option = {
     .parse_c = CLANG,
     .parse_cxx = CLANG,
     .parse_def = GENERIC,
+    .parse_python = GENERIC,
     .clang_argc = 0,
     .clang_argv = NULL,
     .compile_commands = {0},

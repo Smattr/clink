@@ -10,8 +10,7 @@
 #include <stddef.h>
 
 int clink_parse_generic(clink_db_t *db, const char *filename,
-                        const char **keywords, size_t keywords_length,
-                        const char **defn_leaders, size_t defn_leaders_length) {
+                        const clink_lang_t *lang) {
 
   if (ERROR(db == NULL))
     return EINVAL;
@@ -19,10 +18,13 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   if (ERROR(filename == NULL))
     return EINVAL;
 
-  if (ERROR(keywords == NULL && keywords_length > 0))
+  if (ERROR(lang == NULL))
     return EINVAL;
 
-  if (ERROR(defn_leaders == NULL && defn_leaders_length > 0))
+  if (ERROR(lang->keywords == NULL && lang->keywords_length > 0))
+    return EINVAL;
+
+  if (ERROR(lang->defn_leaders == NULL && lang->defn_leaders_length > 0))
     return EINVAL;
 
   int rc = 0;
@@ -69,8 +71,8 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
       // is this one of the restricted keywords?
       bool is_keyword = false;
-      for (size_t i = 0; i < keywords_length; ++i) {
-        if (span_eq(pending, keywords[i])) {
+      for (size_t i = 0; i < lang->keywords_length; ++i) {
+        if (span_eq(pending, lang->keywords[i])) {
           is_keyword = true;
           break;
         }
@@ -78,8 +80,8 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
       // is this a definition leader?
       bool is_defn_leader = false;
-      for (size_t i = 0; i < defn_leaders_length; ++i) {
-        if (span_eq(pending, defn_leaders[i])) {
+      for (size_t i = 0; i < lang->defn_leaders_length; ++i) {
+        if (span_eq(pending, lang->defn_leaders[i])) {
           is_defn_leader = true;
           break;
         }
@@ -112,7 +114,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
     // if this is something other than whitespace, it separates a definition
     // leader from anything it could apply to
-    if (!isspace(c))
+    if (pending.base == NULL && !isspace(c))
       last_defn_leader = false;
 
     // update our position tracking

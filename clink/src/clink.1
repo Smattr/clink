@@ -73,6 +73,8 @@ Do not update the database.
 \fB--parse-cxx=\fR\fIMODE\fR
 .br
 \fB--parse-def=\fR\fIMODE\fR
+.br
+\fB--parse-python=\fR\fIMODE\fR
 .RS
 Control which source code formats are considered for parsing and how they are
 parsed. The following table describes what source code format each of these
@@ -86,7 +88,9 @@ option	format	modes	default
 \fB--parse-c\fR	C source code (.c, .h files)	\fBoff\fR, \fBclang\fR, \fBgeneric\fR	\fBclang\fR
 \fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBoff\fR, \fBclang\fR, \fBgeneric\fR	\fBclang\fR
 \fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB--parse-python\fR	Python source code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 .TE
+.PP
 The mode \fBgeneric\fR selects a parser that has limited semantic understanding
 and cannot infer things like complex definitions. But it can be useful when you
 do not have full compiler flags for your sources and so Clang cannot effectively

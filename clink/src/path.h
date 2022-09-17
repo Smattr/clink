@@ -73,6 +73,13 @@ bool is_dir(const char *path);
  */
 bool is_file(const char *path);
 
+/** is this a path to a Python file?
+ *
+ * \param path Path to assess
+ * \return True if this is a Python file
+ */
+bool is_python(const char *path);
+
 /** is this the root directory of the file system?
  *
  * \param path Path to a file or directory
