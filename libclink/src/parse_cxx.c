@@ -1,5 +1,6 @@
 #include "debug.h"
 #include <clink/c.h>
+#include <clink/db.h>
 #include <clink/generic.h>
 #include <errno.h>
 #include <unistd.h>
