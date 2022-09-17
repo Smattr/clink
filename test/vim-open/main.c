@@ -24,5 +24,5 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  return clink_vim_open(filename, lineno, colno);
+  return clink_vim_open(filename, lineno, colno, NULL);
 }

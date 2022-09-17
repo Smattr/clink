@@ -34,11 +34,6 @@ static bool smart_progress(void) {
   if (!tty)
     return false;
 
-  // also not if we are using the line-oriented interface because we assume we
-  // are being called by Vim that does not expect this progress output
-  if (option.line_ui)
-    return false;
-
   return true;
 }
 

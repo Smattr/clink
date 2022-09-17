@@ -11,7 +11,6 @@ add_executable(clink
   src/help.c
   src/is_root.c
   src/join.c
-  src/line_ui.c
   src/main.c
   src/ncurses_ui.c
   src/option.c
@@ -49,15 +48,23 @@ add_custom_command(OUTPUT manpage.c
 find_program(GZIP gzip REQUIRED)
 add_custom_target(man-clink
   ALL
-  DEPENDS clink.1.gz)
+  DEPENDS clink.1.gz clink-repl.1.gz)
 add_custom_command(OUTPUT clink.1.gz
   COMMAND ${GZIP} -9 --no-name --to-stdout src/clink.1
     >"${CMAKE_CURRENT_BINARY_DIR}/clink.1.gz"
   MAIN_DEPENDENCY src/clink.1
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(OUTPUT clink-repl.1.gz
+  COMMAND ${GZIP} -9 --no-name --to-stdout src/clink-repl.1
+    >"${CMAKE_CURRENT_BINARY_DIR}/clink-repl.1.gz"
+  MAIN_DEPENDENCY src/clink-repl.1
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(TARGETS clink
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/clink.1.gz
+  ${CMAKE_CURRENT_BINARY_DIR}/clink-repl.1.gz
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+install(PROGRAMS src/clink-repl
+  DESTINATION ${CMAKE_INSTALL_BINDIR})

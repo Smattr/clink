@@ -1,0 +1,43 @@
+.TH CLINK-REPL 1
+.SH NAME
+clink \- C/C++/assembly code navigator
+.SH SYNOPSIS
+.B \fBclink-repl\fR \fIoptions...\fR
+.SH DESCRIPTION
+As an alternative to invoking \fBcscope\fR within \fBvim\fR, \fBclink-repl\fR
+can be used to access a Clink database. \fBclink-repl\fR implements just enough
+of the
+.BR cscope(1)
+protocol that \fBvim\fR expects to enable \fBcsope\fR-like interaction.
+.PP
+This program is not expected to be called directly by users. You can call it
+directly, but you probably want
+.BR clink(1)
+instead.
+.SH OPTIONS
+\fB-d\fR
+.RS
+Ignored, but provided for
+.BR cscope(1)
+compatibility.
+.RE
+\fB-f\fR \fIDATABASE\fR
+.RS
+Access the given database for code lookups. If this option is not given, an
+attempt will be made to locate a database using the same logic as
+.BR clink(1)
+itself.
+.RE
+\fB-l\fR
+Ignored, but provided for
+.BR cscope(1)
+compatibility.
+.RE
+.SH ENVIRONMENT VARIABLES
+\fBCLINK_DEBUG_LOG\fR
+.RS
+This can be set to a path to a file to log debug messages to. This can be useful
+for debugging problems with interaction with \fBvim\fR.
+.RE
+.SH SEE ALSO
+clink(1), cscope(1)

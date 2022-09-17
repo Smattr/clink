@@ -15,10 +15,11 @@ extern "C" {
  * \param filename File to open with Vim
  * \param lineno Line number to position cursor at within the file
  * \param colno Column number to position cursor at within the file
+ * \param db Optional database to connect Vim to
  * \return Vim’s exit status
  */
 CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
-                             unsigned long colno);
+                             unsigned long colno, const clink_db_t *db);
 
 /** Vim-highlight the given file, returning lines through the callback function
  *

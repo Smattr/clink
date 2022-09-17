@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+
+"""
+Clink line-oriented interface
+
+This implements just enough of the `cscope -l` protocol to interact with Vim.
+"""
+
+import argparse
+import io
+import logging
+import os
+import shlex
+import sqlite3
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+
+CLINK_DEFINITION = 0
+CLINK_FUNCTION_CALL = 1
+CLINK_REFERENCE = 2
+CLINK_INCLUDE = 3
+
+
+def find_database() -> Optional[Path]:
+    """
+    locate the Clink database, based on the current working directory
+    """
+
+    # replicate the heuristic search performed by Clink
+    branch = Path.cwd()
+    while True:
+
+        candidate = branch / ".clink.db"
+        if candidate.exists():
+            return candidate
+
+        for vcs in (".git", ".hg", ".svn"):
+            vcs_dir = branch / vcs
+            if not vcs_dir.exists():
+                continue
+
+            candidate = vcs_dir / ".clink.db"
+            if candidate.exists():
+                return candidate
+            return None
+
+        if branch.samefile(branch.root):
+            break
+        branch = branch.parent
+    return None
+
+
+def select(
+    db: sqlite3.Connection, sql: str, parameters: Dict[str, Any]
+) -> List[Tuple[str, ...]]:
+    cursor = db.execute(sql, parameters)
+    return cursor.fetchall()
+
+
+def in_bw(s: Optional[str]) -> str:
+    """
+    string ANSI color codes from a string
+    """
+
+    if s is None:
+        return ""
+
+    buffer = io.StringIO()
+    i = 0
+    while i < len(s):
+
+        if s[i:].startswith("\033["):
+            i += 2
+            while i < len(s) and s[i] != "m":
+                i += 1
+            i += 1
+            continue
+
+        buffer.write(s[i])
+        i += 1
+    return buffer.getvalue()
+
+
+def find_symbol(db: sqlite3.Connection, name: str):
+    logging.debug(f"find_symbol of {name}")
+    SQL = (
+        "select symbols.path, symbols.parent, symbols.line, content.body "
+        "from symbols left join content on symbols.path = content.path and "
+        "symbols.line = content.line where symbols.name = :name order by "
+        "symbols.path, symbols.line, symbols.col;"
+    )
+    rows = select(db, SQL, {"name": name})
+    print(f"cscope: {len(rows)} lines")
+    for row in rows:
+        print(f"{row[0]} {row[1] or name} {row[2]} {in_bw(row[3])}")
+
+
+def find_definition(db: sqlite3.Connection, name: str):
+    logging.debug(f"find_definition of {name}")
+    SQL = (
+        "select symbols.path, symbols.line, content.body "
+        "from symbols left join content on symbols.path = content.path and "
+        "symbols.line = content.line where symbols.name = :name and "
+        f"symbols.category = {CLINK_DEFINITION} order by "
+        "symbols.path, symbols.line, symbols.col;"
+    )
+    rows = select(db, SQL, {"name": name})
+    print(f"cscope: {len(rows)} lines")
+    for row in rows:
+        print(f"{row[0]} {name} {row[1]} {in_bw(row[2])}")
+
+
+def find_calls(db: sqlite3.Connection, caller: str):
+    logging.debug(f"find_calls of {caller}")
+    SQL = (
+        "select symbols.path, symbols.name, symbols.line, content.body "
+        "from symbols left join content on symbols.path = content.path and "
+        "symbols.line = content.line where symbols.parent = :caller and "
+        f"symbols.category = {CLINK_FUNCTION_CALL} order by "
+        "symbols.path, symbols.line, symbols.col;"
+    )
+    rows = select(db, SQL, {"caller": caller})
+    print(f"cscope: {len(rows)} lines")
+    for row in rows:
+        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+
+
+def find_callers(db: sqlite3.Connection, callee: str):
+    logging.debug(f"find_callers of {callee}")
+    SQL = (
+        "select symbols.path, symbols.parent, symbols.line, content.body "
+        "from symbols left join content on symbols.path = content.path and "
+        "symbols.line = content.line where symbols.name = :callee and "
+        f"symbols.category = {CLINK_FUNCTION_CALL} order by "
+        "symbols.path, symbols.line, symbols.col;"
+    )
+    rows = select(db, SQL, {"callee": callee})
+    print(f"cscope: {len(rows)} lines")
+    for row in rows:
+        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+
+
+def find_file(db: sqlite3.Connection, filename: str):
+    logging.debug(f"find_file of {filename}")
+    SQL = (
+        "select distinct path from symbols where path = :filename or "
+        "path like :pattern order by path"
+    )
+    rows = select(db, SQL, {"filename": filename, "pattern": f"%/{filename}"})
+    print(f"cscope: {len(rows)} lines")
+    for row in rows:
+        print(f"{row[0]} <unknown> 1 <unknown>")
+
+
+def find_includers(db: sqlite3.Connection, path: str):
+    logging.debug(f"find_includers of {path}")
+    SQL = (
+        "select symbols.path, symbols.parent, symbols.line, content.body "
+        "from symbols left join content on symbols.path = content.path and "
+        "symbols.line = content.line where symbols.name like :name and "
+        f"symbols.category = {CLINK_INCLUDE} order by "
+        "symbols.path, symbols.line, symbols.col;"
+    )
+    rows = select(db, SQL, {"name": f"%{path}"})
+    print(f"cscope: {len(rows)} lines")
+    for row in rows:
+        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+
+
+def main(args: List[str]) -> int:
+
+    logging.basicConfig(
+        filename=os.environ.get("CLINK_DEBUG_LOG", os.devnull),
+        level=logging.DEBUG,
+    )
+
+    logging.info(f"clink-repl run as: {' '.join(shlex.quote(a) for a in args)}")
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("-d", action="store_true", help="ignored")
+    parser.add_argument("-f", type=argparse.FileType("rt"), help="database to search")
+    parser.add_argument("-l", action="store_true", help="ignored")
+    options = parser.parse_args(args[1:])
+
+    if options.f is not None:
+        db_path = options.f.name
+    else:
+        db_path = find_database()
+        if db_path is None:
+            sys.stderr.write("Clink database not found\n")
+            return -1
+
+    db_conn = sqlite3.connect(db_path)
+
+    while True:
+        try:
+            query = input(">> ")
+        except EOFError:
+            break
+
+        # ignore blank lines
+        if not query.strip():
+            continue
+
+        if query[0] == "0":
+            find_symbol(db_conn, query[1:])
+
+        elif query[0] == "1":  # find definition
+            find_definition(db_conn, query[1:])
+
+        elif query[0] == "2":
+            find_calls(db_conn, query[1:])
+
+        elif query[0] == "3":
+            find_callers(db_conn, query[1:])
+
+        elif query[0] == "7":
+            find_file(db_conn, query[1:])
+
+        elif query[0] == "8":
+            find_includers(db_conn, query[1:])
+
+        # Commands we do not support. Just pretend there were no results.
+        elif query[0] in (
+            "4",  # find text
+            "5",  # change text
+            "6",  # find pattern
+            "9",  # find assignments
+        ):
+            print("cscope: 0 lines")
+
+        else:
+            sys.stderr.write("unrecognised command\n")
+            return -1
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

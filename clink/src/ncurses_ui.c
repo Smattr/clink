@@ -906,7 +906,7 @@ static int handle_select(void) {
 
     int rc = clink_vim_open(results.rows[select_index].path,
                             results.rows[select_index].lineno,
-                            results.rows[select_index].colno);
+                            results.rows[select_index].colno, database);
     if (rc != 0)
       return rc;
 

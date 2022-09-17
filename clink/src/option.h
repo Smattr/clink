@@ -37,9 +37,6 @@ typedef struct {
   // run the NCurses-based interface?
   bool ncurses_ui;
 
-  // run the line-oriented interface?
-  bool line_ui;
-
   // parallelism (0 == auto)
   unsigned long threads;
 

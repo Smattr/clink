@@ -1,7 +1,6 @@
 #include "../../common/compiler.h"
 #include "build.h"
 #include "help.h"
-#include "line_ui.h"
 #include "ncurses_ui.h"
 #include "option.h"
 #include "path.h"
@@ -65,7 +64,6 @@ static void parse_args(int argc, char **argv) {
         {"debug",                no_argument,       0, OPT_DEBUG},
         {"help",                 no_argument,       0, 'h'},
         {"jobs",                 required_argument, 0, 'j'},
-        {"line-oriented",        no_argument,       0, 'l'},
         {"no-build",             no_argument,       0, 'd'},
         {"parse-asm",            required_argument, 0, OPT_PARSE_ASM},
         {"parse-c",              required_argument, 0, OPT_PARSE_C},
@@ -87,7 +85,6 @@ static void parse_args(int argc, char **argv) {
 
     case 'b': // --build-only
       option.ncurses_ui = false;
-      option.line_ui = false;
       break;
 
     case 'd': // --no-build
@@ -115,11 +112,6 @@ static void parse_args(int argc, char **argv) {
           exit(EXIT_FAILURE);
         }
       }
-      break;
-
-    case 'l':
-      option.ncurses_ui = false;
-      option.line_ui = true;
       break;
 
     case 's': // --syntax-highlighting
@@ -250,9 +242,6 @@ static void parse_args(int argc, char **argv) {
   if (option.colour == AUTO)
     option.colour = isatty(STDOUT_FILENO) ? ALWAYS : NEVER;
   assert(option.colour == ALWAYS || option.colour == NEVER);
-
-  // at most one user interface should have been enabled
-  assert(!option.ncurses_ui || !option.line_ui);
 }
 
 int main(int argc, char **argv) {
@@ -371,12 +360,6 @@ int main(int argc, char **argv) {
   // build/update the database, if requested
   if (option.update_database) {
     if ((rc = build(db)))
-      goto done1;
-  }
-
-  // run line-oriented interface, if requested
-  if (option.line_ui) {
-    if ((rc = line_ui(db)))
       goto done1;
   }
 
