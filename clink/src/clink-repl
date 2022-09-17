@@ -14,7 +14,7 @@ import shlex
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 CLINK_DEFINITION = 0
@@ -53,8 +53,8 @@ def find_database() -> Optional[Path]:
 
 
 def select(
-    db: sqlite3.Connection, sql: str, parameters: dict[str, Any]
-) -> list[Tuple[str, ...]]:
+    db: sqlite3.Connection, sql: str, parameters: Dict[str, Any]
+) -> List[Tuple[str, ...]]:
     cursor = db.execute(sql, parameters)
     return cursor.fetchall()
 
@@ -169,15 +169,14 @@ def find_includers(db: sqlite3.Connection, path: str):
         print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
 
 
-def main(args: list[str]) -> int:
+def main(args: List[str]) -> int:
 
     logging.basicConfig(
         filename=os.environ.get("CLINK_DEBUG_LOG", os.devnull),
-        encoding="utf-8",
         level=logging.DEBUG,
     )
 
-    logging.info(f"clink-repl run as: {shlex.join(args)}")
+    logging.info(f"clink-repl run as: {' '.join(shlex.quote(a) for a in args)}")
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-d", action="store_true", help="ignored")
