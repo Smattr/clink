@@ -13,9 +13,9 @@ What does that mean?
   understands your code (including macros) as well as your compiler does.
 * **Multicore support** – Parsing multiple, independent files trivially
   parallelises, so why be limited by one core?
-* **Assembly support** – Systems code often calls into assembly, at which point
-  Cscope gets lost. Clink parses assembly fuzzily and can maintain a call
-  graph across this boundary.
+* **Assembly, MSVC DEFs file support** – Your code base is more than just C and
+  C++. Clink parses some other formats fuzzily and can maintain a call graph
+  across language boundaries.
 * **Syntax highlighting** – You’re probably used to looking at code in Vim with
   syntax highlighting, so Clink can ask Vim to highlight the snippets it shows
   you.
@@ -23,8 +23,9 @@ What does that mean?
   contains non-ASCII characters? Now you can.
 * **Exact jumps** – Clink opens Vim not only at the right line, but at the right
   column for the entry you’ve asked for.
-* **MSVC DEFs file support** – Not too common nowadays, but still nice for
-  your code browser to understand these.
+* **Extended regex supported in all fields** - Can’t remember the exact name of
+  a symbol? Want to search for multiple similar symbols at once? Clink has you
+  covered.
 * **Fewer features** – Cscope’s options to find files and regex text are now
   better served by any__ number__ of__ other__ tools__ and are not included in
   Clink.
