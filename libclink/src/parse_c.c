@@ -48,6 +48,10 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
   static const size_t DEFN_LEADERS_LENGTH =
       sizeof(DEFN_LEADERS) / sizeof(DEFN_LEADERS[0]);
 
-  return clink_parse_generic(db, filename, KEYWORDS, KEYWORDS_LENGTH,
-                             DEFN_LEADERS, DEFN_LEADERS_LENGTH);
+  static const clink_lang_t C = {.keywords = KEYWORDS,
+                                 .keywords_length = KEYWORDS_LENGTH,
+                                 .defn_leaders = DEFN_LEADERS,
+                                 .defn_leaders_length = DEFN_LEADERS_LENGTH};
+
+  return clink_parse_generic(db, filename, &C);
 }
