@@ -9,6 +9,7 @@ void re_sqlite(sqlite3_context *context, int argc, sqlite3_value **argv) {
 
   assert(context != NULL);
   assert(argc == 2);
+  (void)argc;
   assert(argv != NULL);
 
   const char *pattern = (const char *)sqlite3_value_text(argv[0]);
