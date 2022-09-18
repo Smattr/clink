@@ -63,8 +63,24 @@ if(CLANG_FORMAT AND GIT AND XARGS)
     COMMAND ${GIT} ls-files -z -- ':!:test/cases' '**/*.c' '**/*.h' |
       ${XARGS} -0 -- ${CLANG_FORMAT} -i --style=file
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "clang-formatting sources")
+    COMMENT "clang-formatting C sources")
+endif()
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_FOUND)
+  execute_process(
+    COMMAND ${Python3_EXECUTABLE} -c "import black"
+    RESULT_VARIABLE IMPORT_BLACK_RET
+    OUTPUT_QUIET
+    ERROR_QUIET
+  )
+  if(${IMPORT_BLACK_RET} EQUAL 0 AND GIT AND XARGS)
+    add_custom_target(python-format
+      COMMAND ${GIT} ls-files -z -- ':!:test/cases' '**/*.py' |
+        ${XARGS} -0 -- ${Python3_EXECUTABLE} -m black
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      COMMENT "black-formatting Python sources")
+  endif()
 endif()
 add_custom_target(format
-  DEPENDS clang-format
+  DEPENDS clang-format python-format
   COMMENT "formatting sources")
