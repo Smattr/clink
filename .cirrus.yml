@@ -47,3 +47,9 @@ task:
         UBSAN_OPTIONS: print_stacktrace=1
       install_script: brew update && brew install llvm && pip3 install pytest
       test_script: uname -sr && git submodule init && git submodule update && mkdir build && cd build && cmake .. && cmake --build . && cmake --build . -- check && cmake --build . -- install
+
+    - name: Python formatting
+      container:
+        image: cytopia/black
+      install_script: apk add git
+      test_script: git ls-files -z -- ':!:test/cases' '**/*.py' | xargs -0 -- python3 -m black && git diff --exit-code
