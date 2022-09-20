@@ -6,8 +6,7 @@
 #include <vimcat/vimcat.h>
 
 int clink_vim_read(const char *filename,
-                   int (*callback)(void *state, const char *line),
-                   void *state) {
+                   int (*callback)(void *state, char *line), void *state) {
 
   if (ERROR(filename == NULL))
     return EINVAL;

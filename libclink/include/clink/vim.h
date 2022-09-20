@@ -34,7 +34,7 @@ CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
  *   the caller’s callback if there was one
  */
 CLINK_API int clink_vim_read(const char *filename,
-                             int (*callback)(void *state, const char *line),
+                             int (*callback)(void *state, char *line),
                              void *state);
 
 /** Vim-highlight the given file, inserting results into the given database

@@ -11,7 +11,7 @@ typedef struct {
   unsigned long lineno;
 } state_t;
 
-static int insert(void *state, const char *line) {
+static int insert(void *state, char *line) {
   assert(state != NULL);
   assert(line != NULL);
 
