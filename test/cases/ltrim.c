@@ -4,8 +4,6 @@ void foo(void) {
   int x = 0;
 }
 
-// XFAIL: True
-
 // parse this into a database with full content extraction
 // RUN: clink --build-only --database {%t} --debug --syntax-highlight=eager {%s} >/dev/null
 
