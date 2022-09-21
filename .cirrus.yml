@@ -48,6 +48,11 @@ task:
       install_script: brew update && brew install llvm && pip3 install pytest
       test_script: uname -sr && git submodule init && git submodule update && mkdir build && cd build && cmake .. && cmake --build . && cmake --build . -- check && cmake --build . -- install
 
+    - name: C formatting
+      container:
+        image: silkeh/clang:14
+      test_script: git ls-files -z -- ':!:test/cases' '**/*.c' '**/*.h' | xargs -0 -- clang-format --dry-run --style=file --Werror
+
     - name: Python formatting
       container:
         image: cytopia/black
