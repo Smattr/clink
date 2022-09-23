@@ -44,9 +44,8 @@ def lit(tmp: Path, source: Path):
             if directive == "RUN":
                 try:
                     result = subprocess.check_output(
-                        content,
+                        ["bash", "-o", "pipefail", "-c", "--", content],
                         stdin=subprocess.DEVNULL,
-                        shell=True,
                         cwd=tmp,
                         universal_newlines=True,
                     )
