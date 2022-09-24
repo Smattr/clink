@@ -81,7 +81,13 @@ static int parse(clink_db_t *db, const char *filename, const clink_lang_t *lang,
           continue;
         is_comment = true;
         const char *end = lang->comments[i].end;
+        bool escapes = lang->comments[i].escapes;
         while (s.offset < s.size) {
+          if (escapes && eat_if(&s, "\\")) {
+            if (s.offset < s.size)
+              eat_one(&s);
+            continue;
+          }
           if (end == NULL) {
             if (eat_eol(&s))
               break;

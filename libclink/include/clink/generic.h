@@ -16,6 +16,7 @@ typedef struct {
       *start;      ///< sequence of characters that begins this type of comment
   const char *end; ///< Sequence of characters that ends this type of comment.
                    ///< \p NULL means “end of line”.
+  unsigned escapes : 1; ///< does this type of comment support \p \\ escapes?
 } clink_comment_t;
 
 /// description of how to parse a source language
