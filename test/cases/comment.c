@@ -18,8 +18,6 @@
 
 // try this again with the generic parser
 
-// XFAIL: True
-
 // RUN: clink --build-only --database={%t}2 --parse-c=generic --debug {%s} >/dev/null
 
 // RUN: echo 'select * from symbols where name = "foo";' | sqlite3 {%t}2

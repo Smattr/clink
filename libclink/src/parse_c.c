@@ -45,8 +45,11 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
       "short", "signed", "struct", "union",  "unsigned", "void",  NULL,
   };
 
-  static const clink_lang_t C = {.keywords = KEYWORDS,
-                                 .defn_leaders = DEFN_LEADERS};
+  static clink_comment_t COMMENTS[] = {
+      {"//", NULL}, {"/*", "*/"}, {NULL, NULL}};
+
+  static const clink_lang_t C = {
+      .keywords = KEYWORDS, .defn_leaders = DEFN_LEADERS, .comments = COMMENTS};
 
   return clink_parse_generic(db, filename, &C);
 }
