@@ -73,6 +73,30 @@ static int parse(clink_db_t *db, const char *filename, const clink_lang_t *lang,
       continue;
     }
 
+    // is this a comment?
+    if (lang->comments != NULL) {
+      bool is_comment = false;
+      for (size_t i = 0; lang->comments[i].start != NULL; ++i) {
+        if (!eat_if(&s, lang->comments[i].start))
+          continue;
+        is_comment = true;
+        const char *end = lang->comments[i].end;
+        while (s.offset < s.size) {
+          if (end == NULL) {
+            if (eat_eol(&s))
+              break;
+          } else {
+            if (eat_if(&s, end))
+              break;
+          }
+          eat_one(&s);
+        }
+        break;
+      }
+      if (is_comment)
+        continue;
+    }
+
     // if this is something other than whitespace, it separates a definition
     // leader from anything it could apply to
     if (!isspace(s.base[s.offset]))
