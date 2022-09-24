@@ -47,7 +47,7 @@ int clink_parse_def(clink_db_t *db, const char *filename) {
       "WINDOWS",        NULL,
   };
 
-  static clink_comment_t COMMENTS[] = {{";", NULL}, {NULL, NULL}};
+  static clink_comment_t COMMENTS[] = {{.start = ";", .end = NULL}, {0}};
 
   static const clink_lang_t DEF = {.keywords = KEYWORDS, .comments = COMMENTS};
 
