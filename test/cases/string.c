@@ -38,8 +38,6 @@ void fn() {
 // RUN: echo 'select name, line, col from symbols where name = "foo";' | sqlite3 {%t}2
 // CHECK: foo|4|15
 
-// XFAIL: True
-
 // RUN: echo 'select name, line, col from symbols where name = "bar";' | sqlite3 {%t}2
 // RUN: echo "marker4"
 // CHECK: marker4
