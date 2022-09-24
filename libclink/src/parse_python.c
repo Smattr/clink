@@ -22,23 +22,20 @@ int clink_parse_python(clink_db_t *db, const char *filename) {
     return errno;
 
   static const char *KEYWORDS[] = {
-      "False",  "await", "else",     "import", "pass",   "None",    "break",
-      "except", "in",    "raise",    "True",   "class",  "finally", "is",
-      "return", "and",   "continue", "for",    "lambda", "try",     "as",
-      "def",    "from",  "nonlocal", "while",  "assert", "del",     "global",
-      "not",    "with",  "async",    "elif",   "if",     "or",      "yield",
+      "False",   "await",  "else",   "import", "pass",     "None",
+      "break",   "except", "in",     "raise",  "True",     "class",
+      "finally", "is",     "return", "and",    "continue", "for",
+      "lambda",  "try",    "as",     "def",    "from",     "nonlocal",
+      "while",   "assert", "del",    "global", "not",      "with",
+      "async",   "elif",   "if",     "or",     "yield",    NULL,
   };
-  static const size_t KEYWORDS_LENGTH = sizeof(KEYWORDS) / sizeof(KEYWORDS[0]);
 
-  static const char *DEFN_LEADERS[] = {"class", "def"};
-  static const size_t DEFN_LEADERS_LENGTH =
-      sizeof(DEFN_LEADERS) / sizeof(DEFN_LEADERS[0]);
+  static const char *DEFN_LEADERS[] = {"class", "def", NULL};
 
-  static const clink_lang_t PYTHON = {.keywords = KEYWORDS,
-                                      .keywords_length = KEYWORDS_LENGTH,
-                                      .defn_leaders = DEFN_LEADERS,
-                                      .defn_leaders_length =
-                                          DEFN_LEADERS_LENGTH};
+  static clink_comment_t COMMENTS[] = {{.start = "#", .end = NULL}, {0}};
+
+  static const clink_lang_t PYTHON = {
+      .keywords = KEYWORDS, .defn_leaders = DEFN_LEADERS, .comments = COMMENTS};
 
   return clink_parse_generic(db, filename, &PYTHON);
 }

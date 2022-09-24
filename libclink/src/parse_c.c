@@ -6,6 +6,7 @@
 #include <clink/db.h>
 #include <clink/generic.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <unistd.h>
 
@@ -38,20 +39,22 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
 #undef CXX
 #undef CXX_11
 #undef CXX_20
-  };
-  static const size_t KEYWORDS_LENGTH = sizeof(KEYWORDS) / sizeof(KEYWORDS[0]);
+      NULL};
 
   static const char *DEFN_LEADERS[] = {
-      "auto", "bool",  "char",   "double", "enum",  "float",    "int",
-      "long", "short", "signed", "struct", "union", "unsigned", "void",
+      "auto",  "bool",   "char",   "double", "enum",     "float", "int", "long",
+      "short", "signed", "struct", "union",  "unsigned", "void",  NULL,
   };
-  static const size_t DEFN_LEADERS_LENGTH =
-      sizeof(DEFN_LEADERS) / sizeof(DEFN_LEADERS[0]);
 
-  static const clink_lang_t C = {.keywords = KEYWORDS,
-                                 .keywords_length = KEYWORDS_LENGTH,
-                                 .defn_leaders = DEFN_LEADERS,
-                                 .defn_leaders_length = DEFN_LEADERS_LENGTH};
+  static clink_comment_t COMMENTS[] = {
+      {.start = "//", .end = NULL, .escapes = true},
+      {.start = "/*", .end = "*/", .escapes = true},
+      {.start = "\"", .end = "\"", .escapes = true},
+      {.start = "'", .end = "'", .escapes = true},
+      {0}};
+
+  static const clink_lang_t C = {
+      .keywords = KEYWORDS, .defn_leaders = DEFN_LEADERS, .comments = COMMENTS};
 
   return clink_parse_generic(db, filename, &C);
 }

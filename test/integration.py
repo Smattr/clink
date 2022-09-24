@@ -10,6 +10,13 @@ from pathlib import Path
 import pytest
 
 
+def is_python(path: Path) -> bool:
+    """
+    is this a path to a Python source file?
+    """
+    return path.suffix.lower() == ".py"
+
+
 def lit(tmp: Path, source: Path):
     """
     a minimal implementation of something like the LLVM Integrated Tester (LIT)
@@ -29,9 +36,14 @@ def lit(tmp: Path, source: Path):
         for lineno, line in enumerate(f, 1):
 
             # is this a LIT line?
-            m = re.match(
-                r"\s*//\s*(?P<directive>[A-Z]+)\s*:\s*(?P<content>.*)\s*$", line
-            )
+            if is_python(source):
+                m = re.match(
+                    r"\s*#\s*(?P<directive>[A-Z]+)\s*:\s*(?P<content>.*)\s*$", line
+                )
+            else:
+                m = re.match(
+                    r"\s*//\s*(?P<directive>[A-Z]+)\s*:\s*(?P<content>.*)\s*$", line
+                )
             if m is None:
                 continue
 

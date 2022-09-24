@@ -1,7 +1,6 @@
 #pragma once
 
 #include <clink/db.h>
-#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,13 +10,25 @@ extern "C" {
 #define CLINK_API __attribute__((visibility("default")))
 #endif
 
+/// comment format of a source code language
+typedef struct {
+  const char
+      *start;      ///< sequence of characters that begins this type of comment
+  const char *end; ///< Sequence of characters that ends this type of comment.
+                   ///< \p NULL means “end of line”.
+  unsigned escapes : 1; ///< does this type of comment support \p \\ escapes?
+} clink_comment_t;
+
 /// description of how to parse a source language
 typedef struct {
-  const char **keywords;  ///< words that should never be considered references
-  size_t keywords_length; ///< number of entries in \p keywords
   const char *
-      *defn_leaders; ///< words that indicate the next symbol is a definition
-  size_t defn_leaders_length; ///< number of entries in \p defn_leaders
+      *keywords; ///< Words that should never be considered references. A \p
+                 ///< NULL entry is expected to terminate this array.
+  const char *
+      *defn_leaders; ///< Words that indicate the next symbol is a definition. A
+                     ///< \p NULL entry is expected to terminate this array.
+  clink_comment_t *comments; ///< Comment formats. A \p { 0, 0 } entry is
+                             ///< expected to terminate this array.
 } clink_lang_t;
 
 /** parse the given source in a language-agnostic way

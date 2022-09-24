@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "isid.h"
 #include "mmap.h"
+#include "scanner.h"
 #include "span.h"
 #include <clink/generic.h>
 #include <ctype.h>
@@ -9,81 +10,45 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-int clink_parse_generic(clink_db_t *db, const char *filename,
-                        const clink_lang_t *lang) {
-
-  if (ERROR(db == NULL))
-    return EINVAL;
-
-  if (ERROR(filename == NULL))
-    return EINVAL;
-
-  if (ERROR(lang == NULL))
-    return EINVAL;
-
-  if (ERROR(lang->keywords == NULL && lang->keywords_length > 0))
-    return EINVAL;
-
-  if (ERROR(lang->defn_leaders == NULL && lang->defn_leaders_length > 0))
-    return EINVAL;
+static int parse(clink_db_t *db, const char *filename, const clink_lang_t *lang,
+                 scanner_t s) {
 
   int rc = 0;
-  mmap_t mapped = {0};
-
-  rc = mmap_open(&mapped, filename);
-  if (ERROR(rc != 0))
-    goto done;
-
-  // if this is a zero-sized file, nothing to be done
-  if (mapped.size == 0)
-    goto done;
-
-  const char *base = mapped.base;
-  size_t size = mapped.size;
-
-  // a symbol we are accruing
-  span_t pending = {0};
-
-  // current line and column position
-  unsigned lineno = 1;
-  unsigned colno = 1;
 
   // was the last token we read a definition leader?
   bool last_defn_leader = false;
 
-  for (size_t j = 0; j < size;) {
+  while (s.offset < s.size) {
 
-    int c = base[j];
-
-    // is this the start of a new identifier?
-    if (pending.base == NULL && isid0(c)) {
-
-      // note its position
-      pending = (span_t){.base = &base[j], .lineno = lineno, .colno = colno};
-    }
-
-    // is this part of the current identifier?
-    if (pending.base != NULL && isid(c))
-      ++pending.size;
-
-    // is this the end of the current identifier?
-    if (pending.base != NULL && (j + 1 == size || !isid(base[j + 1]))) {
+    // is this an identifier?
+    if (isid0(s.base[s.offset])) {
+      span_t id = {.base = &s.base[s.offset],
+                   .size = 1,
+                   .lineno = s.lineno,
+                   .colno = s.colno};
+      for (eat_one(&s); s.offset < s.size && isid(s.base[s.offset]);
+           eat_one(&s))
+        ++id.size;
 
       // is this one of the restricted keywords?
       bool is_keyword = false;
-      for (size_t i = 0; i < lang->keywords_length; ++i) {
-        if (span_eq(pending, lang->keywords[i])) {
-          is_keyword = true;
-          break;
+      if (lang->keywords != NULL) {
+        for (size_t i = 0; lang->keywords[i] != NULL; ++i) {
+          if (span_eq(id, lang->keywords[i])) {
+            is_keyword = true;
+            break;
+          }
         }
       }
 
       // is this a definition leader?
       bool is_defn_leader = false;
-      for (size_t i = 0; i < lang->defn_leaders_length; ++i) {
-        if (span_eq(pending, lang->defn_leaders[i])) {
-          is_defn_leader = true;
-          break;
+      if (lang->defn_leaders != NULL) {
+        for (size_t i = 0; lang->defn_leaders[i] != NULL; ++i) {
+          if (span_eq(id, lang->defn_leaders[i])) {
+            is_defn_leader = true;
+            break;
+          }
         }
       }
 
@@ -97,7 +62,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
         }
 
         const span_t no_parent = {0};
-        if ((rc = add_symbol(db, category, pending, filename, no_parent)))
+        if ((rc = add_symbol(db, category, id, filename, no_parent)))
           goto done;
       }
 
@@ -105,32 +70,79 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
       // keywords and non-keywords can be definition leaders.
       last_defn_leader = is_defn_leader;
 
-      pending = (span_t){0};
-
-      ++colno;
-      ++j;
       continue;
+    }
+
+    // is this a comment?
+    if (lang->comments != NULL) {
+      bool is_comment = false;
+      for (size_t i = 0; lang->comments[i].start != NULL; ++i) {
+        if (!eat_if(&s, lang->comments[i].start))
+          continue;
+        is_comment = true;
+        const char *end = lang->comments[i].end;
+        bool escapes = lang->comments[i].escapes;
+        while (s.offset < s.size) {
+          if (escapes && eat_if(&s, "\\")) {
+            if (s.offset < s.size)
+              eat_one(&s);
+            continue;
+          }
+          if (end == NULL) {
+            if (eat_eol(&s))
+              break;
+          } else {
+            if (eat_if(&s, end))
+              break;
+          }
+          eat_one(&s);
+        }
+        break;
+      }
+      if (is_comment)
+        continue;
     }
 
     // if this is something other than whitespace, it separates a definition
     // leader from anything it could apply to
-    if (pending.base == NULL && !isspace(c))
+    if (!isspace(s.base[s.offset]))
       last_defn_leader = false;
 
-    // update our position tracking
-    if (c == '\r') {
-      if (j + 1 < size && base[j + 1] == '\n') // Windows line ending
-        ++j;
-      ++lineno;
-      colno = 1;
-    } else if (c == '\n') {
-      ++lineno;
-      colno = 1;
-    } else {
-      ++colno;
-    }
-    ++j;
+    eat_one(&s);
   }
+
+done:
+  return rc;
+}
+
+int clink_parse_generic(clink_db_t *db, const char *filename,
+                        const clink_lang_t *lang) {
+
+  if (ERROR(db == NULL))
+    return EINVAL;
+
+  if (ERROR(filename == NULL))
+    return EINVAL;
+
+  if (ERROR(lang == NULL))
+    return EINVAL;
+
+  int rc = 0;
+  mmap_t mapped = {0};
+
+  rc = mmap_open(&mapped, filename);
+  if (ERROR(rc != 0))
+    goto done;
+
+  // if this is a zero-sized file, nothing to be done
+  if (mapped.size == 0)
+    goto done;
+
+  scanner_t s = {
+      .base = mapped.base, .size = mapped.size, .lineno = 1, .colno = 1};
+  rc = parse(db, filename, lang, s);
+  if (ERROR(rc != 0))
+    goto done;
 
 done:
   mmap_close(mapped);
