@@ -47,6 +47,8 @@ int clink_parse_cxx(clink_db_t *db, const char *filename) {
   static clink_comment_t COMMENTS[] = {
       {.start = "//", .end = NULL, .escapes = true},
       {.start = "/*", .end = "*/", .escapes = true},
+      {.start = "\"", .end = "\"", .escapes = true},
+      {.start = "'", .end = "'", .escapes = true},
       {0}};
 
   static const clink_lang_t CXX = {
