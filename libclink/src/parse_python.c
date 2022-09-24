@@ -32,8 +32,10 @@ int clink_parse_python(clink_db_t *db, const char *filename) {
 
   static const char *DEFN_LEADERS[] = {"class", "def", NULL};
 
-  static const clink_lang_t PYTHON = {.keywords = KEYWORDS,
-                                      .defn_leaders = DEFN_LEADERS};
+  static clink_comment_t COMMENTS[] = {{"#", NULL}, {NULL, NULL}};
+
+  static const clink_lang_t PYTHON = {
+      .keywords = KEYWORDS, .defn_leaders = DEFN_LEADERS, .comments = COMMENTS};
 
   return clink_parse_generic(db, filename, &PYTHON);
 }

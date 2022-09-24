@@ -2,8 +2,6 @@
 
 # foo in a comment
 
-# XFAIL: True
-
 # RUN: clink --build-only --database={%t} --debug {%s} >/dev/null
 # RUN: echo 'select * from symbols where name = "foo";' | sqlite3 {%t}
 # RUN: echo "marker"
