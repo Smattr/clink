@@ -21,12 +21,6 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   if (ERROR(lang == NULL))
     return EINVAL;
 
-  if (ERROR(lang->keywords == NULL && lang->keywords_length > 0))
-    return EINVAL;
-
-  if (ERROR(lang->defn_leaders == NULL && lang->defn_leaders_length > 0))
-    return EINVAL;
-
   int rc = 0;
   mmap_t mapped = {0};
 
@@ -71,19 +65,23 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
       // is this one of the restricted keywords?
       bool is_keyword = false;
-      for (size_t i = 0; i < lang->keywords_length; ++i) {
-        if (span_eq(pending, lang->keywords[i])) {
-          is_keyword = true;
-          break;
+      if (lang->keywords != NULL) {
+        for (size_t i = 0; lang->keywords[i] != NULL; ++i) {
+          if (span_eq(pending, lang->keywords[i])) {
+            is_keyword = true;
+            break;
+          }
         }
       }
 
       // is this a definition leader?
       bool is_defn_leader = false;
-      for (size_t i = 0; i < lang->defn_leaders_length; ++i) {
-        if (span_eq(pending, lang->defn_leaders[i])) {
-          is_defn_leader = true;
-          break;
+      if (lang->defn_leaders != NULL) {
+        for (size_t i = 0; lang->defn_leaders[i] != NULL; ++i) {
+          if (span_eq(pending, lang->defn_leaders[i])) {
+            is_defn_leader = true;
+            break;
+          }
         }
       }
 

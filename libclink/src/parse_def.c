@@ -44,12 +44,10 @@ int clink_parse_def(clink_db_t *db, const char *filename) {
       "SINGLE",         "STACKSIZE",
       "STUB",           "VERSION",
       "WINDOWAPI",      "WINDOWCOMPAT",
-      "WINDOWS",
+      "WINDOWS",        NULL,
   };
-  static const size_t KEYWORDS_LENGTH = sizeof(KEYWORDS) / sizeof(KEYWORDS[0]);
 
-  static const clink_lang_t DEF = {.keywords = KEYWORDS,
-                                   .keywords_length = KEYWORDS_LENGTH};
+  static const clink_lang_t DEF = {.keywords = KEYWORDS};
 
   return clink_parse_generic(db, filename, &DEF);
 }

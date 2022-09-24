@@ -1,7 +1,6 @@
 #pragma once
 
 #include <clink/db.h>
-#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,13 +10,14 @@ extern "C" {
 #define CLINK_API __attribute__((visibility("default")))
 #endif
 
-/// description of how to parse a source language
+/** description of how to parse a source language
+ *
+ * The arrays of this struct should be terminated with \p NULL entries.
+ */
 typedef struct {
-  const char **keywords;  ///< words that should never be considered references
-  size_t keywords_length; ///< number of entries in \p keywords
+  const char **keywords; ///< words that should never be considered references
   const char *
       *defn_leaders; ///< words that indicate the next symbol is a definition
-  size_t defn_leaders_length; ///< number of entries in \p defn_leaders
 } clink_lang_t;
 
 /** parse the given source in a language-agnostic way
