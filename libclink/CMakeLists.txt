@@ -23,6 +23,7 @@ add_library(libclink
   src/eat_num.c
   src/eat_rest_of_line.c
   src/get_environ.c
+  src/have_cscope.c
   src/iter.c
   src/mmap.c
   src/parse_asm.c
@@ -33,6 +34,7 @@ add_library(libclink
   src/parse_cxx.c
   src/parse_python.c
   src/parse_with_clang.c
+  src/parse_with_cscope.c
   src/re.c
   src/re_sqlite.c
   src/run.c
