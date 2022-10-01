@@ -22,6 +22,9 @@ INTERNAL bool eat_id(scanner_t *s, const char *expected);
 /// advance and return true if the expected text is next
 INTERNAL bool eat_if(scanner_t *s, const char *expected);
 
+/// advance over a non-negative integer
+INTERNAL bool eat_num(scanner_t *s, size_t *number);
+
 /// advance one character
 INTERNAL void eat_one(scanner_t *s);
 
