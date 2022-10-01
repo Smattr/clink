@@ -78,6 +78,19 @@ done:
   return rc;
 }
 
+static bool use_clang(const char *path) {
+  if (is_c(path) && option.parse_c == CLANG)
+    return true;
+  if (is_cxx(path) && option.parse_cxx == CLANG)
+    return true;
+  return false;
+}
+
+static const char *filetype(const char *path) {
+  assert(is_c(path) || is_cxx(path));
+  return is_c(path) ? "C" : "C++";
+}
+
 static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
 
   int rc = 0;
@@ -90,15 +103,9 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
     goto done;
   }
 
-  // assembly
-  if (is_asm(path)) {
-
-    progress_status(thread_id, "parsing asm file %s", display);
-    rc = clink_parse_asm(db, path);
-
-    // C++ with libclang
-  } else if (is_cxx(path) && option.parse_cxx == CLANG) {
-    progress_status(thread_id, "Clang-parsing C++ file %s", display);
+  if (use_clang(path)) {
+    progress_status(thread_id, "Clang-parsing %s file %s", filetype(path),
+                    display);
 
     do {
       // if we have a compile commands database, use it
@@ -121,37 +128,16 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
     // parse with the preprocessor
     if (rc == 0)
       rc = clink_parse_cpp(db, path);
+
+  } else if (is_asm(path)) {
+
+    progress_status(thread_id, "parsing asm file %s", display);
+    rc = clink_parse_asm(db, path);
 
     // C++ with generic parser
   } else if (is_cxx(path) && option.parse_cxx == GENERIC) {
     progress_status(thread_id, "generic-parsing C++ file %s", display);
     rc = clink_parse_cxx(db, path);
-
-    // C with libclang
-  } else if (is_c(path) && option.parse_c == CLANG) {
-    progress_status(thread_id, "Clang-parsing C file %s", display);
-
-    do {
-      // if we have a compile commands database, use it
-      if (option.compile_commands.db != NULL) {
-        rc = parse_with_comp_db(db, path);
-        if (rc != ENOMSG)
-          break;
-
-        progress_warn(thread_id, "no compile_commands.json entry found for %s",
-                      path);
-      }
-
-      // if we do not have a compile commands database or no entry was found
-      // for this path, parse with our default arguments
-      assert(option.clang_argc > 0 && option.clang_argv != NULL);
-      const char **argv = (const char **)option.clang_argv;
-      rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
-    } while (0);
-
-    // parse with the preprocessor
-    if (rc == 0)
-      rc = clink_parse_cpp(db, path);
 
     // C with generic parser
   } else if (is_c(path) && option.parse_c == GENERIC) {
