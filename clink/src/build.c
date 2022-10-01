@@ -86,6 +86,14 @@ static bool use_clang(const char *path) {
   return false;
 }
 
+static bool use_cscope(const char *path) {
+  if (is_c(path) && option.parse_c == CSCOPE)
+    return true;
+  if (is_cxx(path) && option.parse_cxx == CSCOPE)
+    return true;
+  return false;
+}
+
 static const char *filetype(const char *path) {
   assert(is_c(path) || is_cxx(path));
   return is_c(path) ? "C" : "C++";
@@ -128,6 +136,11 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
     // parse with the preprocessor
     if (rc == 0)
       rc = clink_parse_cpp(db, path);
+
+  } else if (use_cscope(path)) {
+    progress_status(thread_id, "Cscope-parsing %s file %s", filetype(path),
+                    display);
+    rc = clink_parse_with_cscope(db, path);
 
   } else if (is_asm(path)) {
 

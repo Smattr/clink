@@ -18,6 +18,7 @@ typedef enum {
 
 typedef enum {
   CLANG,   ///< libclang-based parser
+  CSCOPE,  ///< Cscope-based parser
   GENERIC, ///< generic parser
   OFF,     ///< skip parsing
 } parser_t;
