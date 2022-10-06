@@ -18,6 +18,7 @@ add_library(libclink
   src/db_open.c
   src/db_remove.c
   src/debug.c
+  src/eat_mark.c
   src/eat_non_ws.c
   src/eat_num.c
   src/eat_rest_of_line.c
