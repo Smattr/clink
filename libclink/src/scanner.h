@@ -36,3 +36,6 @@ INTERNAL void eat_ws(scanner_t *s);
 
 /// advance over white space until the end of the line
 INTERNAL void eat_ws_to_eol(scanner_t *s);
+
+/// advance over any characters up to and including the end of the line
+INTERNAL void eat_rest_of_line(scanner_t *s);
