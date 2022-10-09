@@ -13,6 +13,10 @@ typedef struct {
   unsigned long colno;  ///< current position’s column number
 } scanner_t;
 
+static inline scanner_t scanner(const void *base, size_t size) {
+  return (scanner_t){.base = base, .size = size, .lineno = 1, .colno = 1};
+}
+
 /// advance and return true if the next character(s) are an end of line
 INTERNAL bool eat_eol(scanner_t *s);
 
