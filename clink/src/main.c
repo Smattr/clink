@@ -173,6 +173,8 @@ static void parse_args(int argc, char **argv) {
     case OPT_PARSE_C: // --parse-c
       if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
+      } else if (strcmp(optarg, "cscope") == 0) {
+        option.parse_c = CSCOPE;
       } else if (strcmp(optarg, "generic") == 0) {
         option.parse_c = GENERIC;
       } else if (strcmp(optarg, "off") == 0) {
@@ -186,6 +188,8 @@ static void parse_args(int argc, char **argv) {
     case OPT_PARSE_CXX: // --parse-cxx
       if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
+      } else if (strcmp(optarg, "cscope") == 0) {
+        option.parse_cxx = CSCOPE;
       } else if (strcmp(optarg, "generic") == 0) {
         option.parse_cxx = GENERIC;
       } else if (strcmp(optarg, "off") == 0) {
@@ -297,6 +301,17 @@ int main(int argc, char **argv) {
       if (option.debug && r != 0)
         fprintf(stderr, "setting up compile commands failed: %s\n",
                 strerror(r));
+    }
+  }
+
+  // check we have Cscope
+  if (option.update_database) {
+    if (option.parse_c == CSCOPE || option.parse_cxx == CSCOPE) {
+      if (!clink_have_cscope()) {
+        rc = ENOENT;
+        fprintf(stderr, "Cscope not found\n");
+        goto done;
+      }
     }
   }
 

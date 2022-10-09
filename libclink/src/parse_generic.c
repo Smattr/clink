@@ -138,8 +138,7 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   if (mapped.size == 0)
     goto done;
 
-  scanner_t s = {
-      .base = mapped.base, .size = mapped.size, .lineno = 1, .colno = 1};
+  scanner_t s = scanner(mapped.base, mapped.size);
   rc = parse(db, filename, lang, s);
   if (ERROR(rc != 0))
     goto done;

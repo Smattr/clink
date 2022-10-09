@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "get_environ.h"
+#include "posix_spawn.h"
 #include <assert.h>
 #include <clink/c.h>
 #include <errno.h>
@@ -142,7 +143,7 @@ int clink_compiler_includes(const char *compiler, char ***includes,
   int channel[2] = {-1, -1};
   FILE *child_err = NULL;
 
-  if ((rc = posix_spawn_file_actions_init(&fa)))
+  if ((rc = fa_init(&fa)))
     return rc;
 
   // wire the child’s stdin and stdout to /dev/null
@@ -150,9 +151,9 @@ int clink_compiler_includes(const char *compiler, char ***includes,
     rc = errno;
     goto done;
   }
-  if ((rc = posix_spawn_file_actions_adddup2(&fa, devnull, STDIN_FILENO)))
+  if ((rc = adddup2(&fa, devnull, STDIN_FILENO)))
     goto done;
-  if ((rc = posix_spawn_file_actions_adddup2(&fa, devnull, STDOUT_FILENO)))
+  if ((rc = adddup2(&fa, devnull, STDOUT_FILENO)))
     goto done;
 
   // create a pipe for communicating with the compiler
@@ -168,14 +169,13 @@ int clink_compiler_includes(const char *compiler, char ***includes,
   }
 
   // wire the child’s stderr to the write end of the pipe
-  if ((rc = posix_spawn_file_actions_adddup2(&fa, channel[1], STDERR_FILENO)))
+  if ((rc = adddup2(&fa, channel[1], STDERR_FILENO)))
     goto done;
 
   {
     // start the child
     pid_t pid;
-    char *const *args = (char *const *)argv;
-    if ((rc = posix_spawnp(&pid, argv[0], &fa, NULL, args, get_environ())))
+    if ((rc = spawn(&pid, argv, &fa)))
       goto done;
 
     // extract the list of #include paths
@@ -208,7 +208,7 @@ done:
     close(channel[0]);
   if (devnull != -1)
     close(devnull);
-  (void)posix_spawn_file_actions_destroy(&fa);
+  fa_destroy(&fa);
 
   return rc;
 }

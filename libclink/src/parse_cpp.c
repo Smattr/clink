@@ -140,8 +140,7 @@ int clink_parse_cpp(clink_db_t *db, const char *filename) {
     goto done;
 
   // run the parser
-  scanner_t s = {
-      .base = mapped.base, .size = mapped.size, .lineno = 1, .colno = 1};
+  scanner_t s = scanner(mapped.base, mapped.size);
   rc = parse(db, filename, s);
   if (ERROR(rc != 0))
     goto done;

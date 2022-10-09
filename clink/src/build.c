@@ -78,6 +78,128 @@ done:
   return rc;
 }
 
+static bool use_clang(const char *path) {
+  if (is_c(path) && option.parse_c == CLANG)
+    return true;
+  if (is_cxx(path) && option.parse_cxx == CLANG)
+    return true;
+  return false;
+}
+
+static bool use_cscope(const char *path) {
+  if (is_c(path) && option.parse_c == CSCOPE)
+    return true;
+  if (is_cxx(path) && option.parse_cxx == CSCOPE)
+    return true;
+  return false;
+}
+
+static const char *filetype(const char *path) {
+  assert(is_c(path) || is_cxx(path));
+  return is_c(path) ? "C" : "C++";
+}
+
+static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
+
+  int rc = 0;
+
+  // generate a friendlier name for the source path
+  char *display = NULL;
+  if (UNLIKELY((rc = disppath(path, &display)))) {
+    progress_error(thread_id, "failed to make %s relative: %s", path,
+                   strerror(rc));
+    goto done;
+  }
+
+  if (use_clang(path)) {
+    progress_status(thread_id, "Clang-parsing %s file %s", filetype(path),
+                    display);
+
+    do {
+      // if we have a compile commands database, use it
+      if (option.compile_commands.db != NULL) {
+        rc = parse_with_comp_db(db, path);
+        if (rc != ENOMSG)
+          break;
+
+        progress_warn(thread_id, "no compile_commands.json entry found for %s",
+                      path);
+      }
+
+      // if we do not have a compile commands database or no entry was found
+      // for this path, parse with our default arguments
+      assert(option.clang_argc > 0 && option.clang_argv != NULL);
+      const char **argv = (const char **)option.clang_argv;
+      rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
+    } while (0);
+
+    // parse with the preprocessor
+    if (rc == 0)
+      rc = clink_parse_cpp(db, path);
+
+  } else if (use_cscope(path)) {
+    progress_status(thread_id, "Cscope-parsing %s file %s", filetype(path),
+                    display);
+    rc = clink_parse_with_cscope(db, path);
+
+  } else if (is_asm(path)) {
+
+    progress_status(thread_id, "parsing asm file %s", display);
+    rc = clink_parse_asm(db, path);
+
+    // C++ with generic parser
+  } else if (is_cxx(path) && option.parse_cxx == GENERIC) {
+    progress_status(thread_id, "generic-parsing C++ file %s", display);
+    rc = clink_parse_cxx(db, path);
+
+    // C with generic parser
+  } else if (is_c(path) && option.parse_c == GENERIC) {
+    progress_status(thread_id, "generic-parsing C file %s", display);
+    rc = clink_parse_c(db, path);
+
+    // DEF
+  } else if (is_def(path)) {
+    progress_status(thread_id, "parsing DEF file %s", display);
+    rc = clink_parse_def(db, path);
+
+    // Python
+  } else {
+    assert(is_python(path));
+    progress_status(thread_id, "parsing Python file %s", display);
+    rc = clink_parse_python(db, path);
+  }
+
+  if (rc != 0) {
+    progress_error(thread_id, "failed to parse %s: %s", display, strerror(rc));
+    goto done;
+  }
+
+  if (option.highlighting == EAGER) {
+    progress_status(thread_id, "syntax highlighting %s", display);
+
+    if (UNLIKELY((rc = clink_vim_read_into(db, path)))) {
+
+      // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to
+      // fail cryptically. If it looks like this happened, give the user a
+      // less confusing message.
+      if (sigint_pending()) {
+        progress_error(thread_id, "failed to read %s: received SIGINT",
+                       display);
+
+      } else {
+        progress_error(thread_id, "failed to read %s: %s", display,
+                       strerror(rc));
+      }
+      goto done;
+    }
+  }
+
+done:
+  free(display);
+
+  return rc;
+}
+
 /// drain a work queue, processing its entries into the database
 static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
                    file_queue_t *q) {
@@ -131,133 +253,14 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       }
     }
 
-    // generate a friendlier name for the source path
-    char *display = NULL;
-    if (UNLIKELY((rc = disppath(path, &display)))) {
-      progress_error(thread_id, "failed to make %s relative: %s", path,
-                     strerror(rc));
-      break;
-    }
-
     // remove anything related to the file we are about to parse
     clink_db_remove(db, path);
 
-    // assembly
-    if (is_asm(path)) {
-
-      progress_status(thread_id, "parsing asm file %s", display);
-      rc = clink_parse_asm(db, path);
-
-      // C++ with libclang
-    } else if (is_cxx(path) && option.parse_cxx == CLANG) {
-      progress_status(thread_id, "Clang-parsing C++ file %s", display);
-
-      do {
-        // if we have a compile commands database, use it
-        if (option.compile_commands.db != NULL) {
-          rc = parse_with_comp_db(db, path);
-          if (rc == 0 || rc != ENOMSG)
-            break;
-
-          progress_warn(thread_id,
-                        "no compile_commands.json entry found for %s", path);
-        }
-
-        // if we do not have a compile commands database or no entry was found
-        // for this path, parse with our default arguments
-        assert(option.clang_argc > 0 && option.clang_argv != NULL);
-        const char **argv = (const char **)option.clang_argv;
-        rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
-      } while (0);
-
-      // parse with the preprocessor
-      if (rc == 0) {
-        rc = clink_parse_cpp(db, path);
-      }
-
-      // C++ with generic parser
-    } else if (is_cxx(path) && option.parse_cxx == GENERIC) {
-      progress_status(thread_id, "generic-parsing C++ file %s", display);
-      rc = clink_parse_cxx(db, path);
-
-      // C with libclang
-    } else if (is_c(path) && option.parse_c == CLANG) {
-      progress_status(thread_id, "Clang-parsing C file %s", display);
-
-      do {
-        // if we have a compile commands database, use it
-        if (option.compile_commands.db != NULL) {
-          rc = parse_with_comp_db(db, path);
-          if (rc == 0 || rc != ENOMSG)
-            break;
-
-          progress_warn(thread_id,
-                        "no compile_commands.json entry found for %s", path);
-        }
-
-        // if we do not have a compile commands database or no entry was found
-        // for this path, parse with our default arguments
-        assert(option.clang_argc > 0 && option.clang_argv != NULL);
-        const char **argv = (const char **)option.clang_argv;
-        rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
-      } while (0);
-
-      // parse with the preprocessor
-      if (rc == 0) {
-        rc = clink_parse_cpp(db, path);
-      }
-
-      // C with generic parser
-    } else if (is_c(path) && option.parse_c == GENERIC) {
-      progress_status(thread_id, "generic-parsing C file %s", display);
-      rc = clink_parse_c(db, path);
-
-      // DEF
-    } else if (is_def(path)) {
-      progress_status(thread_id, "parsing DEF file %s", display);
-      rc = clink_parse_def(db, path);
-
-      // Python
-    } else {
-      assert(is_python(path));
-      progress_status(thread_id, "parsing Python file %s", display);
-      rc = clink_parse_python(db, path);
-    }
-
-    if (UNLIKELY(rc))
-      progress_error(thread_id, "failed to parse %s: %s", display,
-                     strerror(rc));
-
-    if (LIKELY(rc == 0)) {
-
-      if (option.highlighting == EAGER) {
-        progress_status(thread_id, "syntax highlighting %s", display);
-
-        if (UNLIKELY((rc = clink_vim_read_into(db, path)))) {
-
-          // If the user hit Ctrl+C, Vim may have been SIGINTed causing it to
-          // fail cryptically. If it looks like this happened, give the user a
-          // less confusing message.
-          if (sigint_pending()) {
-            progress_error(thread_id, "failed to read %s: received SIGINT",
-                           display);
-
-          } else {
-            progress_error(thread_id, "failed to read %s: %s", display,
-                           strerror(rc));
-          }
-        }
-      }
-
-      // now we can insert a record for the file
-      if (rc == 0)
-        (void)clink_db_add_record(db, path, hash, timestamp);
-    }
-
-    free(display);
-
-    if (UNLIKELY(rc))
+    if (UNLIKELY((rc = parse(thread_id, db, path))))
       break;
+
+    // now we can insert a record for the file
+    (void)clink_db_add_record(db, path, hash, timestamp);
 
     // bump the progress counter
     progress_increment();
