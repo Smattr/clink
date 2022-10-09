@@ -15,13 +15,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <unistd.h>
 
 static char *xstrdup(const char *s) {
   char *p = strdup(s);
   if (p == NULL) {
     fprintf(stderr, "out of memory\n");
-    exit(EXIT_FAILURE);
+    exit(EX_OSERR);
   }
   return p;
 }
@@ -32,7 +33,7 @@ static void xappend(char ***list, size_t *len, const char *item) {
   *list = realloc(*list, (*len + 1) * sizeof(**list));
   if (*list == NULL) {
     fprintf(stderr, "out of memory\n");
-    exit(EXIT_FAILURE);
+    exit(EX_OSERR);
   }
   ++(*len);
 
@@ -111,7 +112,7 @@ static void parse_args(int argc, char **argv) {
         if (optarg == endptr ||
             (option.threads == ULONG_MAX && errno == ERANGE)) {
           fprintf(stderr, "illegal value to --jobs: %s\n", optarg);
-          exit(EXIT_FAILURE);
+          exit(EX_USAGE);
         }
       }
       break;
@@ -125,7 +126,7 @@ static void parse_args(int argc, char **argv) {
         option.highlighting = LAZY;
       } else {
         fprintf(stderr, "illegal value to --syntax-highlighting: %s\n", optarg);
-        exit(EXIT_FAILURE);
+        exit(EX_USAGE);
       }
       break;
 
@@ -138,7 +139,7 @@ static void parse_args(int argc, char **argv) {
         option.colour = NEVER;
       } else {
         fprintf(stderr, "illegal value to --colour: %s\n", optarg);
-        exit(EXIT_FAILURE);
+        exit(EX_USAGE);
       }
       break;
 
@@ -149,7 +150,7 @@ static void parse_args(int argc, char **argv) {
       if (rc != 0) {
         fprintf(stderr, "failed to open compile commands directory %s: %s\n",
                 optarg, strerror(rc));
-        exit(EXIT_FAILURE);
+        exit(EX_USAGE);
       }
       break;
     }
@@ -166,7 +167,7 @@ static void parse_args(int argc, char **argv) {
         option.parse_asm = OFF;
       } else {
         fprintf(stderr, "illegal value to --parse-asm: %s\n", optarg);
-        exit(EXIT_FAILURE);
+        exit(EX_USAGE);
       }
       break;
 
@@ -181,7 +182,7 @@ static void parse_args(int argc, char **argv) {
         option.parse_c = OFF;
       } else {
         fprintf(stderr, "illegal value to --parse-c: %s\n", optarg);
-        exit(EXIT_FAILURE);
+        exit(EX_USAGE);
       }
       break;
 
@@ -196,7 +197,7 @@ static void parse_args(int argc, char **argv) {
         option.parse_cxx = OFF;
       } else {
         fprintf(stderr, "illegal value to --parse-cxx: %s\n", optarg);
-        exit(EXIT_FAILURE);
+        exit(EX_USAGE);
       }
       break;
 
@@ -207,7 +208,7 @@ static void parse_args(int argc, char **argv) {
         option.parse_def = OFF;
       } else {
         fprintf(stderr, "illegal value to --parse-def: %s\n", optarg);
-        exit(EXIT_FAILURE);
+        exit(EX_USAGE);
       }
       break;
 
@@ -218,7 +219,7 @@ static void parse_args(int argc, char **argv) {
         option.parse_python = OFF;
       } else {
         fprintf(stderr, "illegal value to --parse-python: %s\n", optarg);
-        exit(EXIT_FAILURE);
+        exit(EX_USAGE);
       }
       break;
 
@@ -236,7 +237,7 @@ static void parse_args(int argc, char **argv) {
     }
 
     default:
-      exit(EXIT_FAILURE);
+      exit(EX_USAGE);
     }
   }
 
@@ -401,6 +402,9 @@ done1:
   clink_db_close(&db);
 done:
   clean_up_options();
+
+  if (rc == ENOMEM)
+    return EX_OSERR;
 
   return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
