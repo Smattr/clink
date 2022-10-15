@@ -8,6 +8,7 @@ add_executable(clink
   src/dirname.c
   src/disppath.c
   src/file_queue.c
+  src/have_vim.c
   src/help.c
   src/is_root.c
   src/join.c

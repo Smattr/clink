@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "build.h"
+#include "have_vim.h"
 #include "help.h"
 #include "ncurses_ui.h"
 #include "option.h"
@@ -314,6 +315,13 @@ int main(int argc, char **argv) {
         goto done;
       }
     }
+  }
+
+  // check we have Vim
+  if (!have_vim()) {
+    rc = ENOENT;
+    fprintf(stderr, "Vim not found\n");
+    goto done;
   }
 
   if (option.update_database) {
