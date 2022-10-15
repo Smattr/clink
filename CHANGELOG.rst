@@ -1,6 +1,15 @@
 Change log
 ==========
 
+v2022.10.15
+-----------
+* The ``--parse-c`` and ``--parse-cxx`` options gained a new possible argument,
+  ``cscope`` that uses Cscope to parse sources. This can be useful in a foreign
+  project whose build flags you do not know and thus libclang struggles to parse
+  accurately (commits merged in 874a2b894e91e227e9a94007f3ec08c42d289d71).
+* Exit status from ``clink`` now follows sysexits.h guidelines more closely
+  (commit 4c16e47b7a1c42f46615fbba67f0c1def4225a10).
+
 v2022.09.24
 -----------
 * The generic C, C++, MSVC DEF, and Python parsers now all recognise comment
