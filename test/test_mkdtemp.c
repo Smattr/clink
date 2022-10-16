@@ -8,7 +8,12 @@ static void my_rmdir(void *arg) {
   assert(access(arg, F_OK) == 0);
 
   // in case we are inside the directory, move elsewhere so we can remove it
-  (void)chdir("/");
+  {
+    int rc = chdir("/");
+
+    // nothing reasonable to do if `chdir` fails
+    (void)rc;
+  }
 
   (void)rmdir(arg);
 }
