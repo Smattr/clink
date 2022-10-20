@@ -38,7 +38,8 @@ static bool is_supported(const char *path) {
 }
 
 int clink_vim_open(const char *filename, unsigned long lineno,
-                   unsigned long colno, const clink_db_t *db) {
+                   unsigned long colno, const char *cscopeprg,
+                   const clink_db_t *db) {
 
   // check filename is valid
   if (ERROR(filename == NULL))
@@ -54,6 +55,7 @@ int clink_vim_open(const char *filename, unsigned long lineno,
 
   int rc = 0;
   char *cursor = NULL;
+  char *csprg = NULL;
   char *add = NULL;
 
   // construct a directive telling Vim to jump to the given position
@@ -64,9 +66,8 @@ int clink_vim_open(const char *filename, unsigned long lineno,
 
   // construct a argument vector to invoke Vim
   enum { ARGC_MAX = 8 };
-  char const *argv[ARGC_MAX] = {"vim", cursor, "+set nocscopeverbose",
-                                "+set cscopeprg=clink-repl"};
-  size_t argc = 4;
+  char const *argv[ARGC_MAX] = {"vim", cursor};
+  size_t argc = 2;
 
 #define APPEND(str)                                                            \
   do {                                                                         \
@@ -75,6 +76,27 @@ int clink_vim_open(const char *filename, unsigned long lineno,
     ++argc;                                                                    \
     assert(argc < ARGC_MAX && "exceeding allocated Vim arguments");            \
   } while (0)
+
+  // hide Vim’s informational messages if we will be tweaking its Cscope
+  // connection
+  if (cscopeprg != NULL || db != NULL)
+    APPEND("+set nocscopeverbose");
+
+  // construct a directive to teach Vim a new `cscopeprg`
+  if (cscopeprg != NULL) {
+    // will we be unable to communicate this to Vim?
+    if (ERROR(!is_supported(cscopeprg))) {
+      rc = ENOTSUP;
+      goto done;
+    }
+
+    if (ERROR(asprintf(&csprg, "+set cscopeprg=%s", cscopeprg) < 0)) {
+      rc = ENOMEM;
+      goto done;
+    }
+
+    APPEND(csprg);
+  }
 
   // construct a directive teaching Vim the database
   if (db != NULL) {
@@ -100,6 +122,7 @@ int clink_vim_open(const char *filename, unsigned long lineno,
 
 done:
   free(add);
+  free(csprg);
   free(cursor);
 
   return rc;
