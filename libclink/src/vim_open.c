@@ -1,6 +1,7 @@
 #include "db.h"
 #include "debug.h"
 #include "run.h"
+#include <assert.h>
 #include <clink/vim.h>
 #include <errno.h>
 #include <stdio.h>
@@ -31,6 +32,20 @@ int clink_vim_open(const char *filename, unsigned long lineno,
     goto done;
   }
 
+  // construct a argument vector to invoke Vim
+  enum { ARGC_MAX = 8 };
+  char const *argv[ARGC_MAX] = {"vim", cursor, "+set nocscopeverbose",
+                                "+set cscopeprg=clink-repl"};
+  size_t argc = 4;
+
+#define APPEND(str)                                                            \
+  do {                                                                         \
+    assert(argv[argc] == NULL && "overwriting existing argument");             \
+    argv[argc] = (str);                                                        \
+    ++argc;                                                                    \
+    assert(argc < ARGC_MAX && "exceeding allocated Vim arguments");            \
+  } while (0)
+
   // construct a directive teaching Vim the database
   if (db != NULL) {
     // there does not seem to be an escaping scheme capable of passing a path
@@ -60,16 +75,12 @@ int clink_vim_open(const char *filename, unsigned long lineno,
       rc = ENOMEM;
       goto done;
     }
+
+    APPEND(add);
   }
 
-  // construct a argument vector to invoke Vim
-  char const *argv[] = {"vim",
-                        cursor,
-                        "+set nocscopeverbose",
-                        "+set cscopeprg=clink-repl",
-                        filename,
-                        add,
-                        NULL};
+  APPEND("--");
+  APPEND(filename);
 
   // run it
   rc = run(argv);
