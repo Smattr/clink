@@ -4,8 +4,38 @@
 #include <assert.h>
 #include <clink/vim.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/// can this path be successfully passed to Vim?
+static bool is_supported(const char *path) {
+  assert(path != NULL);
+
+  // There does not seem to be an escaping scheme capable of passing a path
+  // through Vim’s `cs add` to where it calls Cscope. Technically we _can_
+  // escape a `cscopeprg` value (see `fnameescape`), but the interactions are
+  // a little complex. Lets conservatively reject anything unusual for now.
+  for (const char *p = path; *p != '\0'; ++p) {
+    switch (*p) {
+    case 'a' ... 'z':
+    case 'A' ... 'Z':
+    case '0' ... '9':
+    case '_':
+    case '.':
+    case ',':
+    case '+':
+    case '-':
+    case ':':
+    case '@':
+    case '%':
+    case '/':
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
 
 int clink_vim_open(const char *filename, unsigned long lineno,
                    unsigned long colno, const clink_db_t *db) {
@@ -48,25 +78,8 @@ int clink_vim_open(const char *filename, unsigned long lineno,
 
   // construct a directive teaching Vim the database
   if (db != NULL) {
-    // there does not seem to be an escaping scheme capable of passing a path
-    // through Vim’s `cs add` to where it calls Cscope, so reject any path
-    // containing unusual characters
-    for (const char *p = db->path; *p != '\0'; ++p) {
-      switch (*p) {
-      case 'a' ... 'z':
-      case 'A' ... 'Z':
-      case '0' ... '9':
-      case '_':
-      case '.':
-      case ',':
-      case '+':
-      case '-':
-      case ':':
-      case '@':
-      case '%':
-      case '/':
-        continue;
-      }
+    // will we be unable to communicate this to Vim?
+    if (ERROR(!is_supported(db->path))) {
       rc = ENOTSUP;
       goto done;
     }
