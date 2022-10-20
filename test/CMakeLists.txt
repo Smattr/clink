@@ -1,3 +1,4 @@
+add_subdirectory(find-me)
 add_subdirectory(libclang-ls)
 add_subdirectory(ls-includes)
 add_subdirectory(vim-open)

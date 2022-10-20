@@ -13,4 +13,6 @@ cd build
 cmake ..
 cmake --build .
 cmake --build . -- check
+printf "find-me says: "
+./test/find-me/find-me 
 cmake --build . -- install
