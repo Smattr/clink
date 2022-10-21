@@ -87,9 +87,8 @@ done:
 }
 
 /// parse the header of a Cscope database
-static int eat_header(scanner_t *s, size_t *trailer_offset) {
+static int eat_header(scanner_t *s) {
   assert(s != NULL);
-  assert(trailer_offset != NULL);
 
   if (ERROR(!eat_if(s, "cscope ")))
     return EPROTO;
@@ -123,8 +122,8 @@ static int eat_header(scanner_t *s, size_t *trailer_offset) {
   if (ERROR(eat_if(s, "-T")))
     return EPROTONOSUPPORT;
 
-  // read the trailer offset field
-  if (ERROR(!eat_num(s, trailer_offset)))
+  // swallow the trailer offset field
+  if (ERROR(!eat_num(s, NULL)))
     return EPROTO;
   if (ERROR(!eat_eol(s)))
     return EPROTO;
@@ -159,15 +158,8 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 
   scanner_t s = scanner(f.base, f.size);
 
-  {
-    size_t trailer_offset = 0;
-    if (ERROR((rc = eat_header(&s, &trailer_offset))))
-      goto done;
-
-    // constrain the range we are reading to exclude the trailer
-    DEBUG("shrinking scanner range from %zu to %zu", s.size, trailer_offset);
-    s.size = trailer_offset;
-  }
+  if (ERROR((rc = eat_header(&s))))
+    goto done;
 
   // are we within the section of the Cscope database relating to the target
   // file?
