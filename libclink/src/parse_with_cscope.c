@@ -93,16 +93,8 @@ static int eat_header(scanner_t *s) {
   if (ERROR(!eat_if(s, "cscope ")))
     return EPROTO;
 
-  {
-    size_t cscope_version;
-    if (ERROR(!eat_num(s, &cscope_version)))
-      return EPROTO;
-    if (ERROR(cscope_version != 15))
-      return EPROTONOSUPPORT;
-  }
-
-  if (ERROR(!eat_if(s, " ")))
-    return EPROTO;
+  if (ERROR(!eat_if(s, "15 ")))
+    return EPROTONOSUPPORT;
 
   // swallow the “current dir” part of the header
   if (ERROR(!eat_non_ws(s)))
