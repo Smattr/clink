@@ -1,6 +1,7 @@
 #include "ncurses_ui.h"
 #include "../../common/compiler.h"
 #include "colour.h"
+#include "find_repl.h"
 #include "option.h"
 #include "re.h"
 #include "screen.h"
@@ -44,6 +45,9 @@ static char *right;
 
 /// database previously loaded
 static clink_db_t *database;
+
+/// absolute path to our accompanying `clink-repl` script
+static char *clink_repl;
 
 typedef struct {
   clink_symbol_t *rows;
@@ -884,9 +888,10 @@ static int handle_select(void) {
   enter:
     screen_free();
 
-    int rc = clink_vim_open(
-        results.rows[select_index].path, results.rows[select_index].lineno,
-        results.rows[select_index].colno, "clink-repl", database);
+    int rc = clink_vim_open(results.rows[select_index].path,
+                            results.rows[select_index].lineno,
+                            results.rows[select_index].colno, clink_repl,
+                            clink_repl == NULL ? NULL : database);
     if (rc != 0)
       return rc;
 
@@ -958,6 +963,9 @@ int ncurses_ui(clink_db_t *db) {
   // save database pointer
   database = db;
 
+  // see if we can locate `clink-repl`; failure is non-critical
+  clink_repl = find_repl();
+
   int rc = 0;
 
   // setup our initial (empty) accrued text at the prompt
@@ -1007,6 +1015,8 @@ done:
   right = NULL;
   free(left);
   left = NULL;
+  free(clink_repl);
+  clink_repl = NULL;
 
   return rc;
 }
