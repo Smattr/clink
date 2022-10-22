@@ -1,6 +1,19 @@
 Change log
 ==========
 
+v2022.10.22
+-----------
+* ``clink`` can now locate a ``clink-repl`` adjacent to itself and pass this to
+  Vim instead of assuming ``clink-repl`` can be found through ``$PATH``. This
+  means the location you install Clink to no longer needs to be added to
+  ``$PATH`` to avoid errors when ``clink`` opens Vim (commit series merged in
+  afdfddca57885c363e518a4923d28f7024124a9e).
+* Vim is checked for on startup and an error is shown, rather than trying to run
+  Vim later and failing confusingly if it is not installed (commit
+  7ac2d7c24ec933e67d29011ef122dcb94dddbb2c).
+* Filenames beginning with characters like ``-`` no longer cause problems when
+  opening Vim (commit 4375fa9c1fe02c861a7655f584e54854c7e4d393).
+
 v2022.10.15
 -----------
 * The ``--parse-c`` and ``--parse-cxx`` options gained a new possible argument,
