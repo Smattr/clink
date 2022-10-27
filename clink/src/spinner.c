@@ -1,5 +1,6 @@
 #include "spinner.h"
 #include "../../common/compiler.h"
+#include "option.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -76,26 +77,34 @@ int spinner_on(size_t row, size_t column) {
   printf("\033[?25l");
   fflush(stdout);
 
-  assert(done[0] < 0);
-  assert(done[1] < 0);
-  if (UNLIKELY(pipe(done) < 0)) {
-    rc = errno;
-    goto done;
-  }
+  if (option.animation) {
 
-  // set the read end of the pipe to be non-blocking so the worker can poll it
-  {
-    int flags = fcntl(done[0], F_GETFL);
-    if (UNLIKELY(fcntl(done[0], F_SETFL, flags | O_NONBLOCK) < 0)) {
+    assert(done[0] < 0);
+    assert(done[1] < 0);
+    if (UNLIKELY(pipe(done) < 0)) {
       rc = errno;
       goto done;
     }
-  }
 
-  assert(!worker_inited);
-  if (UNLIKELY(rc = pthread_create(&worker, NULL, spin, NULL)))
-    goto done;
-  worker_inited = true;
+    // set the read end of the pipe to be non-blocking so the worker can poll it
+    {
+      int flags = fcntl(done[0], F_GETFL);
+      if (UNLIKELY(fcntl(done[0], F_SETFL, flags | O_NONBLOCK) < 0)) {
+        rc = errno;
+        goto done;
+      }
+    }
+
+    assert(!worker_inited);
+    if (UNLIKELY(rc = pthread_create(&worker, NULL, spin, NULL)))
+      goto done;
+    worker_inited = true;
+
+  } else {
+    // print static progress indicator
+    printf("\033[%zu;%zuH»", spinner_row, spinner_column);
+    fflush(stdout);
+  }
 
 done:
   if (rc != 0)

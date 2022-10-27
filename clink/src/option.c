@@ -22,6 +22,7 @@ option_t option = {
     .ncurses_ui = true,
     .threads = 0,
     .colour = AUTO,
+    .animation = true,
     .debug = false,
     .highlighting = BEHAVIOUR_AUTO,
     .parse_asm = GENERIC,
