@@ -7,6 +7,14 @@ clink \- C/C++/assembly code navigator
 Clink is a replacement for Cscope that uses libclang, features syntax
 highlighting, multicore support, and more.
 .SH OPTIONS
+\fB--animation=\fR[\fBon\fR|\fBoff\fR]
+.RS
+Enable or disable text animations. By default, Clink will show an animated
+spinner when performing some long running applications like on-demand Vim syntax
+highlighting. You can use \fBoff\fR to disable this and use a static character
+instead.
+.RE
+.PP
 \fB-b\fR, \fB--build-only\fR
 .RS
 Exit after constructing or updating the symbol database. That is, do not load a

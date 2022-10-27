@@ -44,6 +44,9 @@ typedef struct {
   // colour terminal output on or off
   colour_t colour;
 
+  // terminal text animations enabled?
+  bool animation;
+
   // debug mode
   bool debug;
 

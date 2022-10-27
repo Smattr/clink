@@ -46,7 +46,8 @@ static void parse_args(int argc, char **argv) {
 
   while (true) {
     enum {
-      OPT_COLOUR = 128,
+      OPT_ANIMATION = 128,
+      OPT_COLOUR,
       OPT_COMPILE_COMMANDS,
       OPT_DEBUG,
       OPT_PARSE_ASM,
@@ -58,6 +59,7 @@ static void parse_args(int argc, char **argv) {
 
     static const struct option opts[] = {
         // clang-format off
+        {"animation",            required_argument, 0, OPT_ANIMATION},
         {"build-only",           no_argument,       0, 'b'},
         {"color",                required_argument, 0, OPT_COLOUR},
         {"colour",               required_argument, 0, OPT_COLOUR},
@@ -86,6 +88,17 @@ static void parse_args(int argc, char **argv) {
       break;
 
     switch (c) {
+
+    case OPT_ANIMATION: // --animation
+      if (strcmp(optarg, "on") == 0) {
+        option.animation = true;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.animation = false;
+      } else {
+        fprintf(stderr, "illegal value to --animation: %s\n", optarg);
+        exit(EX_USAGE);
+      }
+      break;
 
     case 'b': // --build-only
       option.ncurses_ui = false;
