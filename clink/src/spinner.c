@@ -72,6 +72,10 @@ int spinner_on(size_t row, size_t column) {
   spinner_row = row;
   spinner_column = column;
 
+  // hide the cursor
+  printf("\033[?25l");
+  fflush(stdout);
+
   assert(done[0] < 0);
   assert(done[1] < 0);
   if (UNLIKELY(pipe(done) < 0)) {
@@ -87,10 +91,6 @@ int spinner_on(size_t row, size_t column) {
       goto done;
     }
   }
-
-  // hide the cursor
-  printf("\033[?25l");
-  fflush(stdout);
 
   assert(!worker_inited);
   if (UNLIKELY(rc = pthread_create(&worker, NULL, spin, NULL)))
