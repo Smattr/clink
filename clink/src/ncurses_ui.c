@@ -130,9 +130,7 @@ static int format_results(clink_iter_t *it) {
   // free any previous results
   for (size_t i = 0; i < results.count; ++i)
     clink_symbol_clear(&results.rows[i]);
-  free(results.rows);
-  results.rows = NULL;
-  results.count = results.size = 0;
+  results.count = 0;
 
   int rc = 0;
 
