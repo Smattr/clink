@@ -3,6 +3,7 @@
 #include "colour.h"
 #include "find_repl.h"
 #include "option.h"
+#include "path.h"
 #include "re.h"
 #include "screen.h"
 #include "set.h"
@@ -48,6 +49,23 @@ static clink_db_t *database;
 
 /// absolute path to our accompanying `clink-repl` script
 static char *clink_repl;
+
+/// current working directory
+static char *cur_dir;
+
+/// `disppath` but assumes an absolute input, so no need to allocate
+static const char *display_path(const char *path) {
+  assert(path != NULL);
+  assert(path[0] == '/');
+
+  assert(cur_dir != NULL);
+  if (strncmp(path, cur_dir, strlen(cur_dir)) != 0)
+    return path;
+  if (path[strlen(cur_dir)] != '/')
+    return path;
+
+  return &path[strlen(cur_dir) + 1];
+}
 
 typedef struct {
   clink_symbol_t *rows;
@@ -194,7 +212,7 @@ static int format_results(clink_iter_t *it) {
         // spinner.
         size_t rows = screen_get_rows();
         PRINT("\033[%zu;4Hsyntax highlighting %s…%s", rows - FUNCTIONS_SZ,
-              target->path, CLRTOEOL);
+              display_path(target->path), CLRTOEOL);
 
         // ignore non-fatal failure of highlighting
         (void)clink_vim_read_into(database, target->path);
@@ -356,7 +374,7 @@ static int print_results(void) {
     for (size_t j = from_row; j < from_row + row_count; ++j) {
       assert(j < results.count);
       const clink_symbol_t *sym = &results.rows[j];
-      size_t w = i == 0   ? strlen(sym->path)
+      size_t w = i == 0   ? strlen(display_path(sym->path))
                  : i == 1 ? (sym->parent == NULL ? 0 : strlen(sym->parent))
                  : i == 2 ? digit_count(sym->lineno)
                           : (sym->context == NULL ? 0 : strlen(sym->context));
@@ -384,11 +402,13 @@ static int print_results(void) {
         const clink_symbol_t *sym = &results.rows[i + from_row];
         size_t padding = widths[j] + 1;
         switch (j) {
-        case 0: // file
-          padding -= strlen(sym->path);
-          PRINT("%s", sym->path);
+        case 0: { // file
+          const char *display = display_path(sym->path);
+          padding -= strlen(display);
+          PRINT("%s", display);
           pad(padding);
           break;
+        }
         case 1: // function
           padding -= sym->parent == NULL ? 0 : strlen(sym->parent);
           if (sym->parent != NULL)
@@ -979,6 +999,9 @@ int ncurses_ui(clink_db_t *db) {
     goto done;
   }
 
+  if (UNLIKELY((rc = cwd(&cur_dir))))
+    goto done;
+
   // initialise screen
   if ((rc = screen_init()))
     goto done;
@@ -1016,6 +1039,8 @@ done:
   results.size = 0;
 
   screen_free();
+  free(cur_dir);
+  cur_dir = NULL;
   free(right);
   right = NULL;
   free(left);
