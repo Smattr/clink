@@ -902,7 +902,7 @@ static int handle_select(void) {
       index = 10 + 26 + (size_t)e.value - 'A';
     }
 
-    if (from_row + index < results.count) {
+    if (from_row + index < results.count && index < usable_rows()) {
       select_index = from_row + index;
       goto enter;
     }
