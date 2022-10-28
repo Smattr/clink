@@ -327,11 +327,6 @@ static size_t usable_rows(void) {
   return screen_get_rows() - FUNCTIONS_SZ - 2 - 1;
 }
 
-static void pad(size_t width) {
-  for (size_t i = 0; i < width; ++i)
-    PRINT(" ");
-}
-
 static size_t digit_count(unsigned long num) {
 
   if (num == 0)
@@ -386,11 +381,8 @@ static int print_results(void) {
   // print column headings
   move(1, 1);
   PRINT("  ");
-  for (size_t i = 0; i < COLUMN_COUNT; ++i) {
-    PRINT("%s ", HEADINGS[i]);
-    size_t padding = widths[i] - strlen(HEADINGS[i]);
-    pad(padding);
-  }
+  for (size_t i = 0; i < COLUMN_COUNT; ++i)
+    PRINT("%-*s ", (int)widths[i], HEADINGS[i]);
   PRINT("%s", CLRTOEOL);
 
   // print the rows
@@ -400,25 +392,18 @@ static int print_results(void) {
       PRINT("%c ", hotkey(i));
       for (size_t j = 0; j < COLUMN_COUNT; ++j) {
         const clink_symbol_t *sym = &results.rows[i + from_row];
-        size_t padding = widths[j] + 1;
         switch (j) {
         case 0: { // file
           const char *display = display_path(sym->path);
-          padding -= strlen(display);
-          PRINT("%s", display);
-          pad(padding);
+          PRINT("%-*s ", (int)widths[j], display);
           break;
         }
         case 1: // function
-          padding -= sym->parent == NULL ? 0 : strlen(sym->parent);
-          if (sym->parent != NULL)
-            PRINT("%s", sym->parent);
-          pad(padding);
+          PRINT("%-*s ", (int)widths[j],
+                sym->parent == NULL ? "" : sym->parent);
           break;
         case 2: // line
-          padding -= digit_count(sym->lineno) + 1;
-          pad(padding);
-          PRINT("%lu ", sym->lineno);
+          PRINT("%*lu ", (int)widths[j], sym->lineno);
           break;
         case 3: // context
           if (sym->context != NULL)
