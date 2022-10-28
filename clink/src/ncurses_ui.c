@@ -90,28 +90,25 @@ enum { COLUMN_COUNT = 4 };
 ///
 /// \param str String to print
 /// \param lock An optional format to keep applied
-#define PRINT_COLOUR(str, lock)                                                \
-  do {                                                                         \
-    if (option.colour == ALWAYS) {                                             \
-      const char *str_ = (str);                                                \
-      bool in_csi_ = false;                                                    \
-      for (size_t i_ = 0; str_[i_] != '\0'; ++i_) {                            \
-        putchar(str_[i_]);                                                     \
-        if (in_csi_ && str_[i_] == 'm') {                                      \
-          /* exiting CSI; reapply the locked format */                         \
-          const char *lock_ = (lock);                                          \
-          if (lock_ != NULL) {                                                 \
-            printf("%s", lock_);                                               \
-          }                                                                    \
-        } else if (!in_csi_ && str_[i_] == '\033') {                           \
-          in_csi_ = true;                                                      \
-        }                                                                      \
-      }                                                                        \
-    } else {                                                                   \
-      printf_bw((str), stdout);                                                \
-    }                                                                          \
-    fflush(stdout);                                                            \
-  } while (0)
+static void print_colour(const char *str, const char *lock) {
+  assert(str != NULL);
+  if (option.colour == ALWAYS) {
+    bool in_csi = false;
+    for (size_t i = 0; str[i] != '\0'; ++i) {
+      putchar(str[i]);
+      if (in_csi && str[i] == 'm') {
+        // exiting CSI; reapply the locked format
+        if (lock != NULL)
+          printf("%s", lock);
+      } else if (!in_csi && str[i] == '\033') {
+        in_csi = true;
+      }
+    }
+  } else {
+    printf_bw(str, stdout);
+  }
+  fflush(stdout);
+}
 
 /// will these two symbols appear identically in the results list?
 static bool are_duplicates(const clink_symbol_t *a, const clink_symbol_t *b) {
@@ -428,7 +425,7 @@ static int print_results(void) {
           break;
         case 3: // context
           if (sym->context != NULL)
-            PRINT_COLOUR(sym->context, is_selected ? "\033[44m" : NULL);
+            print_colour(sym->context, is_selected ? "\033[44m" : NULL);
           break;
         }
       }
@@ -564,7 +561,7 @@ static int handle_input(void) {
           break;
         free(query);
         move(screen_get_rows() - FUNCTIONS_SZ, 1);
-        PRINT_COLOUR("  \033[31;1mERROR\033[0m: ", NULL);
+        print_colour("  \033[31;1mERROR\033[0m: ", NULL);
         printf("%s", rc == EINVAL ? "invalid regex" : strerror(rc));
         return 0;
       } while (0);
