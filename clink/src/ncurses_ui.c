@@ -1008,6 +1008,13 @@ int ncurses_ui(clink_db_t *db) {
   }
 
 done:
+  for (size_t i = 0; i < results.count; ++i)
+    clink_symbol_clear(&results.rows[i]);
+  results.count = 0;
+  free(results.rows);
+  results.rows = NULL;
+  results.size = 0;
+
   screen_free();
   free(right);
   right = NULL;
