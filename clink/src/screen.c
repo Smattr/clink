@@ -197,18 +197,20 @@ event_t screen_read(void) {
 }
 
 void screen_free(void) {
-  assert(active && "double screen_free() calls");
 
-  active = false;
+  if (active) {
 
-  // drain anything pending to avoid it coming out once we switch away from the
-  // alternate screen
-  fflush(stdout);
+    // drain anything pending to avoid it coming out once we switch away from
+    // the alternate screen
+    fflush(stdout);
 
-  screen_clear();
+    screen_clear();
 
-  // switch out of the alternate screen
-  printf("\033[?1049l");
+    // switch out of the alternate screen
+    printf("\033[?1049l");
+
+    active = false;
+  }
 
   // restore the signal handlers
   for (size_t i = 0; i < SIGS_LENGTH; ++i) {
