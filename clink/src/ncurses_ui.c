@@ -913,14 +913,13 @@ static int handle_select(void) {
   enter:
     screen_free();
 
-    int rc = clink_vim_open(results.rows[select_index].path,
-                            results.rows[select_index].lineno,
-                            results.rows[select_index].colno, clink_repl,
-                            clink_repl == NULL ? NULL : database);
-    if (rc != 0)
-      return rc;
+    (void)clink_vim_open(results.rows[select_index].path,
+                         results.rows[select_index].lineno,
+                         results.rows[select_index].colno, clink_repl,
+                         clink_repl == NULL ? NULL : database);
 
-    if ((rc = screen_init()))
+    int rc = screen_init();
+    if (rc != 0)
       return rc;
 
     refresh();
