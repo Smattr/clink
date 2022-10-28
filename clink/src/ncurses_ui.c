@@ -902,7 +902,7 @@ static int handle_select(void) {
       index = 10 + 26 + (size_t)e.value - 'A';
     }
 
-    if (from_row + index < results.count) {
+    if (from_row + index < results.count && index < usable_rows()) {
       select_index = from_row + index;
       goto enter;
     }
@@ -935,7 +935,8 @@ static int handle_select(void) {
 
   if (e.type == EVENT_KEYPRESS && e.value == 0x425b1b) { // ↓
     if (select_index < results.count - 1 &&
-        select_index - from_row + 1 < usable_rows())
+        select_index - from_row + 1 < usable_rows() &&
+        select_index - from_row + 1 < sizeof(HOTKEYS) - 1)
       select_index++;
     return 0;
   }
