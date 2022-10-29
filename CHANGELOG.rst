@@ -1,6 +1,24 @@
 Change log
 ==========
 
+v2022.10.29
+-----------
+* Bug fix: it is no longer possible to navigate off the bottom of the result
+  list or select results on the next page (commit series merged in
+  09cfbd140582d7d5b89163ce5d3adac6034affeb).
+* Bug fix: Vim returning a non-zero exit status no longer causes Clink to exit
+  or crash (commit series merged in b17e61fe61c02753c6876a3999d36c52a4ce2709).
+* The selected row in the result list is now highlighted in blue. This behaviour
+  is controllable with the ``--colour`` command line option (commit
+  7d76f3a52a917b1f5dfbf78210dc6928338e7fcb).
+* Paths in the result list are shown relative to the current directory instead
+  of absolute (commit 83300fe55acb2cba5690a3c337a7dac3c8430178).
+* Text animations can now be disabled through the ``--animation`` command line
+  option. See ``--help`` for more information (commit series merged in
+  85e52cd4ee1639f58e2ea8c446a2c109ff935f57).
+* LLVM 15 is now supported in the build system (commit series merged in
+  60fedb806aded6b10973ee618bc122e6b3712a69).
+
 v2022.10.22
 -----------
 * ``clink`` can now locate a ``clink-repl`` adjacent to itself and pass this to
