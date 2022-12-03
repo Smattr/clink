@@ -52,10 +52,6 @@ Notes for devs
   implement any abstraction for this because Vim is my unabashed weapon of
   choice. If you want support for another editor, please ask me and I’ll
   probably do it.
-* The line-oriented interface is likely bit-rotted and does not currently work.
-  It needs resurrecting. It was a bare bones hack intended to mimic Cscope just
-  well enough to fool Vim into talking to it. If you want a more full featured
-  line-oriented interface, please ask.
 * Cscope’s “find assignments to this symbol” is not implemented. Honestly, I
   have never used this query. Have you? It actually sounds really useful, but I
   have never once thought of this until enumerating Cscope’s options while
