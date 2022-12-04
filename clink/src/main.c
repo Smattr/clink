@@ -206,7 +206,7 @@ static void parse_args(int argc, char **argv) {
       if (strcmp(optarg, "auto") == 0) {
         option.parse_cxx = PARSER_AUTO;
       } else if (strcmp(optarg, "clang") == 0) {
-        option.parse_c = CLANG;
+        option.parse_cxx = CLANG;
       } else if (strcmp(optarg, "cscope") == 0) {
         option.parse_cxx = CSCOPE;
       } else if (strcmp(optarg, "generic") == 0) {
