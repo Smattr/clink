@@ -45,6 +45,10 @@ CLINK_API int clink_vim_read(const char *filename,
  * action being done with every result is simply to insert it into a Clink
  * database.
  *
+ * Only lines for which the database contains a symbol reference will be stored.
+ * That is, it is assumed the caller has previously `clink_db_add_symbol` any
+ * symbols whose line content they wish to be added.
+ *
  * \param db Database to insert into
  * \param filename Source file to read
  * \return 0 on success or an errno on failure
