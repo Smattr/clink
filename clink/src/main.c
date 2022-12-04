@@ -297,17 +297,6 @@ int main(int argc, char **argv) {
   }
   assert(option.src != NULL && option.src_len > 0);
 
-  // setup Clang command line
-  if (option.update_database) {
-    if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
-      rc = set_clang_flags();
-      if (UNLIKELY(rc)) {
-        fprintf(stderr, "failed to set Clang flags: %s\n", strerror(rc));
-        goto done;
-      }
-    }
-  }
-
   // setup out connection to compile_commands.json
   if (option.update_database) {
     if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
@@ -316,6 +305,17 @@ int main(int argc, char **argv) {
       if (option.debug && r != 0)
         fprintf(stderr, "setting up compile commands failed: %s\n",
                 strerror(r));
+    }
+  }
+
+  // setup Clang command line
+  if (option.update_database) {
+    if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
+      rc = set_clang_flags();
+      if (UNLIKELY(rc)) {
+        fprintf(stderr, "failed to set Clang flags: %s\n", strerror(rc));
+        goto done;
+      }
     }
   }
 
