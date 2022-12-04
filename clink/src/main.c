@@ -186,7 +186,9 @@ static void parse_args(int argc, char **argv) {
       break;
 
     case OPT_PARSE_C: // --parse-c
-      if (strcmp(optarg, "clang") == 0) {
+      if (strcmp(optarg, "auto") == 0) {
+        option.parse_c = PARSER_AUTO;
+      } else if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
       } else if (strcmp(optarg, "cscope") == 0) {
         option.parse_c = CSCOPE;
@@ -201,8 +203,10 @@ static void parse_args(int argc, char **argv) {
       break;
 
     case OPT_PARSE_CXX: // --parse-cxx
-      if (strcmp(optarg, "clang") == 0) {
-        option.parse_c = CLANG;
+      if (strcmp(optarg, "auto") == 0) {
+        option.parse_cxx = PARSER_AUTO;
+      } else if (strcmp(optarg, "clang") == 0) {
+        option.parse_cxx = CLANG;
       } else if (strcmp(optarg, "cscope") == 0) {
         option.parse_cxx = CSCOPE;
       } else if (strcmp(optarg, "generic") == 0) {
@@ -297,6 +301,42 @@ int main(int argc, char **argv) {
   }
   assert(option.src != NULL && option.src_len > 0);
 
+  // setup out connection to compile_commands.json
+  if (option.update_database) {
+    if (option.parse_c == PARSER_AUTO || option.parse_c == CLANG ||
+        option.parse_cxx == PARSER_AUTO || option.parse_cxx == CLANG) {
+      int r = set_compile_commands();
+      // ignore failure here
+      if (option.debug && r != 0)
+        fprintf(stderr, "setting up compile commands failed: %s\n",
+                strerror(r));
+
+      bool do_warn = false;
+      if (option.parse_c == PARSER_AUTO) {
+        if (r == 0 || !clink_have_cscope()) {
+          option.parse_c = CLANG;
+        } else {
+          option.parse_c = CSCOPE;
+          do_warn = true;
+        }
+      }
+      if (option.parse_cxx == PARSER_AUTO) {
+        if (r == 0 || !clink_have_cscope()) {
+          option.parse_cxx = CLANG;
+        } else {
+          option.parse_cxx = CSCOPE;
+          do_warn = true;
+        }
+      }
+      if (do_warn)
+        fprintf(stderr,
+                "%swarning: compile_commands.json not found; falling back on "
+                "Cscope-based parsing%s\n",
+                option.colour == ALWAYS ? "\033[33m" : "",
+                option.colour == ALWAYS ? "\033[0m" : "");
+    }
+  }
+
   // setup Clang command line
   if (option.update_database) {
     if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
@@ -305,17 +345,6 @@ int main(int argc, char **argv) {
         fprintf(stderr, "failed to set Clang flags: %s\n", strerror(rc));
         goto done;
       }
-    }
-  }
-
-  // setup out connection to compile_commands.json
-  if (option.update_database) {
-    if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
-      int r = set_compile_commands();
-      // ignore failure here
-      if (option.debug && r != 0)
-        fprintf(stderr, "setting up compile commands failed: %s\n",
-                strerror(r));
     }
   }
 

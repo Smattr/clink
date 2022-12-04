@@ -93,11 +93,17 @@ allbox center; l l l l .
 option	format	modes	default
 =
 \fB--parse-asm\fR	assembly code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
-\fB--parse-c\fR	C source code (.c, .h files)	\fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBclang\fR
-\fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBclang\fR
+\fB--parse-c\fR	C source code (.c, .h files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
+\fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
 \fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 \fB--parse-python\fR	Python source code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 .TE
+.PP
+The mode \fBauto\fR selects either \fBclang\fR or \fBcscope\fR based on the
+presence of compile_commands.json and Cscope. If a compile_commands.json is
+present (either passed in explicitly with \fB--compile-commands\fR or located by
+the inferred search) or Cscope is not installed, \fBclang\fR will be selected.
+Otherwise \fBcscope\fR will be selected.
 .PP
 The mode \fBgeneric\fR selects a parser that has limited semantic understanding
 and cannot infer things like complex definitions. But it can be useful when you
