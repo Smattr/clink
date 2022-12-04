@@ -40,13 +40,13 @@ task:
       test_script: ./misc/ci.sh
 
     - name: macOS
-      osx_instance:
-        image: monterey-xcode-13.3
+      macos_instance:
+        image: ghcr.io/cirruslabs/macos-ventura-base:latest
       environment:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
-        PATH: /usr/local/opt/llvm/bin:${PATH}
+        PATH: /opt/homebrew/opt/llvm/bin:${PATH}
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: brew update && brew install llvm && pip3 install pytest
+      install_script: brew update && brew install llvm && /opt/homebrew/Frameworks/Python.framework/Versions/3.11/bin/pip3 install pytest
       test_script: ./misc/ci.sh
 
     - name: C formatting

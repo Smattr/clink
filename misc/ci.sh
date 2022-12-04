@@ -14,5 +14,12 @@ cmake ..
 cmake --build .
 cmake --build . -- check
 printf "find-me says: "
-./test/find-me/find-me 
-cmake --build . -- install
+./test/find-me/find-me
+
+if [ "$(uname -s)" = "Darwin" ]; then
+  SUDO=sudo
+else
+  # sudo not needed
+  SUDO=
+fi
+${SUDO} cmake --build . -- install
