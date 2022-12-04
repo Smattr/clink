@@ -186,7 +186,9 @@ static void parse_args(int argc, char **argv) {
       break;
 
     case OPT_PARSE_C: // --parse-c
-      if (strcmp(optarg, "clang") == 0) {
+      if (strcmp(optarg, "auto") == 0) {
+        option.parse_c = PARSER_AUTO;
+      } else if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
       } else if (strcmp(optarg, "cscope") == 0) {
         option.parse_c = CSCOPE;
@@ -201,7 +203,9 @@ static void parse_args(int argc, char **argv) {
       break;
 
     case OPT_PARSE_CXX: // --parse-cxx
-      if (strcmp(optarg, "clang") == 0) {
+      if (strcmp(optarg, "auto") == 0) {
+        option.parse_cxx = PARSER_AUTO;
+      } else if (strcmp(optarg, "clang") == 0) {
         option.parse_c = CLANG;
       } else if (strcmp(optarg, "cscope") == 0) {
         option.parse_cxx = CSCOPE;
