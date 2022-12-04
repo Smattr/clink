@@ -17,10 +17,11 @@ typedef enum {
 } behaviour_t;
 
 typedef enum {
-  CLANG,   ///< libclang-based parser
-  CSCOPE,  ///< Cscope-based parser
-  GENERIC, ///< generic parser
-  OFF,     ///< skip parsing
+  PARSER_AUTO, ///< libclang- or Cscope-based chosen for you
+  CLANG,       ///< libclang-based parser
+  CSCOPE,      ///< Cscope-based parser
+  GENERIC,     ///< generic parser
+  OFF,         ///< skip parsing
 } parser_t;
 
 typedef struct {
