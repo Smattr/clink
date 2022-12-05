@@ -6,7 +6,7 @@
    bar in a multiline comment
  */
 
-// RUN: clink --build-only --database={%t}1 --debug {%s} >/dev/null
+// RUN: clink --build-only --database={%t}1 --debug --parse-c=clang {%s} >/dev/null
 
 // RUN: echo 'select * from symbols where name = "foo";' | sqlite3 {%t}1
 // RUN: echo "marker1"

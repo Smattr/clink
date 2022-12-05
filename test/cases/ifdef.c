@@ -8,7 +8,7 @@
 #elif QUUZ
 #endif
 
-// RUN: clink --build-only --database {%t} --debug {%s} >/dev/null
+// RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 
 // can we recognise a reference in an ifdef?
 // RUN: echo 'select * from symbols where name = "FOO";' | sqlite3 {%t}

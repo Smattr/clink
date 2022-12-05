@@ -10,6 +10,6 @@ void foo(void) {
   g(x * y);
 }
 
-// RUN: clink --build-only --database {%t} --debug {%s} >/dev/null
+// RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 // RUN: echo 'select * from symbols where name = "y" and line = 10;' | sqlite3 {%t}
 // CHECK: y|{%s}|2|10|9|foo

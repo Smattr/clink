@@ -5,7 +5,7 @@
 void foo() {
 }
 
-// RUN: clink --build-only --database={%t} --debug {%s} >/dev/null
+// RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 // RUN: echo '0foo' | clink-repl -dl -f {%t}
 // CHECK: >> cscope: 1 lines
 // CHECK: {%s} foo 5 void foo() {{

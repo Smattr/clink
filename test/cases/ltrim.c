@@ -5,7 +5,7 @@ void foo(void) {
 }
 
 // parse this into a database with full content extraction
-// RUN: clink --build-only --database {%t} --debug --syntax-highlight=eager {%s} >/dev/null
+// RUN: clink --build-only --database={%t} --debug --parse-c=clang --syntax-highlight=eager {%s} >/dev/null
 
 // we should have content extracted
 // RUN: echo 'select COUNT(*) from content where line = 4;' | sqlite3 {%t}
