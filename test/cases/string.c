@@ -8,7 +8,7 @@ void fn() {
   char a = 'b';
 }
 
-// RUN: clink --build-only --database={%t}1 --debug {%s} >/dev/null
+// RUN: clink --build-only --database={%t}1 --debug --parse-c=clang {%s} >/dev/null
 
 // RUN: echo 'select name, line, col from symbols where name = "foo";' | sqlite3 {%t}1
 // CHECK: foo|4|15

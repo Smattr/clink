@@ -9,6 +9,6 @@ int foo() {
   return 0;
 }
 
-// RUN: clink --build-only --database {%t} {%s} >/dev/null
+// RUN: clink --build-only --database={%t} --parse-c=clang {%s} >/dev/null
 // RUN: echo 'select * from symbols where name = "macro_call" and category = 1;' | sqlite3 {%t}
 // CHECK: macro_call|{%s}|1|8|3|foo

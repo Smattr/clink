@@ -7,6 +7,6 @@ void bar(void) {
   int r = foo();
 }
 
-// RUN: clink --build-only --database {%t} {%s} >/dev/null
+// RUN: clink --build-only --database={%t} --parse-c=clang {%s} >/dev/null
 // RUN: echo 'select parent from symbols where name = "foo" and category = 1;' | sqlite3 {%t}
 // CHECK: bar

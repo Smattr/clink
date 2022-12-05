@@ -5,6 +5,6 @@
 #else
 #endif
 
-// RUN: clink --build-only --database {%t} --debug {%s} >/dev/null
+// RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 // RUN: echo 'select * from symbols where name = "FOO";' | sqlite3 {%t}
 // CHECK: FOO|{%s}|0|4|9|
