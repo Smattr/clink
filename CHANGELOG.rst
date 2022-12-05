@@ -1,6 +1,21 @@
 Change log
 ==========
 
+v2022.12.04
+-----------
+* Bug fix: the ``--parse-cxx=clang`` command line option correctly sets the C++
+  parsing mode instead of mistakenly setting the C parsing mode.
+* ``--parse-c`` and ``--parse-cxx`` gained a new option that is also the new
+  default, ``auto``. In this mode, ``clang`` is selected if a
+  compile_commands.json is found or Cscope is not installed. Otherwise
+  ``cscope`` is selected (commits a2a50c6f314fc9035694b7e0110dc8897c1d46c3,
+  3fec779f6a9a18daa3a2661abc204704fe29ab8b,
+  6d4275cca3c01040804dafeee79b2efb927e5ace).
+* The file content lines stored in the database are now restricted to only those
+  containing referenced symbols. The only user-visible effect for ``clink``
+  users should be reduced on-disk database size and improved runtime (commit
+  a14aeda4b6fb0f5422fc648efb144bad289d8bde).
+
 v2022.10.29
 -----------
 * Bug fix: it is no longer possible to navigate off the bottom of the result
