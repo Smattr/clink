@@ -427,11 +427,16 @@ int build(clink_db_t *db) {
                        "C/C++ parsing will not be fully accurate");
   }
 
+  // open a transaction to accelerate our upcoming additions
+  if (UNLIKELY((rc = clink_db_begin_transaction(db))))
+    progress_warn(0, "failed to start database transaction");
+
   if (UNLIKELY((rc = option.threads > 1 ? mt_process(db, q)
                                         : process(0, NULL, db, q))))
     goto done;
 
 done:
+  (void)clink_db_commit_transaction(db);
   progress_free();
   (void)sigint_unblock();
   file_queue_free(&q);
