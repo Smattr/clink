@@ -22,6 +22,33 @@ typedef struct clink_db clink_db_t;
  */
 CLINK_API int clink_db_open(clink_db_t **db, const char *path);
 
+/** start a transaction on the underlying database store
+ *
+ * Addition operations to a database will run faster inside a transaction. So if
+ * you are about to repeatedly call addition functions, it is a good idea to
+ * call this function first.
+ *
+ * A transaction is closed by calling \p clink_db_commit_transaction. There is
+ * no way to rollback/abort a transaction. Closing a database while a
+ * transaction is still open results in undefined behaviour. Transactions do not
+ * nest. That is, you calling this function twice without an intervening
+ * \p clink_db_commit_transaction will result in an error.
+ *
+ * \param db Database to operate on
+ * \return 0 on success or an errno on failure
+ */
+CLINK_API int clink_db_begin_transaction(clink_db_t *db);
+
+/** close a transaction and commit its pending actions
+ *
+ * Calling this without a transaction being in progress (i.e. without previously
+ * calling \p clink_db_begin_transaction) is an error.
+ *
+ * \param db Database to operate on
+ * \return 0 on success or an errno on failure
+ */
+CLINK_API int clink_db_commit_transaction(clink_db_t *db);
+
 /** add a file record to the database
  *
  * Nothing in the symbol or content functionality assumes a corresponding file
