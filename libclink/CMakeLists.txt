@@ -7,7 +7,9 @@ add_library(libclink
   src/db_add_line.c
   src/db_add_record.c
   src/db_add_symbol.c
+  src/db_begin_transaction.c
   src/db_close.c
+  src/db_commit_transaction.c
   src/db_find_call.c
   src/db_find_caller.c
   src/db_find_definition.c
