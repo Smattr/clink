@@ -36,8 +36,8 @@ typedef struct {
   // update the Clink symbol database with latest source file changes?
   bool update_database;
 
-  // run the NCurses-based interface?
-  bool ncurses_ui;
+  // run the TUI interface?
+  bool ui;
 
   // parallelism (0 == auto)
   unsigned long threads;

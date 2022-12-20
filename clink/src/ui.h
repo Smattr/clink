@@ -2,9 +2,9 @@
 
 #include <clink/db.h>
 
-/** run Clink’s Ncurses interface
+/** run Clink’s TUI
  *
  * \param db Database for searching
  * \return 0 on success or an errno on failure
  */
-int ncurses_ui(clink_db_t *db);
+int ui(clink_db_t *db);

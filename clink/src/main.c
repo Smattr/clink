@@ -2,10 +2,10 @@
 #include "build.h"
 #include "have_vim.h"
 #include "help.h"
-#include "ncurses_ui.h"
 #include "option.h"
 #include "path.h"
 #include "sigint.h"
+#include "ui.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <errno.h>
@@ -101,7 +101,7 @@ static void parse_args(int argc, char **argv) {
       break;
 
     case 'b': // --build-only
-      option.ncurses_ui = false;
+      option.ui = false;
       break;
 
     case 'd': // --no-build
@@ -442,9 +442,9 @@ int main(int argc, char **argv) {
       goto done1;
   }
 
-  // Ncurses interface, if requested
-  if (option.ncurses_ui) {
-    if ((rc = ncurses_ui(db)))
+  // TUI interface, if requested
+  if (option.ui) {
+    if ((rc = ui(db)))
       goto done1;
   }
 
