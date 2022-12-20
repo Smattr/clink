@@ -1,4 +1,4 @@
-#include "ncurses_ui.h"
+#include "ui.h"
 #include "../../common/compiler.h"
 #include "colour.h"
 #include "find_repl.h"
@@ -983,7 +983,7 @@ static int handle_select(void) {
   return 0;
 }
 
-int ncurses_ui(clink_db_t *db) {
+int ui(clink_db_t *db) {
 
   // save database pointer
   database = db;
