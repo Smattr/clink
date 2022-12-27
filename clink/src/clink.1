@@ -119,6 +119,23 @@ are considered both C and C++. If \fB--parse-c\fR and \fB--parse-cxx\fR are both
 set to non-\fBoff\fR modes, the \fB--parse-cxx\fR mode will apply to .h files.
 .RE
 .PP
+\fB-c\fR \fITEXT\fR, \fB--script=\fR\fITEXT\fR
+.RS
+Interpret \fITEXT\fR as if it were typed into the UI on start up. This option
+can be given multiple times, in which case \fITEXT\fR is accumulated in the
+order in which parameters appear. This option cannot be used in combination with
+\fB--build-only\fR.
+.PP
+This functionality allows automating invocations of Clink to perform particular
+searches, or even go on to open a particular result if the result list can be
+predicted in advance. The C escape sequences \fB\\b\fR, \fB\\n\fR, \fB\\r\fR,
+\fB\\t\fR, \fB\\\\\fR, \fB\\'\fR, and \fB\\"\fR are interpreted as are escaped
+sequences for control keys like the arrow keys. So when entering a Clink command
+at the terminal, for example, you can pass \fB--script=\fR and press Ctrl+V
+followed by the down arrow. On start up, Clink will move down to the second
+field.
+.RE
+.PP
 \fB-s\fR \fIMODE\fR, \fB--syntax-highlighting=\fR\fIMODE\fR
 .RS
 Control when Vim syntax highlighting is performed. \fIMODE\fR can be:

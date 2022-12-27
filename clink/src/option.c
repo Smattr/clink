@@ -33,6 +33,7 @@ option_t option = {
     .clang_argc = 0,
     .clang_argv = NULL,
     .compile_commands = {0},
+    .script = NULL,
 };
 
 int set_db_path(void) {
@@ -272,4 +273,7 @@ void clean_up_options(void) {
 
   if (option.compile_commands.db != 0)
     compile_commands_close(&option.compile_commands);
+
+  free(option.script);
+  option.script = NULL;
 }

@@ -1,9 +1,11 @@
 #include "screen.h"
+#include "option.h"
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -141,8 +143,71 @@ size_t screen_get_columns(void) { return columns; }
 
 size_t screen_get_rows(void) { return rows; }
 
+/// consume bytes, interpreting them as a key press
+static uint32_t parse_key(char *script) {
+  assert(script != NULL);
+  assert(strlen(script) > 0);
+
+#define MATCH(sequence, translation)                                           \
+  do {                                                                         \
+    if (strncmp(script, (sequence), sizeof(sequence) - 1) == 0) {              \
+      memmove(script, script + sizeof(sequence) - 1,                           \
+              strlen(script) - sizeof(sequence) + 2);                          \
+      return (translation);                                                    \
+    }                                                                          \
+  } while (0)
+  // interpret a subset of C escapes
+  MATCH("\\b", 0x7f);
+  MATCH("\\r", 0xa);
+  MATCH("\\n", 0xa);
+  MATCH("\\t", '\t');
+  MATCH("\\\\", '\\');
+  MATCH("\\'", '\'');
+  MATCH("\\\"", '"');
+#undef MATCH
+#define MATCH(sequence)                                                        \
+  do {                                                                         \
+    if (strncmp(script, (sequence), sizeof(sequence) - 1) == 0) {              \
+      uint32_t v = 0;                                                          \
+      for (size_t i = 0; i < sizeof(sequence) - 1; ++i) {                      \
+        v |= ((uint32_t)sequence[i]) << (8 * i);                               \
+        memmove(script, script + 1, strlen(script));                           \
+      }                                                                        \
+      return v;                                                                \
+    }                                                                          \
+  } while (0)
+  // intepret various control sequences
+  MATCH("\x1b[A");  // ↑
+  MATCH("\x1b[B");  // ↓
+  MATCH("\x1b[C");  // →
+  MATCH("\x1b[D");  // ←
+  MATCH("\x1b[1~"); // Home
+  MATCH("\x1b[4~"); // End
+  MATCH("\x1b[5~"); // Page Up
+  MATCH("\x1b[6~"); // Page Down
+  MATCH("\x1b[3~"); // Delete
+#undef MATCH
+
+  uint32_t key = script[0];
+  memmove(script, script + 1, strlen(script));
+  return key;
+}
+
 event_t screen_read(void) {
   assert(active && "read from screen prior to screen_init()");
+
+  // priority 1: process scripting from the command line
+  if (option.script != NULL) {
+    do {
+      if (option.script[0] == '\0') {
+        free(option.script);
+        option.script = NULL;
+        break;
+      }
+      event_t e = {.type = EVENT_KEYPRESS, .value = parse_key(option.script)};
+      return e;
+    } while (0);
+  }
 
   // wait until we have some data on stdin or from the signal bouncer
   fd_set in;
@@ -159,7 +224,7 @@ event_t screen_read(void) {
     return (event_t){EVENT_ERROR, (uint32_t)errno};
   }
 
-  // priority 1: did we get a signal?
+  // priority 2: did we get a signal?
   if (FD_ISSET(signal_pipe[0], &in)) {
     int signum = 0;
     do {
@@ -183,7 +248,7 @@ event_t screen_read(void) {
 
   assert(FD_ISSET(STDIN_FILENO, &in));
 
-  // read a character from stdin
+  // priority 3: read a character from stdin
   unsigned char buffer[4]; // enough for a UTF-8 character or escape sequence
   ssize_t len = read(STDIN_FILENO, &buffer, sizeof(buffer));
   if (len < 0)

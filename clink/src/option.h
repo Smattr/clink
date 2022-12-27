@@ -68,6 +68,9 @@ typedef struct {
   // compile_commands.json database
   compile_commands_t compile_commands;
 
+  // text to type into the UI on start up
+  char *script;
+
 } option_t;
 
 extern option_t option;
