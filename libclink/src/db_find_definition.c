@@ -138,7 +138,7 @@ int clink_db_find_definition(clink_db_t *db, const char *regex,
   }
   if (ERROR((rc = re_add(&db->regexes, s->pattern))))
     goto done;
-  if (ERROR(rc = sql_bind_text(s->stmt, 1, s->pattern)))
+  if (ERROR((rc = sql_bind_text(s->stmt, 1, s->pattern))))
     goto done;
   if (ERROR((rc = sql_bind_int(s->stmt, 2, CLINK_DEFINITION))))
     goto done;
