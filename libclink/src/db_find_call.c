@@ -1,6 +1,7 @@
 #include "db.h"
 #include "debug.h"
 #include "iter.h"
+#include "re.h"
 #include "sql.h"
 #include <clink/db.h>
 #include <clink/iter.h>
@@ -136,6 +137,8 @@ int clink_db_find_call(clink_db_t *db, const char *regex, clink_iter_t **it) {
     rc = ENOMEM;
     goto done;
   }
+  if (ERROR((rc = re_add(&db->regexes, s->pattern))))
+    goto done;
   if (ERROR((rc = sql_bind_text(s->stmt, 1, s->pattern))))
     goto done;
   if (ERROR((rc = sql_bind_int(s->stmt, 2, CLINK_FUNCTION_CALL))))

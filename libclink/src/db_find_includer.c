@@ -1,6 +1,7 @@
 #include "db.h"
 #include "debug.h"
 #include "iter.h"
+#include "re.h"
 #include "sql.h"
 #include <clink/db.h>
 #include <clink/iter.h>
@@ -137,6 +138,8 @@ int clink_db_find_includer(clink_db_t *db, const char *regex,
     rc = ENOMEM;
     goto done;
   }
+  if (ERROR((rc = re_add(&db->regexes, s->pattern))))
+    goto done;
 
   // bind the where clause to our given function
   if (ERROR((rc = sql_bind_text(s->stmt, 1, s->pattern))))

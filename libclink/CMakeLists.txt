@@ -38,6 +38,8 @@ add_library(libclink
   src/parse_with_clang.c
   src/parse_with_cscope.c
   src/re.c
+  src/re_add.c
+  src/re_find.c
   src/re_free.c
   src/re_sqlite.c
   src/run.c

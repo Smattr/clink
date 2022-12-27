@@ -101,8 +101,9 @@ int clink_db_open(clink_db_t **db, const char *path) {
 #ifdef SQLITE_DIRECTONLY
     eTextRep |= SQLITE_DIRECTONLY;
 #endif
-    int r = sqlite3_create_function(d->db, "regexp", 2, eTextRep, NULL,
-                                    re_sqlite, NULL, NULL);
+    int r =
+        sqlite3_create_function_v2(d->db, "regexp", 2, eTextRep, &d->regexes,
+                                   re_sqlite, NULL, NULL, re_free);
     if (ERROR(r != SQLITE_OK)) {
       rc = sql_err_to_errno(r);
       goto done;
