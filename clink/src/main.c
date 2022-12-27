@@ -75,6 +75,7 @@ static void parse_args(int argc, char **argv) {
         {"parse-cxx",            required_argument, 0, OPT_PARSE_CXX},
         {"parse-def",            required_argument, 0, OPT_PARSE_DEF},
         {"parse-python",         required_argument, 0, OPT_PARSE_PYTHON},
+        {"script",               required_argument, 0, 'c'},
         {"syntax-highlighting",  required_argument, 0, 's'},
         {"version",              no_argument,       0, 'V'},
         {0, 0, 0, 0},
@@ -82,7 +83,7 @@ static void parse_args(int argc, char **argv) {
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bdf:hj:ls:V", opts, &index);
+    int c = getopt_long(argc, argv, "bc:df:hj:ls:V", opts, &index);
 
     if (c == -1)
       break;
@@ -102,6 +103,20 @@ static void parse_args(int argc, char **argv) {
 
     case 'b': // --build-only
       option.ui = false;
+      break;
+
+    case 'c': // --script
+      if (option.script == NULL) {
+        option.script = xstrdup(optarg);
+      } else {
+        char *s =
+            realloc(option.script, strlen(option.script) + strlen(optarg) + 1);
+        if (s == NULL) {
+          fprintf(stderr, "out of memory\n");
+          exit(EX_OSERR);
+        }
+        strcat(s, optarg);
+      }
       break;
 
     case 'd': // --no-build
@@ -278,6 +293,11 @@ static void parse_args(int argc, char **argv) {
   if (option.colour == AUTO)
     option.colour = isatty(STDOUT_FILENO) ? ALWAYS : NEVER;
   assert(option.colour == ALWAYS || option.colour == NEVER);
+
+  if (!option.ui && option.script != NULL) {
+    fprintf(stderr, "--build-only and --script cannot be used together\n");
+    exit(EX_USAGE);
+  }
 }
 
 int main(int argc, char **argv) {
