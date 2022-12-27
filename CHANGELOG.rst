@@ -1,6 +1,18 @@
 Change log
 ==========
 
+v2022.12.27
+-----------
+* A new option, ``--script``, for automating Clink has been added. See the man
+  page for details (commit 69b4a46ca6a3fb0431851a3b7d4bc7cfd7f9b4fb).
+* libclink gained functions for using transactions on the underlying SQLite
+  database (commit 91e296ca959d2e383ef89058891a8d3d05a8663a).
+* Several performance improvements have made both indexing and searching faster
+  (commits 7196725910c2bba3c1fe69a9bad58993b6a36dc5,
+  b50bf2b1b85abb31843ae63432c796e92c4b3fed,
+  ce07dd445992855872c679f44a1ce43910f53356,
+  5de623d08b05ab61a5e39d83b5bbab87a94e443b).
+
 v2022.12.04
 -----------
 * Bug fix: the ``--parse-cxx=clang`` command line option correctly sets the C++
