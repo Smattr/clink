@@ -111,14 +111,9 @@ int clink_db_open(clink_db_t **db, const char *path) {
 
 done:
   if (rc) {
-    if (d != NULL) {
-      if (d->db != NULL)
-        (void)sqlite3_close(d->db);
-      free(d->path);
-    }
+    clink_db_close(&d);
     if (!exists)
       (void)unlink(path);
-    free(d);
   } else {
     *db = d;
   }
