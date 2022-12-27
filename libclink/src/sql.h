@@ -2,9 +2,12 @@
 
 #include "../../common/compiler.h"
 #include "span.h"
+#include <assert.h>
+#include <limits.h>
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 static inline bool sql_ok(int error) {
   return error == SQLITE_DONE || error == SQLITE_OK || error == SQLITE_ROW;
@@ -20,7 +23,9 @@ static inline int sql_exec(sqlite3 *db, const char *query) {
 
 static inline int sql_prepare(sqlite3 *db, const char *query,
                               sqlite3_stmt **stmt) {
-  int r = sqlite3_prepare_v2(db, query, -1, stmt, NULL);
+  size_t query_len = strlen(query);
+  assert(query_len < INT_MAX);
+  int r = sqlite3_prepare_v2(db, query, (int)query_len + 1, stmt, NULL);
   return sql_err_to_errno(r);
 }
 
