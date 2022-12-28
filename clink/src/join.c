@@ -1,7 +1,8 @@
+#include "../../common/compiler.h"
 #include "path.h"
 #include <errno.h>
-#include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int join(const char *branch, const char *stem, char **path) {
@@ -31,8 +32,16 @@ int join(const char *branch, const char *stem, char **path) {
   while (*suffix == '/')
     ++suffix;
 
-  if (asprintf(path, "%.*s/%s", (int)prefix_len, branch, suffix) < 0)
+  // construct the joined path
+  size_t suffix_len = strlen(suffix);
+  char *p = malloc(prefix_len + 1 + suffix_len + 1);
+  if (UNLIKELY(p == NULL))
     return ENOMEM;
+  memcpy(p, branch, prefix_len);
+  p[prefix_len] = '/';
+  memcpy(&p[prefix_len + 1], suffix, suffix_len + 1);
+
+  *path = p;
 
   return 0;
 }
