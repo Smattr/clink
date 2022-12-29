@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 static int parse(clink_db_t *db, const char *filename, const clink_lang_t *lang,
                  scanner_t s) {
@@ -126,6 +127,22 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
 
   if (ERROR(lang == NULL))
     return EINVAL;
+
+  // disallow newline characters in comment delimiters
+  if (lang->comments != NULL) {
+    for (size_t i = 0; lang->comments[i].start != NULL; ++i) {
+      if (ERROR(strchr(lang->comments[i].start, '\r') != NULL))
+        return EINVAL;
+      if (ERROR(strchr(lang->comments[i].start, '\n') != NULL))
+        return EINVAL;
+      if (lang->comments[i].end != NULL) {
+        if (ERROR(strchr(lang->comments[i].end, '\r') != NULL))
+          return EINVAL;
+        if (ERROR(strchr(lang->comments[i].end, '\n') != NULL))
+          return EINVAL;
+      }
+    }
+  }
 
   int rc = 0;
   mmap_t mapped = {0};
