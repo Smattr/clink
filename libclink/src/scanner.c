@@ -76,9 +76,8 @@ bool eat_if(scanner_t *s, const char *expected) {
 
 #ifndef NDEBUG
   for (size_t i = 0; i < strlen(expected); ++i) {
-    if (expected[i] == '\r')
-      assert(i + 1 != strlen(expected) && expected[i + 1] == '\n' &&
-             "orphaned CR in expected text");
+    assert(expected[i] != '\r');
+    assert(expected[i] != '\n');
   }
 #endif
 
@@ -89,19 +88,7 @@ bool eat_if(scanner_t *s, const char *expected) {
     return false;
 
   s->offset += strlen(expected);
-
-  for (size_t i = 0; i < strlen(expected); ++i) {
-    if (strncmp(&expected[i], "\r\n", strlen("\r\n")) == 0) {
-      ++i;
-      ++s->lineno;
-      s->colno = 1;
-    } else if (expected[i] == '\n') {
-      ++s->lineno;
-      s->colno = 1;
-    } else {
-      ++s->colno;
-    }
-  }
+  s->colno += strlen(expected);
 
   return true;
 }

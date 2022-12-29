@@ -38,6 +38,9 @@ typedef struct {
  * (`CLINK_DEFINITION`) and references (`CLINK_REFERENCE`), and even these are
  * just educated guesses.
  *
+ * The comment start and end markers defined in \p lang->comments cannot include
+ * newline characters ('\n' and '\r').
+ *
  * \param db Database to insert into
  * \param filename Path to source file to parse
  * \param lang The source language for interpreting this file
