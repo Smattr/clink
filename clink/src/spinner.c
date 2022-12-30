@@ -4,10 +4,10 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <sys/select.h>
 #include <unistd.h>
 
 /// position at which to output the progress spinner
@@ -37,12 +37,9 @@ static void *spin(void *ignored __attribute__((unused))) {
     // give the main thread a chance to signal us to complete
     assert(done[0] >= 0);
     {
-      fd_set in;
-      FD_ZERO(&in);
-      FD_SET(done[0], &in);
-      int nfds = done[0] + 1;
-      struct timeval timeout = {.tv_usec = 100000};
-      if (select(nfds, &in, NULL, NULL, &timeout) > 0)
+      struct pollfd in[] = {{.fd = done[0], .events = POLLIN}};
+      nfds_t nfds = sizeof(in) / sizeof(in[0]);
+      if (poll(in, nfds, 100) > 0)
         break;
     }
 
