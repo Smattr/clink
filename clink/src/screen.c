@@ -196,6 +196,7 @@ static uint32_t parse_key(char *script) {
 event_t screen_read(void) {
   assert(active && "read from screen prior to screen_init()");
 
+#ifndef MAIN
   // priority 1: process scripting from the command line
   if (option.script != NULL) {
     do {
@@ -208,6 +209,7 @@ event_t screen_read(void) {
       return e;
     } while (0);
   }
+#endif
 
   // wait until we have some data on stdin or from the signal bouncer
   fd_set in;
