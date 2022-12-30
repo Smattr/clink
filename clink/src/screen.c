@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -10,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -212,15 +212,12 @@ event_t screen_read(void) {
 #endif
 
   // wait until we have some data on stdin or from the signal bouncer
-  fd_set in;
-  FD_ZERO(&in);
-  FD_SET(STDIN_FILENO, &in);
-  FD_SET(signal_pipe[0], &in);
+  struct pollfd in[] = {{.fd = STDIN_FILENO, .events = POLLIN},
+                        {.fd = signal_pipe[0], .events = POLLIN}};
   {
-    int nfds = STDIN_FILENO > signal_pipe[0] ? STDIN_FILENO : signal_pipe[0];
-    ++nfds;
+    nfds_t nfds = sizeof(in) / sizeof(in[0]);
     while (true) {
-      if (select(nfds, &in, NULL, NULL, NULL) >= 0)
+      if (poll(in, nfds, -1) >= 0)
         break;
       if (errno == EINTR)
         continue;
@@ -229,7 +226,7 @@ event_t screen_read(void) {
   }
 
   // priority 2: did we get a signal?
-  if (FD_ISSET(signal_pipe[0], &in)) {
+  if (in[1].revents & POLLIN) {
     int signum = 0;
     do {
       ssize_t len = read(signal_pipe[0], &signum, sizeof(signum));
@@ -250,7 +247,7 @@ event_t screen_read(void) {
     return (event_t){EVENT_ERROR, (uint32_t)errno};
   }
 
-  assert(FD_ISSET(STDIN_FILENO, &in));
+  assert(in[0].revents & POLLIN);
 
   // priority 3: read a character from stdin
   unsigned char buffer[4]; // enough for a UTF-8 character or escape sequence
