@@ -216,14 +216,16 @@ event_t screen_read(void) {
   FD_ZERO(&in);
   FD_SET(STDIN_FILENO, &in);
   FD_SET(signal_pipe[0], &in);
-  int nfds = STDIN_FILENO > signal_pipe[0] ? STDIN_FILENO : signal_pipe[0];
-  ++nfds;
-  while (true) {
-    if (select(nfds, &in, NULL, NULL, NULL) >= 0)
-      break;
-    if (errno == EINTR)
-      continue;
-    return (event_t){EVENT_ERROR, (uint32_t)errno};
+  {
+    int nfds = STDIN_FILENO > signal_pipe[0] ? STDIN_FILENO : signal_pipe[0];
+    ++nfds;
+    while (true) {
+      if (select(nfds, &in, NULL, NULL, NULL) >= 0)
+        break;
+      if (errno == EINTR)
+        continue;
+      return (event_t){EVENT_ERROR, (uint32_t)errno};
+    }
   }
 
   // priority 2: did we get a signal?
