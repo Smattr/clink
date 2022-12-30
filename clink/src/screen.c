@@ -250,14 +250,36 @@ event_t screen_read(void) {
   assert(in[0].revents & POLLIN);
 
   // priority 3: read a character from stdin
-  unsigned char buffer[4]; // enough for a UTF-8 character or escape sequence
-  ssize_t len = read(STDIN_FILENO, &buffer, sizeof(buffer));
-  if (len < 0)
+  unsigned char buffer[4] = {
+      0}; // enough for a UTF-8 character or escape sequence
+  if (read(STDIN_FILENO, &buffer, 1) < 0)
     return (event_t){EVENT_ERROR, errno};
+
+  // is this a multi-byte sequence?
+  size_t more = 0;
+  if (buffer[0] == 0x1b) {             // ESC
+    more = 3;                          // up to 3 extra bytes
+  } else if ((buffer[0] >> 3) == 30) { // 4-byte UTF-8
+    more = 3;
+  } else if ((buffer[0] >> 4) == 14) { // 3-byte UTF-8
+    more = 2;
+  } else if ((buffer[0] >> 5) == 6) { // 2-byte UTF-8
+    more = 1;
+  }
+
+  if (more > 0) {
+    // does stdin have remaining ready data?
+    struct pollfd input[] = {{.fd = STDIN_FILENO, .events = POLLIN}};
+    nfds_t nfds = sizeof(input) / sizeof(input[0]);
+    if (poll(input, nfds, 0) > 0) {
+      assert(more <= sizeof(buffer) / sizeof(buffer[0]) - 1);
+      (void)read(STDIN_FILENO, &buffer[1], more);
+    }
+  }
 
   // construct a key press event
   event_t key = {.type = EVENT_KEYPRESS};
-  for (size_t i = 0; i < (size_t)len; ++i)
+  for (size_t i = 0; i < sizeof(buffer) / sizeof(buffer[0]); ++i)
     key.value |= (uint32_t)buffer[i] << (i * 8);
   return key;
 }
