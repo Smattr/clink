@@ -22,10 +22,12 @@ struct str_queue {
 
 static void check_invariant(const str_queue_t *sq) {
 
+  const char **head = __atomic_load_n(&sq->head, __ATOMIC_ACQUIRE);
+
   // head should be within the allocated region
-  assert(sq->head >= sq->base);
+  assert(head >= sq->base);
   if (sq->capacity != 0)
-    assert(sq->head <= sq->base + sq->capacity);
+    assert(head <= sq->base + sq->capacity);
 
   // tail should be within the allocated region
   assert(sq->tail >= sq->base);
@@ -33,9 +35,10 @@ static void check_invariant(const str_queue_t *sq) {
     assert(sq->tail <= sq->base + sq->capacity);
 
   // head should precede tail
-  assert(sq->head <= sq->tail);
+  assert(head <= sq->tail);
 
   (void)sq;
+  (void)head;
 }
 
 int str_queue_new(str_queue_t **sq) {
