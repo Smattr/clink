@@ -22,36 +22,42 @@ static void print(FILE *stream, CXCursor cursor) {
   assert(stream != NULL);
 
   // get the location of the cursor
-  CXSourceLocation loc = clang_getCursorLocation(cursor);
-  unsigned lineno, colno;
-  CXFile file = NULL;
-  clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
-  const char *filename = "<none>";
-  CXString filestr = {0};
-  if (file != NULL) {
-    filestr = clang_getFileName(file);
-    filename = clang_getCString(filestr);
+  {
+    CXSourceLocation loc = clang_getCursorLocation(cursor);
+    unsigned lineno, colno;
+    CXFile file = NULL;
+    clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
+    const char *filename = "<none>";
+    CXString filestr = {0};
+    if (file != NULL) {
+      filestr = clang_getFileName(file);
+      filename = clang_getCString(filestr);
+    }
+    fprintf(stream, "%s:%u:%u: ", filename, lineno, colno);
+    if (filestr.data != NULL)
+      clang_disposeString(filestr);
   }
 
   // retrieve the type of this symbol
-  enum CXCursorKind kind = clang_getCursorKind(cursor);
-  CXString kindstr = clang_getCursorKindSpelling(kind);
-  assert(kindstr.data != NULL);
-  const char *kindcstr = clang_getCString(kindstr);
-  assert(kindcstr != NULL);
+  {
+    enum CXCursorKind kind = clang_getCursorKind(cursor);
+    CXString kindstr = clang_getCursorKindSpelling(kind);
+    assert(kindstr.data != NULL);
+    const char *kindcstr = clang_getCString(kindstr);
+    assert(kindcstr != NULL);
+    fprintf(stream, "%s ", kindcstr);
+    clang_disposeString(kindstr);
+  }
 
   // retrieve the text of this node
-  CXString textstr = clang_getCursorSpelling(cursor);
-  assert(textstr.data != NULL);
-  const char *textcstr = clang_getCString(textstr);
+  {
+    CXString textstr = clang_getCursorSpelling(cursor);
+    assert(textstr.data != NULL);
+    const char *textcstr = clang_getCString(textstr);
 
-  fprintf(stream, "%s:%u:%u: %s with text «%s»", filename, lineno, colno,
-          kindcstr, textcstr);
-
-  clang_disposeString(textstr);
-  clang_disposeString(kindstr);
-  if (filestr.data != NULL)
-    clang_disposeString(filestr);
+    fprintf(stream, "with text «%s»", textcstr);
+    clang_disposeString(textstr);
+  }
 }
 
 static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
