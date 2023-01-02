@@ -1,6 +1,14 @@
 Change log
 ==========
 
+v2023.01.01
+-----------
+* Bug fix: mouse pasting and middle-click pasting into the UI works once again
+  (commit 17ea019394edf56baba8de784efd6dc8f0a28cd2).
+* The ``\r`` and ``\n`` characters are no longer permitted in comment delimiters
+  when describing a language to parse with the generic parser (commit
+  a9f8a5974cb42d5f5cf968720fbf69b0e3059e0e).
+
 v2022.12.27
 -----------
 * A new option, ``--script``, for automating Clink has been added. See the man
