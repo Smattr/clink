@@ -941,8 +941,11 @@ static int handle_select(void) {
   }
 
   if (e.type == EVENT_KEYPRESS && e.value == ' ') {
-    if (from_row + usable_rows() < results.count) {
-      from_row += usable_rows();
+    size_t increment = usable_rows();
+    if (increment > sizeof(HOTKEYS) - 1)
+      increment = sizeof(HOTKEYS) - 1;
+    if (from_row + increment < results.count) {
+      from_row += increment;
     } else {
       from_row = 0;
     }
