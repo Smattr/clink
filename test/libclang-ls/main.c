@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static CXTranslationUnit tu;
 
@@ -23,19 +24,47 @@ static void print(FILE *stream, CXCursor cursor) {
 
   // get the location of the cursor
   {
-    CXSourceLocation loc = clang_getCursorLocation(cursor);
-    unsigned lineno, colno;
-    CXFile file = NULL;
-    clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
-    const char *filename = "<none>";
-    CXString filestr = {0};
-    if (file != NULL) {
-      filestr = clang_getFileName(file);
-      filename = clang_getCString(filestr);
+    CXSourceRange loc = clang_getCursorExtent(cursor);
+
+    CXSourceLocation begin = clang_getRangeStart(loc);
+    unsigned begin_lineno, begin_colno;
+    CXFile begin_file = NULL;
+    clang_getSpellingLocation(begin, &begin_file, &begin_lineno, &begin_colno,
+                              NULL);
+    const char *begin_filename = "<none>";
+    CXString begin_filestr = {0};
+    if (begin_file != NULL) {
+      begin_filestr = clang_getFileName(begin_file);
+      begin_filename = clang_getCString(begin_filestr);
     }
-    fprintf(stream, "%s:%u:%u: ", filename, lineno, colno);
-    if (filestr.data != NULL)
-      clang_disposeString(filestr);
+
+    CXSourceLocation end = clang_getRangeEnd(loc);
+    unsigned end_lineno, end_colno;
+    CXFile end_file = NULL;
+    clang_getSpellingLocation(end, &end_file, &end_lineno, &end_colno, NULL);
+    const char *end_filename = "<none>";
+    CXString end_filestr = {0};
+    if (end_file != NULL) {
+      end_filestr = clang_getFileName(end_file);
+      end_filename = clang_getCString(end_filestr);
+    }
+
+    fprintf(stream, "%s", begin_filename);
+    if (strcmp(begin_filename, end_filename) != 0)
+      fprintf(stream, "-%s", end_filename);
+    fprintf(stream, ":%u", begin_lineno);
+    if (strcmp(begin_filename, end_filename) != 0 || begin_lineno != end_lineno)
+      fprintf(stream, "-%u", end_lineno);
+    fprintf(stream, ":%u", begin_colno);
+    if (strcmp(begin_filename, end_filename) != 0 ||
+        begin_lineno != end_lineno || begin_colno != end_colno)
+      fprintf(stream, "-%u", end_colno);
+    fprintf(stream, ":");
+
+    if (begin_filestr.data != NULL)
+      clang_disposeString(begin_filestr);
+    if (end_filestr.data != NULL)
+      clang_disposeString(end_filestr);
   }
 
   // retrieve the type of this symbol
