@@ -70,6 +70,30 @@ static void print_tokens(FILE *stream, CXCursor cursor) {
   clang_disposeTokens(tu, tokens, tokens_len);
 }
 
+static bool is_macro(enum CXCursorKind kind) {
+  switch (kind) {
+  case CXCursor_MacroDefinition:
+  case CXCursor_MacroExpansion:
+    return true;
+  default:
+    break;
+  }
+  return false;
+}
+
+static bool is_exposed(enum CXCursorKind kind) {
+  switch (kind) {
+  case CXCursor_UnexposedDecl:
+  case CXCursor_UnexposedExpr:
+  case CXCursor_UnexposedStmt:
+  case CXCursor_UnexposedAttr:
+    return false;
+  default:
+    break;
+  }
+  return true;
+}
+
 /// print a cursor and its position
 static void print(FILE *stream, CXCursor cursor) {
 
@@ -156,7 +180,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
 
   // if this is a macro, tokenise its contained content
   enum CXCursorKind kind = clang_getCursorKind(cursor);
-  if (kind == CXCursor_MacroDefinition || kind == CXCursor_MacroExpansion)
+  if (is_macro(kind) || !is_exposed(kind))
     print_tokens(stdout, cursor);
 
   return CXChildVisit_Recurse;
