@@ -131,7 +131,7 @@ int str_queue_pop(str_queue_t *sq, const char **str) {
     *str = sq->base[head];
 
     // try to remove the head
-  } while (!__atomic_compare_exchange_n(&sq->head, &head, head + 1, false,
+  } while (!__atomic_compare_exchange_n(&sq->head, &head, head + 1, true,
                                         __ATOMIC_RELEASE, __ATOMIC_ACQUIRE));
 
   return 0;
