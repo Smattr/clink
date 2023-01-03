@@ -4,6 +4,7 @@
 #include <clink/clang.h>
 #include <clink/db.h>
 #include <clink/symbol.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -213,6 +214,126 @@ static int visit_children(state_t *state, CXCursor cursor) {
   return state->rc;
 }
 
+/// if an unexposed expression looks like a call, extra the callee’s name
+static char *get_callee(CXCursor cursor) {
+  enum CXCursorKind kind = clang_getCursorKind(cursor);
+  assert(kind == CXCursor_UnexposedExpr || kind == CXCursor_CallExpr);
+  (void)kind;
+
+  CXTranslationUnit tu = clang_Cursor_getTranslationUnit(cursor);
+
+  char *rc = NULL;
+
+  // find all the tokens covered by this cursor
+  CXSourceRange range = clang_getCursorExtent(cursor);
+  CXToken *tokens = NULL;
+  unsigned tokens_len = 0;
+  clang_tokenize(tu, range, &tokens, &tokens_len);
+
+  // the call must at least contain «callee»«(»«)»
+  if (tokens_len < 3)
+    goto done;
+
+  // the second token must be the opening paren
+  {
+    CXString paren = clang_getTokenSpelling(tu, tokens[1]);
+    const char *paren_cstr = clang_getCString(paren);
+
+    bool is_paren = strcmp(paren_cstr, "(") == 0;
+    clang_disposeString(paren);
+    if (!is_paren)
+      goto done;
+  }
+
+  // the last token must be the closing paren
+  {
+    CXString paren = clang_getTokenSpelling(tu, tokens[tokens_len - 1]);
+    const char *paren_cstr = clang_getCString(paren);
+
+    bool is_paren = strcmp(paren_cstr, ")") == 0;
+    clang_disposeString(paren);
+    if (!is_paren)
+      goto done;
+  }
+
+  // the first token must be a valid identifier
+  {
+    CXString callee = clang_getTokenSpelling(tu, tokens[0]);
+    const char *callee_cstr = clang_getCString(callee);
+
+    bool is_id = strcmp(callee_cstr, "") != 0;
+    for (size_t i = 0; callee_cstr[i] != '\0'; ++i) {
+      if (isalpha((int)callee_cstr[i]))
+        continue;
+      if (callee_cstr[i] == '_')
+        continue;
+      if (i != 0 && isdigit((int)callee_cstr[i]))
+        continue;
+      is_id = false;
+      break;
+    }
+
+    if (is_id)
+      rc = strdup(callee_cstr);
+
+    clang_disposeString(callee);
+    if (!is_id)
+      goto done;
+  }
+
+done:
+  clang_disposeTokens(tu, tokens, tokens_len);
+  return rc;
+}
+
+// is this the name of an implementation of one of the __sync built-ins?
+static bool is_sync_impl(const char *name) {
+  if (name == NULL)
+    return false;
+
+  // check this looks like a __sync built-in
+  const char *suffix = NULL;
+#define MATCH(prefix)                                                          \
+  do {                                                                         \
+    if (suffix == NULL) {                                                      \
+      if (strncmp(name, ("__sync_" prefix "_"),                                \
+                  strlen("__sync_" prefix "_")) == 0) {                        \
+        suffix = name + strlen("__sync_" prefix "_");                          \
+      }                                                                        \
+    }                                                                          \
+  } while (0)
+  MATCH("fetch_and_add");
+  MATCH("fetch_and_sub");
+  MATCH("fetch_and_or");
+  MATCH("fetch_and_and");
+  MATCH("fetch_and_xor");
+  MATCH("fetch_and_nand");
+  MATCH("add_and_fetch");
+  MATCH("sub_and_fetch");
+  MATCH("or_and_fetch");
+  MATCH("and_and_fetch");
+  MATCH("xor_and_fetch");
+  MATCH("nand_and_fetch");
+  MATCH("bool_compare_and_swap");
+  MATCH("val_compare_and_swap");
+  MATCH("lock_test_and_set");
+  MATCH("lock_release");
+#undef MATCH
+
+  if (suffix == NULL)
+    return false;
+
+  // the remainder should be a bit width
+  if (*suffix == '\0')
+    return false;
+  for (; *suffix != '\0'; ++suffix) {
+    if (!isdigit((int)*suffix))
+      return false;
+  }
+
+  return true;
+}
+
 static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
                                      CXClientData state) {
 
@@ -289,6 +410,23 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   // retrieve the name of this thing
   CXString text = clang_getCursorSpelling(cursor);
   const char *name = clang_getCString(text);
+  char *extra_name = NULL;
+
+  if (name != NULL) {
+    // XXX: calls to the __atomic built-ins somehow only appear as unexposed
+    // expressions
+    bool maybe_atomic = kind == CXCursor_UnexposedExpr && strcmp(name, "") == 0;
+    // XXX: similarly, calls to the __sync built-ins somehow appear as calls to
+    // their bit-width implementations
+    bool sync_impl = kind == CXCursor_CallExpr && is_sync_impl(name);
+    if (maybe_atomic || sync_impl) {
+      extra_name = get_callee(cursor);
+      if (extra_name != NULL && strncmp(extra_name, "__", 2) == 0) {
+        category = CLINK_FUNCTION_CALL;
+        name = extra_name;
+      }
+    }
+  }
 
   // skip entities with no name
   if (name == NULL || strcmp(name, "") == 0)
@@ -408,6 +546,7 @@ done:
   DEBUG("processed symbol %s, rc = %d", name == NULL ? "<unnamed>" : name, rc);
   if (filename.data != NULL)
     clang_disposeString(filename);
+  free(extra_name);
   clang_disposeString(text);
 
   // abort visitation if we have seen an error

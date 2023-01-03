@@ -13,8 +13,86 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static CXTranslationUnit tu;
+
+/// tokenise and print the contents of a cursor
+static void print_tokens(FILE *stream, CXCursor cursor) {
+
+  assert(stream != NULL);
+
+  CXSourceRange range = clang_getCursorExtent(cursor);
+  CXToken *tokens = NULL;
+  unsigned tokens_len = 0;
+  clang_tokenize(tu, range, &tokens, &tokens_len);
+
+  for (unsigned i = 0; i < tokens_len; ++i) {
+
+    CXSourceLocation loc = clang_getTokenLocation(tu, tokens[i]);
+    CXFile file = NULL;
+    unsigned lineno, colno;
+    clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
+    const char *filename = "<none>";
+    CXString filestr = {0};
+    if (file != NULL) {
+      filestr = clang_getFileName(file);
+      filename = clang_getCString(filestr);
+    }
+    printf(" %s:%u:%u: ", filename, lineno, colno);
+    if (filestr.data != NULL)
+      clang_disposeString(filestr);
+
+    CXTokenKind k = clang_getTokenKind(tokens[i]);
+    switch (k) {
+    case CXToken_Punctuation:
+      printf("CXToken_Punctuation");
+      break;
+    case CXToken_Keyword:
+      printf("CXToken_Keyword");
+      break;
+    case CXToken_Identifier:
+      printf("CXToken_Identifier");
+      break;
+    case CXToken_Literal:
+      printf("CXToken_Literal");
+      break;
+    case CXToken_Comment:
+      printf("CXToken_Comment");
+      break;
+    }
+
+    CXString tokenstr = clang_getTokenSpelling(tu, tokens[i]);
+    printf(" with text «%s»\n", clang_getCString(tokenstr));
+    clang_disposeString(tokenstr);
+  }
+
+  clang_disposeTokens(tu, tokens, tokens_len);
+}
+
+static bool is_macro(enum CXCursorKind kind) {
+  switch (kind) {
+  case CXCursor_MacroDefinition:
+  case CXCursor_MacroExpansion:
+    return true;
+  default:
+    break;
+  }
+  return false;
+}
+
+static bool is_exposed(enum CXCursorKind kind) {
+  switch (kind) {
+  case CXCursor_UnexposedDecl:
+  case CXCursor_UnexposedExpr:
+  case CXCursor_UnexposedStmt:
+  case CXCursor_UnexposedAttr:
+    return false;
+  default:
+    break;
+  }
+  return true;
+}
 
 /// print a cursor and its position
 static void print(FILE *stream, CXCursor cursor) {
@@ -22,36 +100,70 @@ static void print(FILE *stream, CXCursor cursor) {
   assert(stream != NULL);
 
   // get the location of the cursor
-  CXSourceLocation loc = clang_getCursorLocation(cursor);
-  unsigned lineno, colno;
-  CXFile file = NULL;
-  clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
-  const char *filename = "<none>";
-  CXString filestr = {0};
-  if (file != NULL) {
-    filestr = clang_getFileName(file);
-    filename = clang_getCString(filestr);
+  {
+    CXSourceRange loc = clang_getCursorExtent(cursor);
+
+    CXSourceLocation begin = clang_getRangeStart(loc);
+    unsigned begin_lineno, begin_colno;
+    CXFile begin_file = NULL;
+    clang_getSpellingLocation(begin, &begin_file, &begin_lineno, &begin_colno,
+                              NULL);
+    const char *begin_filename = "<none>";
+    CXString begin_filestr = {0};
+    if (begin_file != NULL) {
+      begin_filestr = clang_getFileName(begin_file);
+      begin_filename = clang_getCString(begin_filestr);
+    }
+
+    CXSourceLocation end = clang_getRangeEnd(loc);
+    unsigned end_lineno, end_colno;
+    CXFile end_file = NULL;
+    clang_getSpellingLocation(end, &end_file, &end_lineno, &end_colno, NULL);
+    const char *end_filename = "<none>";
+    CXString end_filestr = {0};
+    if (end_file != NULL) {
+      end_filestr = clang_getFileName(end_file);
+      end_filename = clang_getCString(end_filestr);
+    }
+
+    fprintf(stream, "%s", begin_filename);
+    if (strcmp(begin_filename, end_filename) != 0)
+      fprintf(stream, "-%s", end_filename);
+    fprintf(stream, ":%u", begin_lineno);
+    if (strcmp(begin_filename, end_filename) != 0 || begin_lineno != end_lineno)
+      fprintf(stream, "-%u", end_lineno);
+    fprintf(stream, ":%u", begin_colno);
+    if (strcmp(begin_filename, end_filename) != 0 ||
+        begin_lineno != end_lineno || begin_colno != end_colno)
+      fprintf(stream, "-%u", end_colno);
+    fprintf(stream, ":");
+
+    if (begin_filestr.data != NULL)
+      clang_disposeString(begin_filestr);
+    if (end_filestr.data != NULL)
+      clang_disposeString(end_filestr);
   }
 
   // retrieve the type of this symbol
-  enum CXCursorKind kind = clang_getCursorKind(cursor);
-  CXString kindstr = clang_getCursorKindSpelling(kind);
-  assert(kindstr.data != NULL);
-  const char *kindcstr = clang_getCString(kindstr);
-  assert(kindcstr != NULL);
+  {
+    enum CXCursorKind kind = clang_getCursorKind(cursor);
+    CXString kindstr = clang_getCursorKindSpelling(kind);
+    assert(kindstr.data != NULL);
+    const char *kindcstr = clang_getCString(kindstr);
+    assert(kindcstr != NULL);
+    fprintf(stream, "%s ", kindcstr);
+    clang_disposeString(kindstr);
+  }
 
   // retrieve the text of this node
-  CXString textstr = clang_getCursorSpelling(cursor);
-  assert(textstr.data != NULL);
-  const char *textcstr = clang_getCString(textstr);
+  {
+    CXString textstr = clang_getCursorSpelling(cursor);
+    assert(textstr.data != NULL);
+    const char *textcstr = clang_getCString(textstr);
 
-  fprintf(stream, "%s:%u:%u: %s with text «%s»", filename, lineno, colno,
-          kindcstr, textcstr);
-
-  clang_disposeString(textstr);
-  clang_disposeString(kindstr);
-  if (filestr.data != NULL)
-    clang_disposeString(filestr);
+    fprintf(stream, "with text «%s»", textcstr);
+    clang_disposeString(textstr);
+  }
 }
 
 static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
@@ -68,55 +180,8 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
 
   // if this is a macro, tokenise its contained content
   enum CXCursorKind kind = clang_getCursorKind(cursor);
-  if (kind == CXCursor_MacroDefinition || kind == CXCursor_MacroExpansion) {
-
-    CXSourceRange range = clang_getCursorExtent(cursor);
-    CXToken *tokens = NULL;
-    unsigned tokens_len = 0;
-    clang_tokenize(tu, range, &tokens, &tokens_len);
-
-    for (unsigned i = 0; i < tokens_len; ++i) {
-
-      CXSourceLocation loc = clang_getTokenLocation(tu, tokens[i]);
-      CXFile file = NULL;
-      unsigned lineno, colno;
-      clang_getSpellingLocation(loc, &file, &lineno, &colno, NULL);
-      const char *filename = "<none>";
-      CXString filestr = {0};
-      if (file != NULL) {
-        filestr = clang_getFileName(file);
-        filename = clang_getCString(filestr);
-      }
-      printf(" %s:%u:%u: ", filename, lineno, colno);
-      if (filestr.data != NULL)
-        clang_disposeString(filestr);
-
-      CXTokenKind k = clang_getTokenKind(tokens[i]);
-      switch (k) {
-      case CXToken_Punctuation:
-        printf("CXToken_Punctuation");
-        break;
-      case CXToken_Keyword:
-        printf("CXToken_Keyword");
-        break;
-      case CXToken_Identifier:
-        printf("CXToken_Identifier");
-        break;
-      case CXToken_Literal:
-        printf("CXToken_Literal");
-        break;
-      case CXToken_Comment:
-        printf("CXToken_Comment");
-        break;
-      }
-
-      CXString tokenstr = clang_getTokenSpelling(tu, tokens[i]);
-      printf(" with text «%s»\n", clang_getCString(tokenstr));
-      clang_disposeString(tokenstr);
-    }
-
-    clang_disposeTokens(tu, tokens, tokens_len);
-  }
+  if (is_macro(kind) || !is_exposed(kind))
+    print_tokens(stdout, cursor);
 
   return CXChildVisit_Recurse;
 }
