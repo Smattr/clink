@@ -5,7 +5,6 @@ int foo(void) {
   return __atomic_load_n(&i, __ATOMIC_ACQUIRE);
 }
 
-// XFAIL: True
 // RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 // RUN: echo 'select name, path, line, col from symbols where name = "__ATOMIC_ACQUIRE";' | sqlite3 {%t}
 // CHECK: __ATOMIC_ACQUIRE|{%s}|5|30
