@@ -417,7 +417,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     // expressions
     bool maybe_atomic = kind == CXCursor_UnexposedExpr && strcmp(name, "") == 0;
     // XXX: similarly, calls to the __sync built-ins somehow appear as calls to
-    // their bit-width implementations
+    // their byte-width implementations
     bool sync_impl = kind == CXCursor_CallExpr && is_sync_impl(name);
     if (maybe_atomic || sync_impl) {
       extra_name = get_callee(cursor);
