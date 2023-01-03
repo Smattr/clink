@@ -214,7 +214,7 @@ static int visit_children(state_t *state, CXCursor cursor) {
   return state->rc;
 }
 
-/// if an unexposed expression looks like a call, extra the callee’s name
+/// if this looks like a call, extract the callee’s name
 static char *get_callee(CXCursor cursor) {
   enum CXCursorKind kind = clang_getCursorKind(cursor);
   assert(kind == CXCursor_UnexposedExpr || kind == CXCursor_CallExpr);
