@@ -216,7 +216,9 @@ static int visit_children(state_t *state, CXCursor cursor) {
 
 /// if an unexposed expression looks like a call, extra the callee’s name
 static char *get_callee(CXCursor cursor) {
-  assert(clang_getCursorKind(cursor) == CXCursor_UnexposedExpr);
+  enum CXCursorKind kind = clang_getCursorKind(cursor);
+  assert(kind == CXCursor_UnexposedExpr || kind == CXCursor_CallExpr);
+  (void)kind;
 
   CXTranslationUnit tu = clang_Cursor_getTranslationUnit(cursor);
 
@@ -282,6 +284,54 @@ static char *get_callee(CXCursor cursor) {
 done:
   clang_disposeTokens(tu, tokens, tokens_len);
   return rc;
+}
+
+// is this the name of an implementation of one of the __sync built-ins?
+static bool is_sync_impl(const char *name) {
+  if (name == NULL)
+    return false;
+
+  // check this looks like a __sync built-in
+  const char *suffix = NULL;
+#define MATCH(prefix)                                                          \
+  do {                                                                         \
+    if (suffix == NULL) {                                                      \
+      if (strncmp(name, ("__sync_" prefix "_"),                                \
+                  strlen("__sync_" prefix "_")) == 0) {                        \
+        suffix = name + strlen("__sync_" prefix "_");                          \
+      }                                                                        \
+    }                                                                          \
+  } while (0)
+  MATCH("fetch_and_add");
+  MATCH("fetch_and_sub");
+  MATCH("fetch_and_or");
+  MATCH("fetch_and_and");
+  MATCH("fetch_and_xor");
+  MATCH("fetch_and_nand");
+  MATCH("add_and_fetch");
+  MATCH("sub_and_fetch");
+  MATCH("or_and_fetch");
+  MATCH("and_and_fetch");
+  MATCH("xor_and_fetch");
+  MATCH("nand_and_fetch");
+  MATCH("bool_compare_and_swap");
+  MATCH("val_compare_and_swap");
+  MATCH("lock_test_and_set");
+  MATCH("lock_release");
+#undef MATCH
+
+  if (suffix == NULL)
+    return false;
+
+  // the remainder should be a bit width
+  if (*suffix == '\0')
+    return false;
+  for (; *suffix != '\0'; ++suffix) {
+    if (!isdigit((int)*suffix))
+      return false;
+  }
+
+  return true;
 }
 
 static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
@@ -362,13 +412,19 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   const char *name = clang_getCString(text);
   char *extra_name = NULL;
 
-  // XXX: calls to the __atomic built-ins somehow only appear as unexposed
-  // expressions, so try to compensate for that here
-  if (kind == CXCursor_UnexposedExpr && name != NULL && strcmp(name, "") == 0) {
-    extra_name = get_callee(cursor);
-    if (extra_name != NULL && strncmp(extra_name, "__", 2) == 0) {
-      category = CLINK_FUNCTION_CALL;
-      name = extra_name;
+  if (name != NULL) {
+    // XXX: calls to the __atomic built-ins somehow only appear as unexposed
+    // expressions
+    bool maybe_atomic = kind == CXCursor_UnexposedExpr && strcmp(name, "") == 0;
+    // XXX: similarly, calls to the __sync built-ins somehow appear as calls to
+    // their bit-width implementations
+    bool sync_impl = kind == CXCursor_CallExpr && is_sync_impl(name);
+    if (maybe_atomic || sync_impl) {
+      extra_name = get_callee(cursor);
+      if (extra_name != NULL && strncmp(extra_name, "__", 2) == 0) {
+        category = CLINK_FUNCTION_CALL;
+        name = extra_name;
+      }
     }
   }
 
