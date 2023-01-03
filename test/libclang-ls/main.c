@@ -178,7 +178,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   print(stdout, cursor);
   printf("\n");
 
-  // if this is a macro, tokenise its contained content
+  // if this is a macro or not exposed, tokenise its contained content
   enum CXCursorKind kind = clang_getCursorKind(cursor);
   if (is_macro(kind) || !is_exposed(kind))
     print_tokens(stdout, cursor);
