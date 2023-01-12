@@ -3,11 +3,10 @@
 #include <assert.h>
 #include <errno.h>
 #include <regex.h>
-#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 
-int re_add(re_t *_Atomic *re, const char *regex) {
+int re_add(re_t **re, const char *regex) {
   assert(re != NULL);
   assert(regex != NULL);
 
@@ -35,11 +34,11 @@ int re_add(re_t *_Atomic *re, const char *regex) {
   }
 
   {
-    re_t *head = atomic_load_explicit(re, memory_order_acquire);
+    re_t *head = __atomic_load_n(re, __ATOMIC_ACQUIRE);
     do {
       r->next = head;
-    } while (!atomic_compare_exchange_weak_explicit(
-        re, &head, r, memory_order_release, memory_order_acquire));
+    } while (!__atomic_compare_exchange_n(re, &head, r, true, __ATOMIC_RELEASE,
+                                          __ATOMIC_ACQUIRE));
   }
 
 done:

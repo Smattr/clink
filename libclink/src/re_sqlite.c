@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <regex.h>
 #include <sqlite3.h>
-#include <stdatomic.h>
 #include <stddef.h>
 
 void re_sqlite(sqlite3_context *context, int argc, sqlite3_value **argv) {
@@ -20,7 +19,7 @@ void re_sqlite(sqlite3_context *context, int argc, sqlite3_value **argv) {
   assert(text != NULL);
 
   // retrieve the pre-compiled regex state that was setup by `db_open`
-  const re_t *_Atomic *re = sqlite3_user_data(context);
+  const re_t **re = sqlite3_user_data(context);
   assert(re != NULL);
 
   // find our matching regex which should have been pre-compiled

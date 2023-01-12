@@ -3,7 +3,6 @@
 #include "../../common/compiler.h"
 #include <regex.h>
 #include <sqlite3.h>
-#include <stdatomic.h>
 
 /// translate a POSIX regex.h error to an errno
 INTERNAL int re_err_to_errno(int err);
@@ -28,7 +27,7 @@ typedef struct re {
  * \param regex Regex to compile
  * \return 0 on success or an errno on failure
  */
-INTERNAL int re_add(re_t *_Atomic *re, const char *regex);
+INTERNAL int re_add(re_t **re, const char *regex);
 
 /** lookup a previously compiled regex
  *
@@ -42,7 +41,7 @@ INTERNAL int re_add(re_t *_Atomic *re, const char *regex);
  * \param regex Originating regex text
  * \return The matching previously compiled regex
  */
-INTERNAL regex_t re_find(const re_t *_Atomic *re, const char *regex);
+INTERNAL regex_t re_find(const re_t **re, const char *regex);
 
 /** cleanup pre-compiled regexes
  *
