@@ -5,13 +5,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/** get current working directory
- *
- * \param wd [out] Path to current working directory on success
- * \return 0 on success or an errno on failure
- */
-int cwd(char **wd);
-
 /** get the directory name of a given path
  *
  * This is a more sane version of POSIX dirname().

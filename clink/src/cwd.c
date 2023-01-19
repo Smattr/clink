@@ -1,17 +1,27 @@
-#include "path.h"
+#include "cwd.h"
+#include <assert.h>
 #include <errno.h>
-#include <stddef.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-int cwd(char **wd) {
+static char *cwd;
 
-  if (wd == NULL)
-    return EINVAL;
+int cwd_init(void) {
+  assert(cwd == NULL);
 
-  char *w = getcwd(NULL, 0);
-  if (w == NULL)
+  cwd = getcwd(NULL, 0);
+  if (cwd == NULL)
     return errno;
 
-  *wd = w;
   return 0;
+}
+
+const char *cwd_get(void) {
+  assert(cwd != NULL);
+  return cwd;
+}
+
+void cwd_free(void) {
+  free(cwd);
+  cwd = NULL;
 }

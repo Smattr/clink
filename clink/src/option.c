@@ -1,6 +1,7 @@
 #include "option.h"
 #include "../../common/compiler.h"
 #include "compile_commands.h"
+#include "cwd.h"
 #include "debug.h"
 #include "path.h"
 #include <assert.h>
@@ -44,13 +45,8 @@ int set_db_path(void) {
 
   int rc = 0;
 
-  // get our current directory
-  char *wd = NULL;
-  if ((rc = cwd(&wd)))
-    return rc;
-
   // start at this current directory
-  char *branch = strdup(wd);
+  char *branch = strdup(cwd_get());
   if (branch == NULL) {
     rc = ENOMEM;
     goto done;
@@ -107,12 +103,11 @@ int set_db_path(void) {
   }
 
   // if we still did not find a database, default to the current directory
-  if ((rc = join(wd, ".clink.db", &option.database_path)))
+  if ((rc = join(cwd_get(), ".clink.db", &option.database_path)))
     goto done;
 
 done:
   free(branch);
-  free(wd);
 
   return rc;
 }

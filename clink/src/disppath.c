@@ -1,3 +1,4 @@
+#include "cwd.h"
 #include "path.h"
 #include <errno.h>
 #include <stdlib.h>
@@ -17,12 +18,10 @@ int disppath(const char *path, char **display) {
     return errno;
 
   char *d = NULL;
+  int rc = 0;
 
   // get the current working directory
-  char *wd = NULL;
-  int rc = cwd(&wd);
-  if (rc)
-    goto done;
+  const char *wd = cwd_get();
 
   // if the given path was exactly the working directory, describe it as “.”
   if (strcmp(wd, a) == 0) {
@@ -46,7 +45,6 @@ int disppath(const char *path, char **display) {
     rc = ENOMEM;
 
 done:
-  free(wd);
   free(a);
 
   if (rc == 0)

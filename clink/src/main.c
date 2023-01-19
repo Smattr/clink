@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "build.h"
+#include "cwd.h"
 #include "have_vim.h"
 #include "help.h"
 #include "option.h"
@@ -302,11 +303,16 @@ static void parse_args(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 
+  // setup CWD so we can use cwd_get freely
+  int rc = cwd_init();
+  if (UNLIKELY(rc))
+    goto done;
+
   // parse command line arguments
   parse_args(argc, argv);
 
   // figure out where to create (or re-open) .clink.db
-  int rc = set_db_path();
+  rc = set_db_path();
   if (rc) {
     fprintf(stderr, "failed to configure path to database: %s\n", strerror(rc));
     goto done;
@@ -472,6 +478,7 @@ done1:
   clink_db_close(&db);
 done:
   clean_up_options();
+  cwd_free();
 
   if (rc == ENOMEM)
     return EX_OSERR;

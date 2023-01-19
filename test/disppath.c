@@ -1,3 +1,4 @@
+#include "../clink/src/cwd.h"
 #include "../clink/src/path.h"
 #include "test.h"
 #include <stdbool.h>
@@ -12,9 +13,14 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
 
   // disppath with invalid parameters should fail
   {
+    int r = cwd_init();
+    ASSERT_EQ(r, 0);
+
     char *out = NULL;
     ASSERT_NE(disppath(NULL, &out), 0);
     ASSERT_NE(disppath(target, NULL), 0);
+
+    cwd_free();
   }
 
   // construct a temporary directory
@@ -23,6 +29,11 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
   // change to this directory
   {
     int r = chdir(path);
+    ASSERT_EQ(r, 0);
+  }
+
+  {
+    int r = cwd_init();
     ASSERT_EQ(r, 0);
   }
 
@@ -66,6 +77,8 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
 
   // clean up temporary file
   (void)unlink(target);
+
+  cwd_free();
 
   // assert all our claims
   ASSERT(claim1_a);

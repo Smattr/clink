@@ -1,9 +1,9 @@
 #include "ui.h"
 #include "../../common/compiler.h"
 #include "colour.h"
+#include "cwd.h"
 #include "find_repl.h"
 #include "option.h"
-#include "path.h"
 #include "re.h"
 #include "screen.h"
 #include "set.h"
@@ -50,15 +50,12 @@ static clink_db_t *database;
 /// absolute path to our accompanying `clink-repl` script
 static char *clink_repl;
 
-/// current working directory
-static char *cur_dir;
-
 /// `disppath` but assumes an absolute input, so no need to allocate
 static const char *display_path(const char *path) {
   assert(path != NULL);
   assert(path[0] == '/');
 
-  assert(cur_dir != NULL);
+  const char *cur_dir = cwd_get();
   if (strncmp(path, cur_dir, strlen(cur_dir)) != 0)
     return path;
   if (path[strlen(cur_dir)] != '/')
@@ -1009,9 +1006,6 @@ int ui(clink_db_t *db) {
     goto done;
   }
 
-  if (UNLIKELY((rc = cwd(&cur_dir))))
-    goto done;
-
   // initialise screen
   if ((rc = screen_init()))
     goto done;
@@ -1050,8 +1044,6 @@ done:
   results.size = 0;
 
   screen_free();
-  free(cur_dir);
-  cur_dir = NULL;
   free(right);
   right = NULL;
   free(left);
