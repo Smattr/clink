@@ -6,8 +6,8 @@
 #include "path.h"
 #include "re.h"
 #include "screen.h"
-#include "set.h"
 #include "spinner.h"
+#include "str_queue.h"
 #include <assert.h>
 #include <clink/clink.h>
 #include <ctype.h>
@@ -165,9 +165,9 @@ static int format_results(clink_iter_t *it) {
 
   int rc = 0;
 
-  // track which files we have attempted to syntax-highlight
-  set_t *highlighted = NULL;
-  if (UNLIKELY((rc = set_new(&highlighted))))
+  // files we have not yet highlighted
+  str_queue_t *to_highlight = NULL;
+  if (UNLIKELY((rc = str_queue_new(&to_highlight))))
     goto done;
 
   while (true) {
@@ -213,31 +213,47 @@ static int format_results(clink_iter_t *it) {
       break;
     ++results.count;
 
-    // if the context is missing (can happen if it was delayed), highlight the
-    // file now
+    // if the context is missing (can happen if it was delayed), queue it for
+    // highlighting now
     if (target->context == NULL) {
-      // if we have not tried highlighting, try it now
-      const char *path = target->path;
-      int r = set_add(highlighted, &path);
-      if (r == 0) {
-        // Update what we are doing. Inline the move and `CLRTOEOL` so we can do
-        // it all while holding the stdout lock and avoid racing with the
-        // spinner.
-        size_t rows = screen_get_rows();
-        PRINT("\033[%zu;4Hsyntax highlighting %s…%s", rows - FUNCTIONS_SZ,
-              display_path(target->path), CLRTOEOL);
-
-        // ignore non-fatal failure of highlighting
-        (void)clink_vim_read_into(database, target->path);
-
-        // update what we are doing
-        PRINT("\033[%zu;4Hformatting results…%s", rows - FUNCTIONS_SZ,
-              CLRTOEOL);
-      } else if (r != EALREADY) {
+      int r = str_queue_push(to_highlight, target->path);
+      if (r != 0 && r != EALREADY) {
         rc = r;
-        break;
+        goto done;
       }
-      // also ignore failure here and continue
+    }
+  }
+
+  // highlight all the pending files
+  while (true) {
+    const char *path = NULL;
+    int r = str_queue_pop(to_highlight, &path);
+    if (r == ENOMSG) {
+      break;
+    } else if (r != 0) {
+      rc = r;
+      goto done;
+    }
+
+    // Update what we are doing. Inline the move and `CLRTOEOL` so we can do
+    // it all while holding the stdout lock and avoid racing with the
+    // spinner.
+    size_t rows = screen_get_rows();
+    PRINT("\033[%zu;4Hsyntax highlighting %s…%s", rows - FUNCTIONS_SZ,
+          display_path(path), CLRTOEOL);
+
+    // ignore non-fatal failure of highlighting
+    (void)clink_vim_read_into(database, path);
+
+    // update what we are doing
+    PRINT("\033[%zu;4Hformatting results…%s", rows - FUNCTIONS_SZ, CLRTOEOL);
+  }
+
+  // try to populate any symbols with missing context
+  for (size_t i = 0; i < results.count; ++i) {
+    clink_symbol_t *target = &results.rows[i];
+    if (target->context == NULL) {
+      // ignore failure here
       (void)clink_db_get_content(database, target->path, target->lineno,
                                  &target->context);
     }
@@ -252,7 +268,7 @@ done:
     PRINT("%s", CLRTOEOL);
   }
 
-  set_free(&highlighted);
+  str_queue_free(&to_highlight);
   clink_iter_free(&it);
 
   return rc;
