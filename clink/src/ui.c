@@ -79,13 +79,6 @@ static results_t results;
 /// number of result columns excluding the hot key
 enum { COLUMN_COUNT = 4 };
 
-/// print something, updating the display immediately
-#define PRINT(args...)                                                         \
-  do {                                                                         \
-    printf(args);                                                              \
-    fflush(stdout);                                                            \
-  } while (0)
-
 /// print something, accounting for the possibility of stripping colours
 ///
 /// \param str String to print
@@ -126,8 +119,6 @@ static bool are_duplicates(const clink_symbol_t *a, const clink_symbol_t *b) {
 static void move(size_t row, size_t column) {
   PRINT("\033[%zu;%zuH", row, column);
 }
-
-static const char CLRTOEOL[] = "\033[K";
 
 static int find_symbol(const char *query);
 static int find_definition(const char *query);

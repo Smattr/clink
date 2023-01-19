@@ -34,6 +34,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /// type of an event returned from `screen_read`
 typedef enum {
@@ -83,3 +84,13 @@ event_t screen_read(void);
  * any of the other functions in this header.
  */
 void screen_free(void);
+
+/// character sequence to clear the current line from the cursor to EOL
+#define CLRTOEOL "\033[K"
+
+/// print something, updating the display immediately
+#define PRINT(args...)                                                         \
+  do {                                                                         \
+    printf(args);                                                              \
+    fflush(stdout);                                                            \
+  } while (0)
