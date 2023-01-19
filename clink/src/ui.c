@@ -2,6 +2,7 @@
 #include "../../common/compiler.h"
 #include "colour.h"
 #include "find_repl.h"
+#include "highlight.h"
 #include "option.h"
 #include "path.h"
 #include "re.h"
@@ -216,28 +217,11 @@ static int format_results(clink_iter_t *it) {
   }
 
   // highlight all the pending files
-  while (true) {
-    const char *path = NULL;
-    int r = str_queue_pop(to_highlight, &path);
-    if (r == ENOMSG) {
-      break;
-    } else if (r != 0) {
-      rc = r;
-      goto done;
-    }
-
-    // Update what we are doing. Inline the move and `CLRTOEOL` so we can do
-    // it all while holding the stdout lock and avoid racing with the
-    // spinner.
+  {
     size_t rows = screen_get_rows();
-    PRINT("\033[%zu;4Hsyntax highlighting %s…%s", rows - FUNCTIONS_SZ,
-          display_path(path), CLRTOEOL);
-
-    // ignore non-fatal failure of highlighting
-    (void)clink_vim_read_into(database, path);
-
-    // update what we are doing
-    PRINT("\033[%zu;4Hformatting results…%s", rows - FUNCTIONS_SZ, CLRTOEOL);
+    rc = highlight(database, to_highlight, rows - FUNCTIONS_SZ);
+    if (rc != 0)
+      goto done;
   }
 
   // try to populate any symbols with missing context

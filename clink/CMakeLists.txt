@@ -12,6 +12,7 @@ add_executable(clink
   src/find_repl.c
   src/have_vim.c
   src/help.c
+  src/highlight.c
   src/is_root.c
   src/join.c
   src/main.c
