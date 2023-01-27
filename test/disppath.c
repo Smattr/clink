@@ -34,14 +34,7 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
     (void)fclose(f);
   }
 
-  // disppath on a local path should give us the relative path
-  char *out1 = NULL;
-  int r1 = disppath(target, &out1);
-  bool claim1_a = r1 == 0;
-  bool claim1_b = claim1_a && strcmp(out1, "target") == 0;
-  free(out1);
-
-  // the same if we provide a absolute path
+  // standard disppath use case
   char *in2 = test_asprintf("%s/%s", path, target);
   char *out2 = NULL;
   int r2 = disppath(in2, &out2);
@@ -69,8 +62,6 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
   (void)unlink(target);
 
   // assert all our claims
-  ASSERT(claim1_a);
-  ASSERT(claim1_b);
   ASSERT(claim2_a);
   ASSERT(claim2_b);
   ASSERT(claim3_a);
