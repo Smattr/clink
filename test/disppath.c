@@ -35,37 +35,37 @@ TEST("test cases for clink/src/disppath.c:disppath()") {
   }
 
   // standard disppath use case
-  char *in2 = test_asprintf("%s/%s", path, target);
-  char *out2 = NULL;
-  int r2 = disppath(in2, &out2);
-  bool claim2_a = r2 == 0;
-  bool claim2_b = claim2_a && strcmp(out2, "target") == 0;
-  free(out2);
+  char *in1 = test_asprintf("%s/%s", path, target);
+  char *out1 = NULL;
+  int r1 = disppath(in1, &out1);
+  bool claim1_a = r1 == 0;
+  bool claim1_b = claim1_a && strcmp(out1, "target") == 0;
+  free(out1);
 
   // we should get an absolute path for something with a smaller common prefix
-  char *out3 = NULL;
-  int r3 = disppath("/", &out3);
-  bool claim3_a = r3 == 0;
-  bool claim3_b = claim3_a && strcmp(out3, "/") == 0;
-  free(out3);
+  char *out2 = NULL;
+  int r2 = disppath("/", &out2);
+  bool claim2_a = r2 == 0;
+  bool claim2_b = claim2_a && strcmp(out2, "/") == 0;
+  free(out2);
 
   // and we should get an absolute path for something with a different root
-  char *out4 = NULL;
-  int r4 = disppath("/usr", &out4);
-  bool claim4_a = access("/usr", R_OK) != 0 || r4 == 0;
-  bool claim4_b =
-      access("/usr", R_OK) != 0 || (r4 == 0 && strcmp(out4, "/usr") == 0);
-  if (r4 == 0)
-    free(out4);
+  char *out3 = NULL;
+  int r3 = disppath("/usr", &out3);
+  bool claim3_a = access("/usr", R_OK) != 0 || r3 == 0;
+  bool claim3_b =
+      access("/usr", R_OK) != 0 || (r3 == 0 && strcmp(out3, "/usr") == 0);
+  if (r3 == 0)
+    free(out3);
 
   // clean up temporary file
   (void)unlink(target);
 
   // assert all our claims
+  ASSERT(claim1_a);
+  ASSERT(claim1_b);
   ASSERT(claim2_a);
   ASSERT(claim2_b);
   ASSERT(claim3_a);
   ASSERT(claim3_b);
-  ASSERT(claim4_a);
-  ASSERT(claim4_b);
 }
