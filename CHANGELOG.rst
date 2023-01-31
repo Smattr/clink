@@ -1,6 +1,17 @@
 Change log
 ==========
 
+v2023.01.30
+-----------
+* Bug fix: pressing space in the UI view no longer advances too many entries
+  (commit 3fe36b8f81ce4f78386ef4252bbef852ee26e9b6).
+* Calls to the ``__atomic`` built-ins are now correctly detected when parsing in
+  Clang mode (commit ff9dfb76daad6f43bb3dcbf8f612a75c1e9b05e9).
+* Calls to the ``__sync`` built-ins are now correctly detected when parsing in
+  Clang mode (commit 5a03a46542eaf1a4e54603c53d1caf370ac76f84).
+* On-demand syntax highlighting that occurs in the UI now uses multiple threads
+  (commit 45404b1844df0a13a7343b0b8c4aef2dac2fa67e).
+
 v2023.01.01
 -----------
 * Bug fix: mouse pasting and middle-click pasting into the UI works once again
