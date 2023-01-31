@@ -54,20 +54,6 @@ static char *clink_repl;
 /// current working directory
 static char *cur_dir;
 
-/// `disppath` but assumes an absolute input, so no need to allocate
-static const char *display_path(const char *path) {
-  assert(path != NULL);
-  assert(path[0] == '/');
-
-  assert(cur_dir != NULL);
-  if (strncmp(path, cur_dir, strlen(cur_dir)) != 0)
-    return path;
-  if (path[strlen(cur_dir)] != '/')
-    return path;
-
-  return &path[strlen(cur_dir) + 1];
-}
-
 typedef struct {
   clink_symbol_t *rows;
   size_t count;
@@ -219,7 +205,7 @@ static int format_results(clink_iter_t *it) {
   // highlight all the pending files
   {
     size_t rows = screen_get_rows();
-    rc = highlight(database, to_highlight, rows - FUNCTIONS_SZ);
+    rc = highlight(database, cur_dir, to_highlight, rows - FUNCTIONS_SZ);
     if (rc != 0)
       goto done;
   }
@@ -373,7 +359,7 @@ static int print_results(void) {
     for (size_t j = from_row; j < from_row + row_count; ++j) {
       assert(j < results.count);
       const clink_symbol_t *sym = &results.rows[j];
-      size_t w = i == 0   ? strlen(display_path(sym->path))
+      size_t w = i == 0   ? strlen(disppath(cur_dir, sym->path))
                  : i == 1 ? (sym->parent == NULL ? 0 : strlen(sym->parent))
                  : i == 2 ? digit_count(sym->lineno)
                           : (sym->context == NULL ? 0 : strlen(sym->context));
@@ -403,7 +389,7 @@ static int print_results(void) {
         const clink_symbol_t *sym = &results.rows[i + from_row];
         switch (j) {
         case 0: { // file
-          const char *display = display_path(sym->path);
+          const char *display = disppath(cur_dir, sym->path);
           PRINT("%-*s ", (int)widths[j], display);
           break;
         }

@@ -14,6 +14,7 @@
 
 typedef struct {
   clink_db_t *db;
+  const char *cur_dir;
   str_queue_t *sources;
   size_t screen_row;
 } state_t;
@@ -31,16 +32,14 @@ static void *do_work(void *arg) {
       return (void *)(intptr_t)rc;
     }
 
-    // try to generate a friendly path
-    char *display_path = NULL;
-    (void)disppath(path, &display_path);
+    // generate a friendly path
+    const char *display_path = disppath(st->cur_dir, path);
 
     // Update what we are doing. Inline the move and `CLRTOEOL` so we can do
     // it all while holding the stdout lock and avoid racing with the
     // spinner.
-    PRINT("\033[%zu;4Hsyntax highlighting %s…%s", st->screen_row,
-          display_path ? display_path : path, CLRTOEOL);
-    free(display_path);
+    PRINT("\033[%zu;4Hsyntax highlighting %s…%s", st->screen_row, display_path,
+          CLRTOEOL);
 
     // ignore non-fatal failure of highlighting
     (void)clink_vim_read_into(st->db, path);
@@ -58,9 +57,11 @@ static size_t sub_clamp(size_t a, size_t b) {
   return a - b;
 }
 
-int highlight(clink_db_t *db, str_queue_t *sources, size_t last_screen_row) {
+int highlight(clink_db_t *db, const char *cur_dir, str_queue_t *sources,
+              size_t last_screen_row) {
 
   assert(db != NULL);
+  assert(cur_dir != NULL);
   assert(sources != NULL);
   assert(last_screen_row > 0);
 
@@ -81,6 +82,7 @@ int highlight(clink_db_t *db, str_queue_t *sources, size_t last_screen_row) {
   for (size_t i = 0; i < option.threads; ++i) {
     state_t *arg = &args[i];
     arg->db = db;
+    arg->cur_dir = cur_dir;
     arg->sources = sources;
     arg->screen_row = sub_clamp(last_screen_row, i);
   }

@@ -24,12 +24,14 @@ int dirname(const char *path, char **dir);
 
 /** get a friendly-for-display path relative to the current directory
  *
+ * The input path is assumed to be absolute.
+ *
+ * \param cur_dir Path to the current working directory
  * \param path Path to a file or directory
- * \param display [out] Path relative to the current directory, or a copy of the
- *   original path if this is not possible
- * \return 0 on success or an errno on failure
+ * \return Path relative to the current directory, or a copy of the original
+ *   path if this is not possible
  */
-int disppath(const char *path, char **display);
+const char *disppath(const char *cur_dir, const char *path);
 
 /** is this a path to an assembly file?
  *

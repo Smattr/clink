@@ -27,6 +27,9 @@
     }                                                                          \
   } while (0)
 
+/// saved current working directory
+static char *cur_dir;
+
 /// use a compilation database to parse the given source with libclang
 static int parse_with_comp_db(clink_db_t *db, const char *path) {
 
@@ -104,12 +107,7 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
   int rc = 0;
 
   // generate a friendlier name for the source path
-  char *display = NULL;
-  if (UNLIKELY((rc = disppath(path, &display)))) {
-    progress_error(thread_id, "failed to make %s relative: %s", path,
-                   strerror(rc));
-    goto done;
-  }
+  const char *display = disppath(cur_dir, path);
 
   if (use_clang(path)) {
     progress_status(thread_id, "Clang-parsing %s file %s", filetype(path),
@@ -195,8 +193,6 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
   }
 
 done:
-  free(display);
-
   return rc;
 }
 
@@ -402,6 +398,13 @@ int build(clink_db_t *db) {
   // learn how many files we just enqueued
   size_t total_files = file_queue_size(q);
 
+  // find the current working directory
+  if (UNLIKELY(rc = cwd(&cur_dir))) {
+    fprintf(stderr, "failed to get current working directory: %s\n",
+            strerror(rc));
+    goto done;
+  }
+
   // select a highlighting mode, if necessary
   if (option.highlighting == BEHAVIOUR_AUTO) {
     static const size_t LARGE = 100; // a heuristic for when things get annoying
@@ -439,6 +442,8 @@ done:
   (void)clink_db_commit_transaction(db);
   progress_free();
   (void)sigint_unblock();
+  free(cur_dir);
+  cur_dir = NULL;
   file_queue_free(&q);
 
   return rc;
