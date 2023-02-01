@@ -39,31 +39,31 @@ static void print_tokens(FILE *stream, CXCursor cursor) {
       filestr = clang_getFileName(file);
       filename = clang_getCString(filestr);
     }
-    printf(" %s:%u:%u: ", filename, lineno, colno);
+    fprintf(stream, " %s:%u:%u: ", filename, lineno, colno);
     if (filestr.data != NULL)
       clang_disposeString(filestr);
 
     CXTokenKind k = clang_getTokenKind(tokens[i]);
     switch (k) {
     case CXToken_Punctuation:
-      printf("CXToken_Punctuation");
+      fprintf(stream, "CXToken_Punctuation");
       break;
     case CXToken_Keyword:
-      printf("CXToken_Keyword");
+      fprintf(stream, "CXToken_Keyword");
       break;
     case CXToken_Identifier:
-      printf("CXToken_Identifier");
+      fprintf(stream, "CXToken_Identifier");
       break;
     case CXToken_Literal:
-      printf("CXToken_Literal");
+      fprintf(stream, "CXToken_Literal");
       break;
     case CXToken_Comment:
-      printf("CXToken_Comment");
+      fprintf(stream, "CXToken_Comment");
       break;
     }
 
     CXString tokenstr = clang_getTokenSpelling(tu, tokens[i]);
-    printf(" with text «%s»\n", clang_getCString(tokenstr));
+    fprintf(stream, " with text «%s»\n", clang_getCString(tokenstr));
     clang_disposeString(tokenstr);
   }
 
