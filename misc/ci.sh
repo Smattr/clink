@@ -10,7 +10,7 @@ git submodule update
 
 mkdir build
 cd build
-cmake ..
+cmake ${CMAKE_FLAGS:-} ..
 cmake --build .
 cmake --build . -- check
 printf "find-me says: "
