@@ -51,8 +51,9 @@ task:
 
     - name: C formatting
       container:
-        image: silkeh/clang:14
-      test_script: git ls-files -z -- ':!:test/cases' '**/*.c' '**/*.h' | xargs -0 -- clang-format --dry-run --style=file --Werror
+        image: silkeh/clang
+      install_script: apt-get update -y && apt-get install --no-install-recommends -y git
+      test_script: clang-format --version && git ls-files -z -- ':!:test/cases' '**/*.c' '**/*.h' | xargs -0 -- clang-format --dry-run --style=file --Werror
 
     - name: Python formatting
       container:
