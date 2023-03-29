@@ -7,6 +7,7 @@
 #include <clink/db.h>
 #include <clink/symbol.h>
 #include <errno.h>
+#include <pthread.h>
 #include <sqlite3.h>
 #include <stddef.h>
 #include <string.h>
@@ -68,6 +69,13 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
 
   int rc = 0;
 
+  // assume other `add_symbols` calls are being done concurrently and try to
+  // serialise them to accelerate throughput
+  if (db->bulk_operation_available) {
+    if (ERROR((rc = pthread_mutex_lock(&db->bulk_operation))))
+      return rc;
+  }
+
   sqlite3_stmt *s = NULL;
   if (ERROR((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
     goto done;
@@ -92,6 +100,9 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
 done:
   if (s != NULL)
     sqlite3_finalize(s);
+
+  if (db->bulk_operation_available)
+    (void)pthread_mutex_unlock(&db->bulk_operation);
 
   return rc;
 }
