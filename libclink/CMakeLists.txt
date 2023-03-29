@@ -81,6 +81,9 @@ set_target_properties(libclink PROPERTIES PREFIX "")
 
 target_link_libraries(libclink PRIVATE libvimcat)
 
+find_package(Threads REQUIRED)
+target_link_libraries(libclink PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+
 find_package(LIBCLANG REQUIRED)
 target_compile_definitions(libclink
   PRIVATE -DLLVM_VERSION="${LIBCLANG_LLVM_VERSION}")

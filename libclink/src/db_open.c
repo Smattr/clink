@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <clink/db.h>
 #include <errno.h>
+#include <pthread.h>
 #include <sqlite3.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -109,6 +110,10 @@ int clink_db_open(clink_db_t **db, const char *path) {
       goto done;
     }
   }
+
+  if (ERROR((rc = pthread_mutex_init(&d->bulk_operation, NULL))))
+    goto done;
+  d->bulk_operation_available = true;
 
 done:
   if (rc) {

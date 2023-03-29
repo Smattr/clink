@@ -163,6 +163,11 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
   // function/macro/struct we are within
   span_t parent = {0};
 
+  // symbols queued to be inserted
+  enum { SYMBOL_WINDOW = 100 };
+  symbol_t pending[SYMBOL_WINDOW];
+  size_t pending_size = 0;
+
   while (s.offset < s.size) {
 
     clink_category_t category = CLINK_REFERENCE;
@@ -246,8 +251,19 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 
     if (in_file) {
       DEBUG("adding symbol \"%.*s\"", (int)symbol.size, symbol.base);
-      if (ERROR((rc = add_symbol(db, category, symbol, filename, parent))))
-        goto done;
+      symbol_t sym = {.category = category,
+                      .name = symbol,
+                      .path = filename,
+                      .parent = parent};
+      if (pending_size == sizeof(pending) / sizeof(pending[0])) {
+        // flush the pending symbols
+        if (ERROR((rc = add_symbols(db, pending_size, pending))))
+          goto done;
+        pending_size = 0;
+      }
+      // enqueue the current symbol
+      pending[pending_size] = sym;
+      ++pending_size;
     }
 
     if (can_be_parent)
@@ -258,6 +274,10 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
   }
 
 done:
+  // flush any remaining pending symbols
+  if (rc == 0 && pending_size > 0)
+    rc = add_symbols(db, pending_size, pending);
+
   mmap_close(f);
 
   return rc;
