@@ -54,8 +54,7 @@ done:
   return rc;
 }
 
-int add_symbol(clink_db_t *db, clink_category_t category, span_t name,
-               const char *path, span_t parent) {
+int add_symbol(clink_db_t *db, symbol_t sym) {
 
   // insert into the symbol table
 
@@ -70,7 +69,7 @@ int add_symbol(clink_db_t *db, clink_category_t category, span_t name,
   if (ERROR((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
     goto done;
 
-  if (ERROR((rc = add(s, category, name, path, parent))))
+  if (ERROR((rc = add(s, sym.category, sym.name, sym.path, sym.parent))))
     goto done;
 
 done:
@@ -100,5 +99,10 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   if (symbol->parent != NULL)
     parent.size = strlen(symbol->parent);
 
-  return add_symbol(db, symbol->category, name, symbol->path, parent);
+  symbol_t sym = {.category = symbol->category,
+                  .name = name,
+                  .path = symbol->path,
+                  .parent = parent};
+
+  return add_symbol(db, sym);
 }

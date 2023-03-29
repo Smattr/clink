@@ -63,7 +63,11 @@ static int parse(clink_db_t *db, const char *filename, const clink_lang_t *lang,
         }
 
         const span_t no_parent = {0};
-        if ((rc = add_symbol(db, category, id, filename, no_parent)))
+        symbol_t sym = {.category = category,
+                        .name = id,
+                        .path = filename,
+                        .parent = no_parent};
+        if ((rc = add_symbol(db, sym)))
           goto done;
       }
 

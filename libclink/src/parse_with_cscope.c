@@ -246,7 +246,11 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 
     if (in_file) {
       DEBUG("adding symbol \"%.*s\"", (int)symbol.size, symbol.base);
-      if (ERROR((rc = add_symbol(db, category, symbol, filename, parent))))
+      symbol_t sym = {.category = category,
+                      .name = symbol,
+                      .path = filename,
+                      .parent = parent};
+      if (ERROR((rc = add_symbol(db, sym))))
         goto done;
     }
 

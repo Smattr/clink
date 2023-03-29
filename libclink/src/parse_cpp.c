@@ -49,7 +49,11 @@ static int parse(clink_db_t *db, const char *filename, scanner_t s) {
         ++sym.size;
 
       span_t no_parent = {0};
-      rc = add_symbol(db, CLINK_REFERENCE, sym, filename, no_parent);
+      symbol_t symbol = {.category = CLINK_REFERENCE,
+                         .name = sym,
+                         .path = filename,
+                         .parent = no_parent};
+      rc = add_symbol(db, symbol);
       if (ERROR(rc != 0))
         goto done;
 

@@ -109,7 +109,10 @@ static int add(const state_t *s, clink_category_t cat, const char *line,
   if (parent != NULL)
     par = (span_t){.base = parent, .size = strlen(parent)};
 
-  return add_symbol(s->db, cat, name, s->filename, par);
+  symbol_t sym = {
+      .category = cat, .name = name, .path = s->filename, .parent = par};
+
+  return add_symbol(s->db, sym);
 }
 
 /// run the assembly parsing job described by our state parameter
