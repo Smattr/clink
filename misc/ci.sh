@@ -4,6 +4,9 @@ set -e
 set -x
 
 uname -sr
+which bash
+which python3
+python3 --version
 
 git submodule init
 git submodule update
