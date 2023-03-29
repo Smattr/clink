@@ -1,5 +1,7 @@
+#include "add_symbol.h"
 #include "debug.h"
 #include "re.h"
+#include "span.h"
 #include <assert.h>
 #include <clink/asm.h>
 #include <clink/db.h>
@@ -92,33 +94,22 @@ typedef struct {
 } state_t;
 
 /// add a symbol to our pending next-to-yield slot
-static int add_symbol(const state_t *s, clink_category_t cat, const char *line,
-                      const regmatch_t *m, const char *parent) {
+static int add(const state_t *s, clink_category_t cat, const char *line,
+               const regmatch_t *m, const char *parent) {
 
   assert(s != NULL);
   assert(line != NULL);
   assert(m != NULL);
 
-  int rc = 0;
+  span_t name = {.base = line + m->rm_so,
+                 .size = m->rm_eo - m->rm_so,
+                 .lineno = s->lineno,
+                 .colno = m->rm_so + 1};
+  span_t par = {0};
+  if (parent != NULL)
+    par = (span_t){.base = parent, .size = strlen(parent)};
 
-  clink_symbol_t symbol = {.category = cat,
-                           .path = (char *)s->filename,
-                           .lineno = s->lineno,
-                           .colno = m->rm_so + 1,
-                           .parent = (char *)parent};
-
-  symbol.name = strndup(line + m->rm_so, m->rm_eo - m->rm_so);
-  if (ERROR(symbol.name == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-
-  rc = clink_db_add_symbol(s->db, &symbol);
-
-done:
-  free(symbol.name);
-
-  return rc;
+  return add_symbol(s->db, cat, name, s->filename, par);
 }
 
 /// run the assembly parsing job described by our state parameter
@@ -150,7 +141,7 @@ static int parse(state_t *s) {
       size_t m_len = sizeof(m) / sizeof(m[0]);
       int r = regexec(&s->define, line, m_len, m, 0);
       if (r == 0) { // match
-        rc = add_symbol(s, CLINK_DEFINITION, line, &m[1], NULL);
+        rc = add(s, CLINK_DEFINITION, line, &m[1], NULL);
       } else if (ERROR(r != REG_NOMATCH)) { // error
         rc = re_err_to_errno(r);
       }
@@ -169,7 +160,7 @@ static int parse(state_t *s) {
         ++m[1].rm_so;
         --m[1].rm_eo;
 
-        rc = add_symbol(s, CLINK_INCLUDE, line, &m[1], NULL);
+        rc = add(s, CLINK_INCLUDE, line, &m[1], NULL);
       } else if (ERROR(r != REG_NOMATCH)) { // error
         rc = re_err_to_errno(r);
       }
@@ -183,7 +174,7 @@ static int parse(state_t *s) {
       size_t m_len = sizeof(m) / sizeof(m[0]);
       int r = regexec(&s->function, line, m_len, m, 0);
       if (r == 0) { // match
-        if (ERROR((rc = add_symbol(s, CLINK_DEFINITION, line, &m[1], NULL))))
+        if (ERROR((rc = add(s, CLINK_DEFINITION, line, &m[1], NULL))))
           break;
 
         // save the context we  are now assumed to be within
@@ -205,7 +196,7 @@ static int parse(state_t *s) {
       size_t m_len = sizeof(m) / sizeof(m[0]);
       int r = regexec(&s->call, line, m_len, m, 0);
       if (r == 0) { // match
-        rc = add_symbol(s, CLINK_FUNCTION_CALL, line, &m[2], parent);
+        rc = add(s, CLINK_FUNCTION_CALL, line, &m[2], parent);
       } else if (ERROR(r != REG_NOMATCH)) { // error
         rc = re_err_to_errno(r);
       }
