@@ -54,7 +54,10 @@ done:
   return rc;
 }
 
-int add_symbol(clink_db_t *db, symbol_t sym) {
+int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
+
+  assert(db != NULL);
+  assert(syms_size == 0 || syms != NULL);
 
   // insert into the symbol table
 
@@ -69,8 +72,22 @@ int add_symbol(clink_db_t *db, symbol_t sym) {
   if (ERROR((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
     goto done;
 
-  if (ERROR((rc = add(s, sym.category, sym.name, sym.path, sym.parent))))
-    goto done;
+  for (size_t i = 0; i < syms_size; ++i) {
+
+    // if we already used the statement, clear it for reuse
+    if (i > 0) {
+      int r = sqlite3_reset(s);
+      assert(r == SQLITE_OK);
+      if (ERROR((r = sqlite3_clear_bindings(s)))) {
+        rc = sql_err_to_errno(r);
+        goto done;
+      }
+    }
+
+    if (ERROR((rc = add(s, syms[i].category, syms[i].name, syms[i].path,
+                        syms[i].parent))))
+      goto done;
+  }
 
 done:
   if (s != NULL)
