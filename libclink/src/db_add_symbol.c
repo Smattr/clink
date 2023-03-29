@@ -11,6 +11,49 @@
 #include <stddef.h>
 #include <string.h>
 
+static int add(sqlite3_stmt *stmt, clink_category_t category, span_t name,
+               const char *path, span_t parent) {
+
+  assert(stmt != NULL);
+
+  int rc = 0;
+
+  assert(name.base != NULL);
+  if (ERROR((rc = sql_bind_span(stmt, 1, name))))
+    goto done;
+
+  assert(path != NULL);
+  if (ERROR((rc = sql_bind_text(stmt, 2, path))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_int(stmt, 3, category))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_int(stmt, 4, name.lineno))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_int(stmt, 5, name.colno))))
+    goto done;
+
+  {
+    if (parent.base == NULL)
+      parent = (span_t){.base = "", .size = 0};
+    if (ERROR((rc = sql_bind_span(stmt, 6, parent))))
+      goto done;
+  }
+
+  {
+    int r = sqlite3_step(stmt);
+    if (ERROR(r != SQLITE_DONE)) {
+      rc = sql_err_to_errno(r);
+      goto done;
+    }
+  }
+
+done:
+  return rc;
+}
+
 int add_symbol(clink_db_t *db, clink_category_t category, span_t name,
                const char *path, span_t parent) {
 
@@ -27,37 +70,8 @@ int add_symbol(clink_db_t *db, clink_category_t category, span_t name,
   if (ERROR((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
     goto done;
 
-  assert(name.base != NULL);
-  if (ERROR((rc = sql_bind_span(s, 1, name))))
+  if (ERROR((rc = add(s, category, name, path, parent))))
     goto done;
-
-  assert(path != NULL);
-  if (ERROR((rc = sql_bind_text(s, 2, path))))
-    goto done;
-
-  if (ERROR((rc = sql_bind_int(s, 3, category))))
-    goto done;
-
-  if (ERROR((rc = sql_bind_int(s, 4, name.lineno))))
-    goto done;
-
-  if (ERROR((rc = sql_bind_int(s, 5, name.colno))))
-    goto done;
-
-  {
-    if (parent.base == NULL)
-      parent = (span_t){.base = "", .size = 0};
-    if (ERROR((rc = sql_bind_span(s, 6, parent))))
-      goto done;
-  }
-
-  {
-    int r = sqlite3_step(s);
-    if (ERROR(r != SQLITE_DONE)) {
-      rc = sql_err_to_errno(r);
-      goto done;
-    }
-  }
 
 done:
   if (s != NULL)
