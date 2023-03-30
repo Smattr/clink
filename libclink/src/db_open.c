@@ -113,7 +113,7 @@ int clink_db_open(clink_db_t **db, const char *path) {
 
   if (ERROR((rc = pthread_mutex_init(&d->bulk_operation, NULL))))
     goto done;
-  d->bulk_operation_available = true;
+  d->bulk_operation_inited = true;
 
 done:
   if (rc) {
