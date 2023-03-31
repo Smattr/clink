@@ -1,5 +1,6 @@
 #include "db.h"
 #include "debug.h"
+#include "get_id.h"
 #include "sql.h"
 #include <clink/db.h>
 #include <errno.h>
@@ -28,9 +29,8 @@ int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
   int rc = 0;
   if (id != NULL)
     *id = -1;
-  sqlite3_stmt *insert = NULL;
-  sqlite3_stmt *lookup = NULL;
 
+  sqlite3_stmt *insert = NULL;
   if (ERROR((rc = sql_prepare(db->db, INSERT, &insert))))
     goto done;
 
@@ -59,32 +59,10 @@ int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
   // separate query instead of using `sqlite3_last_insert_rowid` because
   // multiple threads or multiple processes may be operating on the database at
   // once.
-
-  static const char LOOKUP[] = "select id from records where path = @path;";
-
-  if (ERROR((rc = sql_prepare(db->db, LOOKUP, &lookup))))
+  if (ERROR((rc = get_id(db, path, id))))
     goto done;
-
-  if (ERROR((rc = sql_bind_text(lookup, 1, path))))
-    goto done;
-
-  {
-    int r = sqlite3_step(lookup);
-    if (ERROR(r != SQLITE_ROW)) {
-      if (r == SQLITE_DONE) {
-        rc = ENOENT;
-      } else {
-        rc = sql_err_to_errno(r);
-      }
-      goto done;
-    }
-  }
-
-  *id = sqlite3_column_int64(lookup, 0);
 
 done:
-  if (lookup != NULL)
-    sqlite3_finalize(lookup);
   if (insert != NULL)
     sqlite3_finalize(insert);
 
