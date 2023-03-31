@@ -256,7 +256,7 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
       break;
 
     // now we can insert a record for the file
-    (void)clink_db_add_record(db, path, hash, timestamp);
+    (void)clink_db_add_record(db, path, hash, timestamp, NULL);
 
     // bump the progress counter
     progress_increment();

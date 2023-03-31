@@ -14,6 +14,7 @@ create table if not exists content (
   unique(path, line));
 
 create table if not exists records (
+  id integer primary key,
   path text not null unique,
   hash integer not null,
   timestamp integer not null);

@@ -8,7 +8,7 @@
 #include <string.h>
 
 int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
-                        uint64_t timestamp) {
+                        uint64_t timestamp, clink_record_id_t *id) {
 
   if (ERROR(db == NULL))
     return EINVAL;
@@ -26,31 +26,67 @@ int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
                                "timestamp) values (@path, @hash, @timestamp);";
 
   int rc = 0;
+  if (id != NULL)
+    *id = -1;
+  sqlite3_stmt *insert = NULL;
+  sqlite3_stmt *lookup = NULL;
 
-  sqlite3_stmt *s = NULL;
-  if (ERROR((rc = sql_prepare(db->db, INSERT, &s))))
+  if (ERROR((rc = sql_prepare(db->db, INSERT, &insert))))
     goto done;
 
-  if (ERROR((rc = sql_bind_text(s, 1, path))))
+  if (ERROR((rc = sql_bind_text(insert, 1, path))))
     goto done;
 
-  if (ERROR((rc = sql_bind_int(s, 2, hash))))
+  if (ERROR((rc = sql_bind_int(insert, 2, hash))))
     goto done;
 
-  if (ERROR((rc = sql_bind_int(s, 3, timestamp))))
+  if (ERROR((rc = sql_bind_int(insert, 3, timestamp))))
     goto done;
 
   {
-    int r = sqlite3_step(s);
+    int r = sqlite3_step(insert);
     if (ERROR(r != SQLITE_DONE)) {
       rc = sql_err_to_errno(r);
       goto done;
     }
   }
 
+  // if the user did not need the ID of this row, we are done
+  if (id == NULL)
+    goto done;
+
+  // Now we need to look up the ID of the just-inserted record. We do this as a
+  // separate query instead of using `sqlite3_last_insert_rowid` because
+  // multiple threads or multiple processes may be operating on the database at
+  // once.
+
+  static const char LOOKUP[] = "select id from records where path = @path;";
+
+  if (ERROR((rc = sql_prepare(db->db, LOOKUP, &lookup))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_text(lookup, 1, path))))
+    goto done;
+
+  {
+    int r = sqlite3_step(lookup);
+    if (ERROR(r != SQLITE_ROW)) {
+      if (r == SQLITE_DONE) {
+        rc = ENOENT;
+      } else {
+        rc = sql_err_to_errno(r);
+      }
+      goto done;
+    }
+  }
+
+  *id = sqlite3_column_int64(lookup, 0);
+
 done:
-  if (s != NULL)
-    sqlite3_finalize(s);
+  if (lookup != NULL)
+    sqlite3_finalize(lookup);
+  if (insert != NULL)
+    sqlite3_finalize(insert);
 
   return rc;
 }
