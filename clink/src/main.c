@@ -322,7 +322,7 @@ int main(int argc, char **argv) {
   }
   assert(option.src != NULL && option.src_len > 0);
 
-  // setup out connection to compile_commands.json
+  // setup our connection to compile_commands.json
   if (option.update_database) {
     if (option.parse_c == PARSER_AUTO || option.parse_c == CLANG ||
         option.parse_cxx == PARSER_AUTO || option.parse_cxx == CLANG) {
