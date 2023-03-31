@@ -259,6 +259,7 @@ static void parse_args(int argc, char **argv) {
     case 'V': { // --version
       clink_version_info_t version = clink_version_info();
       fprintf(stderr, "clink version %s\n", version.version);
+      fprintf(stderr, " database schema version %s\n", version.schema_version);
       fprintf(stderr, " assertions: %s\n",
               version.with_assertions ? "enabled" : "disabled");
       fprintf(stderr, " optimisations: %s\n",
@@ -321,7 +322,7 @@ int main(int argc, char **argv) {
   }
   assert(option.src != NULL && option.src_len > 0);
 
-  // setup out connection to compile_commands.json
+  // setup our connection to compile_commands.json
   if (option.update_database) {
     if (option.parse_c == PARSER_AUTO || option.parse_c == CLANG ||
         option.parse_cxx == PARSER_AUTO || option.parse_cxx == CLANG) {
@@ -435,7 +436,13 @@ int main(int argc, char **argv) {
   // open the database
   clink_db_t *db = NULL;
   if ((rc = clink_db_open(&db, option.database_path))) {
-    fprintf(stderr, "failed to open database: %s\n", strerror(rc));
+    if (rc == EPROTO) {
+      fprintf(stderr,
+              "%s was created by a different, incompatible version of Clink\n",
+              option.database_path);
+    } else {
+      fprintf(stderr, "failed to open database: %s\n", strerror(rc));
+    }
     goto done;
   }
 

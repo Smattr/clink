@@ -71,10 +71,8 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
 
   // assume other `add_symbols` calls are being done concurrently and try to
   // serialise them to accelerate throughput
-  if (db->bulk_operation_available) {
-    if (ERROR((rc = pthread_mutex_lock(&db->bulk_operation))))
-      return rc;
-  }
+  if (ERROR((rc = pthread_mutex_lock(&db->bulk_operation))))
+    return rc;
 
   sqlite3_stmt *s = NULL;
   if (ERROR((rc = sql_prepare(db->db, SYMBOL_INSERT, &s))))
@@ -101,8 +99,10 @@ done:
   if (s != NULL)
     sqlite3_finalize(s);
 
-  if (db->bulk_operation_available)
-    (void)pthread_mutex_unlock(&db->bulk_operation);
+  {
+    int r __attribute__((unused)) = pthread_mutex_unlock(&db->bulk_operation);
+    assert(r == 0);
+  }
 
   return rc;
 }

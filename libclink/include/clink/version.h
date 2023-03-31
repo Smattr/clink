@@ -21,6 +21,7 @@ CLINK_API const char *clink_version(void);
 /// return value of `clink_version_info`
 typedef struct {
   const char *version;             ///< version name (return of `clink_version`)
+  const char *schema_version;      ///< database schema version name
   unsigned with_assertions : 1;    ///< was the library built with runtime
                                    ///< assertions enabled?
   unsigned with_optimisations : 1; ///< was -O1 or higher compiler optimisation

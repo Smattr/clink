@@ -16,7 +16,7 @@ struct clink_db {
   /// pre-compiled regexes
   re_t *regexes;
 
-  /// opportunistic mutual exclusion mechanism to accelerate bulk operations
-  bool bulk_operation_available : 1;
+  /// mutual exclusion mechanism to accelerate bulk operations
   pthread_mutex_t bulk_operation;
+  bool bulk_operation_inited : 1;
 };

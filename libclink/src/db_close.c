@@ -12,9 +12,9 @@ void clink_db_close(clink_db_t **db) {
   if (db == NULL || *db == NULL)
     return;
 
-  if ((*db)->bulk_operation_available)
+  if ((*db)->bulk_operation_inited)
     (void)pthread_mutex_destroy(&(*db)->bulk_operation);
-  (*db)->bulk_operation_available = false;
+  (*db)->bulk_operation_inited = false;
 
   re_free(&(*db)->regexes);
 
