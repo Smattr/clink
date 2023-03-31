@@ -13,19 +13,38 @@
 #include <string.h>
 #include <unistd.h>
 
-static int init(sqlite3 *db) {
+static int exec_all(sqlite3 *db, size_t queries_length, const char **queries) {
 
   assert(db != NULL);
+  assert(queries_length == 0 || queries != NULL);
 
   int rc = 0;
 
-  for (size_t i = 0; i < SCHEMA_LENGTH; ++i) {
-    assert(SCHEMA[i] != NULL);
-    if (ERROR((rc = sql_exec(db, SCHEMA[i]))))
+  for (size_t i = 0; i < queries_length; ++i) {
+    assert(queries[i] != NULL);
+    if (ERROR((rc = sql_exec(db, queries[i]))))
       return rc;
   }
 
   return rc;
+}
+
+static int init(sqlite3 *db) {
+  assert(db != NULL);
+  return exec_all(db, SCHEMA_LENGTH, SCHEMA);
+}
+
+static int configure(sqlite3 *db) {
+
+  assert(db != NULL);
+
+  static const char *PRAGMAS[] = {
+      "pragma synchronous=OFF;",
+      "pragma journal_mode=OFF;",
+      "pragma temp_store=MEMORY;",
+  };
+
+  return exec_all(db, sizeof(PRAGMAS) / sizeof(PRAGMAS[0]), PRAGMAS);
 }
 
 static int check_schema_version(sqlite3 *db) {
@@ -103,12 +122,15 @@ int clink_db_open(clink_db_t **db, const char *path) {
   }
 
   if (exists) {
-    if (ERROR(rc = check_schema_version(d->db)))
+    if (ERROR((rc = check_schema_version(d->db))))
       goto done;
   } else {
-    if (ERROR(rc = init(d->db)))
+    if (ERROR((rc = init(d->db))))
       goto done;
   }
+
+  if (ERROR((rc = configure(d->db))))
+    goto done;
 
   // install a SQLite user function that implements regex
   {
