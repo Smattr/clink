@@ -122,10 +122,10 @@ int clink_db_open(clink_db_t **db, const char *path) {
   }
 
   if (exists) {
-    if (ERROR(rc = check_schema_version(d->db)))
+    if (ERROR((rc = check_schema_version(d->db))))
       goto done;
   } else {
-    if (ERROR(rc = init(d->db)))
+    if (ERROR((rc = init(d->db))))
       goto done;
   }
 
