@@ -21,7 +21,3 @@ create table if not exists records (
 create table if not exists metadata (
   key text not null unique,
   value text not null);
-
-pragma synchronous=OFF;
-pragma journal_mode=OFF;
-pragma temp_store=MEMORY;

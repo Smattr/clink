@@ -34,6 +34,19 @@ static int init(sqlite3 *db) {
   return exec_all(db, SCHEMA_LENGTH, SCHEMA);
 }
 
+static int configure(sqlite3 *db) {
+
+  assert(db != NULL);
+
+  static const char *PRAGMAS[] = {
+      "pragma synchronous=OFF;",
+      "pragma journal_mode=OFF;",
+      "pragma temp_store=MEMORY;",
+  };
+
+  return exec_all(db, sizeof(PRAGMAS) / sizeof(PRAGMAS[0]), PRAGMAS);
+}
+
 static int check_schema_version(sqlite3 *db) {
 
   assert(db != NULL);
@@ -115,6 +128,9 @@ int clink_db_open(clink_db_t **db, const char *path) {
     if (ERROR(rc = init(d->db)))
       goto done;
   }
+
+  if (ERROR((rc = configure(d->db))))
+    goto done;
 
   // install a SQLite user function that implements regex
   {
