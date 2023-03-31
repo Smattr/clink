@@ -3,11 +3,12 @@ Clink integration test suite
 """
 
 import os
-from packaging import version
 import re
 import subprocess
 from pathlib import Path
+
 import pytest
+from packaging import version
 
 
 def is_python(path: Path) -> bool:

@@ -6,7 +6,9 @@ Generate contents of a schema.c.
 
 import hashlib
 import io
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Iterator
 
@@ -43,7 +45,21 @@ def get_statements(sql: Path) -> Iterator[str]:
 
             # are we at the end of a statement?
             if c == ";":
-                yield accrued.getvalue()
+                query = accrued.getvalue()
+                # ensure this is a valid SQL statement
+                with tempfile.TemporaryDirectory() as tmp:
+                    try:
+                        subprocess.run(
+                            ["sqlite3", "temp.db"],
+                            input=query,
+                            cwd=tmp,
+                            check=True,
+                            universal_newlines=True,
+                        )
+                    except subprocess.CalledProcessError:
+                        sys.stderr.write(f"failed to validate SQL: {query}\n")
+                        raise
+                yield query
                 accrued = io.StringIO()
 
 
