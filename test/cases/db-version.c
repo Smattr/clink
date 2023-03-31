@@ -4,8 +4,6 @@ int foo(void) {
   return 42;
 }
 
-// XFAIL: True
-
 // RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 // now modify the database version
 // RUN: echo 'update metadata set value = "foo" where key = "schema_version";' | sqlite3 {%t}

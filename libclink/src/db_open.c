@@ -28,6 +28,50 @@ static int init(sqlite3 *db) {
   return rc;
 }
 
+static int check_schema_version(sqlite3 *db) {
+
+  assert(db != NULL);
+
+  static const char QUERY[] =
+      "select value from metadata where key = \"schema_version\";";
+
+  int rc = 0;
+
+  sqlite3_stmt *stmt = NULL;
+  if (ERROR((rc = sql_prepare(db, QUERY, &stmt))))
+    goto done;
+
+  {
+    int r = sqlite3_step(stmt);
+    if (ERROR(r != SQLITE_ROW)) {
+      if (r == SQLITE_DONE) {
+        rc = ENOENT;
+      } else {
+        rc = sql_err_to_errno(r);
+      }
+      goto done;
+    }
+  }
+
+  const char *ours = schema_version();
+  const char *theirs = (char *)sqlite3_column_text(stmt, 0);
+
+  assert(ours != NULL);
+  assert(theirs != NULL);
+
+  // reject any version that does not match exactly
+  if (strcmp(ours, theirs) != 0) {
+    rc = EPROTO;
+    goto done;
+  }
+
+done:
+  if (stmt != NULL)
+    sqlite3_finalize(stmt);
+
+  return rc;
+}
+
 int clink_db_open(clink_db_t **db, const char *path) {
 
   if (ERROR(db == NULL))
@@ -58,7 +102,10 @@ int clink_db_open(clink_db_t **db, const char *path) {
     goto done;
   }
 
-  if (!exists) {
+  if (exists) {
+    if (ERROR(rc = check_schema_version(d->db)))
+      goto done;
+  } else {
     if (ERROR(rc = init(d->db)))
       goto done;
   }

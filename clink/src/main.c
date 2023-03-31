@@ -436,7 +436,13 @@ int main(int argc, char **argv) {
   // open the database
   clink_db_t *db = NULL;
   if ((rc = clink_db_open(&db, option.database_path))) {
-    fprintf(stderr, "failed to open database: %s\n", strerror(rc));
+    if (rc == EPROTO) {
+      fprintf(stderr,
+              "%s was created by a different, incompatible version of Clink\n",
+              option.database_path);
+    } else {
+      fprintf(stderr, "failed to open database: %s\n", strerror(rc));
+    }
     goto done;
   }
 
