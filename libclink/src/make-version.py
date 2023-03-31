@@ -93,7 +93,7 @@ def main(args: [str]) -> int:
 
     if len(args) != 2 or args[1] == "--help":
         sys.stderr.write(
-            f"usage: {args[0]} file\n" " write version information as a C source file\n"
+            f"usage: {args[0]} file\n write version information as a C source file\n"
         )
         return -1
 
