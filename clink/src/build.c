@@ -252,11 +252,11 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     // remove anything related to the file we are about to parse
     clink_db_remove(db, path);
 
+    // insert a new record for the file
+    (void)clink_db_add_record(db, path, hash, timestamp, NULL);
+
     if (UNLIKELY((rc = parse(thread_id, db, path))))
       break;
-
-    // now we can insert a record for the file
-    (void)clink_db_add_record(db, path, hash, timestamp, NULL);
 
     // bump the progress counter
     progress_increment();
