@@ -13,19 +13,25 @@
 #include <string.h>
 #include <unistd.h>
 
-static int init(sqlite3 *db) {
+static int exec_all(sqlite3 *db, size_t queries_length, const char **queries) {
 
   assert(db != NULL);
+  assert(queries_length == 0 || queries != NULL);
 
   int rc = 0;
 
-  for (size_t i = 0; i < SCHEMA_LENGTH; ++i) {
-    assert(SCHEMA[i] != NULL);
-    if (ERROR((rc = sql_exec(db, SCHEMA[i]))))
+  for (size_t i = 0; i < queries_length; ++i) {
+    assert(queries[i] != NULL);
+    if (ERROR((rc = sql_exec(db, queries[i]))))
       return rc;
   }
 
   return rc;
+}
+
+static int init(sqlite3 *db) {
+  assert(db != NULL);
+  return exec_all(db, SCHEMA_LENGTH, SCHEMA);
 }
 
 static int check_schema_version(sqlite3 *db) {
