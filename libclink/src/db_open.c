@@ -1,6 +1,7 @@
 #include "db.h"
 #include "debug.h"
 #include "re.h"
+#include "schema.h"
 #include "sql.h"
 #include <assert.h>
 #include <clink/db.h>
@@ -12,46 +13,15 @@
 #include <string.h>
 #include <unistd.h>
 
-static const char SYMBOLS_SCHEMA[] =
-    "create table if not exists symbols (name "
-    "text not null, path text not null, category integer not null, line "
-    "integer "
-    "not null, col integer not null, parent text, "
-    "unique(name, path, category, line, col));";
-
-static const char CONTENT_SCHEMA[] =
-    "create table if not exists content "
-    "(path text not null, line integer not null, body text not null, "
-    "unique(path, line));";
-
-static const char RECORDS_SCHEMA[] =
-    "create table if not exists records "
-    "(path text not null unique, hash integer not null, timestamp integer not "
-    "null);";
-
-static const char *PRAGMAS[] = {
-    "pragma synchronous=OFF;",
-    "pragma journal_mode=OFF;",
-    "pragma temp_store=MEMORY;",
-};
-
 static int init(sqlite3 *db) {
 
   assert(db != NULL);
 
   int rc = 0;
 
-  if (ERROR((rc = sql_exec(db, SYMBOLS_SCHEMA))))
-    return rc;
-
-  if (ERROR((rc = sql_exec(db, CONTENT_SCHEMA))))
-    return rc;
-
-  if (ERROR((rc = sql_exec(db, RECORDS_SCHEMA))))
-    return rc;
-
-  for (size_t i = 0; i < sizeof(PRAGMAS) / sizeof(PRAGMAS[0]); ++i) {
-    if (ERROR((rc = sql_exec(db, PRAGMAS[i]))))
+  for (size_t i = 0; i < SCHEMA_LENGTH; ++i) {
+    assert(SCHEMA[i] != NULL);
+    if (ERROR((rc = sql_exec(db, SCHEMA[i]))))
       return rc;
   }
 

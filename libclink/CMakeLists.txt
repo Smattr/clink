@@ -50,6 +50,7 @@ add_library(libclink
   src/vim_open.c
   src/vim_read.c
   src/vim_read_into.c
+  ${CMAKE_CURRENT_BINARY_DIR}/schema.c
   ${CMAKE_CURRENT_BINARY_DIR}/version.c)
 
 if(APPLE)
@@ -57,6 +58,13 @@ if(APPLE)
 endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+add_custom_command(
+  OUTPUT schema.c
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/make-schema.py
+    ${CMAKE_CURRENT_BINARY_DIR}/schema.c
+  MAIN_DEPENDENCY src/schema.sql
+  DEPENDS src/make-schema.py)
 
 add_custom_command(
   OUTPUT version.c

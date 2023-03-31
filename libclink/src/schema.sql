@@ -1,0 +1,23 @@
+create table if not exists symbols (
+  name text not null,
+  path text not null,
+  category integer not null,
+  line integer not null,
+  col integer not null,
+  parent text,
+  unique(name, path, category, line, col));
+
+create table if not exists content (
+  path text not null,
+  line integer not null,
+  body text not null,
+  unique(path, line));
+
+create table if not exists records (
+  path text not null unique,
+  hash integer not null,
+  timestamp integer not null);
+
+pragma synchronous=OFF;
+pragma journal_mode=OFF;
+pragma temp_store=MEMORY;
