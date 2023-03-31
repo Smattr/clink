@@ -5,11 +5,11 @@ Generate contents of a version.c.
 """
 
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess as sp
 import sys
+from pathlib import Path
 from typing import Optional
 
 
