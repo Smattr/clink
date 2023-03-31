@@ -1,6 +1,15 @@
 Change log
 ==========
 
+v2023.03.31
+-----------
+* Bug fix: syntax highlighted results in the UI are no longer affected by the
+  highlighting of your last search term in Vim (commit
+  642817e2b3fb3af2a0bfb02dfd07cea8e5bf9a7a).
+* Database construction when using Cscope for parsing is ~16% faster (commits
+  12e8e3113855a98cf9dd32bd2c6ca4688ca2f4fa,
+  15d4bcc6b80b832c3b5192b7b6f015337e3705c2).
+
 v2023.01.30
 -----------
 * Bug fix: pressing space in the UI view no longer advances too many entries
