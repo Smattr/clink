@@ -18,6 +18,10 @@ create table if not exists records (
   hash integer not null,
   timestamp integer not null);
 
+create table if not exists metadata (
+  key text not null unique,
+  value text not null);
+
 pragma synchronous=OFF;
 pragma journal_mode=OFF;
 pragma temp_store=MEMORY;
