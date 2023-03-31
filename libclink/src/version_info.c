@@ -1,9 +1,11 @@
+#include "schema.h"
 #include <clang-c/Index.h>
 #include <clink/version.h>
 #include <stdbool.h>
 
 clink_version_info_t clink_version_info(void) {
-  clink_version_info_t version = {.version = clink_version()};
+  clink_version_info_t version = {.version = clink_version(),
+                                  .schema_version = schema_version()};
 #ifndef NDEBUG
   version.with_assertions = true;
 #endif

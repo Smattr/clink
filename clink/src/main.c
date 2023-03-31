@@ -259,6 +259,7 @@ static void parse_args(int argc, char **argv) {
     case 'V': { // --version
       clink_version_info_t version = clink_version_info();
       fprintf(stderr, "clink version %s\n", version.version);
+      fprintf(stderr, " database schema version %s\n", version.schema_version);
       fprintf(stderr, " assertions: %s\n",
               version.with_assertions ? "enabled" : "disabled");
       fprintf(stderr, " optimisations: %s\n",

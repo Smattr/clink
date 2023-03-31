@@ -79,7 +79,10 @@ def main(args: [str]) -> int:
     )
     statement_count += 1
 
-    schema_c.write(f"}};\n\nconst size_t SCHEMA_LENGTH = {statement_count};\n")
+    schema_c.write(f"}};\n\nconst size_t SCHEMA_LENGTH = {statement_count};\n\n")
+
+    # write a way to access the schema version
+    schema_c.write(f'const char *schema_version(void) {{\n  return "{version}";\n}}\n')
 
     # write out schema.c
     Path(args[1]).write_text(schema_c.getvalue(), encoding="utf-8")
