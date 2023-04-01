@@ -83,7 +83,7 @@ static int find(clink_db_t *db, const char *path) {
   return 0;
 }
 
-TEST("test looking up an included file by its final component works") {
+TEST("test looking up an included file by its final component works (1)") {
 
   // construct a unique path
   char *target = test_tmpnam();
@@ -112,8 +112,74 @@ TEST("test looking up an included file by its final component works") {
   // lookup the include by full path
   int r1 = find(db, "include/clink/clink.h");
 
+  // close the database
+  if (rc == 0)
+    clink_db_close(&db);
+
+  ASSERT_EQ(r1, 0); // failed to lookup include by full path
+}
+
+TEST("test looking up an included file by its final component works (2)") {
+
+  // construct a unique path
+  char *target = test_tmpnam();
+
+  // open it as a database
+  clink_db_t *db = NULL;
+  int rc = clink_db_open(&db, target);
+  if (rc)
+    fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+
+  // add an include that is a path with multiple components
+  if (rc == 0) {
+
+    clink_symbol_t symbol = {
+        .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
+
+    symbol.name = (char *)"include/clink/clink.h";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent";
+
+    rc = clink_db_add_symbol(db, &symbol);
+    if (rc)
+      fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
+  }
+
   // lookup the include by stem
   int r2 = find(db, "clink.h");
+
+  // close the database
+  if (rc == 0)
+    clink_db_close(&db);
+
+  ASSERT_EQ(r2, 0); // failed to lookup include by stem
+}
+
+TEST("test looking up an included file by its final component works (3)") {
+
+  // construct a unique path
+  char *target = test_tmpnam();
+
+  // open it as a database
+  clink_db_t *db = NULL;
+  int rc = clink_db_open(&db, target);
+  if (rc)
+    fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+
+  // add an include that is a path with multiple components
+  if (rc == 0) {
+
+    clink_symbol_t symbol = {
+        .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
+
+    symbol.name = (char *)"include/clink/clink.h";
+    symbol.path = (char *)"/foo/bar";
+    symbol.parent = (char *)"sym-parent";
+
+    rc = clink_db_add_symbol(db, &symbol);
+    if (rc)
+      fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
+  }
 
   // lookup the include by an intermediate suffix
   int r3 = find(db, "clink/clink.h");
@@ -122,7 +188,5 @@ TEST("test looking up an included file by its final component works") {
   if (rc == 0)
     clink_db_close(&db);
 
-  ASSERT_EQ(r1, 0); // failed to lookup include by full path
-  ASSERT_EQ(r2, 0); // failed to lookup include by stem
   ASSERT_EQ(r3, 0); // failed to lookup include by suffix
 }
