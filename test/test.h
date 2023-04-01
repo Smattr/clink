@@ -57,7 +57,7 @@ void run_cleanups(void);
   _Generic((x),                                                                \
            int: "%d",                                                          \
            long: "%ld",                                                        \
-           long long: "%lld", \
+           long long: "%lld",                                                  \
            unsigned long: "%lu",                                               \
            const void*: "%p")
 
