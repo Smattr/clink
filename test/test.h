@@ -57,8 +57,10 @@ void run_cleanups(void);
   _Generic((x),                                                                \
            int: "%d",                                                          \
            long: "%ld",                                                        \
-           long long: "%lld", \
+           long long: "%lld",                                                  \
+           unsigned: "%u",                                                     \
            unsigned long: "%lu",                                               \
+           unsigned long long: "%llu",                                         \
            const void*: "%p")
 
 #define ASSERT_(a, a_name, op, b, b_name)                                      \
