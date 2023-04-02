@@ -12,13 +12,15 @@ TEST("clink_db_find_includer()") {
 
   // open it as a database
   clink_db_t *db = NULL;
-  int rc = clink_db_open(&db, target);
-  if (rc)
-    fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+  {
+    int rc = clink_db_open(&db, target);
+    if (rc)
+      fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
+  }
 
   // add a new symbol
-  if (rc == 0) {
-
+  {
     clink_symbol_t symbol = {
         .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
 
@@ -26,14 +28,14 @@ TEST("clink_db_find_includer()") {
     symbol.path = (char *)"/foo/bar";
     symbol.parent = (char *)"sym-parent";
 
-    rc = clink_db_add_symbol(db, &symbol);
+    int rc = clink_db_add_symbol(db, &symbol);
     if (rc)
       fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
   }
 
   // add another new symbol that is not a #include
-  if (rc == 0) {
-
+  {
     clink_symbol_t symbol = {
         .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
@@ -41,149 +43,103 @@ TEST("clink_db_find_includer()") {
     symbol.path = (char *)"/foo/bar";
     symbol.parent = (char *)"sym-parent";
 
-    rc = clink_db_add_symbol(db, &symbol);
+    int rc = clink_db_add_symbol(db, &symbol);
     if (rc)
       fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
   }
 
-  int r1 = 0;
-  do {
-
+  {
     // lookup a #include that does not exist
     clink_iter_t *it = NULL;
-    if ((r1 = clink_db_find_includer(db, "foobar", &it))) {
-      fprintf(stderr, "clink_db_find_includer: %s\n", strerror(r1));
-      break;
+    {
+      int rc = clink_db_find_includer(db, "foobar", &it);
+      if (rc)
+        fprintf(stderr, "clink_db_find_includer: %s\n", strerror(rc));
+      ASSERT_EQ(rc, 0);
     }
 
     // confirm this iterator finds nothing
     {
       const clink_symbol_t *sym = NULL;
-      int r = clink_iter_next_symbol(it, &sym);
-      if (r == 0) {
+      int rc = clink_iter_next_symbol(it, &sym);
+      if (rc == 0) {
         fprintf(stderr, "iterator unexpectedly is non-empty\n");
-        r1 = -1;
-      } else if (r != ENOMSG) {
-        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
-        r1 = -1;
+      } else if (rc != ENOMSG) {
+        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(rc));
       }
+      ASSERT_EQ(rc, ENOMSG);
     }
 
     clink_iter_free(&it);
+  }
 
-  } while (0);
-
-  int r2 = 0;
-  do {
-
+  {
     // lookup a #include that exists
     clink_iter_t *it = NULL;
-    if ((r2 = clink_db_find_includer(db, "sym-name", &it))) {
-      fprintf(stderr, "clink_db_find_includer: %s\n", strerror(r2));
-      break;
+    {
+      int rc = clink_db_find_includer(db, "sym-name", &it);
+      if (rc)
+        fprintf(stderr, "clink_db_find_includer: %s\n", strerror(rc));
+      ASSERT_EQ(rc, 0);
     }
 
     // confirm this iterator finds something
     {
       const clink_symbol_t *sym = NULL;
-      if ((r2 = clink_iter_next_symbol(it, &sym))) {
-        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r2));
-        break;
-      }
+      int rc = clink_iter_next_symbol(it, &sym);
+      if (rc)
+        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(rc));
+      ASSERT_EQ(rc, 0);
 
-      if (sym->category != CLINK_INCLUDE) {
-        fprintf(stderr, "incorrect symbol category: %d != %d\n",
-                (int)sym->category, (int)CLINK_INCLUDE);
-        r2 = -1;
-      }
-
-      if (strcmp(sym->name, "sym-name") != 0) {
-        fprintf(stderr, "incorrect symbol name: \"%s\" != \"sym-name\"\n",
-                sym->name);
-        r2 = -1;
-      }
-
-      if (sym->lineno != 42) {
-        fprintf(stderr, "incorrect symbol line number: %lu != 42\n",
-                sym->lineno);
-        r2 = -1;
-      }
-
-      if (sym->colno != 10) {
-        fprintf(stderr, "incorrect symbol column number: %lu != 10\n",
-                sym->colno);
-        r2 = -1;
-      }
-
-      if (strcmp(sym->path, "/foo/bar") != 0) {
-        fprintf(stderr, "incorrect symbol path: \"%s\" != \"/foo/bar\"\n",
-                sym->path);
-        r2 = -1;
-      }
-
-      if (strcmp(sym->parent, "sym-parent") != 0) {
-        fprintf(stderr, "incorrect symbol parent: \"%s\" != \"sym-parent\"\n",
-                sym->parent);
-        r2 = -1;
-      }
+      ASSERT_EQ((int)sym->category, (int)CLINK_INCLUDE);
+      ASSERT_STREQ(sym->name, "sym-name");
+      ASSERT_EQ(sym->lineno, 42u);
+      ASSERT_EQ(sym->colno, 10u);
+      ASSERT_STREQ(sym->path, "/foo/bar");
+      ASSERT_STREQ(sym->parent, "sym-parent");
     }
 
     // confirm that the iterator is now empty
     {
       const clink_symbol_t *sym = NULL;
-      int r = clink_iter_next_symbol(it, &sym);
-      if (r == 0) {
+      int rc = clink_iter_next_symbol(it, &sym);
+      if (rc == 0) {
         fprintf(stderr, "iterator unexpectedly is non-empty\n");
-        r2 = -1;
-      } else if (r != ENOMSG) {
-        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
-        r2 = -1;
+      } else if (rc != ENOMSG) {
+        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(rc));
       }
+      ASSERT_EQ(rc, ENOMSG);
     }
 
     clink_iter_free(&it);
-  } while (0);
+  }
 
-  int r3 = 0;
-  do {
-
+  {
     // lookup something that exists but is not a #include
     clink_iter_t *it = NULL;
-    if ((r3 = clink_db_find_includer(db, "sym-name2", &it))) {
-      fprintf(stderr, "clink_db_find_includer: %s\n", strerror(r3));
-      break;
+    {
+      int rc = clink_db_find_includer(db, "sym-name2", &it);
+      if (rc)
+        fprintf(stderr, "clink_db_find_includer: %s\n", strerror(rc));
+      ASSERT_EQ(rc, 0);
     }
 
     // confirm this iterator finds nothing
     {
       const clink_symbol_t *sym = NULL;
-      int r = clink_iter_next_symbol(it, &sym);
-      if (r == 0) {
+      int rc = clink_iter_next_symbol(it, &sym);
+      if (rc == 0) {
         fprintf(stderr, "iterator unexpectedly is non-empty\n");
-        r3 = -1;
-      } else if (r != ENOMSG) {
-        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(r));
-        r3 = -1;
+      } else if (rc != ENOMSG) {
+        fprintf(stderr, "clink_iter_next_symbol: %s\n", strerror(rc));
       }
+      ASSERT_EQ(rc, ENOMSG);
     }
 
     clink_iter_free(&it);
-
-  } while (0);
+  }
 
   // close the database
-  if (rc == 0)
-    clink_db_close(&db);
-
-  // confirm that the database was opened correctly
-  ASSERT_EQ(rc, 0);
-
-  // confirm that lookup of a missing symbol worked as expected
-  ASSERT_EQ(r1, 0);
-
-  // confirm that lookup of a symbol that does exist works as expected
-  ASSERT_EQ(r2, 0);
-
-  // confirm that looking up a non-#include worked as expected
-  ASSERT_EQ(r3, 0);
+  clink_db_close(&db);
 }

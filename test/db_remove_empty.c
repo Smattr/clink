@@ -11,18 +11,16 @@ TEST("clink_db_remove() on an empty database") {
 
   // open it as a database
   clink_db_t *db = NULL;
-  int rc = clink_db_open(&db, target);
-  if (rc)
-    fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+  {
+    int rc = clink_db_open(&db, target);
+    if (rc)
+      fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
+  }
 
   // remove on this empty database should work
-  if (rc == 0)
-    clink_db_remove(db, "hello-world");
+  clink_db_remove(db, "hello-world");
 
   // close the database
-  if (rc == 0)
-    clink_db_close(&db);
-
-  // confirm that the database was opened correctly
-  ASSERT_EQ(rc, 0);
+  clink_db_close(&db);
 }

@@ -11,20 +11,21 @@ TEST("clink_db_add_record()") {
 
   // open it as a database
   clink_db_t *db = NULL;
-  int rc = clink_db_open(&db, target);
-  if (rc)
-    fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+  {
+    int rc = clink_db_open(&db, target);
+    if (rc)
+      fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
+  }
 
   // add a new record
-  if (rc == 0) {
-    if ((rc = clink_db_add_record(db, "foo/bar.c", 42, 128)))
+  {
+    int rc = clink_db_add_record(db, "foo/bar.c", 42, 128);
+    if (rc)
       fprintf(stderr, "clink_db_add_record: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
   }
 
   // close the database
-  if (rc == 0)
-    clink_db_close(&db);
-
-  // confirm that the database was opened correctly
-  ASSERT_EQ(rc, 0);
+  clink_db_close(&db);
 }

@@ -11,13 +11,15 @@ TEST("clink_db_add_symbol()") {
 
   // open it as a database
   clink_db_t *db = NULL;
-  int rc = clink_db_open(&db, target);
-  if (rc)
-    fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+  {
+    int rc = clink_db_open(&db, target);
+    if (rc)
+      fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
+  }
 
   // add a new symbol
-  if (rc == 0) {
-
+  {
     clink_symbol_t symbol = {
         .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
@@ -25,15 +27,12 @@ TEST("clink_db_add_symbol()") {
     symbol.path = (char *)"/foo/bar";
     symbol.parent = (char *)"sym-parent";
 
-    rc = clink_db_add_symbol(db, &symbol);
+    int rc = clink_db_add_symbol(db, &symbol);
     if (rc)
       fprintf(stderr, "clink_db_add_symbol: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
   }
 
   // close the database
-  if (rc == 0)
-    clink_db_close(&db);
-
-  // confirm that the database was opened correctly
-  ASSERT_EQ(rc, 0);
+  clink_db_close(&db);
 }

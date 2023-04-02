@@ -14,126 +14,82 @@ TEST("clink_db_find_record()") {
 
   // open it as a database
   clink_db_t *db = NULL;
-  int rc = clink_db_open(&db, target);
-  if (rc)
-    fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+  {
+    int rc = clink_db_open(&db, target);
+    if (rc)
+      fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
+  }
 
   // add a new record
-  if (rc == 0) {
-    if ((rc = clink_db_add_record(db, "/foo/bar.c", 42, 128)))
+  {
+    int rc = clink_db_add_record(db, "/foo/bar.c", 42, 128);
+    if (rc)
       fprintf(stderr, "clink_db_add_record: %s\n", strerror(rc));
+    ASSERT_EQ(rc, 0);
   }
 
   // find something that does not exist
-  if (rc == 0) {
+  {
     uint64_t hash, timestamp;
-    int r = clink_db_find_record(db, "/baz/bar.c", &hash, &timestamp);
-    if (r != ENOENT) {
-      fprintf(stderr,
-              "unexpected result from finding non-existent file: %d != "
-              "ENOENT\n",
-              r);
-      rc = -1;
-    }
+    int rc = clink_db_find_record(db, "/baz/bar.c", &hash, &timestamp);
+    ASSERT_EQ(rc, ENOENT);
   }
 
   // the same, but with NULLs
-  if (rc == 0) {
+  {
     uint64_t hash;
-    int r = clink_db_find_record(db, "/baz/bar.c", &hash, NULL);
-    if (r != ENOENT) {
-      fprintf(stderr,
-              "unexpected result from finding non-existent file, with "
-              "null timestamp: %d != ENOENT\n",
-              r);
-      rc = -1;
-    }
+    int rc = clink_db_find_record(db, "/baz/bar.c", &hash, NULL);
+    ASSERT_EQ(rc, ENOENT);
   }
-  if (rc == 0) {
+  {
     uint64_t timestamp;
-    int r = clink_db_find_record(db, "/baz/bar.c", NULL, &timestamp);
-    if (r != ENOENT) {
-      fprintf(stderr,
-              "unexpected result from finding non-existent file, with "
-              "null hash: %d != ENOENT\n",
-              r);
-      rc = -1;
-    }
+    int rc = clink_db_find_record(db, "/baz/bar.c", NULL, &timestamp);
+    ASSERT_EQ(rc, ENOENT);
   }
-  if (rc == 0) {
-    int r = clink_db_find_record(db, "/baz/bar.c", NULL, NULL);
-    if (r != ENOENT) {
-      fprintf(stderr,
-              "unexpected result from finding non-existent file, with "
-              "null hash and timestamp: %d != ENOENT\n",
-              r);
-      rc = -1;
-    }
+  {
+    int rc = clink_db_find_record(db, "/baz/bar.c", NULL, NULL);
+    ASSERT_EQ(rc, ENOENT);
   }
 
   // now lookup an existing record
-  if (rc == 0) {
-    do {
-      uint64_t hash, timestamp;
-      if ((rc = clink_db_find_record(db, "/foo/bar.c", &hash, &timestamp))) {
-        fprintf(stderr, "unexpected result from finding file: %s\n",
-                strerror(rc));
-        break;
-      }
+  {
+    uint64_t hash, timestamp;
+    int rc = clink_db_find_record(db, "/foo/bar.c", &hash, &timestamp);
+    if (rc)
+      fprintf(stderr, "unexpected result from finding file: %s\n",
+              strerror(rc));
+    ASSERT_EQ(rc, 0);
 
-      if (hash != 42) {
-        fprintf(stderr, "unexpected hash: %" PRIu64 "\n", hash);
-        rc = -1;
-        break;
-      }
-
-      if (timestamp != 128) {
-        fprintf(stderr, "unexpected timestamp: %" PRIu64 "\n", timestamp);
-        rc = -1;
-        break;
-      }
-    } while (0);
+    ASSERT_EQ(hash, 42u);
+    ASSERT_EQ(timestamp, 128u);
   }
-  if (rc == 0) {
-    do {
-      uint64_t hash;
-      if ((rc = clink_db_find_record(db, "/foo/bar.c", &hash, NULL))) {
-        fprintf(stderr, "unexpected result from finding file: %s\n",
-                strerror(rc));
-        break;
-      }
+  {
+    uint64_t hash;
+    int rc = clink_db_find_record(db, "/foo/bar.c", &hash, NULL);
+    if (rc)
+      fprintf(stderr, "unexpected result from finding file: %s\n",
+              strerror(rc));
+    ASSERT_EQ(rc, 0);
 
-      if (hash != 42) {
-        fprintf(stderr, "unexpected hash: %" PRIu64 "\n", hash);
-        rc = -1;
-        break;
-      }
-    } while (0);
+    ASSERT_EQ(hash, 42u);
   }
-  if (rc == 0) {
-    do {
-      uint64_t timestamp;
-      if ((rc = clink_db_find_record(db, "/foo/bar.c", NULL, &timestamp))) {
-        fprintf(stderr, "unexpected result from finding file: %d\n", rc);
-        break;
-      }
-
-      if (timestamp != 128) {
-        fprintf(stderr, "unexpected timestamp: %" PRIu64 "\n", timestamp);
-        rc = -1;
-        break;
-      }
-    } while (0);
-  }
-  if (rc == 0) {
-    if ((rc = clink_db_find_record(db, "/foo/bar.c", NULL, NULL)))
+  {
+    uint64_t timestamp;
+    int rc = clink_db_find_record(db, "/foo/bar.c", NULL, &timestamp);
+    if (rc)
       fprintf(stderr, "unexpected result from finding file: %d\n", rc);
+    ASSERT_EQ(rc, 0);
+
+    ASSERT_EQ(timestamp, 128u);
+  }
+  {
+    int rc = clink_db_find_record(db, "/foo/bar.c", NULL, NULL);
+    if (rc)
+      fprintf(stderr, "unexpected result from finding file: %d\n", rc);
+    ASSERT_EQ(rc, 0);
   }
 
   // close the database
-  if (rc == 0)
-    clink_db_close(&db);
-
-  // confirm everything went correctly
-  ASSERT_EQ(rc, 0);
+  clink_db_close(&db);
 }

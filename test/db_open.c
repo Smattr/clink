@@ -14,11 +14,8 @@ TEST("clink_db_open()") {
   int rc = clink_db_open(&db, target);
   if (rc)
     fprintf(stderr, "clink_db_open: %s\n", strerror(rc));
+  ASSERT_EQ(rc, 0);
 
   // close the database
-  if (rc == 0)
-    clink_db_close(&db);
-
-  // confirm that the database was opened correctly
-  ASSERT_EQ(rc, 0);
+  clink_db_close(&db);
 }
