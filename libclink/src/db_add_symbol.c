@@ -82,12 +82,8 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
 
     // if we already used the statement, clear it for reuse
     if (i > 0) {
-      int r = sqlite3_reset(s);
+      int r __attribute__((unused)) = sqlite3_reset(s);
       assert(r == SQLITE_OK);
-      if (ERROR((r = sqlite3_clear_bindings(s)))) {
-        rc = sql_err_to_errno(r);
-        goto done;
-      }
     }
 
     if (ERROR((rc = add(s, syms[i].category, syms[i].name, syms[i].path,
