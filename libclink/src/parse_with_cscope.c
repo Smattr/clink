@@ -164,7 +164,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
   span_t parent = {0};
 
   // symbols queued to be inserted
-  enum { SYMBOL_WINDOW = 100 };
+  enum { SYMBOL_WINDOW = 1000 };
   symbol_t pending[SYMBOL_WINDOW];
   size_t pending_size = 0;
 
