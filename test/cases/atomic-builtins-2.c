@@ -6,5 +6,5 @@ int foo(void) {
 }
 
 // RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
-// RUN: echo 'select name, path, category, line, col from symbols where name = "__sync_fetch_and_add";' | sqlite3 {%t}
+// RUN: echo "select name, path, category, line, col from symbols where name = '__sync_fetch_and_add';" | sqlite3 {%t}
 // CHECK: __sync_fetch_and_add|{%s}|1|5|10

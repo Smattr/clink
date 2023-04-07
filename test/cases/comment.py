@@ -3,6 +3,6 @@
 # foo in a comment
 
 # RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
-# RUN: echo 'select * from symbols where name = "foo";' | sqlite3 {%t}
+# RUN: echo "select * from symbols where name = 'foo';" | sqlite3 {%t}
 # RUN: echo "marker"
 # CHECK: marker
