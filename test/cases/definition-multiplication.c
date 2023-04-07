@@ -11,5 +11,5 @@ void foo(void) {
 }
 
 // RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
-// RUN: echo 'select * from symbols where name = "y" and line = 10;' | sqlite3 {%t}
+// RUN: echo "select * from symbols where name = 'y' and line = 10;" | sqlite3 {%t}
 // CHECK: y|{%s}|2|10|9|foo

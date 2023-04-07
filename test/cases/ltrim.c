@@ -8,7 +8,7 @@ void foo(void) {
 // RUN: clink --build-only --database={%t} --debug --parse-c=clang --syntax-highlight=eager {%s} >/dev/null
 
 // we should have content extracted
-// RUN: echo 'select COUNT(*) from content where line = 4;' | sqlite3 {%t}
+// RUN: echo "select COUNT(*) from content where line = 4;" | sqlite3 {%t}
 // CHECK: 1
 
 // it should have been stripped for leading space
@@ -16,5 +16,5 @@ void foo(void) {
 //   2. use `sed` to strip ANSI colour sequences
 //   3. use `sed` to add a marker to suppress integration.py’s own left-trimming
 //      behaviour
-// RUN: echo 'select body from content where line = 4;' | sqlite3 {%t} | sed -E 's/\x1b\[[0-9;]+m//g' | sed -E 's/(.*)/start\1/'
+// RUN: echo "select body from content where line = 4;" | sqlite3 {%t} | sed -E 's/\x1b\[[0-9;]+m//g' | sed -E 's/(.*)/start\1/'
 // CHECK: startint x = 0;

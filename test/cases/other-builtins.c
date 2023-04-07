@@ -6,5 +6,5 @@ void foo(void) {
 }
 
 // RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
-// RUN: echo 'select name, path, category, line, col from symbols where name = "__builtin_unreachable";' | sqlite3 {%t}
+// RUN: echo "select name, path, category, line, col from symbols where name = '__builtin_unreachable';" | sqlite3 {%t}
 // CHECK: __builtin_unreachable|{%s}|1|5|3
