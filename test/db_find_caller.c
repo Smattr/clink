@@ -19,13 +19,20 @@ TEST("clink_db_find_caller()") {
     ASSERT_EQ(rc, 0);
   }
 
+  // add a record for the upcoming path
+  char path[] = "/foo/bar";
+  {
+    int rc = clink_db_add_record(db, path, 0, 0, NULL);
+    ASSERT_EQ(rc, 0);
+  }
+
   // add a new symbol
   {
     clink_symbol_t symbol = {
         .category = CLINK_FUNCTION_CALL, .lineno = 42, .colno = 10};
 
     symbol.name = (char *)"sym-name";
-    symbol.path = (char *)"/foo/bar";
+    symbol.path = path;
     symbol.parent = (char *)"sym-parent";
 
     int rc = clink_db_add_symbol(db, &symbol);
@@ -40,7 +47,7 @@ TEST("clink_db_find_caller()") {
         .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
     symbol.name = (char *)"sym-name2";
-    symbol.path = (char *)"/foo/bar";
+    symbol.path = path;
     symbol.parent = (char *)"sym-parent";
 
     int rc = clink_db_add_symbol(db, &symbol);
@@ -98,7 +105,7 @@ TEST("clink_db_find_caller()") {
       ASSERT_STREQ(sym->name, "sym-name");
       ASSERT_EQ(sym->lineno, 42u);
       ASSERT_EQ(sym->colno, 10u);
-      ASSERT_STREQ(sym->path, "/foo/bar");
+      ASSERT_STREQ(sym->path, path);
       ASSERT_STREQ(sym->parent, "sym-parent");
     }
 

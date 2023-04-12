@@ -66,13 +66,20 @@ TEST("test looking up an included file by its final component works (1)") {
     ASSERT_EQ(rc, 0);
   }
 
+  // add a record for the upcoming path
+  char path[] = "/foo/bar";
+  {
+    int rc = clink_db_add_record(db, path, 0, 0, NULL);
+    ASSERT_EQ(rc, 0);
+  }
+
   // add an include that is a path with multiple components
   {
     clink_symbol_t symbol = {
         .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
 
     symbol.name = (char *)"include/clink/clink.h";
-    symbol.path = (char *)"/foo/bar";
+    symbol.path = path;
     symbol.parent = (char *)"sym-parent";
 
     int rc = clink_db_add_symbol(db, &symbol);
@@ -102,13 +109,20 @@ TEST("test looking up an included file by its final component works (2)") {
     ASSERT_EQ(rc, 0);
   }
 
+  // add a record for the upcoming path
+  char path[] = "/foo/bar";
+  {
+    int rc = clink_db_add_record(db, path, 0, 0, NULL);
+    ASSERT_EQ(rc, 0);
+  }
+
   // add an include that is a path with multiple components
   {
     clink_symbol_t symbol = {
         .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
 
     symbol.name = (char *)"include/clink/clink.h";
-    symbol.path = (char *)"/foo/bar";
+    symbol.path = path;
     symbol.parent = (char *)"sym-parent";
 
     int rc = clink_db_add_symbol(db, &symbol);
@@ -138,13 +152,20 @@ TEST("test looking up an included file by its final component works (3)") {
     ASSERT_EQ(rc, 0);
   }
 
+  // add a record for the upcoming path
+  char path[] = "/foo/bar";
+  {
+    int rc = clink_db_add_record(db, path, 0, 0, NULL);
+    ASSERT_EQ(rc, 0);
+  }
+
   // add an include that is a path with multiple components
   {
     clink_symbol_t symbol = {
         .category = CLINK_INCLUDE, .lineno = 42, .colno = 10};
 
     symbol.name = (char *)"include/clink/clink.h";
-    symbol.path = (char *)"/foo/bar";
+    symbol.path = path;
     symbol.parent = (char *)"sym-parent";
 
     int rc = clink_db_add_symbol(db, &symbol);
