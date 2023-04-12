@@ -110,11 +110,12 @@ int clink_db_find_symbol(clink_db_t *db, const char *regex, clink_iter_t **it) {
     return EINVAL;
 
   static const char QUERY[] =
-      "select symbols.name, symbols.path, symbols.category, "
+      "select symbols.name, records.path, symbols.category, "
       "symbols.line, symbols.col, symbols.parent, content.body from symbols "
+      "inner join records on symbols.path = records.id "
       "left "
-      "join content on symbols.path = content.path and symbols.line = "
-      "content.line where symbols.name regexp @name order by symbols.path, "
+      "join content on records.path = content.path and symbols.line = "
+      "content.line where symbols.name regexp @name order by records.path, "
       "symbols.line, symbols.col;";
 
   int rc = 0;

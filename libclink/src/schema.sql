@@ -1,11 +1,12 @@
 create table if not exists symbols (
   name text not null,
-  path text not null,
+  path integer not null,
   category integer not null,
   line integer not null,
   col integer not null,
   parent text,
-  unique(name, path, category, line, col));
+  unique(name, path, category, line, col),
+  foreign key(path) references records(id));
 
 create table if not exists content (
   path text not null,

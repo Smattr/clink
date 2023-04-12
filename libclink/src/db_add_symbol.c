@@ -1,6 +1,7 @@
 #include "add_symbol.h"
 #include "db.h"
 #include "debug.h"
+#include "get_id.h"
 #include "span.h"
 #include "sql.h"
 #include <assert.h>
@@ -12,19 +13,25 @@
 #include <stddef.h>
 #include <string.h>
 
-static int add(sqlite3_stmt *stmt, clink_category_t category, span_t name,
-               const char *path, span_t parent) {
+static int add(clink_db_t *db, sqlite3_stmt *stmt, clink_category_t category,
+               span_t name, const char *path, span_t parent) {
 
+  assert(db != NULL);
   assert(stmt != NULL);
 
   int rc = 0;
+
+  // find the identifier for this path
+  clink_record_id_t id = -1;
+  if (ERROR((rc = get_id(db, path, &id))))
+    goto done;
 
   assert(name.base != NULL);
   if (ERROR((rc = sql_bind_span(stmt, 1, name))))
     goto done;
 
   assert(path != NULL);
-  if (ERROR((rc = sql_bind_text(stmt, 2, path))))
+  if (ERROR((rc = sql_bind_int(stmt, 2, id))))
     goto done;
 
   if (ERROR((rc = sql_bind_int(stmt, 3, category))))
@@ -86,7 +93,7 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
       assert(r == SQLITE_OK);
     }
 
-    if (ERROR((rc = add(s, syms[i].category, syms[i].name, syms[i].path,
+    if (ERROR((rc = add(db, s, syms[i].category, syms[i].name, syms[i].path,
                         syms[i].parent))))
       goto done;
   }

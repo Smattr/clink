@@ -111,12 +111,13 @@ int clink_db_find_call(clink_db_t *db, const char *regex, clink_iter_t **it) {
     return EINVAL;
 
   static const char QUERY[] =
-      "select symbols.name, symbols.path, symbols.line, symbols.col, "
-      "symbols.parent, content.body from symbols left join content "
+      "select symbols.name, records.path, symbols.line, symbols.col, "
+      "symbols.parent, content.body from symbols inner join records "
+      "on symbols.path = records.id left join content "
       "on "
-      "symbols.path = content.path and symbols.line = content.line where "
+      "records.path = content.path and symbols.line = content.line where "
       "symbols.parent regexp @parent and symbols.category = @category order by "
-      "symbols.path, symbols.line, symbols.col;";
+      "records.path, symbols.line, symbols.col;";
 
   int rc = 0;
   clink_iter_t *i = NULL;

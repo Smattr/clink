@@ -42,6 +42,7 @@ static int configure(sqlite3 *db) {
       "pragma synchronous=OFF;",
       "pragma journal_mode=OFF;",
       "pragma temp_store=MEMORY;",
+      "pragma foreign_keys=ON;",
   };
 
   return exec_all(db, sizeof(PRAGMAS) / sizeof(PRAGMAS[0]), PRAGMAS);
