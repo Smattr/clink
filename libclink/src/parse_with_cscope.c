@@ -257,10 +257,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 
     if (in_file) {
       DEBUG("adding symbol \"%.*s\"", (int)symbol.size, symbol.base);
-      symbol_t sym = {.category = category,
-                      .name = symbol,
-                      .path = filename,
-                      .parent = parent};
+      symbol_t sym = {.category = category, .name = symbol, .parent = parent};
       if (pending_size == sizeof(pending) / sizeof(pending[0])) {
         // flush the pending symbols
         if (ERROR((rc = add_symbols(db, pending_size, pending, id))))
