@@ -32,6 +32,12 @@ typedef struct {
 INTERNAL int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
                          clink_record_id_t id);
 
-static inline int add_symbol(clink_db_t *db, symbol_t sym) {
-  return add_symbols(db, 1, &sym, -1);
-}
+/// convenience wrapper for \p add_symbols with a single symbol
+///
+/// There is no way to set the \p id parameter to \p add_symbols when calling
+/// through this interface.
+///
+/// \param db Database to operate on
+/// \param sym Symbol to insert
+/// \return 0 on success or an errno on failure
+INTERNAL int add_symbol(clink_db_t *db, symbol_t sym);

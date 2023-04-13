@@ -126,6 +126,10 @@ done:
   return rc;
 }
 
+int add_symbol(clink_db_t *db, symbol_t sym) {
+  return add_symbols(db, 1, &sym, -1);
+}
+
 int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
 
   if (ERROR(db == NULL))
