@@ -127,7 +127,21 @@ done:
 }
 
 int add_symbol(clink_db_t *db, symbol_t sym) {
-  return add_symbols(db, 1, &sym, -1);
+
+  assert(db != NULL);
+
+  int rc = 0;
+
+  // find the identifier for this symbol’s path
+  clink_record_id_t id = -1;
+  assert(sym.path != NULL);
+  if (ERROR((rc = get_id(db, sym.path, &id))))
+    goto done;
+
+  rc = add_symbols(db, 1, &sym, id);
+
+done:
+  return rc;
 }
 
 int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
