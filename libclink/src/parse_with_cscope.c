@@ -137,7 +137,7 @@ static span_t read_symbol(scanner_t *s) {
 }
 
 static int parse_into(clink_db_t *db, const char *cscope_out,
-                      const char *filename) {
+                      const char *filename, clink_record_id_t id) {
   assert(db != NULL);
   assert(cscope_out != NULL);
   assert(access(cscope_out, R_OK) == 0);
@@ -146,10 +146,11 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
   int rc = 0;
   mmap_t f = {0};
 
-  // lookup the identifier of this filename
-  clink_record_id_t id = -1;
-  if (ERROR((rc = get_id(db, filename, &id))))
-    goto done;
+  // if the caller did not give us an identifier, look it up now
+  if (id < 0) {
+    if (ERROR((rc = get_id(db, filename, &id))))
+      goto done;
+  }
 
   if (ERROR((rc = mmap_open(&f, cscope_out))))
     goto done;
@@ -286,7 +287,8 @@ done:
   return rc;
 }
 
-int clink_parse_with_cscope(clink_db_t *db, const char *filename) {
+int clink_parse_with_cscope(clink_db_t *db, const char *filename,
+                            clink_record_id_t id) {
 
   if (ERROR(db == NULL))
     return EINVAL;
@@ -330,7 +332,7 @@ int clink_parse_with_cscope(clink_db_t *db, const char *filename) {
     goto done;
 
   // translate Cscope’s output into insertion commands into the Clink database
-  if (ERROR((rc = parse_into(db, cscope_out, filename))))
+  if (ERROR((rc = parse_into(db, cscope_out, filename, id))))
     goto done;
 
 done:

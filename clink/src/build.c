@@ -138,7 +138,7 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
   } else if (use_cscope(path)) {
     progress_status(thread_id, "Cscope-parsing %s file %s", filetype(path),
                     display);
-    rc = clink_parse_with_cscope(db, path);
+    rc = clink_parse_with_cscope(db, path, -1);
 
   } else if (is_asm(path)) {
 
