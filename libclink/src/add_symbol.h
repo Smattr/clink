@@ -19,9 +19,8 @@ typedef struct {
 /// This function provides a way of inserting multiple symbols into the database
 /// in a single operation.
 ///
-/// If all symbols being inserted are from the same source path and the caller
-/// knows the record identifier of this path, they can pass it as \p id as an
-/// optimisation. If not, they can pass -1 as a default.
+/// All symbols being inserted must be from the same source path. The caller
+/// must supply the record identifier of this path as \p id.
 ///
 /// \param db Database to operate on
 /// \param syms_size Number of elements in \p syms
