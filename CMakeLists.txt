@@ -89,7 +89,8 @@ if(Python3_FOUND)
   )
   if(${IMPORT_BLACK_RET} EQUAL 0 AND GIT AND XARGS)
     add_custom_target(python-format
-      COMMAND ${GIT} ls-files -z -- ':!:test/cases' '**/*.py' |
+      COMMAND
+        ${GIT} ls-files -z -- ':!:test/cases' '**/*.py' clink/src/clink-repl |
         ${XARGS} -0 -- ${Python3_EXECUTABLE} -m black
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       COMMENT "black-formatting Python sources")
