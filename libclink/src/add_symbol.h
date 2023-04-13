@@ -19,12 +19,19 @@ typedef struct {
 /// This function provides a way of inserting multiple symbols into the database
 /// in a single operation.
 ///
+/// If all symbols being inserted are from the same source path and the caller
+/// knows the record identifier of this path, they can pass it as \p id as an
+/// optimisation. If not, they can pass -1 as a default.
+///
 /// \param db Database to operate on
 /// \param syms_size Number of elements in \p syms
 /// \param syms Symbols to insert
+/// \param id Identifier of the record for the source path containing all
+///   symbols
 /// \return 0 on success or an errno on failure
-INTERNAL int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms);
+INTERNAL int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
+                         clink_record_id_t id);
 
 static inline int add_symbol(clink_db_t *db, symbol_t sym) {
-  return add_symbols(db, 1, &sym);
+  return add_symbols(db, 1, &sym, -1);
 }

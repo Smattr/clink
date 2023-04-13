@@ -56,7 +56,8 @@ done:
   return rc;
 }
 
-int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
+int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
+                clink_record_id_t id) {
 
   assert(db != NULL);
   assert(syms_size == 0 || syms != NULL);
@@ -87,13 +88,29 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
       assert(r == SQLITE_OK);
     }
 
-    // find the identifier for this symbol’s path
-    clink_record_id_t id = -1;
-    if (ERROR((rc = get_id(db, syms[i].path, &id))))
-      goto done;
+    clink_record_id_t this_id = -1;
+    // did the caller give us a common identifier?
+    if (id >= 0) {
+#ifndef NDEBUG
+      // if the caller passed both `path` and `id`, do them a favour and
+      // validate these match
+      if (syms[i].path != NULL) {
+        clink_record_id_t cross_reference = -1;
+        if (ERROR((rc = get_id(db, syms[i].path, &cross_reference))))
+          goto done;
+        assert(cross_reference == id);
+      }
+#endif
+      this_id = id;
+    } else {
+      // find the identifier for this symbol’s path
+      assert(syms[i].path != NULL);
+      if (ERROR((rc = get_id(db, syms[i].path, &this_id))))
+        goto done;
+    }
 
-    if (ERROR(
-            (rc = add(s, syms[i].category, syms[i].name, id, syms[i].parent))))
+    if (ERROR((rc = add(s, syms[i].category, syms[i].name, this_id,
+                        syms[i].parent))))
       goto done;
   }
 

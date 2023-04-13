@@ -257,7 +257,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
                       .parent = parent};
       if (pending_size == sizeof(pending) / sizeof(pending[0])) {
         // flush the pending symbols
-        if (ERROR((rc = add_symbols(db, pending_size, pending))))
+        if (ERROR((rc = add_symbols(db, pending_size, pending, -1))))
           goto done;
         pending_size = 0;
       }
@@ -276,7 +276,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 done:
   // flush any remaining pending symbols
   if (rc == 0 && pending_size > 0)
-    rc = add_symbols(db, pending_size, pending);
+    rc = add_symbols(db, pending_size, pending, -1);
 
   mmap_close(f);
 
