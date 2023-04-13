@@ -1,6 +1,7 @@
 #include "add_symbol.h"
 #include "debug.h"
 #include "get_environ.h"
+#include "get_id.h"
 #include "mmap.h"
 #include "posix_spawn.h"
 #include "scanner.h"
@@ -143,8 +144,13 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
   assert(filename != NULL);
 
   int rc = 0;
-
   mmap_t f = {0};
+
+  // lookup the identifier of this filename
+  clink_record_id_t id = -1;
+  if (ERROR((rc = get_id(db, filename, &id))))
+    goto done;
+
   if (ERROR((rc = mmap_open(&f, cscope_out))))
     goto done;
 
@@ -257,7 +263,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
                       .parent = parent};
       if (pending_size == sizeof(pending) / sizeof(pending[0])) {
         // flush the pending symbols
-        if (ERROR((rc = add_symbols(db, pending_size, pending, -1))))
+        if (ERROR((rc = add_symbols(db, pending_size, pending, id))))
           goto done;
         pending_size = 0;
       }
@@ -276,7 +282,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 done:
   // flush any remaining pending symbols
   if (rc == 0 && pending_size > 0)
-    rc = add_symbols(db, pending_size, pending, -1);
+    rc = add_symbols(db, pending_size, pending, id);
 
   mmap_close(f);
 
