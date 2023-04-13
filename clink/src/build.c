@@ -102,7 +102,10 @@ static const char *filetype(const char *path) {
   return is_c(path) ? "C" : "C++";
 }
 
-static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
+static int parse(unsigned long thread_id, clink_db_t *db, const char *path,
+                 clink_record_id_t id) {
+
+  assert(id >= 0);
 
   int rc = 0;
 
@@ -138,7 +141,7 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path) {
   } else if (use_cscope(path)) {
     progress_status(thread_id, "Cscope-parsing %s file %s", filetype(path),
                     display);
-    rc = clink_parse_with_cscope(db, path, -1);
+    rc = clink_parse_with_cscope(db, path, id);
 
   } else if (is_asm(path)) {
 
@@ -253,9 +256,10 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     clink_db_remove(db, path);
 
     // insert a new record for the file
-    (void)clink_db_add_record(db, path, hash, timestamp, NULL);
+    clink_record_id_t id = -1;
+    (void)clink_db_add_record(db, path, hash, timestamp, &id);
 
-    if (UNLIKELY((rc = parse(thread_id, db, path))))
+    if (UNLIKELY((rc = parse(thread_id, db, path, id))))
       break;
 
     // bump the progress counter
