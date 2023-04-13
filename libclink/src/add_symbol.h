@@ -14,7 +14,7 @@ typedef struct {
   span_t parent;             ///< optional containing definition
 } symbol_t;
 
-/// a version of \p clink_db_add_symbol` with a different calling convention
+/// a version of \p clink_db_add_symbol with a different calling convention
 ///
 /// This function provides a way of inserting multiple symbols into the database
 /// in a single operation.
