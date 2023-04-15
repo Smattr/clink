@@ -13,8 +13,6 @@ int x;
 // now the database should be un-openable
 // RUN: ! clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 
-// XFAIL: True
-
 // the error message should accurately describe the problem
 // RUN: ! clink --build-only --database={%t} --parse-c=generic --parse-cxx=generic {%s} 2>&1
 // CHECK: {%t} was created by a different, incompatible version of Clink
