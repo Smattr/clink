@@ -1,12 +1,15 @@
-/// test that databases from incompatible versions are rejected
+/// \file
+/// \brief a database without a \p metadata table should be detected as legacy
 
-int foo(void) {
-  return 42;
-}
+int x;
 
+// create a database with entries for this file
 // RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
-// now modify the database version
-// RUN: echo "update metadata set value = 'foo' where key = 'schema_version';" | sqlite3 {%t}
+
+// delete the metadata table, corresponding to what a pre-versioned Clink
+// database would look like
+// RUN: echo "drop table metadata;" | sqlite3 {%t}
+
 // now the database should be un-openable
 // RUN: ! clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 

@@ -57,8 +57,19 @@ static int check_schema_version(sqlite3 *db) {
   int rc = 0;
 
   sqlite3_stmt *stmt = NULL;
-  if (ERROR((rc = sql_prepare(db, QUERY, &stmt))))
-    goto done;
+  {
+    int r = sqlite3_prepare_v2(db, QUERY, sizeof(QUERY), &stmt, NULL);
+    // if we failed to prepare, assume that it was the result of database schema
+    // change that affected the metadata table itself
+    if (ERROR(r == SQLITE_ERROR)) {
+      rc = EPROTO;
+      goto done;
+    }
+    if (ERROR(r)) {
+      rc = sql_err_to_errno(r);
+      goto done;
+    }
+  }
 
   {
     int r = sqlite3_step(stmt);
