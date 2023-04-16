@@ -344,7 +344,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   // ignore anything not from the main file
   CXSourceLocation loc = clang_getCursorLocation(cursor);
   if (!clang_Location_isFromMainFile(loc))
-    return CXChildVisit_Continue;
+    return CXChildVisit_Recurse;
 
   // retrieve the type of this symbol
   enum CXCursorKind kind = clang_getCursorKind(cursor);
