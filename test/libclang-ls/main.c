@@ -214,6 +214,8 @@ int main(int argc, char **argv) {
   unsigned options = 0;
   options |= CXTranslationUnit_DetailedPreprocessingRecord;
   options |= CXTranslationUnit_KeepGoing;
+  options |= CXTranslationUnit_SkipFunctionBodies;
+  options |= CXTranslationUnit_LimitSkipFunctionBodiesToPreamble;
 #if CINDEX_VERSION_MINOR >= 60
   options |= CXTranslationUnit_RetainExcludedConditionalBlocks;
 #endif
