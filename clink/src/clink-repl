@@ -61,7 +61,7 @@ def select(
 
 def in_bw(s: Optional[str]) -> str:
     """
-    string ANSI color codes from a string
+    strip ANSI color codes from a string
     """
 
     if s is None:
