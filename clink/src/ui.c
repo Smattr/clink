@@ -483,6 +483,7 @@ static void move_to_line(size_t target) {
 static void refresh(void) {
   screen_clear();
   print_menu();
+  move_to_line_no_blank(prompt_index);
   if (results.count > 0)
     print_results();
 }
