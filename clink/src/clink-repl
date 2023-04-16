@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-
 CLINK_DEFINITION = 0
 CLINK_FUNCTION_CALL = 1
 CLINK_REFERENCE = 2
@@ -59,32 +58,51 @@ def select(
     return cursor.fetchall()
 
 
-def in_bw(s: Optional[str]) -> str:
+def in_bw(source: Path, line: int, text: Optional[str]) -> str:
     """
-    string ANSI color codes from a string
+    strip ANSI colour codes from a string
+
+    If the content is not supplied (`text is None`), it will be extracted from
+    the given source file. If anything goes wrong, `""` will be returned.
+
+    Args:
+        source: File this content came from.
+        line: Line number this content came from.
+        text: Content of the line itself.
+
+    Returns:
+        The resolved stripped text.
     """
 
-    if s is None:
+    # if we do not have the content, resolve it
+    if text is None:
+        try:
+            with open(source, "rt", encoding="utf-8") as f:
+                for lineno, content in enumerate(f, 1):
+                    if lineno == line:
+                        return in_bw(source, line, content[:-1])
+        except (FileNotFoundError, PermissionError):
+            pass
         return ""
 
     buffer = io.StringIO()
     i = 0
-    while i < len(s):
+    while i < len(text):
 
-        if s[i:].startswith("\033["):
+        if text[i:].startswith("\033["):
             i += 2
-            while i < len(s) and s[i] != "m":
+            while i < len(text) and text[i] != "m":
                 i += 1
             i += 1
             continue
 
-        buffer.write(s[i])
+        buffer.write(text[i])
         i += 1
     return buffer.getvalue()
 
 
 def find_symbol(db: sqlite3.Connection, name: str):
-    logging.debug(f"find_symbol of {name}")
+    logging.debug("find_symbol of %s", name)
     SQL = (
         "select symbols.path, symbols.parent, symbols.line, content.body "
         "from symbols left join content on symbols.path = content.path and "
@@ -94,11 +112,12 @@ def find_symbol(db: sqlite3.Connection, name: str):
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1] or name} {row[2]} {in_bw(row[3])}")
+        content = in_bw(Path(row[0]), int(row[2]), row[3])
+        print(f"{row[0]} {row[1] or name} {row[2]} {content}")
 
 
 def find_definition(db: sqlite3.Connection, name: str):
-    logging.debug(f"find_definition of {name}")
+    logging.debug("find_definition of %s", name)
     SQL = (
         "select symbols.path, symbols.line, content.body "
         "from symbols left join content on symbols.path = content.path and "
@@ -109,11 +128,12 @@ def find_definition(db: sqlite3.Connection, name: str):
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {name} {row[1]} {in_bw(row[2])}")
+        content = in_bw(Path(row[0]), int(row[1]), row[2])
+        print(f"{row[0]} {name} {row[1]} {content}")
 
 
 def find_calls(db: sqlite3.Connection, caller: str):
-    logging.debug(f"find_calls of {caller}")
+    logging.debug("find_calls of %s", caller)
     SQL = (
         "select symbols.path, symbols.name, symbols.line, content.body "
         "from symbols left join content on symbols.path = content.path and "
@@ -124,11 +144,12 @@ def find_calls(db: sqlite3.Connection, caller: str):
     rows = select(db, SQL, {"caller": caller})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+        content = in_bw(Path(row[0]), int(row[2]), row[3])
+        print(f"{row[0]} {row[1]} {row[2]} {content}")
 
 
 def find_callers(db: sqlite3.Connection, callee: str):
-    logging.debug(f"find_callers of {callee}")
+    logging.debug("find_callers of %s", callee)
     SQL = (
         "select symbols.path, symbols.parent, symbols.line, content.body "
         "from symbols left join content on symbols.path = content.path and "
@@ -139,11 +160,12 @@ def find_callers(db: sqlite3.Connection, callee: str):
     rows = select(db, SQL, {"callee": callee})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+        content = in_bw(Path(row[0]), int(row[2]), row[3])
+        print(f"{row[0]} {row[1]} {row[2]} {content}")
 
 
 def find_file(db: sqlite3.Connection, filename: str):
-    logging.debug(f"find_file of {filename}")
+    logging.debug("find_file of %s", filename)
     SQL = (
         "select distinct path from symbols where path = :filename or "
         "path like :pattern order by path"
@@ -155,7 +177,7 @@ def find_file(db: sqlite3.Connection, filename: str):
 
 
 def find_includers(db: sqlite3.Connection, path: str):
-    logging.debug(f"find_includers of {path}")
+    logging.debug("find_includers of %s", path)
     SQL = (
         "select symbols.path, symbols.parent, symbols.line, content.body "
         "from symbols left join content on symbols.path = content.path and "
@@ -166,7 +188,8 @@ def find_includers(db: sqlite3.Connection, path: str):
     rows = select(db, SQL, {"name": f"%{path}"})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+        content = in_bw(Path(row[0]), int(row[2]), row[3])
+        print(f"{row[0]} {row[1]} {row[2]} {content}")
 
 
 def main(args: List[str]) -> int:
@@ -176,7 +199,7 @@ def main(args: List[str]) -> int:
         level=logging.DEBUG,
     )
 
-    logging.info(f"clink-repl run as: {' '.join(shlex.quote(a) for a in args)}")
+    logging.info("clink-repl run as: %s", " ".join(shlex.quote(a) for a in args))
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-d", action="store_true", help="ignored")
