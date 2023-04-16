@@ -18,13 +18,20 @@ TEST("clink_db_remove()") {
     ASSERT_EQ(rc, 0);
   }
 
+  // add a record for the upcoming path
+  char path[] = "/foo/bar";
+  {
+    int rc = clink_db_add_record(db, path, 0, 0, NULL);
+    ASSERT_EQ(rc, 0);
+  }
+
   // add a new symbol
   {
     clink_symbol_t symbol = {
         .category = CLINK_DEFINITION, .lineno = 42, .colno = 10};
 
     symbol.name = (char *)"sym-name";
-    symbol.path = (char *)"/foo/bar";
+    symbol.path = path;
     symbol.parent = (char *)"sym-parent";
 
     int rc = clink_db_add_symbol(db, &symbol);
@@ -34,7 +41,7 @@ TEST("clink_db_remove()") {
   }
 
   // remove the symbol we just added
-  clink_db_remove(db, "/foo/bar");
+  clink_db_remove(db, path);
 
   // close the database
   clink_db_close(&db);

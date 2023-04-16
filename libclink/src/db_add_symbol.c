@@ -1,6 +1,7 @@
 #include "add_symbol.h"
 #include "db.h"
 #include "debug.h"
+#include "get_id.h"
 #include "span.h"
 #include "sql.h"
 #include <assert.h>
@@ -13,7 +14,7 @@
 #include <string.h>
 
 static int add(sqlite3_stmt *stmt, clink_category_t category, span_t name,
-               const char *path, span_t parent) {
+               clink_record_id_t path, span_t parent) {
 
   assert(stmt != NULL);
 
@@ -23,8 +24,8 @@ static int add(sqlite3_stmt *stmt, clink_category_t category, span_t name,
   if (ERROR((rc = sql_bind_span(stmt, 1, name))))
     goto done;
 
-  assert(path != NULL);
-  if (ERROR((rc = sql_bind_text(stmt, 2, path))))
+  assert(path >= 0);
+  if (ERROR((rc = sql_bind_int(stmt, 2, path))))
     goto done;
 
   if (ERROR((rc = sql_bind_int(stmt, 3, category))))
@@ -55,10 +56,12 @@ done:
   return rc;
 }
 
-int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
+int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
+                clink_record_id_t id) {
 
   assert(db != NULL);
   assert(syms_size == 0 || syms != NULL);
+  assert(id >= 0);
 
   // insert into the symbol table
 
@@ -86,8 +89,19 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms) {
       assert(r == SQLITE_OK);
     }
 
-    if (ERROR((rc = add(s, syms[i].category, syms[i].name, syms[i].path,
-                        syms[i].parent))))
+#ifndef NDEBUG
+    // if the caller passed a `path`, do them a favour and validate this matches
+    // `id`
+    if (syms[i].path != NULL) {
+      clink_record_id_t cross_reference = -1;
+      if (ERROR((rc = get_id(db, syms[i].path, &cross_reference))))
+        goto done;
+      assert(cross_reference == id);
+    }
+#endif
+
+    if (ERROR(
+            (rc = add(s, syms[i].category, syms[i].name, id, syms[i].parent))))
       goto done;
   }
 
@@ -100,6 +114,24 @@ done:
     assert(r == 0);
   }
 
+  return rc;
+}
+
+int add_symbol(clink_db_t *db, symbol_t sym) {
+
+  assert(db != NULL);
+
+  int rc = 0;
+
+  // find the identifier for this symbol’s path
+  clink_record_id_t id = -1;
+  assert(sym.path != NULL);
+  if (ERROR((rc = get_id(db, sym.path, &id))))
+    goto done;
+
+  rc = add_symbols(db, 1, &sym, id);
+
+done:
   return rc;
 }
 

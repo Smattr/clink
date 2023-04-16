@@ -49,6 +49,9 @@ CLINK_API int clink_db_begin_transaction(clink_db_t *db);
  */
 CLINK_API int clink_db_commit_transaction(clink_db_t *db);
 
+/// identifier/handle for a record
+typedef int64_t clink_record_id_t;
+
 /** add a file record to the database
  *
  * Nothing in the symbol or content functionality assumes a corresponding file
@@ -61,10 +64,12 @@ CLINK_API int clink_db_commit_transaction(clink_db_t *db);
  * \param path Path of the subject to store information about
  * \param hash Some hash digest of the subject
  * \param timestamp Last modification time of the subject
+ * \param id [out] Identifier of the inserted record on success
  * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_add_record(clink_db_t *db, const char *path,
-                                  uint64_t hash, uint64_t timestamp);
+                                  uint64_t hash, uint64_t timestamp,
+                                  clink_record_id_t *id);
 
 /** add a symbol to the database
  *

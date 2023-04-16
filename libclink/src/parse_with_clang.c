@@ -61,9 +61,8 @@ typedef struct {
 
 } state_t;
 
-static int add_symbol(state_t *state, clink_category_t category,
-                      const char *name, const char *path, unsigned lineno,
-                      unsigned colno) {
+static int add(state_t *state, clink_category_t category, const char *name,
+               const char *path, unsigned lineno, unsigned colno) {
 
   assert(state != NULL);
 
@@ -478,7 +477,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
 
     } else {
       // add this symbol to the database
-      rc = add_symbol(state, category, name, fname, lineno, colno);
+      rc = add(state, category, name, fname, lineno, colno);
       if (ERROR(rc != 0))
         goto done;
 

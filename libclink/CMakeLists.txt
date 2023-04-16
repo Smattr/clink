@@ -25,6 +25,7 @@ add_library(libclink
   src/eat_num.c
   src/eat_rest_of_line.c
   src/get_environ.c
+  src/get_id.c
   src/have_cscope.c
   src/iter.c
   src/mmap.c

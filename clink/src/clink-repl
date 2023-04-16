@@ -104,10 +104,11 @@ def in_bw(source: Path, line: int, text: Optional[str]) -> str:
 def find_symbol(db: sqlite3.Connection, name: str):
     logging.debug("find_symbol of %s", name)
     SQL = (
-        "select symbols.path, symbols.parent, symbols.line, content.body "
-        "from symbols left join content on symbols.path = content.path and "
+        "select records.path, symbols.parent, symbols.line, content.body "
+        "from symbols inner join records on symbols.path = records.id "
+        "left join content on records.path = content.path and "
         "symbols.line = content.line where symbols.name = :name order by "
-        "symbols.path, symbols.line, symbols.col;"
+        "records.path, symbols.line, symbols.col;"
     )
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
@@ -119,11 +120,12 @@ def find_symbol(db: sqlite3.Connection, name: str):
 def find_definition(db: sqlite3.Connection, name: str):
     logging.debug("find_definition of %s", name)
     SQL = (
-        "select symbols.path, symbols.line, content.body "
-        "from symbols left join content on symbols.path = content.path and "
+        "select records.path, symbols.line, content.body "
+        "from symbols inner join records on symbols.path = records.id "
+        "left join content on records.path = content.path and "
         "symbols.line = content.line where symbols.name = :name and "
         f"symbols.category = {CLINK_DEFINITION} order by "
-        "symbols.path, symbols.line, symbols.col;"
+        "records.path, symbols.line, symbols.col;"
     )
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
@@ -135,11 +137,12 @@ def find_definition(db: sqlite3.Connection, name: str):
 def find_calls(db: sqlite3.Connection, caller: str):
     logging.debug("find_calls of %s", caller)
     SQL = (
-        "select symbols.path, symbols.name, symbols.line, content.body "
-        "from symbols left join content on symbols.path = content.path and "
+        "select records.path, symbols.name, symbols.line, content.body "
+        "from symbols inner join records on symbols.path = records.id "
+        "left join content on records.path = content.path and "
         "symbols.line = content.line where symbols.parent = :caller and "
         f"symbols.category = {CLINK_FUNCTION_CALL} order by "
-        "symbols.path, symbols.line, symbols.col;"
+        "records.path, symbols.line, symbols.col;"
     )
     rows = select(db, SQL, {"caller": caller})
     print(f"cscope: {len(rows)} lines")
@@ -151,11 +154,12 @@ def find_calls(db: sqlite3.Connection, caller: str):
 def find_callers(db: sqlite3.Connection, callee: str):
     logging.debug("find_callers of %s", callee)
     SQL = (
-        "select symbols.path, symbols.parent, symbols.line, content.body "
-        "from symbols left join content on symbols.path = content.path and "
+        "select records.path, symbols.parent, symbols.line, content.body "
+        "from symbols inner join records on symbols.path = records.id "
+        "left join content on records.path = content.path and "
         "symbols.line = content.line where symbols.name = :callee and "
         f"symbols.category = {CLINK_FUNCTION_CALL} order by "
-        "symbols.path, symbols.line, symbols.col;"
+        "records.path, symbols.line, symbols.col;"
     )
     rows = select(db, SQL, {"callee": callee})
     print(f"cscope: {len(rows)} lines")
@@ -167,7 +171,7 @@ def find_callers(db: sqlite3.Connection, callee: str):
 def find_file(db: sqlite3.Connection, filename: str):
     logging.debug("find_file of %s", filename)
     SQL = (
-        "select distinct path from symbols where path = :filename or "
+        "select distinct path from records where path = :filename or "
         "path like :pattern order by path"
     )
     rows = select(db, SQL, {"filename": filename, "pattern": f"%/{filename}"})
@@ -179,11 +183,12 @@ def find_file(db: sqlite3.Connection, filename: str):
 def find_includers(db: sqlite3.Connection, path: str):
     logging.debug("find_includers of %s", path)
     SQL = (
-        "select symbols.path, symbols.parent, symbols.line, content.body "
-        "from symbols left join content on symbols.path = content.path and "
+        "select records.path, symbols.parent, symbols.line, content.body "
+        "from symbols inner join records on symbols.path = records.id "
+        "left join content on records.path = content.path and "
         "symbols.line = content.line where symbols.name like :name and "
         f"symbols.category = {CLINK_INCLUDE} order by "
-        "symbols.path, symbols.line, symbols.col;"
+        "records.path, symbols.line, symbols.col;"
     )
     rows = select(db, SQL, {"name": f"%{path}"})
     print(f"cscope: {len(rows)} lines")

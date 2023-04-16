@@ -111,12 +111,13 @@ int clink_db_find_includer(clink_db_t *db, const char *regex,
     return EINVAL;
 
   static const char QUERY[] =
-      "select symbols.name, symbols.path, symbols.line,"
-      "symbols.col, symbols.parent, content.body from symbols left join "
+      "select symbols.name, records.path, symbols.line,"
+      "symbols.col, symbols.parent, content.body from symbols inner join "
+      "records on symbols.path = records.id left join "
       "content "
-      "on symbols.path = content.path and symbols.line = content.line where "
+      "on records.path = content.path and symbols.line = content.line where "
       "symbols.name regexp @name and symbols.category = @category order "
-      "by symbols.path, symbols.line, symbols.col;";
+      "by records.path, symbols.line, symbols.col;";
 
   int rc = 0;
   clink_iter_t *i = NULL;

@@ -10,5 +10,5 @@ int foo() {
 }
 
 // RUN: clink --build-only --database={%t} --parse-c=clang {%s} >/dev/null
-// RUN: echo "select * from symbols where name = 'macro_call' and category = 1;" | sqlite3 {%t}
+// RUN: echo "select symbols.name, records.path, symbols.category, symbols.line, symbols.col, symbols.parent from symbols inner join records on symbols.path = records.id where symbols.name = 'macro_call' and symbols.category = 1;" | sqlite3 {%t}
 // CHECK: macro_call|{%s}|1|8|3|foo
