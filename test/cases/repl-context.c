@@ -9,5 +9,4 @@ int x;
 // highlighted. Ask the REPL to give it us anyway.
 // RUN: echo "1x" | clink-repl -f {%t}
 // CHECK: >> cscope: 1 lines
-// XFAIL: True
 // CHECK: {%s} x 3 int x;

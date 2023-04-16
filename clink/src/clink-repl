@@ -59,26 +59,45 @@ def select(
     return cursor.fetchall()
 
 
-def in_bw(s: Optional[str]) -> str:
+def in_bw(source: Path, line: int, text: Optional[str]) -> str:
     """
     strip ANSI colour codes from a string
+
+    If the content is not supplied (`text is None`), it will be extracted from
+    the given source file. If anything goes wrong, `""` will be returned.
+
+    Args:
+        source: File this content came from.
+        line: Line number this content came from.
+        text: Content of the line itself.
+
+    Returns:
+        The resolved stripped text.
     """
 
-    if s is None:
+    # if we do not have the content, resolve it
+    if text is None:
+        try:
+            with open(source, "rt", encoding="utf-8") as f:
+                for lineno, content in enumerate(f, 1):
+                    if lineno == line:
+                        return in_bw(source, line, content[:-1])
+        except (FileNotFoundError, PermissionError):
+            pass
         return ""
 
     buffer = io.StringIO()
     i = 0
-    while i < len(s):
+    while i < len(text):
 
-        if s[i:].startswith("\033["):
+        if text[i:].startswith("\033["):
             i += 2
-            while i < len(s) and s[i] != "m":
+            while i < len(text) and text[i] != "m":
                 i += 1
             i += 1
             continue
 
-        buffer.write(s[i])
+        buffer.write(text[i])
         i += 1
     return buffer.getvalue()
 
@@ -94,7 +113,8 @@ def find_symbol(db: sqlite3.Connection, name: str):
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1] or name} {row[2]} {in_bw(row[3])}")
+        content = in_bw(Path(row[0]), int(row[2]), row[3])
+        print(f"{row[0]} {row[1] or name} {row[2]} {content}")
 
 
 def find_definition(db: sqlite3.Connection, name: str):
@@ -109,7 +129,8 @@ def find_definition(db: sqlite3.Connection, name: str):
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {name} {row[1]} {in_bw(row[2])}")
+        content = in_bw(Path(row[0]), int(row[1]), row[2])
+        print(f"{row[0]} {name} {row[1]} {content}")
 
 
 def find_calls(db: sqlite3.Connection, caller: str):
@@ -124,7 +145,8 @@ def find_calls(db: sqlite3.Connection, caller: str):
     rows = select(db, SQL, {"caller": caller})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+        content = in_bw(Path(row[0]), int(row[2]), row[3])
+        print(f"{row[0]} {row[1]} {row[2]} {content}")
 
 
 def find_callers(db: sqlite3.Connection, callee: str):
@@ -139,7 +161,8 @@ def find_callers(db: sqlite3.Connection, callee: str):
     rows = select(db, SQL, {"callee": callee})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+        content = in_bw(Path(row[0]), int(row[2]), row[3])
+        print(f"{row[0]} {row[1]} {row[2]} {content}")
 
 
 def find_file(db: sqlite3.Connection, filename: str):
@@ -166,7 +189,8 @@ def find_includers(db: sqlite3.Connection, path: str):
     rows = select(db, SQL, {"name": f"%{path}"})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} {row[1]} {row[2]} {in_bw(row[3])}")
+        content = in_bw(Path(row[0]), int(row[2]), row[3])
+        print(f"{row[0]} {row[1]} {row[2]} {content}")
 
 
 def main(args: List[str]) -> int:
