@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-
 CLINK_DEFINITION = 0
 CLINK_FUNCTION_CALL = 1
 CLINK_REFERENCE = 2
