@@ -82,6 +82,9 @@ bool is_source(const char *path) {
   if (is_python(path) && option.parse_python != OFF)
     return true;
 
+  if (is_tablegen(path) && option.parse_tablegen != OFF)
+    return true;
+
   return false;
 }
 

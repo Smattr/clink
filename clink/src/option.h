@@ -60,6 +60,7 @@ typedef struct {
   parser_t parse_cxx;
   parser_t parse_def;
   parser_t parse_python;
+  parser_t parse_tablegen;
 
   // arguments to pass to Clang
   size_t clang_argc;
