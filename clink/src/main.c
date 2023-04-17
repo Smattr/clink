@@ -55,6 +55,7 @@ static void parse_args(int argc, char **argv) {
       OPT_PARSE_CXX,
       OPT_PARSE_DEF,
       OPT_PARSE_PYTHON,
+      OPT_PARSE_TABLEGEN,
     };
 
     static const struct option opts[] = {
@@ -75,6 +76,7 @@ static void parse_args(int argc, char **argv) {
         {"parse-cxx",            required_argument, 0, OPT_PARSE_CXX},
         {"parse-def",            required_argument, 0, OPT_PARSE_DEF},
         {"parse-python",         required_argument, 0, OPT_PARSE_PYTHON},
+        {"parse-tablegen",       required_argument, 0, OPT_PARSE_TABLEGEN},
         {"script",               required_argument, 0, 'c'},
         {"syntax-highlighting",  required_argument, 0, 's'},
         {"version",              no_argument,       0, 'V'},
@@ -252,6 +254,17 @@ static void parse_args(int argc, char **argv) {
         option.parse_python = OFF;
       } else {
         fprintf(stderr, "illegal value to --parse-python: %s\n", optarg);
+        exit(EX_USAGE);
+      }
+      break;
+
+    case OPT_PARSE_TABLEGEN: // --parse-tablegen
+      if (strcmp(optarg, "generic") == 0) {
+        option.parse_tablegen = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_tablegen = OFF;
+      } else {
+        fprintf(stderr, "illegal value to --parse-tablegen: %s\n", optarg);
         exit(EX_USAGE);
       }
       break;

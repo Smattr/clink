@@ -36,6 +36,7 @@ add_library(libclink
   src/parse_cpp.c
   src/parse_cxx.c
   src/parse_python.c
+  src/parse_tablegen.c
   src/parse_with_clang.c
   src/parse_with_cscope.c
   src/re.c

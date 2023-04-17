@@ -15,5 +15,6 @@
 #include <clink/iter.h>
 #include <clink/python.h>
 #include <clink/symbol.h>
+#include <clink/tablegen.h>
 #include <clink/version.h>
 #include <clink/vim.h>

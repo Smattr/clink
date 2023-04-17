@@ -83,6 +83,8 @@ Do not update the database.
 \fB--parse-def=\fR\fIMODE\fR
 .br
 \fB--parse-python=\fR\fIMODE\fR
+.br
+\fB--parse-tablegen=\fR\fIMODE\fR
 .RS
 Control which source code formats are considered for parsing and how they are
 parsed. The following table describes what source code format each of these
@@ -97,6 +99,7 @@ option	format	modes	default
 \fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
 \fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 \fB--parse-python\fR	Python source code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB--parse-tablegen\fR	LLVM TableGen files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 .TE
 .PP
 The mode \fBauto\fR selects either \fBclang\fR or \fBcscope\fR based on the
