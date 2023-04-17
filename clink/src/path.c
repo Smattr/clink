@@ -84,3 +84,5 @@ bool is_source(const char *path) {
 
   return false;
 }
+
+bool is_tablegen(const char *path) { return has_ext(path, "td"); }

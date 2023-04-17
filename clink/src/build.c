@@ -164,10 +164,15 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path,
     rc = clink_parse_def(db, path);
 
     // Python
-  } else {
-    assert(is_python(path));
+  } else if (is_python(path)) {
     progress_status(thread_id, "parsing Python file %s", display);
     rc = clink_parse_python(db, path);
+
+    // TableGen
+  } else {
+    assert(is_tablegen(path));
+    progress_status(thread_id, "parsing TableGen file %s", display);
+    rc = clink_parse_tablegen(db, path);
   }
 
   if (rc != 0) {
