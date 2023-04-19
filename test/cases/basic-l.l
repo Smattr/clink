@@ -24,8 +24,6 @@ bar {
   return z;
 }
 
-// XFAIL: True
-
 // RUN: clink --build-only --database={%t} --debug --parse-lex=generic {%s} >/dev/null
 
 // RUN: echo "select records.path, symbols.line, symbols.col from symbols inner join records on symbols.path = records.id where symbols.name ='x';" | sqlite3 {%t}

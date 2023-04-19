@@ -82,6 +82,10 @@ Do not update the database.
 .br
 \fB--parse-def=\fR\fIMODE\fR
 .br
+\fB--parse-flex=\fR\fIMODE\fR (alias for \fB--parse-lex\fR)
+.br
+\fB--parse-lex=\fR\fIMODE\fR
+.br
 \fB--parse-python=\fR\fIMODE\fR
 .br
 \fB--parse-tablegen=\fR\fIMODE\fR
@@ -98,24 +102,29 @@ option	format	modes	default
 \fB--parse-c\fR	C source code (.c, .h files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
 \fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
 \fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB--parse-lex\fR	Lex/Flex files	\fBauto\fR, \fBoff\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
 \fB--parse-python\fR	Python source code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 \fB--parse-tablegen\fR	LLVM TableGen files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
 .TE
 .PP
-The mode \fBauto\fR selects either \fBclang\fR or \fBcscope\fR based on the
-presence of compile_commands.json and Cscope. If a compile_commands.json is
-present (either passed in explicitly with \fB--compile-commands\fR or located by
-the inferred search) or Cscope is not installed, \fBclang\fR will be selected.
-Otherwise \fBcscope\fR will be selected.
+For C and C++, the mode \fBauto\fR selects either \fBclang\fR or \fBcscope\fR
+based on the presence of compile_commands.json and Cscope. If a
+compile_commands.json is present (either passed in explicitly with
+\fB--compile-commands\fR or located by the inferred search) or Cscope is not
+installed, \fBclang\fR will be selected. Otherwise \fBcscope\fR will be
+selected.
+.PP
+For Lex/Flex, the mode \fBauto\fR selects \fBcscope\fR if it is available or
+\fBgeneric\fR if not.
 .PP
 The mode \fBgeneric\fR selects a parser that has limited semantic understanding
 and cannot infer things like complex definitions. But it can be useful when you
 do not have full compiler flags for your sources and so Clang cannot effectively
 parse them.
 .PP
-The mode \fBcscope\fR runs Cscope to parse either C or C++. This can be useful
-in a foreign code base, because Cscope sometimes does a better job than Clang at
-parsing a file with unknown flags.
+The mode \fBcscope\fR runs Cscope to parse either C, C++, or Lex/Flex. This can
+be useful in a foreign code base, because Cscope sometimes does a better job
+than Clang at parsing a file with unknown flags.
 .PP
 Note that the definition of C and C++ files overlap in the table above, .h files
 are considered both C and C++. If \fB--parse-c\fR and \fB--parse-cxx\fR are both

@@ -60,6 +60,11 @@ bool is_file(const char *path) {
   return S_ISREG(buf.st_mode);
 }
 
+bool is_lex(const char *path) {
+  return has_ext(path, "l") || has_ext(path, "ll") || has_ext(path, "l++") ||
+         has_ext(path, "lxx") || has_ext(path, "lpp");
+}
+
 bool is_python(const char *path) { return has_ext(path, "py"); }
 
 bool is_source(const char *path) {
@@ -77,6 +82,9 @@ bool is_source(const char *path) {
     return true;
 
   if (is_cxx(path) && option.parse_cxx != OFF)
+    return true;
+
+  if (is_lex(path) && option.parse_lex != OFF)
     return true;
 
   if (is_python(path) && option.parse_python != OFF)

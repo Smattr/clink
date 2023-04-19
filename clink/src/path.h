@@ -75,6 +75,13 @@ bool is_dir(const char *path);
  */
 bool is_file(const char *path);
 
+/** is this a path to a Lex/Flex file?
+ *
+ * \param path Path to assess
+ * \return True if this is a Lex/Flex file
+ */
+bool is_lex(const char *path);
+
 /** is this a path to a Python file?
  *
  * \param path Path to assess
