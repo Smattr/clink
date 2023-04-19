@@ -98,7 +98,7 @@ def lit(tmp: Path, source: Path):
 # find our associated test cases
 root = Path(__file__).parent / "cases"
 cases = sorted(
-    x.name for x in root.iterdir() if x.suffix in (".c", ".def", ".py", ".td")
+    x.name for x in root.iterdir() if x.suffix in (".c", ".def", ".l", ".py", ".td")
 )
 
 
