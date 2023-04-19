@@ -94,12 +94,18 @@ static bool use_cscope(const char *path) {
     return true;
   if (is_cxx(path) && option.parse_cxx == CSCOPE)
     return true;
+  if (is_lex(path) && option.parse_lex == CSCOPE)
+    return true;
   return false;
 }
 
 static const char *filetype(const char *path) {
-  assert(is_c(path) || is_cxx(path));
-  return is_c(path) ? "C" : "C++";
+  assert(is_c(path) || is_cxx(path) || is_lex(path));
+  if (is_c(path))
+    return "C";
+  if (is_cxx(path))
+    return "C++";
+  return "Lex";
 }
 
 static int parse(unsigned long thread_id, clink_db_t *db, const char *path,
@@ -162,6 +168,11 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path,
   } else if (is_def(path)) {
     progress_status(thread_id, "parsing DEF file %s", display);
     rc = clink_parse_def(db, path);
+
+    // Lex/Flex
+  } else if (is_lex(path)) {
+    progress_status(thread_id, "generic parsing Lex file %s", display);
+    rc = clink_parse_cxx(db, path); // parse as C++
 
     // Python
   } else if (is_python(path)) {

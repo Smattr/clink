@@ -54,6 +54,7 @@ static void parse_args(int argc, char **argv) {
       OPT_PARSE_C,
       OPT_PARSE_CXX,
       OPT_PARSE_DEF,
+      OPT_PARSE_LEX,
       OPT_PARSE_PYTHON,
       OPT_PARSE_TABLEGEN,
     };
@@ -75,6 +76,8 @@ static void parse_args(int argc, char **argv) {
         {"parse-c",              required_argument, 0, OPT_PARSE_C},
         {"parse-cxx",            required_argument, 0, OPT_PARSE_CXX},
         {"parse-def",            required_argument, 0, OPT_PARSE_DEF},
+        {"parse-flex",           required_argument, 0, OPT_PARSE_LEX},
+        {"parse-lex",            required_argument, 0, OPT_PARSE_LEX},
         {"parse-python",         required_argument, 0, OPT_PARSE_PYTHON},
         {"parse-tablegen",       required_argument, 0, OPT_PARSE_TABLEGEN},
         {"script",               required_argument, 0, 'c'},
@@ -247,6 +250,21 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
+    case OPT_PARSE_LEX: // --parse-lex
+      if (strcmp(optarg, "auto)") == 0) {
+        option.parse_lex = PARSER_AUTO;
+      } else if (strcmp(optarg, "cscope") == 0) {
+        option.parse_lex = CSCOPE;
+      } else if (strcmp(optarg, "generic") == 0) {
+        option.parse_lex = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_lex = OFF;
+      } else {
+        fprintf(stderr, "illegal value to --parse-lex: %s\n", optarg);
+        exit(EX_USAGE);
+      }
+      break;
+
     case OPT_PARSE_PYTHON: // --parse-python
       if (strcmp(optarg, "generic") == 0) {
         option.parse_python = GENERIC;
@@ -382,9 +400,14 @@ int main(int argc, char **argv) {
     }
   }
 
+  // determine how we will parse Lex/Flex files
+  if (option.update_database && option.parse_lex == PARSER_AUTO)
+    option.parse_lex = clink_have_cscope() ? CSCOPE : GENERIC;
+
   // check we have Cscope
   if (option.update_database) {
-    if (option.parse_c == CSCOPE || option.parse_cxx == CSCOPE) {
+    if (option.parse_c == CSCOPE || option.parse_cxx == CSCOPE ||
+        option.parse_lex == CSCOPE) {
       if (!clink_have_cscope()) {
         rc = ENOENT;
         fprintf(stderr, "Cscope not found\n");
