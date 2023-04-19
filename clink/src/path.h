@@ -110,6 +110,13 @@ bool is_source(const char *path);
  */
 bool is_tablegen(const char *path);
 
+/** is this a path to a Yacc/Bison file?
+ *
+ * \param path Path to assess
+ * \return True if this is a Yacc/Bison file
+ */
+bool is_yacc(const char *path);
+
 /** concatenate two paths
  *
  * \param branch Start of the new path

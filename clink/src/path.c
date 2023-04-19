@@ -93,7 +93,15 @@ bool is_source(const char *path) {
   if (is_tablegen(path) && option.parse_tablegen != OFF)
     return true;
 
+  if (is_yacc(path) && option.parse_yacc != OFF)
+    return true;
+
   return false;
 }
 
 bool is_tablegen(const char *path) { return has_ext(path, "td"); }
+
+bool is_yacc(const char *path) {
+  return has_ext(path, "y") || has_ext(path, "yy") || has_ext(path, "y++") ||
+         has_ext(path, "yxx") || has_ext(path, "ypp");
+}

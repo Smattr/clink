@@ -39,8 +39,6 @@ void foo(int a, int b) {
   printf("%d %d\n", a, b);
 }
 
-// XFAIL: True
-
 // RUN: clink --build-only --database={%t} --debug --parse-yacc=generic {%s} >/dev/null
 
 // RUN: echo "select records.path, symbols.line, symbols.col from symbols inner join records on symbols.path = records.id where symbols.name = 'x';" | sqlite3 {%t}
