@@ -32,6 +32,7 @@ option_t option = {
     .parse_lex = PARSER_AUTO,
     .parse_python = GENERIC,
     .parse_tablegen = GENERIC,
+    .parse_yacc = PARSER_AUTO,
     .clang_argc = 0,
     .clang_argv = NULL,
     .compile_commands = {0},

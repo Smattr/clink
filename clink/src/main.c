@@ -57,6 +57,7 @@ static void parse_args(int argc, char **argv) {
       OPT_PARSE_LEX,
       OPT_PARSE_PYTHON,
       OPT_PARSE_TABLEGEN,
+      OPT_PARSE_YACC,
     };
 
     static const struct option opts[] = {
@@ -73,6 +74,7 @@ static void parse_args(int argc, char **argv) {
         {"jobs",                 required_argument, 0, 'j'},
         {"no-build",             no_argument,       0, 'd'},
         {"parse-asm",            required_argument, 0, OPT_PARSE_ASM},
+        {"parse-bison",          required_argument, 0, OPT_PARSE_YACC},
         {"parse-c",              required_argument, 0, OPT_PARSE_C},
         {"parse-cxx",            required_argument, 0, OPT_PARSE_CXX},
         {"parse-def",            required_argument, 0, OPT_PARSE_DEF},
@@ -80,6 +82,7 @@ static void parse_args(int argc, char **argv) {
         {"parse-lex",            required_argument, 0, OPT_PARSE_LEX},
         {"parse-python",         required_argument, 0, OPT_PARSE_PYTHON},
         {"parse-tablegen",       required_argument, 0, OPT_PARSE_TABLEGEN},
+        {"parse-yacc",           required_argument, 0, OPT_PARSE_YACC},
         {"script",               required_argument, 0, 'c'},
         {"syntax-highlighting",  required_argument, 0, 's'},
         {"version",              no_argument,       0, 'V'},
@@ -287,6 +290,21 @@ static void parse_args(int argc, char **argv) {
       }
       break;
 
+    case OPT_PARSE_YACC: // --parse-yacc
+      if (strcmp(optarg, "auto)") == 0) {
+        option.parse_yacc = PARSER_AUTO;
+      } else if (strcmp(optarg, "cscope") == 0) {
+        option.parse_yacc = CSCOPE;
+      } else if (strcmp(optarg, "generic") == 0) {
+        option.parse_yacc = GENERIC;
+      } else if (strcmp(optarg, "off") == 0) {
+        option.parse_yacc = OFF;
+      } else {
+        fprintf(stderr, "illegal value to --parse-yacc: %s\n", optarg);
+        exit(EX_USAGE);
+      }
+      break;
+
     case 'V': { // --version
       clink_version_info_t version = clink_version_info();
       fprintf(stderr, "clink version %s\n", version.version);
@@ -400,14 +418,18 @@ int main(int argc, char **argv) {
     }
   }
 
-  // determine how we will parse Lex/Flex files
-  if (option.update_database && option.parse_lex == PARSER_AUTO)
-    option.parse_lex = clink_have_cscope() ? CSCOPE : GENERIC;
+  // determine how we will parse Lex/Flex and Bison/Yacc files
+  if (option.update_database) {
+    if (option.parse_lex == PARSER_AUTO)
+      option.parse_lex = clink_have_cscope() ? CSCOPE : GENERIC;
+    if (option.parse_yacc == PARSER_AUTO)
+      option.parse_yacc = clink_have_cscope() ? CSCOPE : GENERIC;
+  }
 
   // check we have Cscope
   if (option.update_database) {
     if (option.parse_c == CSCOPE || option.parse_cxx == CSCOPE ||
-        option.parse_lex == CSCOPE) {
+        option.parse_lex == CSCOPE || option.parse_yacc == CSCOPE) {
       if (!clink_have_cscope()) {
         rc = ENOENT;
         fprintf(stderr, "Cscope not found\n");

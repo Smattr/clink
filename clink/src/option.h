@@ -62,6 +62,7 @@ typedef struct {
   parser_t parse_lex;
   parser_t parse_python;
   parser_t parse_tablegen;
+  parser_t parse_yacc;
 
   // arguments to pass to Clang
   size_t clang_argc;

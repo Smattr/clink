@@ -96,16 +96,20 @@ static bool use_cscope(const char *path) {
     return true;
   if (is_lex(path) && option.parse_lex == CSCOPE)
     return true;
+  if (is_yacc(path) && option.parse_yacc == CSCOPE)
+    return true;
   return false;
 }
 
 static const char *filetype(const char *path) {
-  assert(is_c(path) || is_cxx(path) || is_lex(path));
+  assert(is_c(path) || is_cxx(path) || is_lex(path) || is_yacc(path));
   if (is_c(path))
     return "C";
   if (is_cxx(path))
     return "C++";
-  return "Lex";
+  if (is_lex(path))
+    return "Lex";
+  return "Yacc";
 }
 
 static int parse(unsigned long thread_id, clink_db_t *db, const char *path,
@@ -180,10 +184,15 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path,
     rc = clink_parse_python(db, path);
 
     // TableGen
-  } else {
-    assert(is_tablegen(path));
+  } else if (is_tablegen(path)) {
     progress_status(thread_id, "parsing TableGen file %s", display);
     rc = clink_parse_tablegen(db, path);
+
+    // Yacc/Bison
+  } else {
+    assert(is_yacc(path));
+    progress_status(thread_id, "generic parsing Yacc file %s", display);
+    rc = clink_parse_cxx(db, path); // parse as C++
   }
 
   if (rc != 0) {
