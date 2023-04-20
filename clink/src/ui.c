@@ -92,13 +92,9 @@ static void print_colour(const char *str, const char *lock) {
 
 /// will these two symbols appear identically in the results list?
 static bool are_duplicates(const clink_symbol_t *a, const clink_symbol_t *b) {
-  if (LIKELY(strcmp(a->name, b->name) != 0))
-    return false;
   if (LIKELY(strcmp(a->path, b->path) != 0))
     return false;
   if (LIKELY(a->lineno != b->lineno))
-    return false;
-  if (LIKELY(a->colno != b->colno))
     return false;
   return true;
 }
