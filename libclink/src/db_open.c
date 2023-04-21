@@ -121,16 +121,26 @@ int clink_db_open(clink_db_t **db, const char *path) {
 
   int rc = 0;
 
-  d->path = strdup(path);
-  if (ERROR(d->path == NULL)) {
-    rc = ENOMEM;
-    goto done;
-  }
-
   int err = sqlite3_open(path, &d->db);
   if (err != SQLITE_OK) {
     rc = sql_err_to_errno(err);
     goto done;
+  }
+
+  // now that the database exists, find an absolute path to it
+  if (path[0] != '/') {
+    char *abs = realpath(path, NULL);
+    if (ERROR(abs == NULL)) {
+      rc = errno;
+      goto done;
+    }
+    d->path = abs;
+  } else {
+    d->path = strdup(path);
+    if (ERROR(d->path == NULL)) {
+      rc = ENOMEM;
+      goto done;
+    }
   }
 
   if (exists) {
