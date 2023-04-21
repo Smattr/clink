@@ -15,6 +15,9 @@
 /// state for our iterator
 typedef struct {
 
+  /// database we are searching
+  clink_db_t *db;
+
   /// the full regular expression pattern we are searching for
   char *pattern;
 
@@ -24,6 +27,10 @@ typedef struct {
   /// last symbol we yielded
   clink_symbol_t last;
 
+  /// a temporary buffer for storing resolved paths
+  char *abs_path;
+  size_t abs_path_size;
+
 } state_t;
 
 static void state_free(state_t **ss) {
@@ -32,6 +39,10 @@ static void state_free(state_t **ss) {
     return;
 
   state_t *s = *ss;
+
+  s->abs_path_size = 0;
+  free(s->abs_path);
+  s->abs_path = NULL;
 
   memset(&s->last, 0, sizeof(s->last));
 
@@ -78,7 +89,23 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
   // construct a symbol from the result
   s->last.category = CLINK_DEFINITION;
   s->last.name = (char *)sqlite3_column_text(s->stmt, 0);
-  s->last.path = (char *)sqlite3_column_text(s->stmt, 1);
+  char *path = (char *)sqlite3_column_text(s->stmt, 1);
+  if (path[0] == '/') {
+    s->last.path = path;
+  } else {
+    if (s->abs_path_size < strlen(s->db->dir) + strlen(path) + 1) {
+      size_t abs_path_size = strlen(s->db->dir) + strlen(path) + 1;
+      char *a = realloc(s->abs_path, abs_path_size);
+      if (ERROR(a == NULL))
+        return ENOMEM;
+      s->abs_path = a;
+      if (s->abs_path_size == 0) // is this the first relative path?
+        memcpy(s->abs_path, s->db->dir, strlen(s->db->dir));
+      s->abs_path_size = abs_path_size;
+    }
+    memcpy(s->abs_path + strlen(s->db->dir), path, strlen(path) + 1);
+    s->last.path = s->abs_path;
+  }
   s->last.lineno = sqlite3_column_int64(s->stmt, 2);
   s->last.colno = sqlite3_column_int64(s->stmt, 3);
   s->last.parent = (char *)sqlite3_column_text(s->stmt, 4);
@@ -127,6 +154,7 @@ int clink_db_find_definition(clink_db_t *db, const char *regex,
     rc = ENOMEM;
     goto done;
   }
+  s->db = db;
 
   // create a query to lookup the definition in the database
   if (ERROR((rc = sql_prepare(db->db, QUERY, &s->stmt))))
