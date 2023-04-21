@@ -54,11 +54,8 @@ typedef int64_t clink_record_id_t;
 
 /** add a file record to the database
  *
- * Nothing in the symbol or content functionality assumes a corresponding file
- * record exists. I.e. it is fine to add and lookup symbols and content without
- * having a record installed in the database for the containing file. Both the
- * hash and the timestamp are uninterpreted internally, so the caller can choose
- * any representation they desire.
+ * Both the hash and the timestamp are uninterpreted internally, so the caller
+ * can choose any representation they desire.
  *
  * \param db Database to operate on
  * \param path Path of the subject to store information about
