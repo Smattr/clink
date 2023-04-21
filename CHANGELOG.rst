@@ -1,6 +1,22 @@
 Change log
 ==========
 
+v2023.04.20
+-----------
+* Bug fix: some symbols that occur within parameters to macros that are
+  themselves defined in an external header are now detected correctly when using
+  Clang parsing (commit 44f37f40867f4c734d77927a10246850818f772b).
+* Support for Lex/Flex files has been added (commit
+  a9591cd02fddb5de7106208ce890a67808aa9f4c).
+* Support for Yacc/Bison files has been added (commit
+  820ce31d0701dadb0df42dd64c68f2d79026de09).
+* Support for LLVM TableGen files has been added (commits
+  8de1d9f6d71e39ea60e7df0c4ae553795ccad6ac,
+  0f28dc557f0d15b34d1f60eecfb4e3de7c5ca67d,
+  a073fe0b133ecdc0fdfd08ddbf2a51dbf64ec879).
+* Search results that appear to be duplicated rows are now coalesced (commit
+  b2c7fa71b2f13b016a9ee6d03f2f8715d7125df6).
+
 v2023.04.16
 -----------
 * Bug fix: in Vim, when using the Cscope bridge functionality to jump to
