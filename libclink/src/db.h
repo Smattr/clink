@@ -7,8 +7,11 @@
 
 struct clink_db {
 
-  /// path to the database file
-  char *path;
+  /// directory the database file lives in, with trailing /
+  char *dir;
+
+  /// filename of the database file
+  char *filename;
 
   /// handle to backing SQLite database
   sqlite3 *db;

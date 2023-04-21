@@ -134,13 +134,23 @@ int clink_db_open(clink_db_t **db, const char *path) {
       rc = errno;
       goto done;
     }
-    d->path = abs;
+    char *slash = strrchr(abs, '/');
+    assert(slash != NULL);
+    d->filename = strdup(slash + 1);
+    slash[1] = '\0';
+    d->dir = abs;
   } else {
-    d->path = strdup(path);
-    if (ERROR(d->path == NULL)) {
-      rc = ENOMEM;
-      goto done;
-    }
+    char *slash = strrchr(path, '/');
+    d->dir = strndup(path, (size_t)(slash + 1 - path));
+    d->filename = strdup(slash + 1);
+  }
+  if (ERROR(d->dir == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+  if (ERROR(d->filename == NULL)) {
+    rc = ENOMEM;
+    goto done;
   }
 
   if (exists) {

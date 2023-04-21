@@ -101,12 +101,12 @@ int clink_vim_open(const char *filename, unsigned long lineno,
   // construct a directive teaching Vim the database
   if (db != NULL) {
     // will we be unable to communicate this to Vim?
-    if (ERROR(!is_supported(db->path))) {
+    if (ERROR(!is_supported(db->dir) || !is_supported(db->filename))) {
       rc = ENOTSUP;
       goto done;
     }
 
-    if (ERROR(asprintf(&add, "+cs add %s", db->path) < 0)) {
+    if (ERROR(asprintf(&add, "+cs add %s%s", db->dir, db->filename) < 0)) {
       rc = ENOMEM;
       goto done;
     }
