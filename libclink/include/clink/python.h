@@ -15,6 +15,8 @@ extern "C" {
  * This parsing interface is extremely limited, capable only of heuristically
  * recognising definitions and references.
  *
+ * The \p filename parameter must be an absolute path.
+ *
  * \param db Database to insert into
  * \param filename Path to source file to parse
  * \return 0 on success or an errno on failure

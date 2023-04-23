@@ -24,7 +24,8 @@ CLINK_API bool clink_have_cscope(void);
  *
  * If the caller knows the identifier of the record for the source path
  * \p filename, they can pass this as \p id. If not, they can pass -1 to
- * indicate the callee needs to look this up.
+ * indicate the callee needs to look this up. In this case, the \p filename
+ * provided must be an absolute path.
  *
  * \param db Database to insert into
  * \param filename Path to source file to parse

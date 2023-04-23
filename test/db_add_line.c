@@ -18,9 +18,9 @@ TEST("clink_db_add_line()") {
     ASSERT_EQ(rc, 0);
   }
 
-  // add a new symbol
+  // add a new line of content
   {
-    static const char p[] = "foo";
+    static const char p[] = "/foo";
     unsigned long lineno = 42;
     static const char line[] = "bar\n";
 

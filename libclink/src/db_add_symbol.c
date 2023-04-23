@@ -120,6 +120,8 @@ done:
 int add_symbol(clink_db_t *db, symbol_t sym) {
 
   assert(db != NULL);
+  assert(sym.path != NULL);
+  assert(sym.path[0] == '/');
 
   int rc = 0;
 
@@ -144,6 +146,9 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
     return EINVAL;
 
   if (ERROR(symbol == NULL))
+    return EINVAL;
+
+  if (ERROR(symbol->path == NULL || symbol->path[0] != '/'))
     return EINVAL;
 
   span_t name = {

@@ -21,7 +21,8 @@ void clink_db_close(clink_db_t **db) {
   // close the database handle
   (void)sqlite3_close((*db)->db);
 
-  free((*db)->path);
+  free((*db)->filename);
+  free((*db)->dir);
 
   free(*db);
   *db = NULL;

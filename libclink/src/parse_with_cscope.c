@@ -296,6 +296,9 @@ int clink_parse_with_cscope(clink_db_t *db, const char *filename,
   if (ERROR(filename == NULL))
     return EINVAL;
 
+  if (ERROR(filename[0] != '/'))
+    return EINVAL;
+
   // check the file is readable
   if (ERROR(access(filename, R_OK) < 0))
     return errno;

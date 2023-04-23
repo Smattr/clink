@@ -129,6 +129,9 @@ int clink_parse_generic(clink_db_t *db, const char *filename,
   if (ERROR(filename == NULL))
     return EINVAL;
 
+  if (ERROR(filename[0] != '/'))
+    return EINVAL;
+
   if (ERROR(lang == NULL))
     return EINVAL;
 
