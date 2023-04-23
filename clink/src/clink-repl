@@ -105,10 +105,15 @@ def make_path(db_path: Path, stem: str) -> Path:
     """resolve a (possibly database-relative) path"""
 
     path = Path(stem)
-    if path.is_absolute():
-        return path
+    if not path.is_absolute():
+        path = db_path.parent / path
 
-    return db_path.parent / path
+    # see if we can make this cwd-relative
+    cwd = Path.cwd()
+    if path.is_relative_to(cwd):
+        return path.relative_to(cwd)
+
+    return path
 
 
 def find_symbol(db_path: Path, db: sqlite3.Connection, name: str):
