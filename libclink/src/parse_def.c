@@ -2,6 +2,7 @@
 #include <clink/def.h>
 #include <clink/generic.h>
 #include <errno.h>
+#include <unistd.h>
 
 int clink_parse_def(clink_db_t *db, const char *filename) {
 
@@ -10,6 +11,10 @@ int clink_parse_def(clink_db_t *db, const char *filename) {
 
   if (ERROR(filename == NULL))
     return EINVAL;
+
+  // check the file is readable
+  if (ERROR(access(filename, R_OK) < 0))
+    return errno;
 
   // The keywords in the Module-Definition language, according to Microsoft.
   // Technically one of these can be used as a symbol if you enclose it in
