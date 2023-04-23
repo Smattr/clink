@@ -21,7 +21,7 @@ TEST("clink_db_add_record()") {
   // add a new record
   {
     clink_record_id_t id = -1;
-    int rc = clink_db_add_record(db, "foo/bar.c", 42, 128, &id);
+    int rc = clink_db_add_record(db, "/foo/bar.c", 42, 128, &id);
     if (rc)
       fprintf(stderr, "clink_db_add_record: %s\n", strerror(rc));
     ASSERT_EQ(rc, 0);

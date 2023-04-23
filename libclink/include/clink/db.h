@@ -57,6 +57,8 @@ typedef int64_t clink_record_id_t;
  * Both the hash and the timestamp are uninterpreted internally, so the caller
  * can choose any representation they desire.
  *
+ * The \p filename parameter must be an absolute path.
+ *
  * \param db Database to operate on
  * \param path Path of the subject to store information about
  * \param hash Some hash digest of the subject
@@ -70,6 +72,8 @@ CLINK_API int clink_db_add_record(clink_db_t *db, const char *path,
 
 /** add a symbol to the database
  *
+ * \p symbol->path must be an absolute path.
+ *
  * \param db Database to operate on
  * \param symbol Symbol to add
  * \return 0 on success or a SQLite error code on failure
@@ -77,6 +81,8 @@ CLINK_API int clink_db_add_record(clink_db_t *db, const char *path,
 CLINK_API int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol);
 
 /** add a line of source content to the database
+ *
+ * The \p path parameter must be an absolute path.
  *
  * \param db Database to operate on
  * \param path Path of the file this line came from
@@ -88,6 +94,8 @@ CLINK_API int clink_db_add_line(clink_db_t *db, const char *path,
                                 unsigned long lineno, const char *line);
 
 /** remove all symbols and content related to a given file
+ *
+ * The \p path parameter must be an absolute path.
  *
  * \param db Clink database to operate on
  * \param path Path of the file to remove information for
@@ -147,6 +155,8 @@ CLINK_API int clink_db_find_includer(clink_db_t *db, const char *regex,
  * The hash and timestamp parameters can be NULL if the caller does not need
  * this information.
  *
+ * The \p path parameter must be an absolute path.
+ *
  * \param db Database to search
  * \param path Path to subject to lookup
  * \param hash [out] Hash digest of the subject if a record was found
@@ -170,6 +180,8 @@ CLINK_API int clink_db_find_symbol(clink_db_t *db, const char *regex,
                                    clink_iter_t **it);
 
 /** retrieve a highlighted line from the database
+ *
+ * The \p path parameter must be an absolute path.
  *
  * \param db Database to search
  * \param path Path to file whose content to retrieve

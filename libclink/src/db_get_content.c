@@ -16,6 +16,9 @@ int clink_db_get_content(clink_db_t *db, const char *path, unsigned long lineno,
   if (ERROR(path == NULL))
     return EINVAL;
 
+  if (ERROR(path[0] != '/'))
+    return EINVAL;
+
   if (ERROR(content == NULL))
     return EINVAL;
 

@@ -9,6 +9,8 @@ extern "C" {
 
 /** parse the given C/C++ file with Clang
  *
+ * The \p filename parameter must be an absolute path.
+ *
  * \param db Database to insert into
  * \param filename Path to source file to parse
  * \param argc Number of Clang command line arguments

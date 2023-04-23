@@ -20,6 +20,9 @@ int clink_db_find_record(clink_db_t *db, const char *path, uint64_t *hash,
   if (ERROR(strcmp(path, "") == 0))
     return EINVAL;
 
+  if (ERROR(path[0] != '/'))
+    return EINVAL;
+
   static const char QUERY[] =
       "select hash, timestamp from records where path = @path;";
 

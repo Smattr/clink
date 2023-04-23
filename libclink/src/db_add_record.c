@@ -20,6 +20,9 @@ int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
   if (ERROR(path == NULL))
     return EINVAL;
 
+  if (ERROR(path[0] != '/'))
+    return EINVAL;
+
   if (ERROR(strcmp(path, "") == 0))
     return EINVAL;
 

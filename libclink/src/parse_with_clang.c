@@ -624,6 +624,9 @@ int clink_parse_with_clang(clink_db_t *db, const char *filename, size_t argc,
   if (ERROR(filename == NULL))
     return EINVAL;
 
+  if (ERROR(filename[0] != '/'))
+    return EINVAL;
+
   // the Clang API wants this as an int
   if (ERROR(argc > INT_MAX))
     return EINVAL;

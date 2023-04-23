@@ -17,6 +17,9 @@ void clink_db_remove(clink_db_t *db, const char *path) {
   if (ERROR(path == NULL))
     return;
 
+  if (ERROR(path[0] != '/'))
+    return;
+
   // find the record identifier for this path
   clink_record_id_t id = -1;
   {

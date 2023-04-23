@@ -49,6 +49,8 @@ CLINK_API int clink_vim_read(const char *filename,
  * That is, it is assumed the caller has previously \p clink_db_add_symbol any
  * symbols whose line content they wish to be added.
  *
+ * The \p filename parameter must be an absolute path.
+ *
  * \param db Database to insert into
  * \param filename Source file to read
  * \return 0 on success or an errno on failure

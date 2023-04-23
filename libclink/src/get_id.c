@@ -12,6 +12,7 @@ int get_id(clink_db_t *db, const char *path, clink_record_id_t *id) {
 
   assert(db != NULL);
   assert(path != NULL);
+  assert(path[0] == '/');
   assert(id != NULL);
 
   int rc = 0;

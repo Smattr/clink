@@ -41,6 +41,8 @@ typedef struct {
  * The comment start and end markers defined in \p lang->comments cannot include
  * newline characters ('\n' and '\r').
  *
+ * The \p filename parameter must be an absolute path.
+ *
  * \param db Database to insert into
  * \param filename Path to source file to parse
  * \param lang The source language for interpreting this file

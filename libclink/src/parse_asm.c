@@ -245,6 +245,9 @@ int clink_parse_asm(clink_db_t *db, const char *filename) {
   if (ERROR(filename == NULL))
     return EINVAL;
 
+  if (ERROR(filename[0] != '/'))
+    return EINVAL;
+
   int rc = 0;
   state_t s = {.db = db, .filename = filename};
 

@@ -34,7 +34,7 @@ INTERNAL int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
 /// convenience wrapper for \p add_symbols with a single symbol
 ///
 /// There is no way to set the \p id parameter to \p add_symbols when calling
-/// through this interface.
+/// through this interface. \p sym.path must be an absolute path.
 ///
 /// \param db Database to operate on
 /// \param sym Symbol to insert

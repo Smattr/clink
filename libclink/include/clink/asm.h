@@ -38,6 +38,8 @@ extern "C" {
 
 /** parse the given assembly file into the given database
  *
+ * The \p filename parameter must be an absolute path.
+ *
  * \param db Database to insert into
  * \param filename Path to source file to parse
  * \return 0 on success or an errno on failure

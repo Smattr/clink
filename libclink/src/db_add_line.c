@@ -18,6 +18,9 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
   if (ERROR(path == NULL))
     return EINVAL;
 
+  if (ERROR(path[0] != '/'))
+    return EINVAL;
+
   if (ERROR(lineno == 0))
     return EINVAL;
 

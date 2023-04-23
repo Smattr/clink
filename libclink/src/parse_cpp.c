@@ -131,6 +131,9 @@ int clink_parse_cpp(clink_db_t *db, const char *filename) {
   if (ERROR(filename == NULL))
     return EINVAL;
 
+  if (ERROR(filename[0] != '/'))
+    return EINVAL;
+
   int rc = 0;
   mmap_t mapped = {0};
 
