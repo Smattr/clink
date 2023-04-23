@@ -101,7 +101,17 @@ def in_bw(source: Path, line: int, text: Optional[str]) -> str:
     return buffer.getvalue()
 
 
-def find_symbol(db: sqlite3.Connection, name: str):
+def make_path(db_path: Path, stem: str) -> Path:
+    """resolve a (possibly database-relative) path"""
+
+    path = Path(stem)
+    if path.is_absolute():
+        return path
+
+    return db_path.parent / path
+
+
+def find_symbol(db_path: Path, db: sqlite3.Connection, name: str):
     logging.debug("find_symbol of %s", name)
     SQL = (
         "select records.path, symbols.parent, symbols.line, content.body "
@@ -113,11 +123,12 @@ def find_symbol(db: sqlite3.Connection, name: str):
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        content = in_bw(Path(row[0]), int(row[2]), row[3])
-        print(f"{row[0]} {row[1] or name} {row[2]} {content}")
+        path = make_path(db_path, row[0])
+        content = in_bw(path, int(row[2]), row[3])
+        print(f"{path} {row[1] or name} {row[2]} {content}")
 
 
-def find_definition(db: sqlite3.Connection, name: str):
+def find_definition(db_path: Path, db: sqlite3.Connection, name: str):
     logging.debug("find_definition of %s", name)
     SQL = (
         "select records.path, symbols.line, content.body "
@@ -130,11 +141,12 @@ def find_definition(db: sqlite3.Connection, name: str):
     rows = select(db, SQL, {"name": name})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        content = in_bw(Path(row[0]), int(row[1]), row[2])
-        print(f"{row[0]} {name} {row[1]} {content}")
+        path = make_path(db_path, row[0])
+        content = in_bw(path, int(row[1]), row[2])
+        print(f"{path} {name} {row[1]} {content}")
 
 
-def find_calls(db: sqlite3.Connection, caller: str):
+def find_calls(db_path: Path, db: sqlite3.Connection, caller: str):
     logging.debug("find_calls of %s", caller)
     SQL = (
         "select records.path, symbols.name, symbols.line, content.body "
@@ -147,11 +159,12 @@ def find_calls(db: sqlite3.Connection, caller: str):
     rows = select(db, SQL, {"caller": caller})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        content = in_bw(Path(row[0]), int(row[2]), row[3])
-        print(f"{row[0]} {row[1]} {row[2]} {content}")
+        path = make_path(db_path, row[0])
+        content = in_bw(path, int(row[2]), row[3])
+        print(f"{path} {row[1]} {row[2]} {content}")
 
 
-def find_callers(db: sqlite3.Connection, callee: str):
+def find_callers(db_path: Path, db: sqlite3.Connection, callee: str):
     logging.debug("find_callers of %s", callee)
     SQL = (
         "select records.path, symbols.parent, symbols.line, content.body "
@@ -164,11 +177,12 @@ def find_callers(db: sqlite3.Connection, callee: str):
     rows = select(db, SQL, {"callee": callee})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        content = in_bw(Path(row[0]), int(row[2]), row[3])
-        print(f"{row[0]} {row[1]} {row[2]} {content}")
+        path = make_path(db_path, row[0])
+        content = in_bw(path, int(row[2]), row[3])
+        print(f"{path} {row[1]} {row[2]} {content}")
 
 
-def find_file(db: sqlite3.Connection, filename: str):
+def find_file(db_path: Path, db: sqlite3.Connection, filename: str):
     logging.debug("find_file of %s", filename)
     SQL = (
         "select distinct path from records where path = :filename or "
@@ -177,10 +191,11 @@ def find_file(db: sqlite3.Connection, filename: str):
     rows = select(db, SQL, {"filename": filename, "pattern": f"%/{filename}"})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        print(f"{row[0]} <unknown> 1 <unknown>")
+        path = make_path(db_path, row[0])
+        print(f"{path} <unknown> 1 <unknown>")
 
 
-def find_includers(db: sqlite3.Connection, path: str):
+def find_includers(db_path: Path, db: sqlite3.Connection, path: str):
     logging.debug("find_includers of %s", path)
     SQL = (
         "select records.path, symbols.parent, symbols.line, content.body "
@@ -193,8 +208,9 @@ def find_includers(db: sqlite3.Connection, path: str):
     rows = select(db, SQL, {"name": f"%{path}"})
     print(f"cscope: {len(rows)} lines")
     for row in rows:
-        content = in_bw(Path(row[0]), int(row[2]), row[3])
-        print(f"{row[0]} {row[1]} {row[2]} {content}")
+        path = make_path(db_path, row[0])
+        content = in_bw(path, int(row[2]), row[3])
+        print(f"{path} {row[1]} {row[2]} {content}")
 
 
 def main(args: List[str]) -> int:
@@ -219,6 +235,7 @@ def main(args: List[str]) -> int:
         if db_path is None:
             sys.stderr.write("Clink database not found\n")
             return -1
+    db_path = Path(db_path).resolve()
 
     db_conn = sqlite3.connect(db_path)
 
@@ -233,22 +250,22 @@ def main(args: List[str]) -> int:
             continue
 
         if query[0] == "0":
-            find_symbol(db_conn, query[1:])
+            find_symbol(db_path, db_conn, query[1:])
 
         elif query[0] == "1":  # find definition
-            find_definition(db_conn, query[1:])
+            find_definition(db_path, db_conn, query[1:])
 
         elif query[0] == "2":
-            find_calls(db_conn, query[1:])
+            find_calls(db_path, db_conn, query[1:])
 
         elif query[0] == "3":
-            find_callers(db_conn, query[1:])
+            find_callers(db_path, db_conn, query[1:])
 
         elif query[0] == "7":
-            find_file(db_conn, query[1:])
+            find_file(db_path, db_conn, query[1:])
 
         elif query[0] == "8":
-            find_includers(db_conn, query[1:])
+            find_includers(db_path, db_conn, query[1:])
 
         # Commands we do not support. Just pretend there were no results.
         elif query[0] in (
