@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 /// total number of items we have to process
@@ -166,7 +167,36 @@ void progress_increment(void) {
 
   // print a progress update
   ++done;
-  printf("%zu / %zu (%.02f%%)\n", done, total, (double)done / total * 100);
+  int printed =
+      printf("%zu / %zu (%.02f%%) ", done, total, (double)done / total * 100);
+
+  // determine terminal width
+  struct winsize ws = {0};
+  (void)ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+  size_t columns = ws.ws_col;
+
+  // if we have room, print a progress bar
+  if (option.animation && printed >= 0 && columns > (size_t)printed + 2) {
+    printf("│");
+    size_t available = columns - (size_t)printed - 2;
+
+    // how many segments of `9 × available` should be filled?
+    const char *blocks[] = {" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"};
+    const size_t blocks_len = sizeof(blocks) / sizeof(blocks[0]);
+    size_t filled = (size_t)(available * blocks_len * (double)done / total);
+
+    for (size_t i = 0; i < available; ++i) {
+      if (filled < blocks_len * i) {
+        printf(" ");
+      } else if (filled >= blocks_len * (i + 1)) {
+        printf("█");
+      } else {
+        printf("%s", blocks[filled % blocks_len]);
+      }
+    }
+    printf("│");
+  }
+  printf("\n");
 
   funlockfile(stdout);
 }
