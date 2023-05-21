@@ -177,8 +177,7 @@ void progress_increment(void) {
 
   // if we have room, print a progress bar
   if (option.animation && printed >= 0 && columns > (size_t)printed + 2) {
-    printf("│");
-    size_t available = columns - (size_t)printed - 2;
+    size_t available = columns - (size_t)printed;
 
     // how many segments of `9 × available` should be filled?
     const char *blocks[] = {" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"};
@@ -194,7 +193,6 @@ void progress_increment(void) {
         printf("%s", blocks[filled % blocks_len]);
       }
     }
-    printf("│");
   }
   printf("\n");
 
