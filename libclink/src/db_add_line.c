@@ -1,3 +1,4 @@
+#include "add_line.h"
 #include "db.h"
 #include "debug.h"
 #include "get_id.h"
@@ -8,8 +9,8 @@
 #include <sqlite3.h>
 #include <stddef.h>
 
-static int add_line(clink_db_t *db, clink_record_id_t path,
-                    unsigned long lineno, const char *line) {
+int add_line(clink_db_t *db, clink_record_id_t path, unsigned long lineno,
+             const char *line) {
 
   assert(db != NULL);
   assert(path != -1);
