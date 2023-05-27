@@ -95,12 +95,10 @@ int clink_vim_read_into(clink_db_t *db, const char *filename) {
 
   // create a query to lookup relevant line numbers from the target file
   static const char QUERY[] =
-      "select distinct symbols.line from symbols inner join records "
-      "on symbols.path = records.id "
-      "where records.path = @filename order by symbols.line;";
+      "select distinct line from symbols where path = @id order by line;";
   if (ERROR((rc = sql_prepare(db->db, QUERY, &s.stmt))))
     goto done;
-  if (ERROR((rc = sql_bind_text(s.stmt, 1, filename))))
+  if (ERROR((rc = sql_bind_int(s.stmt, 1, id))))
     goto done;
 
   rc = clink_vim_read(filename, insert, &s);
