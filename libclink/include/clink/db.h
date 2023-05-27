@@ -88,7 +88,7 @@ CLINK_API int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol);
  * \param path Path of the file this line came from
  * \param lineno Line number within the file this came from
  * \param line Content of the line itself
- * \return 0 on success or a SQLite error code on failure
+ * \return 0 on success or an errno on failure
  */
 CLINK_API int clink_db_add_line(clink_db_t *db, const char *path,
                                 unsigned long lineno, const char *line);

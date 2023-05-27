@@ -1,5 +1,7 @@
+#include "add_line.h"
 #include "db.h"
 #include "debug.h"
+#include "get_id.h"
 #include "sql.h"
 #include <assert.h>
 #include <clink/db.h>
@@ -12,7 +14,7 @@
 
 typedef struct {
   clink_db_t *db;
-  const char *filename;
+  clink_record_id_t path_id; ///< record identifier for source file
   unsigned long lineno;
 
   /// query for relevant line numbers of the file
@@ -68,7 +70,7 @@ static int insert(void *state, char *line) {
     }
   }
 
-  return clink_db_add_line(s->db, s->filename, s->lineno, line);
+  return add_line(s->db, s->path_id, s->lineno, line);
 }
 
 int clink_vim_read_into(clink_db_t *db, const char *filename) {
@@ -83,16 +85,20 @@ int clink_vim_read_into(clink_db_t *db, const char *filename) {
     return EINVAL;
 
   int rc = 0;
-  state_t s = {.db = db, .filename = filename};
+  state_t s = {.db = db};
+
+  // lookup the record identifier for the given path in advance
+  clink_record_id_t id = -1;
+  if (ERROR((rc = get_id(db, filename, &id))))
+    goto done;
+  s.path_id = id;
 
   // create a query to lookup relevant line numbers from the target file
   static const char QUERY[] =
-      "select distinct symbols.line from symbols inner join records "
-      "on symbols.path = records.id "
-      "where records.path = @filename order by symbols.line;";
+      "select distinct line from symbols where path = @id order by line;";
   if (ERROR((rc = sql_prepare(db->db, QUERY, &s.stmt))))
     goto done;
-  if (ERROR((rc = sql_bind_text(s.stmt, 1, filename))))
+  if (ERROR((rc = sql_bind_int(s.stmt, 1, id))))
     goto done;
 
   rc = clink_vim_read(filename, insert, &s);

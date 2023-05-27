@@ -121,7 +121,7 @@ def find_symbol(db_path: Path, db: sqlite3.Connection, name: str):
     SQL = (
         "select records.path, symbols.parent, symbols.line, content.body "
         "from symbols inner join records on symbols.path = records.id "
-        "left join content on records.path = content.path and "
+        "left join content on records.id = content.path and "
         "symbols.line = content.line where symbols.name = :name order by "
         "records.path, symbols.line, symbols.col;"
     )
@@ -138,7 +138,7 @@ def find_definition(db_path: Path, db: sqlite3.Connection, name: str):
     SQL = (
         "select records.path, symbols.line, content.body "
         "from symbols inner join records on symbols.path = records.id "
-        "left join content on records.path = content.path and "
+        "left join content on records.id = content.path and "
         "symbols.line = content.line where symbols.name = :name and "
         f"symbols.category = {CLINK_DEFINITION} order by "
         "records.path, symbols.line, symbols.col;"
@@ -156,7 +156,7 @@ def find_calls(db_path: Path, db: sqlite3.Connection, caller: str):
     SQL = (
         "select records.path, symbols.name, symbols.line, content.body "
         "from symbols inner join records on symbols.path = records.id "
-        "left join content on records.path = content.path and "
+        "left join content on records.id = content.path and "
         "symbols.line = content.line where symbols.parent = :caller and "
         f"symbols.category = {CLINK_FUNCTION_CALL} order by "
         "records.path, symbols.line, symbols.col;"
@@ -174,7 +174,7 @@ def find_callers(db_path: Path, db: sqlite3.Connection, callee: str):
     SQL = (
         "select records.path, symbols.parent, symbols.line, content.body "
         "from symbols inner join records on symbols.path = records.id "
-        "left join content on records.path = content.path and "
+        "left join content on records.id = content.path and "
         "symbols.line = content.line where symbols.name = :callee and "
         f"symbols.category = {CLINK_FUNCTION_CALL} order by "
         "records.path, symbols.line, symbols.col;"
@@ -205,7 +205,7 @@ def find_includers(db_path: Path, db: sqlite3.Connection, path: str):
     SQL = (
         "select records.path, symbols.parent, symbols.line, content.body "
         "from symbols inner join records on symbols.path = records.id "
-        "left join content on records.path = content.path and "
+        "left join content on records.id = content.path and "
         "symbols.line = content.line where symbols.name like :name and "
         f"symbols.category = {CLINK_INCLUDE} order by "
         "records.path, symbols.line, symbols.col;"

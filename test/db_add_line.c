@@ -18,13 +18,19 @@ TEST("clink_db_add_line()") {
     ASSERT_EQ(rc, 0);
   }
 
+  // add a record for this file
+  static const char path[] = "/foo";
+  {
+    int rc = clink_db_add_record(db, path, 0, 0, NULL);
+    ASSERT_EQ(rc, 0);
+  }
+
   // add a new line of content
   {
-    static const char p[] = "/foo";
     unsigned long lineno = 42;
     static const char line[] = "bar\n";
 
-    int rc = clink_db_add_line(db, p, lineno, line);
+    int rc = clink_db_add_line(db, path, lineno, line);
     if (rc)
       fprintf(stderr, "clink_db_add_line: %s\n", strerror(rc));
     ASSERT_EQ(rc, 0);
