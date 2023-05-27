@@ -1,5 +1,6 @@
 #include "db.h"
 #include "debug.h"
+#include "get_id.h"
 #include "sql.h"
 #include <clink/db.h>
 #include <errno.h>
@@ -27,19 +28,24 @@ int clink_db_add_line(clink_db_t *db, const char *path, unsigned long lineno,
   if (ERROR(line == NULL))
     return EINVAL;
 
+  int rc = 0;
+  sqlite3_stmt *s = NULL;
+
+  // find the identifier for this line’s path
+  clink_record_id_t id = -1;
+  if (ERROR((rc = get_id(db, path, &id))))
+    goto done;
+
   // insert into the content table
 
   static const char CONTENT_INSERT[] =
       "insert or replace into content (path, "
       "line, body) values (@path, @line, @body);";
 
-  int rc = 0;
-
-  sqlite3_stmt *s = NULL;
   if (ERROR((rc = sql_prepare(db->db, CONTENT_INSERT, &s))))
     goto done;
 
-  if (ERROR((rc = sql_bind_text(s, 1, path))))
+  if (ERROR((rc = sql_bind_int(s, 1, id))))
     goto done;
 
   if (ERROR((rc = sql_bind_int(s, 2, lineno))))

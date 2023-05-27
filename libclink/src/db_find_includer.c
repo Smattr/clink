@@ -142,7 +142,7 @@ int clink_db_find_includer(clink_db_t *db, const char *regex,
       "symbols.col, symbols.parent, content.body from symbols inner join "
       "records on symbols.path = records.id left join "
       "content "
-      "on records.path = content.path and symbols.line = content.line where "
+      "on records.id = content.path and symbols.line = content.line where "
       "symbols.name regexp @name and symbols.category = @category order "
       "by records.path, symbols.line, symbols.col;";
 

@@ -9,10 +9,11 @@ create table if not exists symbols (
   foreign key(path) references records(id));
 
 create table if not exists content (
-  path text not null,
+  path integer not null,
   line integer not null,
   body text not null,
-  unique(path, line));
+  unique(path, line),
+  foreign key(path) references records(id));
 
 create table if not exists records (
   id integer primary key,

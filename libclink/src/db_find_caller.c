@@ -140,7 +140,7 @@ int clink_db_find_caller(clink_db_t *db, const char *regex, clink_iter_t **it) {
       "select symbols.name, records.path, symbols.line, symbols.col, "
       "symbols.parent, content.body from symbols inner join records "
       "on symbols.path = records.id left join content on "
-      "records.path = content.path and symbols.line = content.line where "
+      "records.id = content.path and symbols.line = content.line where "
       "symbols.name regexp @name and symbols.category = @category order by "
       "records.path, symbols.line, symbols.col;";
 

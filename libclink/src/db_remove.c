@@ -61,7 +61,7 @@ void clink_db_remove(clink_db_t *db, const char *path) {
     if (ERROR(sql_prepare(db->db, CONTENT_DELETE, &s)))
       return;
 
-    if (ERROR(sql_bind_text(s, 1, path))) {
+    if (ERROR(sql_bind_int(s, 1, id))) {
       sqlite3_finalize(s);
       return;
     }
