@@ -1,6 +1,7 @@
 #include "get_id.h"
 #include "db.h"
 #include "debug.h"
+#include "make_relative_to.h"
 #include "sql.h"
 #include <assert.h>
 #include <clink/db.h>
@@ -16,6 +17,8 @@ int get_id(clink_db_t *db, const char *path, clink_record_id_t *id) {
   assert(id != NULL);
 
   int rc = 0;
+
+  path = make_relative_to(db, path);
 
   static const char LOOKUP[] = "select id from records where path = @path;";
 

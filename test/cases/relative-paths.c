@@ -5,8 +5,6 @@ int foo(void) {
   return 0;
 }
 
-// XFAIL: True
-
 // RUN: cp {%s} {%T}/
 // RUN: clink --build-only --database={%t}1 --debug --parse-c=clang {%T}/relative-paths.c >/dev/null
 // RUN: echo "select distinct path from records;" | sqlite3 {%t}1

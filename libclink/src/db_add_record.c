@@ -1,6 +1,7 @@
 #include "db.h"
 #include "debug.h"
 #include "get_id.h"
+#include "make_relative_to.h"
 #include "sql.h"
 #include <clink/db.h>
 #include <errno.h>
@@ -26,6 +27,8 @@ int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
   if (ERROR(strcmp(path, "") == 0))
     return EINVAL;
 
+  const char *rel = make_relative_to(db, path);
+
   static const char INSERT[] = "insert or replace into records (path, hash, "
                                "timestamp) values (@path, @hash, @timestamp);";
 
@@ -37,7 +40,7 @@ int clink_db_add_record(clink_db_t *db, const char *path, uint64_t hash,
   if (ERROR((rc = sql_prepare(db->db, INSERT, &insert))))
     goto done;
 
-  if (ERROR((rc = sql_bind_text(insert, 1, path))))
+  if (ERROR((rc = sql_bind_text(insert, 1, rel))))
     goto done;
 
   if (ERROR((rc = sql_bind_int(insert, 2, hash))))
