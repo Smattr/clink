@@ -29,6 +29,7 @@ def lit(tmp: Path, source: Path):
         "%s": str(source),
         "%S": str(source.parent),
         "%t": str(tmp / "tempfile"),
+        "%T": str(tmp),
     }
 
     xfail = None

@@ -1,6 +1,7 @@
 #include "../../common/compiler.h"
 #include "db.h"
 #include "debug.h"
+#include "make_relative_to.h"
 #include "sql.h"
 #include <clink/db.h>
 #include <errno.h>
@@ -22,6 +23,8 @@ int clink_db_find_record(clink_db_t *db, const char *path, uint64_t *hash,
 
   if (ERROR(path[0] != '/'))
     return EINVAL;
+
+  path = make_relative_to(db, path);
 
   static const char QUERY[] =
       "select hash, timestamp from records where path = @path;";
