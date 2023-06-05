@@ -1,6 +1,28 @@
 Change log
 ==========
 
+v2023.06.04
+-----------
+* Paths stored in the database are now relative. This allows you to relocate a
+  directory containing source code and a Clink database and have the database
+  remain usable (commits 07770410c8af0eae8bf3b2e541d74eb19083454b,
+  fb727720a0c3088b4b5e693d428d7c62ced18598,
+  e4feb93935e6e80b26f7cc49122ff90e7b960f57,
+  04d1e1af74b579da64dd692f28c62f543107fcdb,
+  06ca43b6daa462514b6ed0423e1eefa0bdff3fb3
+  b7c3568dcae38666bae166bc77f2e9b00f6c250b).
+* Input paths to the API are now required to be absolute (commit
+  04d1e1af74b579da64dd692f28c62f543107fcdb).
+* Results shown in Vim when jumping between files now use relative paths where
+  possible (commit 5ed239885a59f5009a16503e1ae8a99199c8a893).
+* A graphical progress bar is displayed during database construction. Disabling
+  animations (``--animation=off``) turns this off (commit
+  0466adb14976a78b915fa9dfc1d0886ee72f015b).
+* The database format has changed to normalise some tables (commit
+  111e049fb047f9bc7ea270f694124cf85b805ffe.
+* Syntax highlighting has been slightly accelerated (commit
+  6e6e79327f48a1a8d9c4c9cdbfb76040628ebf65).
+
 v2023.04.20
 -----------
 * Bug fix: some symbols that occur within parameters to macros that are
