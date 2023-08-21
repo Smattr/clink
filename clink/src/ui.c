@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "../../common/compiler.h"
+#include "build.h"
 #include "colour.h"
 #include "find_repl.h"
 #include "highlight.h"
@@ -519,6 +520,21 @@ static int handle_input(void) {
     return 0;
   }
 
+  if (e.type == EVENT_KEYPRESS && e.value == 0x7e) { // F5
+    screen_free();
+
+    int rc = build(database);
+    if (rc != 0)
+      return rc;
+
+    rc = screen_init();
+    if (rc != 0)
+      return rc;
+
+    refresh();
+    return 0;
+  }
+
   if (e.type == EVENT_SIGNAL && e.value == SIGINT) {
     state = ST_EXITING;
     return 0;
@@ -856,6 +872,21 @@ static int handle_select(void) {
 
   if (e.type == EVENT_KEYPRESS && e.value == 0x04) { // Ctrl-D
     state = ST_EXITING;
+    return 0;
+  }
+
+  if (e.type == EVENT_KEYPRESS && e.value == 0x7e) { // F5
+    screen_free();
+
+    int rc = build(database);
+    if (rc != 0)
+      return rc;
+
+    rc = screen_init();
+    if (rc != 0)
+      return rc;
+
+    refresh();
     return 0;
   }
 
