@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+#ifndef CLINK_API
+#define CLINK_API __attribute__((visibility("default")))
+#endif
+
 /** parse the given C/C++ file with Clang
  *
  * The \p filename parameter must be an absolute path.
