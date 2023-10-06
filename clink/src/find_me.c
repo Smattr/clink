@@ -16,34 +16,55 @@
 #include <sys/types.h>
 #endif
 
-/// read the given symlink in the /proc file system
-static char *read_proc(const char *path) {
+/// `readlink`-alike that dynamically allocates
+static char *readln(const char *path) {
 
-  char buf[PATH_MAX + 1] = {0};
-  if (readlink(path, buf, sizeof(buf)) < 0)
-    return NULL;
+  char *resolved = NULL;
+  size_t size = 512;
 
-  // was the path too long?
-  if (buf[sizeof(buf) - 1] != '\0')
-    return NULL;
+  while (true) {
 
-  return strdup(buf);
+    // expand target buffer
+    size *= 2;
+    {
+      char *r = realloc(resolved, size);
+      if (r == NULL)
+        break;
+      resolved = r;
+    }
+
+    // attempt to resolve
+    {
+      ssize_t written = readlink(path, resolved, size);
+      if (written < 0)
+        break;
+      if ((size_t)written < size) {
+        // success
+        resolved[written] = '\0';
+        return resolved;
+      }
+    }
+  }
+
+  // failed
+  free(resolved);
+  return NULL;
 }
 
 char *find_me(void) {
 
   // Linux
-  char *path = read_proc("/proc/self/exe");
+  char *path = readln("/proc/self/exe");
   if (path != NULL)
     return path;
 
   // DragonFly BSD, FreeBSD
-  path = read_proc("/proc/curproc/file");
+  path = readln("/proc/curproc/file");
   if (path != NULL)
     return path;
 
   // NetBSD
-  path = read_proc("/proc/curproc/exe");
+  path = readln("/proc/curproc/exe");
   if (path != NULL)
     return path;
 
@@ -52,10 +73,24 @@ char *find_me(void) {
   {
     int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
     static const size_t MIB_LENGTH = sizeof(mib) / sizeof(mib[0]);
-    char buf[PATH_MAX + 1] = {0};
-    size_t buf_size = sizeof(buf);
-    if (sysctl(mib, MIB_LENGTH, buf, &buf_size, NULL, 0) == 0)
-      return strdup(buf);
+
+    do {
+      // determine how long the path is
+      size_t buf_size = 0;
+      if (sysctl(mib, MIB_LENGTH, NULL, &buf_size, NULL, 0) < 0)
+        break;
+      assert(buf_size > 0);
+
+      // make enough space for the target path
+      char *buf = malloc(buf_size);
+      if (buf == NULL)
+        break;
+
+      // resolve it
+      if (sysctl(mib, MIB_LENGTH, buf, &buf_size, NULL, 0) == 0)
+        return buf;
+      free(buf);
+    } while (0);
   }
 #endif
 
@@ -80,14 +115,12 @@ char *find_me(void) {
 
     // try to resolve any levels of symlinks if possible
     while (true) {
-      char buf[PATH_MAX + 1] = {0};
-      if (readlink(path, buf, sizeof(buf)) < 0)
+      char *buf = readln(path);
+      if (buf == NULL)
         return path;
 
       free(path);
-      path = strdup(buf);
-      if (path == NULL)
-        return NULL;
+      path = buf;
     }
   }
 #endif
