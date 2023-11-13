@@ -1,6 +1,18 @@
 Change log
 ==========
 
+v2023.11.13
+-----------
+* Bug fix: Symbol visibility for ``clink_parse_with_clang`` was corrected
+  (commit cf6dd5943f9c144d04a8f8be0a953da61805093a).
+* Pressing F5 in the UI rescans files/directories, updating the database for
+  those that have changed (commit cb00f805c2dff8d81e97359ad82a4d2b072b786d).
+* Man page typography has been improved (commit
+  48e31a7a77c93687057d767c9b321f094b11d7e8).
+* Use of the non-portable ``PATH_MAX`` constant has been removed (commits
+  94fcf2003045a294255bef7949dc9da50d5c6f7b,
+  5fe9c1236a45fbe92d5eb73361ccd4d2f6db748a).
+
 v2023.06.04
 -----------
 * Paths stored in the database are now relative. This allows you to relocate a
