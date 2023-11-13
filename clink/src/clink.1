@@ -7,7 +7,7 @@ clink \- C/C++/assembly code navigator
 Clink is a replacement for Cscope that uses libclang, features syntax
 highlighting, multicore support, and more.
 .SH OPTIONS
-\fB--animation=\fR[\fBon\fR|\fBoff\fR]
+\fB\-\-animation=\fR[\fBon\fR|\fBoff\fR]
 .RS
 Enable or disable text animations. By default, Clink will show an animated
 spinner when performing some long running applications like on-demand Vim syntax
@@ -15,30 +15,30 @@ highlighting. You can use \fBoff\fR to disable this and use a static character
 instead.
 .RE
 .PP
-\fB-b\fR, \fB--build-only\fR
+\fB\-b\fR, \fB\-\-build\-only\fR
 .RS
 Exit after constructing or updating the symbol database. That is, do not load a
 user interface.
 .RE
 .PP
-\fB--colour=\fR\fIwhen\fR, \fB--color=\fR\fIwhen\fR
+\fB\-\-colour=\fR\fIwhen\fR, \fB\-\-color=\fR\fIwhen\fR
 .RS
 Enable or disable the use of ANSI colour codes. Possible values of \fIwhen\fR
-are "always" (enable), "never" (disable), and "auto" (decide based on whether
-stdout is a TTY).
+are \fBalways\fR (enable), \fBnever\fR (disable), and \fBauto\fR (decide based
+on whether stdout is a TTY).
 .RE
 .PP
-\fB--compile-commands=\fR\fIDIR\fR, \fB--compile-commands-dir=\fR\fIDIR\fR
+\fB\-\-compile\-commands=\fR\fIDIR\fR, \fB\-\-compile\-commands\-dir=\fR\fIDIR\fR
 .RS
 Set a location to a directory containing a compile commands database, as used by
 \fBclangd\fR. When using libclang to parse either C or C++
-(\fB--parse-c=clang\fR, \fB--parse-cxx=clang\fR), this database will be used to
-determine the flags your sources were built with. If this option is not given,
-a compile commands database will be looked for adjacent to your Clink database
-or in an adjacent \fBbuild\fR subdirectory.
+(\fB\-\-parse\-c=clang\fR, \fB\-\-parse\-cxx=clang\fR), this database will be
+used to determine the flags your sources were built with. If this option is not
+given, a compile commands database will be looked for adjacent to your Clink
+database or in an adjacent \fBbuild\fR subdirectory.
 .RE
 .PP
-\fB-f\fR \fIFILE\fR, \fB--database=\fR\fIFILE\fR
+\fB\-f\fR \fIFILE\fR, \fB\-\-database=\fR\fIFILE\fR
 .RS
 Open or create the symbol database at path \fIFILE\fR. Without this option,
 Clink will default to opening the file .clink.db in the current directory or any
@@ -51,48 +51,48 @@ directory of the file system, at which point Clink will fallback to .clink.db in
 the current directory.
 .RE
 .PP
-\fB--debug\fR
+\fB\-\-debug\fR
 .RS
 Enable Clink debugging mode. This is intended for debugging problems within
 Clink itself.
 .RE
 .PP
-\fB-h\fR, \fB--help\fR
+\fB\-h\fR, \fB\-\-help\fR
 .RS
 Display this help information.
 .RE
 .PP
-\fB-j\fR \fINUM\fR, \fB--jobs=\fR\fINUM\fR
+\fB\-j\fR \fINUM\fR, \fB\-\-jobs=\fR\fINUM\fR
 .RS
 Use the given number of threads when performing multithreaded operations. You
-can also pass the special value "auto" (the default) which uses the number of
-processors in your system.
+can also pass the special value \fBauto\fR (the default) which uses the number
+of processors in your system.
 .RE
 .PP
-\fB-d\fR, \fB--no-build\fR
+\fB\-d\fR, \fB\-\-no\-build\fR
 .RS
 Do not update the database.
 .RE
 .PP
-\fB--parse-asm=\fR\fIMODE\fR
+\fB\-\-parse\-asm=\fR\fIMODE\fR
 .br
-\fB--parse-bison=\fR\fIMODE\fR (alias for \fB--parse-yacc\fR)
+\fB\-\-parse\-bison=\fR\fIMODE\fR (alias for \fB\-\-parse\-yacc\fR)
 .br
-\fB--parse-c=\fR\fIMODE\fR
+\fB\-\-parse\-c=\fR\fIMODE\fR
 .br
-\fB--parse-cxx=\fR\fIMODE\fR
+\fB\-\-parse\-cxx=\fR\fIMODE\fR
 .br
-\fB--parse-def=\fR\fIMODE\fR
+\fB\-\-parse\-def=\fR\fIMODE\fR
 .br
-\fB--parse-flex=\fR\fIMODE\fR (alias for \fB--parse-lex\fR)
+\fB\-\-parse\-flex=\fR\fIMODE\fR (alias for \fB\-\-parse\-lex\fR)
 .br
-\fB--parse-lex=\fR\fIMODE\fR
+\fB\-\-parse\-lex=\fR\fIMODE\fR
 .br
-\fB--parse-python=\fR\fIMODE\fR
+\fB\-\-parse\-python=\fR\fIMODE\fR
 .br
-\fB--parse-tablegen=\fR\fIMODE\fR
+\fB\-\-parse\-tablegen=\fR\fIMODE\fR
 .br
-\fB--parse-yacc=\fR\fIMODE\fR
+\fB\-\-parse\-yacc=\fR\fIMODE\fR
 .RS
 Control which source code formats are considered for parsing and how they are
 parsed. The following table describes what source code format each of these
@@ -102,20 +102,20 @@ options control and what values \fIMODE\fR can be.
 allbox center; l l l l .
 option	format	modes	default
 =
-\fB--parse-asm\fR	assembly code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
-\fB--parse-c\fR	C source code (.c, .h files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
-\fB--parse-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
-\fB--parse-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
-\fB--parse-lex\fR	Lex/Flex files	\fBauto\fR, \fBoff\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
-\fB--parse-python\fR	Python source code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
-\fB--parse-tablegen\fR	LLVM TableGen files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
-\fB--parse-yacc\fR	Yacc/Bison files	\fBauto\fR, \fBoff\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
+\fB\-\-parse\-asm\fR	assembly code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB\-\-parse\-c\fR	C source code (.c, .h files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
+\fB\-\-parse\-cxx\fR	C++ source code (.c++, .cpp, .cxx, .cc, .h, .hh, .hpp files)	\fBauto\fR, \fBoff\fR, \fBclang\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
+\fB\-\-parse\-def\fR	MSVC DEF files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB\-\-parse\-lex\fR	Lex/Flex files	\fBauto\fR, \fBoff\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
+\fB\-\-parse\-python\fR	Python source code	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB\-\-parse\-tablegen\fR	LLVM TableGen files	\fBoff\fR, \fBgeneric\fR	\fBgeneric\fR
+\fB\-\-parse\-yacc\fR	Yacc/Bison files	\fBauto\fR, \fBoff\fR, \fBcscope\fR, \fBgeneric\fR	\fBauto\fR
 .TE
 .PP
 For C and C++, the mode \fBauto\fR selects either \fBclang\fR or \fBcscope\fR
 based on the presence of compile_commands.json and Cscope. If a
 compile_commands.json is present (either passed in explicitly with
-\fB--compile-commands\fR or located by the inferred search) or Cscope is not
+\fB\-\-compile\-commands\fR or located by the inferred search) or Cscope is not
 installed, \fBclang\fR will be selected. Otherwise \fBcscope\fR will be
 selected.
 .PP
@@ -132,28 +132,29 @@ Yacc/Bison. This can be useful in a foreign code base, because Cscope sometimes
 does a better job than Clang at parsing a file with unknown flags.
 .PP
 Note that the definition of C and C++ files overlap in the table above, .h files
-are considered both C and C++. If \fB--parse-c\fR and \fB--parse-cxx\fR are both
-set to non-\fBoff\fR modes, the \fB--parse-cxx\fR mode will apply to .h files.
+are considered both C and C++. If \fB\-\-parse\-c\fR and \fB\-\-parse\-cxx\fR
+are both set to non-\fBoff\fR modes, the \fB\-\-parse\-cxx\fR mode will apply to
+.h files.
 .RE
 .PP
-\fB-c\fR \fITEXT\fR, \fB--script=\fR\fITEXT\fR
+\fB\-c\fR \fITEXT\fR, \fB\-\-script=\fR\fITEXT\fR
 .RS
 Interpret \fITEXT\fR as if it were typed into the UI on start up. This option
 can be given multiple times, in which case \fITEXT\fR is accumulated in the
 order in which parameters appear. This option cannot be used in combination with
-\fB--build-only\fR.
+\fB\-\-build\-only\fR.
 .PP
 This functionality allows automating invocations of Clink to perform particular
 searches, or even go on to open a particular result if the result list can be
 predicted in advance. The C escape sequences \fB\\b\fR, \fB\\n\fR, \fB\\r\fR,
-\fB\\t\fR, \fB\\\\\fR, \fB\\'\fR, and \fB\\"\fR are interpreted as are escaped
-sequences for control keys like the arrow keys. So when entering a Clink command
-at the terminal, for example, you can pass \fB--script=\fR and press Ctrl+V
-followed by the down arrow. On start up, Clink will move down to the second
-field.
+\fB\\t\fR, \fB\\\\\fR, \fB\\\[aq]\fR, and \fB\\\[dq]\fR are interpreted as are
+escape sequences for control keys like the arrow keys. So when entering a Clink
+command at the terminal, for example, you can pass \fB\-\-script=\fR and press
+Ctrl+V followed by the down arrow. On start up, Clink will move down to the
+second field.
 .RE
 .PP
-\fB-s\fR \fIMODE\fR, \fB--syntax-highlighting=\fR\fIMODE\fR
+\fB\-s\fR \fIMODE\fR, \fB\-\-syntax\-highlighting=\fR\fIMODE\fR
 .RS
 Control when Vim syntax highlighting is performed. \fIMODE\fR can be:
 .RS
@@ -181,7 +182,7 @@ possible to pick \fBlazy\fR when first building the database and then use
 ones you are actively working on) will be eagerly highlighted.
 .RE
 .PP
-\fB-V\fR, \fB--version\fR
+\fB\-V\fR, \fB\-\-version\fR
 .RS
 Print the current version and exit.
 .RE
@@ -204,7 +205,7 @@ successors. We intend this dedication to be an overt act of
 relinquishment in perpetuity of all present and future rights to this
 software under copyright law.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+THE SOFTWARE IS PROVIDED \[lq]AS IS\[rq], WITHOUT WARRANTY OF ANY KIND,
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
