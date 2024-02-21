@@ -1,3 +1,4 @@
+#include "../../common/ctype.h"
 #include "add_symbol.h"
 #include "debug.h"
 #include "isid.h"
@@ -5,7 +6,6 @@
 #include "scanner.h"
 #include "span.h"
 #include <clink/generic.h>
-#include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -110,7 +110,7 @@ static int parse(clink_db_t *db, const char *filename, const clink_lang_t *lang,
 
     // if this is something other than whitespace, it separates a definition
     // leader from anything it could apply to
-    if (!isspace(s.base[s.offset]))
+    if (!isspace_(s.base[s.offset]))
       last_defn_leader = false;
 
     eat_one(&s);

@@ -1,6 +1,6 @@
+#include "../../common/ctype.h"
 #include "scanner.h"
 #include <assert.h>
-#include <ctype.h>
 #include <stdbool.h>
 
 bool eat_non_ws(scanner_t *s) {
@@ -8,10 +8,10 @@ bool eat_non_ws(scanner_t *s) {
 
   if (s->offset >= s->size)
     return false;
-  if (isspace(s->base[s->offset]))
+  if (isspace_(s->base[s->offset]))
     return false;
 
-  while (s->offset < s->size && !isspace(s->base[s->offset]))
+  while (s->offset < s->size && !isspace_(s->base[s->offset]))
     eat_one(s);
 
   return true;

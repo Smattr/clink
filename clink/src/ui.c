@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "../../common/compiler.h"
+#include "../../common/ctype.h"
 #include "build.h"
 #include "colour.h"
 #include "find_repl.h"
@@ -12,7 +13,6 @@
 #include "str_queue.h"
 #include <assert.h>
 #include <clink/clink.h>
-#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -488,7 +488,7 @@ static void refresh(void) {
 /// how many valid printable UTF-8 bytes in this key pressed?
 static size_t utf8_charlen(uint32_t key) {
   if (key <= 127) {
-    if (iscntrl((int)key))
+    if (iscntrl_(key))
       return 0;
     return 1;
   }
@@ -572,9 +572,9 @@ static int handle_input(void) {
   }
 
   if (e.type == EVENT_KEYPRESS && e.value == 0x17) { // Ctrl-W
-    while (strlen(left) > 0 && isspace(left[strlen(left) - 1]))
+    while (strlen(left) > 0 && isspace_(left[strlen(left) - 1]))
       left[strlen(left) - 1] = '\0';
-    while (strlen(left) > 0 && !isspace(left[strlen(left) - 1]))
+    while (strlen(left) > 0 && !isspace_(left[strlen(left) - 1]))
       left[strlen(left) - 1] = '\0';
     {
       char *l = realloc(left, strlen(left) + 1);
@@ -845,19 +845,6 @@ static int handle_input(void) {
   return 0;
 }
 
-/// `isalnum` that ignores locale
-static bool my_isalnum(uint32_t value) {
-  if (value > 127)
-    return false;
-  if (isdigit((int)value))
-    return true;
-  if (value >= 'a' && value <= 'z')
-    return true;
-  if (value >= 'A' && value <= 'Z')
-    return true;
-  return false;
-}
-
 static int handle_select(void) {
   assert(state == ST_ROWSELECT);
 
@@ -895,10 +882,10 @@ static int handle_select(void) {
     return 0;
   }
 
-  if (e.type == EVENT_KEYPRESS && my_isalnum(e.value)) {
+  if (e.type == EVENT_KEYPRESS && isalnum_(e.value)) {
 
     size_t index;
-    if (isdigit((int)e.value)) {
+    if (isdigit_(e.value)) {
       index = (size_t)e.value - '0';
     } else if (e.value >= 'a' && e.value <= 'z') {
       index = 10 + (size_t)e.value - 'a';
