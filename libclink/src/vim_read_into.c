@@ -1,3 +1,4 @@
+#include "../../common/ctype.h"
 #include "add_line.h"
 #include "db.h"
 #include "debug.h"
@@ -6,7 +7,6 @@
 #include <assert.h>
 #include <clink/db.h>
 #include <clink/vim.h>
-#include <ctype.h>
 #include <errno.h>
 #include <sqlite3.h>
 #include <stddef.h>
@@ -54,7 +54,7 @@ static int insert(void *state, char *line) {
   // eagerly strip leading white space from the line because we know the UI
   // wants it stripped eventually
   for (char *p = line; *p != '\0';) {
-    if (isspace(*p)) {
+    if (isspace_(*p)) {
       memmove(p, p + 1, strlen(p));
     } else if (*p == '\033') { // CSI
       // skip over it to the terminator

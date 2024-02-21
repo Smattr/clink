@@ -1,10 +1,10 @@
+#include "../../common/ctype.h"
 #include "debug.h"
 #include <assert.h>
 #include <clang-c/Index.h>
 #include <clink/clang.h>
 #include <clink/db.h>
 #include <clink/symbol.h>
-#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -262,11 +262,11 @@ static char *get_callee(CXCursor cursor) {
 
     bool is_id = strcmp(callee_cstr, "") != 0;
     for (size_t i = 0; callee_cstr[i] != '\0'; ++i) {
-      if (isalpha((int)callee_cstr[i]))
+      if (isalpha_(callee_cstr[i]))
         continue;
       if (callee_cstr[i] == '_')
         continue;
-      if (i != 0 && isdigit((int)callee_cstr[i]))
+      if (i != 0 && isdigit_(callee_cstr[i]))
         continue;
       is_id = false;
       break;
@@ -326,7 +326,7 @@ static bool is_sync_impl(const char *name) {
   if (*suffix == '\0')
     return false;
   for (; *suffix != '\0'; ++suffix) {
-    if (!isdigit((int)*suffix))
+    if (!isdigit_(*suffix))
       return false;
   }
 

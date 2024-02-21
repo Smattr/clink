@@ -1,7 +1,7 @@
 #include "scanner.h"
+#include "../../common/ctype.h"
 #include "isid.h"
 #include <assert.h>
-#include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
@@ -117,12 +117,12 @@ void eat_ws(scanner_t *s) {
   assert(s->base != NULL && "corrupted scanner state");
   assert(s->offset <= s->size && "corrupted scanner state");
 
-  while (s->offset < s->size && isspace(s->base[s->offset]))
+  while (s->offset < s->size && isspace_(s->base[s->offset]))
     eat_one(s);
 }
 
 static bool isspace_not_eol(char c) {
-  return isspace(c) && c != '\n' && c != '\r';
+  return isspace_(c) && c != '\n' && c != '\r';
 }
 
 void eat_ws_to_eol(scanner_t *s) {
