@@ -67,10 +67,11 @@ static results_t results;
 /// number of result columns excluding the hot key
 enum { COLUMN_COUNT = 4 };
 
-/// print something, accounting for the possibility of stripping colours
-///
-/// \param str String to print
-/// \param lock An optional format to keep applied
+/** print something, accounting for the possibility of stripping colours
+ *
+ * \param str String to print
+ * \param lock An optional format to keep applied
+ */
 static void print_colour(const char *str, const char *lock) {
   assert(str != NULL);
   if (option.colour == ALWAYS) {
