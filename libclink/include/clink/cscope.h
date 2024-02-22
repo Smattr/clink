@@ -2,6 +2,7 @@
 
 #include <clink/db.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +35,39 @@ CLINK_API bool clink_have_cscope(void);
  */
 CLINK_API int clink_parse_with_cscope(clink_db_t *db, const char *filename,
                                       clink_record_id_t id);
+
+/** parse a Cscope namefile
+ *
+ * A Cscope namefile is a file containing space-/tab-/newline-separated entries
+ * of paths. Paths containing space, tab, or newline characters must be enclosed
+ * in double quotes. This function does not check whether any of the parsed
+ * entries point to existing on-disk files/directories.
+ *
+ * The `accept` function will be called once for each parsed entry, with the
+ * entry as the first parameter. Returning non-zero from your `accept` callback
+ * will terminate parsing and return the same non-zero value. Passing `NULL` as
+ * `accept` will skip notification of parsed entries. This can be useful if you
+ * just want to validate the correctness of a namefile.
+ *
+ * The `error` function will be called for any syntax error in the input.
+ * Returning non-zero from your `error` callback will override the error return
+ * which otherwise will be `EIO`. Passing `NULL` as `error` will skip
+ * notification of syntax errors. Parsing cannot tolerate multiple errors; the
+ * first syntax error will terminate parsing regardless of what `error` returns.
+ * Other errors unrelated to the content of the input file can also occur, in
+ * which case the `error` callback will not be invoked.
+ *
+ * \param in Stream to read from
+ * \param accept Callback for parsed names
+ * \param error Callback for syntax errors in the namefile
+ * \param context State passed to callbacks
+ * \return 0 on success or an errno on failure
+ */
+CLINK_API int
+clink_parse_namefile(FILE *in, int (*accept)(const char *name, void *context),
+                     int (*error)(unsigned long lineno, unsigned long colno,
+                                  const char *message, void *context),
+                     void *context);
 
 #ifdef __cplusplus
 }

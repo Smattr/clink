@@ -39,6 +39,7 @@ add_executable(unit-tests
   ../clink/src/is_root.c
   join.c
   ../clink/src/join.c
+  parse_namefile.c
   reject-relative-paths.c
   run-echo.c
   ../libclink/src/get_environ.c

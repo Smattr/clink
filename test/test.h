@@ -61,6 +61,7 @@ void run_cleanups(void);
            unsigned: "%u",                                                     \
            unsigned long: "%lu",                                               \
            unsigned long long: "%llu",                                         \
+           void*: "%p",                                                        \
            const void*: "%p")
 
 #define ASSERT_(a, a_name, op, b, b_name)                                      \
