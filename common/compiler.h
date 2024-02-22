@@ -14,3 +14,5 @@
     assert(0 && "unreachable");                                                \
     __builtin_unreachable();                                                   \
   } while (0)
+
+#define UNUSED __attribute__((unused))

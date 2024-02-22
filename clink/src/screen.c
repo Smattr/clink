@@ -1,4 +1,5 @@
 #include "screen.h"
+#include "../../common/compiler.h"
 #include "option.h"
 #include <assert.h>
 #include <errno.h>
@@ -322,8 +323,8 @@ void screen_free(void) {
 }
 
 // build with -DMAIN=main to compile a standalone tool for viewing key sequences
-int __attribute__((unused)) MAIN(void);
-int __attribute__((unused)) MAIN(void) {
+int UNUSED MAIN(void);
+int UNUSED MAIN(void) {
 
   int rc = 0;
 

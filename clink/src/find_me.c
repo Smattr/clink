@@ -1,4 +1,5 @@
 #include "find_me.h"
+#include "../../common/compiler.h"
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -99,7 +100,7 @@ char *find_me(void) {
   {
     // determine how many bytes we will need to allocate
     uint32_t buf_size = 0;
-    int rc __attribute__((unused)) = _NSGetExecutablePath(NULL, &buf_size);
+    int rc UNUSED = _NSGetExecutablePath(NULL, &buf_size);
     assert(rc != 0);
     assert(buf_size > 0);
 

@@ -1,3 +1,4 @@
+#include "../../common/compiler.h"
 #include "add_symbol.h"
 #include "db.h"
 #include "debug.h"
@@ -85,7 +86,7 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
 
     // if we already used the statement, clear it for reuse
     if (i > 0) {
-      int r __attribute__((unused)) = sqlite3_reset(s);
+      int r UNUSED = sqlite3_reset(s);
       assert(r == SQLITE_OK);
     }
 
@@ -110,7 +111,7 @@ done:
     sqlite3_finalize(s);
 
   {
-    int r __attribute__((unused)) = pthread_mutex_unlock(&db->bulk_operation);
+    int r UNUSED = pthread_mutex_unlock(&db->bulk_operation);
     assert(r == 0);
   }
 
