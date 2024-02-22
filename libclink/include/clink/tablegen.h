@@ -15,7 +15,7 @@ extern "C" {
  * libclink has a limited understanding of TableGen. Results will be
  * approximate.
  *
- * The \p filename parameter must be an absolute path.
+ * The `filename` parameter must be an absolute path.
  *
  * \param db Database to insert into
  * \param filename Path to source file to parse

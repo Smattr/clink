@@ -42,6 +42,20 @@ static void xappend(char ***list, size_t *len, const char *item) {
   (*list)[*len - 1] = xstrdup(item);
 }
 
+/// `clink_parse_namefile` callback
+static int accept_name(const char *name, void *context UNUSED) {
+  assert(name != NULL);
+  xappend(&option.src, &option.src_len, name);
+  return 0;
+}
+
+/// `clink_parse_namefile` callback
+static int error_name(unsigned long lineno, unsigned long colno,
+                      const char *message, void *context UNUSED) {
+  fprintf(stderr, "line %lu, column %lu: %s\n", lineno, colno, message);
+  return 0;
+}
+
 static void parse_args(int argc, char **argv) {
 
   while (true) {
@@ -91,7 +105,7 @@ static void parse_args(int argc, char **argv) {
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bc:df:hj:ls:V", opts, &index);
+    int c = getopt_long(argc, argv, "bc:df:hi:j:ls:V", opts, &index);
 
     if (c == -1)
       break;
@@ -139,6 +153,26 @@ static void parse_args(int argc, char **argv) {
     case 'h': // --help
       help();
       exit(EXIT_SUCCESS);
+
+    case 'i': { // namefile
+      FILE *namefile = stdin;
+      if (strcmp(optarg, "-") != 0) {
+        namefile = fopen(optarg, "r");
+        if (namefile == NULL) {
+          fprintf(stderr, "failed to open %s: %s\n", optarg, strerror(errno));
+          exit(EX_USAGE);
+        }
+      }
+      const int r =
+          clink_parse_namefile(namefile, accept_name, error_name, NULL);
+      if (strcmp(optarg, "-") != 0)
+        (void)fclose(namefile);
+      if (r != 0) {
+        fprintf(stderr, "failed to parse %s: %s\n", optarg, strerror(errno));
+        exit(EX_USAGE);
+      }
+      break;
+    }
 
     case 'j': // --jobs
       if (strcmp(optarg, "auto") == 0) {

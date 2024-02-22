@@ -19,7 +19,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-/** run \p cscope, parsing the given file
+/** run `cscope`, parsing the given file
  *
  * \param filename Path to source file to parse
  * \param cscope_out Path to write Cscope database to

@@ -22,7 +22,7 @@ static pthread_t worker;
 static bool worker_inited;
 
 /// output a progress spinner
-static void *spin(void *ignored __attribute__((unused))) {
+static void *spin(void *ignored UNUSED) {
 
   // various positions of the spinner
   static const char *STATES[] = {"⠇", "⠋", "⠙", "⠸", "⠴", "⠦"};
@@ -125,7 +125,7 @@ void spinner_off(void) {
 
     // wait for it to exit
     {
-      int __attribute__((unused)) rc = pthread_join(worker, NULL);
+      int UNUSED rc = pthread_join(worker, NULL);
       assert(rc == 0);
     }
   }

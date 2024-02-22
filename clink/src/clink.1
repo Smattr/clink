@@ -62,6 +62,19 @@ Clink itself.
 Display this help information.
 .RE
 .PP
+\fB\-i\fR \fInamefile\fR
+.RS
+Parse a list of source paths to index from the given file. Paths can be
+separated by spaces, tabs, or newlines. Paths that contain any of these
+characters need to be enclosed in double quotes. Within a quoted path, double
+quote and backslash characters must be escaped with a leading backslash.
+\fInamefile\fR can be given as \fB-\fR to accept paths on standard input.
+.PP
+Unlike the corresponding Cscope option, other paths passed to Clink on the
+command line are not ignored when using this option. Additionally the paths
+specified in \fInamefile\fR can be either files or directories.
+.RE
+.PP
 \fB\-j\fR \fINUM\fR, \fB\-\-jobs=\fR\fINUM\fR
 .RS
 Use the given number of threads when performing multithreaded operations. You
