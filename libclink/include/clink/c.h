@@ -15,9 +15,9 @@ extern "C" {
  *
  * This parsing interface is extremely limited, capable only of heuristically
  * recognising definitions and references. Callers likely want
- * \p clink_parse_with_clang instead.
+ * `clink_parse_with_clang` instead.
  *
- * The \p filename parameter must be an absolute path.
+ * The `filename` parameter must be an absolute path.
  *
  * \param db Database to insert into
  * \param filename Path to source file to parse
@@ -27,7 +27,7 @@ CLINK_API int clink_parse_c(clink_db_t *db, const char *filename);
 
 /** parse the given C++ file, inserting results into the given database
  *
- * The \p filename parameter must be an absolute path.
+ * The `filename` parameter must be an absolute path.
  *
  * \param db Database to insert into
  * \param filename Path to source file to parse
@@ -44,7 +44,7 @@ CLINK_API int clink_parse_cxx(clink_db_t *db, const char *filename);
  * `clink_parse_with_clang` to produce a more complete understanding of a source
  * file.
  *
- * The \p filename parameter must be an absolute path.
+ * The `filename` parameter must be an absolute path.
  *
  * \param db Database to insert into
  * \param filename Path to source file to parse

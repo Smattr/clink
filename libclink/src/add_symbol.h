@@ -6,7 +6,7 @@
 #include <clink/symbol.h>
 #include <stddef.h>
 
-/// variant of \p clink_symbol_t for internal use
+/// variant of `clink_symbol_t` for internal use
 typedef struct {
   clink_category_t category; ///< the type of this symbol
   span_t name;               ///< name of this item or referent
@@ -14,16 +14,16 @@ typedef struct {
   span_t parent;             ///< optional containing definition
 } symbol_t;
 
-/// a version of \p clink_db_add_symbol with a different calling convention
+/// a version of `clink_db_add_symbol` with a different calling convention
 ///
 /// This function provides a way of inserting multiple symbols into the database
 /// in a single operation.
 ///
 /// All symbols being inserted must be from the same source path. The caller
-/// must supply the record identifier of this path as \p id.
+/// must supply the record identifier of this path as `id`.
 ///
 /// \param db Database to operate on
-/// \param syms_size Number of elements in \p syms
+/// \param syms_size Number of elements in `syms`
 /// \param syms Symbols to insert
 /// \param id Identifier of the record for the source path containing all
 ///   symbols
@@ -31,10 +31,10 @@ typedef struct {
 INTERNAL int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
                          clink_record_id_t id);
 
-/// convenience wrapper for \p add_symbols with a single symbol
+/// convenience wrapper for `add_symbols` with a single symbol
 ///
-/// There is no way to set the \p id parameter to \p add_symbols when calling
-/// through this interface. \p sym.path must be an absolute path.
+/// There is no way to set the `id` parameter to `add_symbols` when calling
+/// through this interface. `sym.path` must be an absolute path.
 ///
 /// \param db Database to operate on
 /// \param sym Symbol to insert

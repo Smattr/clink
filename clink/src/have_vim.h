@@ -2,5 +2,5 @@
 
 #include <stdbool.h>
 
-/// is \p vim available?
+/// is `vim` available?
 bool have_vim(void);

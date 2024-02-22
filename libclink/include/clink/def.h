@@ -12,7 +12,7 @@ extern "C" {
 
 /** parse an MSVC Module-Definition file
  *
- * The \p filename parameter must be an absolute path.
+ * The `filename` parameter must be an absolute path.
  *
  * \param db Database to insert into
  * \param filename Path to .def file to parse

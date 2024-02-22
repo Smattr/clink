@@ -20,8 +20,8 @@ typedef struct re {
 
 /** compile a new regex and add it to the given list
  *
- * This function is thread-safe. Multiple threads can call into it or \p re_find
- * concurrently with the same \p re pointer.
+ * This function is thread-safe. Multiple threads can call into it or `re_find`
+ * concurrently with the same `re` pointer.
  *
  * \param re List to add to
  * \param regex Regex to compile
@@ -31,8 +31,8 @@ INTERNAL int re_add(re_t **re, const char *regex);
 
 /** lookup a previously compiled regex
  *
- * This function is thread-safe. Multiple threads can call into it or \p re_add
- * concurrently with the same \p re pointer.
+ * This function is thread-safe. Multiple threads can call into it or `re_add`
+ * concurrently with the same `re` pointer.
  *
  * The regex being looked up is assumed to exist. Looking up a regex that you do
  * not know exists in the list results in undefined behaviour.
@@ -46,7 +46,7 @@ INTERNAL regex_t re_find(const re_t **re, const char *regex);
 /** cleanup pre-compiled regexes
  *
  * The input to this function is assumed to be a non-null double pointer to a
- * list of regexes, \p re_t**. It is typed as \p void* for interaction with the
+ * list of regexes, `re_t **`. It is typed as `void *` for interaction with the
  * SQLite API.
  *
  * \param re List of regexes to deallocate

@@ -5,8 +5,8 @@
 
 /// find the record identifier for the given path
 ///
-/// This function returns \p ENOENT if \p path does not exist in the
-/// database’s record table. The \p path parameter must be an absolute path.
+/// This function returns `ENOENT` if `path` does not exist in the database’s
+/// record table. The `path` parameter must be an absolute path.
 ///
 /// \param db Database to operate on
 /// \param path File path to lookup

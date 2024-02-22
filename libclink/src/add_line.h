@@ -3,7 +3,7 @@
 #include "../../common/compiler.h"
 #include <clink/db.h>
 
-/** a version of \p clink_db_add_line with a different calling convention
+/** a version of `clink_db_add_line` with a different calling convention
  *
  * This can be used to add a content line when you already know its file’s path
  * identifier, as an optimisation.
