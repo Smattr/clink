@@ -24,6 +24,7 @@ add_library(libclink
   src/eat_non_ws.c
   src/eat_num.c
   src/eat_rest_of_line.c
+  src/editor_open.c
   src/get_environ.c
   src/get_id.c
   src/have_cscope.c
