@@ -1,6 +1,7 @@
 #pragma once
 
 #include <clink/db.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,6 +10,12 @@ extern "C" {
 #ifndef CLINK_API
 #define CLINK_API __attribute__((visibility("default")))
 #endif
+
+/** does the user’s editor look like Vim?
+ *
+ * \return True if the editor appears Vim-alike
+ */
+CLINK_API bool clink_is_editor_vim(void);
 
 /** open Vim at the given position in the given file
  *
