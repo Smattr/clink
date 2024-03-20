@@ -1,6 +1,7 @@
 #pragma once
 
 #include <clink/db.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,6 +10,12 @@ extern "C" {
 #ifndef CLINK_API
 #define CLINK_API __attribute__((visibility("default")))
 #endif
+
+/** does the user’s editor look like Vim?
+ *
+ * \return True if the editor appears Vim-alike
+ */
+CLINK_API bool clink_is_editor_vim(void);
 
 /** open Vim at the given position in the given file
  *
@@ -22,6 +29,17 @@ extern "C" {
 CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
                              unsigned long colno, const char *cscopeprg,
                              const clink_db_t *db);
+
+/** open the given editor with the given file
+ *
+ * This is a simple wrapper around exec-ing `{editor, "--", filename}`. This is
+ * useful as a fallback for `clink_vim_open` if the user’s editor is not Vim.
+ *
+ * \param editor Path to editor to run
+ * \param filename File to open
+ * \return The editor’s exit status
+ */
+CLINK_API int clink_editor_open(const char *editor, const char *filename);
 
 /** Vim-highlight the given file, returning lines through the callback function
  *
