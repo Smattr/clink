@@ -64,9 +64,16 @@ int clink_vim_open(const char *filename, unsigned long lineno,
     goto done;
   }
 
+  // assume the user’s preferred editor is Vim, but still locate the path to it
+  const char *vim = getenv("VISUAL");
+  if (vim == NULL)
+    vim = getenv("EDITOR");
+  if (vim == NULL)
+    vim = "vim";
+
   // construct a argument vector to invoke Vim
   enum { ARGC_MAX = 8 };
-  char const *argv[ARGC_MAX] = {"vim", cursor};
+  char const *argv[ARGC_MAX] = {vim, cursor};
   size_t argc = 2;
 
 #define APPEND(str)                                                            \
