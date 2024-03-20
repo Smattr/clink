@@ -846,6 +846,24 @@ static int handle_input(void) {
   return 0;
 }
 
+/** open the given file in the user’s editor
+ *
+ * \param filename File to open
+ * \return Exit status of the editor
+ */
+static int open_editor(const char *filename) {
+  assert(filename != NULL);
+
+  // find our editor
+  const char *editor = getenv("VISUAL");
+  if (editor == NULL)
+    editor = getenv("EDITOR");
+  assert(editor != NULL && "neither $VISUAL nor $EDITOR set, but "
+                           "clink_vim_open code path was not used");
+
+  return clink_editor_open(editor, filename);
+}
+
 static int handle_select(void) {
   assert(state == ST_ROWSELECT);
 
@@ -906,10 +924,14 @@ static int handle_select(void) {
   enter:
     screen_free();
 
-    (void)clink_vim_open(results.rows[select_index].path,
-                         results.rows[select_index].lineno,
-                         results.rows[select_index].colno, clink_repl,
-                         clink_repl == NULL ? NULL : database);
+    if (clink_is_editor_vim()) {
+      (void)clink_vim_open(results.rows[select_index].path,
+                           results.rows[select_index].lineno,
+                           results.rows[select_index].colno, clink_repl,
+                           clink_repl == NULL ? NULL : database);
+    } else {
+      (void)open_editor(results.rows[select_index].path);
+    }
 
     int rc = screen_init();
     if (rc != 0)

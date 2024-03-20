@@ -199,6 +199,23 @@ ones you are actively working on) will be eagerly highlighted.
 .RS
 Print the current version and exit.
 .RE
+.SH ENVIRONMENT
+The behaviour of \fBclink\fR is affected by the following environment variables.
+.PP
+\fBEDITOR\fR, \fBVISUAL\fR
+.RS
+When opening a result from the search screen, the editor to use is determined by
+consulting first the \fBVISUAL\fR environment variable and then, if it is unset,
+the \fBEDITOR\fR environment variable. If neither of these are set, \fBvim\fR is
+used as a fallback.
+.PP
+Whether the located editor appears to be Vim or not affects what command is run
+to open the result. If the editor is a relative or absolute path to a name that
+is a common alias of Vim, the result will be opened at a specific line and
+column number and with the Clink database connected. If the editor is not
+recognised, the result filename will be opened with no further command line
+options to the editor.
+.RE
 .SH AUTHOR
 All comments, questions and complaints should be directed to Matthew Fernandez
 <matthew.fernandez@gmail.com>.
