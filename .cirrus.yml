@@ -41,7 +41,7 @@ task:
 
     - name: macOS
       macos_instance:
-        image: ghcr.io/cirruslabs/macos-ventura-base:latest
+        image: ghcr.io/cirruslabs/macos-sonoma-base:latest
       environment:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         PATH: /opt/homebrew/opt/llvm/bin:${PATH}
