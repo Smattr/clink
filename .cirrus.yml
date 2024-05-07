@@ -7,7 +7,7 @@ task:
 
     - name: FreeBSD
       freebsd_instance:
-        image_family: freebsd-14-0-snap
+        image_family: freebsd-15-0-snap
       environment:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         UBSAN_OPTIONS: print_stacktrace=1
