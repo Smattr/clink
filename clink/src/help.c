@@ -79,8 +79,7 @@ int help(void) {
   }
 
   // wait for man to finish
-  int ignored;
-  (void)wait(&ignored);
+  (void)wait(&(int){0});
 
   // cleanup
 done:

@@ -189,8 +189,7 @@ int clink_compiler_includes(const char *compiler, char ***includes,
     child_err = NULL;
 
     // clean up the child
-    int ignored;
-    (void)waitpid(pid, &ignored, 0);
+    (void)waitpid(pid, &(int){0}, 0);
 
     // if we were successful, pass back what we discovered
     if (rc == 0) {
