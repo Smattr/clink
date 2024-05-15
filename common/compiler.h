@@ -39,3 +39,9 @@
 #else
 #define UNUSED /* nothing */
 #endif
+
+#ifdef __GNUC__
+#define PRINTF(fmt, next) __attribute__((format(printf, fmt, next)))
+#else
+#define PRINTF(fmt, next) /* nothing */
+#endif

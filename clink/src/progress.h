@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "../../common/compiler.h"
 #include <stddef.h>
 
 /** set up terminal for progress output
@@ -20,8 +21,8 @@ int progress_init(size_t count);
  * \param fmt A printf-style format string describing the status message
  * \param ... Parameters to accompany the format string
  */
-__attribute__((format(printf, 2, 3))) void
-progress_status(unsigned long thread_id, const char *fmt, ...);
+PRINTF(2, 3)
+void progress_status(unsigned long thread_id, const char *fmt, ...);
 
 /** show a warning on behalf of a thread
  *
@@ -29,8 +30,7 @@ progress_status(unsigned long thread_id, const char *fmt, ...);
  * \param fmt A printf-style format string describing the warning message
  * \param ... Parameters to accompany the format string
  */
-__attribute__((format(printf, 2, 3))) void
-progress_warn(unsigned long thread_id, const char *fmt, ...);
+PRINTF(2, 3) void progress_warn(unsigned long thread_id, const char *fmt, ...);
 
 /** show an error message on behalf of a thread
  *
@@ -38,8 +38,7 @@ progress_warn(unsigned long thread_id, const char *fmt, ...);
  * \param fmt A printf-style format string describing the error message
  * \param ... Parameters to accompany the format string
  */
-__attribute__((format(printf, 2, 3))) void
-progress_error(unsigned long thread_id, const char *fmt, ...);
+PRINTF(2, 3) void progress_error(unsigned long thread_id, const char *fmt, ...);
 
 /** add one to the progress counter
  *
