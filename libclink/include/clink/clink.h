@@ -1,7 +1,13 @@
 #pragma once
 
 #ifndef CLINK_API
+#ifdef __GNUC__
 #define CLINK_API __attribute__((visibility("hidden")))
+#elif defined(_MSC_VER)
+#define CLINK_API __declspec(dllimport)
+#else
+#define CLINK_API /* nothing */
+#endif
 #endif
 
 #include <clink/asm.h>

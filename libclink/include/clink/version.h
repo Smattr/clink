@@ -5,7 +5,13 @@ extern "C" {
 #endif
 
 #ifndef CLINK_API
+#ifdef __GNUC__
 #define CLINK_API __attribute__((visibility("default")))
+#elif defined(_MSC_VER)
+#define CLINK_API __declspec(dllexport)
+#else
+#define CLINK_API /* nothing */
+#endif
 #endif
 
 /** retrieve version of this library
