@@ -91,6 +91,8 @@ add_subdirectory(test)
 find_program(CLANG_FORMAT
   NAMES
     clang-format
+    clang-format-mp-18 clang-format-18
+    clang-format-mp-17 clang-format-17
     clang-format-mp-16 clang-format-16
     clang-format-mp-15 clang-format-15
     clang-format-mp-14 clang-format-14
