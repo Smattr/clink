@@ -45,7 +45,7 @@ static void state_free(state_t **ss) {
   free(s->abs_path);
   s->abs_path = NULL;
 
-  memset(&s->last, 0, sizeof(s->last));
+  s->last = (clink_symbol_t){0};
 
   if (s->stmt != NULL)
     sqlite3_finalize(s->stmt);
@@ -69,7 +69,7 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
   state_t *s = it->state;
 
   // discard any previous symbol we had
-  memset(&s->last, 0, sizeof(s->last));
+  s->last = (clink_symbol_t){0};
 
   // is the iterator exhausted?
   if (s->stmt == NULL)

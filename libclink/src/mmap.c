@@ -4,7 +4,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
-#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -14,7 +13,7 @@ int mmap_open(mmap_t *m, const char *filename) {
   assert(m != NULL);
   assert(filename != NULL);
 
-  memset(m, 0, sizeof(*m));
+  *m = (mmap_t){0};
 
   int rc = 0;
   int fd = -1;

@@ -13,7 +13,7 @@ int clink_symbol_copy(clink_symbol_t *restrict dst,
   if (ERROR(src == NULL))
     return EINVAL;
 
-  memset(dst, 0, sizeof(*dst));
+  *dst = (clink_symbol_t){0};
   int rc = 0;
 
   dst->category = src->category;

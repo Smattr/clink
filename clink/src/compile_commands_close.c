@@ -3,7 +3,6 @@
 #include <clang-c/CXCompilationDatabase.h>
 #include <pthread.h>
 #include <stddef.h>
-#include <string.h>
 
 void compile_commands_close(compile_commands_t *cc) {
 
@@ -15,5 +14,5 @@ void compile_commands_close(compile_commands_t *cc) {
   if (cc->db != NULL)
     clang_CompilationDatabase_dispose(cc->db);
 
-  memset(cc, 0, sizeof(*cc));
+  *cc = (compile_commands_t){0};
 }

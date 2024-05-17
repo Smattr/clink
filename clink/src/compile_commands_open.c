@@ -6,7 +6,6 @@
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 int compile_commands_open(compile_commands_t *cc, const char *directory) {
@@ -14,7 +13,7 @@ int compile_commands_open(compile_commands_t *cc, const char *directory) {
   assert(cc != NULL);
   assert(directory != NULL);
 
-  memset(cc, 0, sizeof(*cc));
+  *cc = (compile_commands_t){0};
 
   // check whether compile_commands.json exists
   {
