@@ -54,7 +54,7 @@ CXX(friend)
 CXX_C(goto)
 CXX_C(if)
 CXX_C(inline) // claim this was available even prior to C99 because, although
-              // this is not strictly accurately, it was widely supported by
+              // this is not strictly accurate, it was widely supported by
               // compilers
 CXX_C(int)
 CXX_C(long)
