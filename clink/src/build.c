@@ -282,7 +282,8 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
 
     // insert a new record for the file
     clink_record_id_t id = -1;
-    (void)clink_db_add_record(db, path, hash, timestamp, &id);
+    if (UNLIKELY((rc = clink_db_add_record(db, path, hash, timestamp, &id))))
+      break;
 
     if (UNLIKELY((rc = parse(thread_id, db, path, id))))
       break;

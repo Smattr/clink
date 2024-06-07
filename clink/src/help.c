@@ -80,7 +80,7 @@ int help(void) {
   }
 
   // wait for man to finish
-  (void)wait((int[]){0});
+  (void)wait(&(int){0});
 
   // cleanup
 done:
