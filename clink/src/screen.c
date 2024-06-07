@@ -1,5 +1,6 @@
 #include "screen.h"
 #include "../../common/compiler.h"
+#include "../../common/pipe.h"
 #include "option.h"
 #include <assert.h>
 #include <errno.h>
@@ -93,10 +94,8 @@ int screen_init(void) {
   }
 
   // setup a pipe for the signal bouncer to write to
-  if (pipe(signal_pipe) < 0) {
-    rc = errno;
+  if ((rc = pipe_(signal_pipe)))
     goto done;
-  }
 
   // install signal handlers
   struct sigaction sig = {.sa_handler = signal_bounce};

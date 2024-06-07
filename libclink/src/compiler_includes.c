@@ -1,4 +1,5 @@
 #include "../../common/compiler.h"
+#include "../../common/pipe.h"
 #include "debug.h"
 #include "get_environ.h"
 #include "posix_spawn.h"
@@ -113,39 +114,6 @@ done:
   }
 
   return rc;
-}
-
-/// `pipe` that also sets close-on-exec
-static int pipe_(int pipefd[2]) {
-  assert(pipefd != NULL);
-
-#ifdef __APPLE__
-  // macOS does not have `pipe2`, so we need to fall back on `pipe`+`fcntl`.
-  // This is racy, but there does not seem to be a way to avoid this.
-
-  // create the pipe
-  if (ERROR(pipe(pipefd) < 0))
-    return errno;
-
-  // set close-on-exec
-  for (size_t i = 0; i < 2; ++i) {
-    const int flags = fcntl(pipefd[i], F_GETFD);
-    if (ERROR(fcntl(pipefd[i], F_SETFD, flags | FD_CLOEXEC) < 0)) {
-      const int err = errno;
-      for (size_t j = 0; j < 2; ++j) {
-        (void)close(pipefd[j]);
-        pipefd[j] = -1;
-      }
-      return err;
-    }
-  }
-
-#else
-  if (ERROR(pipe2(pipefd, O_CLOEXEC) < 0))
-    return errno;
-#endif
-
-  return 0;
 }
 
 int clink_compiler_includes(const char *compiler, char ***includes,
