@@ -1,4 +1,6 @@
 #include "../../common/compiler.h"
+#include "../../common/pipe.h"
+#include "debug.h"
 #include "get_environ.h"
 #include "posix_spawn.h"
 #include <assert.h>
@@ -31,7 +33,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
   errno = 0;
   while (true) {
 
-    if (getline(&line, &line_size, in) < 0) {
+    if (ERROR(getline(&line, &line_size, in) < 0)) {
       rc = errno;
       if (rc == 0)
         rc = ENOTSUP;
@@ -45,7 +47,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
   // read includes
   while (true) {
 
-    if (getline(&line, &line_size, in) < 0) {
+    if (ERROR(getline(&line, &line_size, in) < 0)) {
       rc = errno;
       if (rc == 0)
         rc = ENOTSUP;
@@ -61,7 +63,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
       break;
 
     // we expect all #include lines to begin with a space
-    if (UNLIKELY(line[0] != ' ')) {
+    if (ERROR(line[0] != ' ')) {
       rc = ENOTSUP;
       goto done;
     }
@@ -70,7 +72,7 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
     size_t extent = strlen(start);
 
     // and we expect it to end with a newline
-    if (UNLIKELY(extent == 0 || start[extent - 1] != '\n')) {
+    if (ERROR(extent == 0 || start[extent - 1] != '\n')) {
       rc = ENOTSUP;
       goto done;
     }
@@ -86,14 +88,14 @@ static int parse_includes(FILE *in, char ***list, size_t *list_len) {
 
     // record this include
     char **new_l = realloc(l, (l_len + 1) * sizeof(l[0]));
-    if (UNLIKELY(new_l == NULL)) {
+    if (ERROR(new_l == NULL)) {
       rc = ENOMEM;
       goto done;
     }
     l = new_l;
     ++l_len;
     l[l_len - 1] = strndup(start, extent);
-    if (UNLIKELY(l[l_len - 1] == NULL)) {
+    if (ERROR(l[l_len - 1] == NULL)) {
       rc = ENOMEM;
       goto done;
     }
@@ -139,43 +141,37 @@ int clink_compiler_includes(const char *compiler, char ***includes,
 
   int rc = 0;
   posix_spawn_file_actions_t fa;
-  int devnull = -1;
   int channel[2] = {-1, -1};
   FILE *child_err = NULL;
 
-  if ((rc = fa_init(&fa)))
+  if (ERROR((rc = fa_init(&fa))))
     return rc;
 
   // wire the child’s stdin and stdout to /dev/null
-  if ((devnull = open("/dev/null", O_RDWR)) < 0) {
-    rc = errno;
+  if (ERROR((rc = addopen(&fa, STDIN_FILENO, "/dev/null", O_RDONLY))))
     goto done;
-  }
-  if ((rc = adddup2(&fa, devnull, STDIN_FILENO)))
-    goto done;
-  if ((rc = adddup2(&fa, devnull, STDOUT_FILENO)))
+  if (ERROR((rc = addopen(&fa, STDOUT_FILENO, "/dev/null", O_WRONLY))))
     goto done;
 
   // create a pipe for communicating with the compiler
-  if (pipe(channel)) {
-    rc = errno;
+  if (ERROR((rc = pipe_(channel))))
     goto done;
-  }
 
   // open the read end as a stream so we can later use getline on it
-  if ((child_err = fdopen(channel[0], "r")) == NULL) {
+  child_err = fdopen(channel[0], "r");
+  if (ERROR(child_err == NULL)) {
     rc = errno;
     goto done;
   }
 
   // wire the child’s stderr to the write end of the pipe
-  if ((rc = adddup2(&fa, channel[1], STDERR_FILENO)))
+  if (ERROR((rc = adddup2(&fa, channel[1], STDERR_FILENO))))
     goto done;
 
   {
     // start the child
     pid_t pid;
-    if ((rc = spawn(&pid, argv, &fa)))
+    if (ERROR((rc = spawn(&pid, argv, &fa))))
       goto done;
 
     // extract the list of #include paths
@@ -206,8 +202,6 @@ done:
     close(channel[1]);
   if (channel[0] != -1)
     close(channel[0]);
-  if (devnull != -1)
-    close(devnull);
   fa_destroy(&fa);
 
   return rc;

@@ -1,5 +1,6 @@
 #include "spinner.h"
 #include "../../common/compiler.h"
+#include "../../common/pipe.h"
 #include "option.h"
 #include <assert.h>
 #include <errno.h>
@@ -78,10 +79,8 @@ int spinner_on(size_t row, size_t column) {
 
     assert(done[0] < 0);
     assert(done[1] < 0);
-    if (UNLIKELY(pipe(done) < 0)) {
-      rc = errno;
+    if (UNLIKELY((rc = pipe_(done))))
       goto done;
-    }
 
     // set the read end of the pipe to be non-blocking so the worker can poll it
     {

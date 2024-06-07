@@ -33,23 +33,17 @@ static int run_cscope(const char *filename, const char *cscope_out) {
 
   int rc = 0;
   posix_spawn_file_actions_t fa;
-  int devnull = -1;
   char *dash_f = NULL;
 
   if (ERROR((rc = fa_init(&fa))))
     return rc;
 
   // hide all of Cscope’s stdin/stdout/stderr
-  devnull = open("/dev/null", O_RDWR);
-  if (ERROR(devnull < 0)) {
-    rc = errno;
+  if (ERROR((rc = addopen(&fa, STDIN_FILENO, "/dev/null", O_RDONLY))))
     goto done;
-  }
-  if (ERROR((rc = adddup2(&fa, devnull, STDIN_FILENO))))
+  if (ERROR((rc = addopen(&fa, STDOUT_FILENO, "/dev/null", O_WRONLY))))
     goto done;
-  if (ERROR((rc = adddup2(&fa, devnull, STDOUT_FILENO))))
-    goto done;
-  if (ERROR((rc = adddup2(&fa, devnull, STDERR_FILENO))))
+  if (ERROR((rc = addopen(&fa, STDERR_FILENO, "/dev/null", O_WRONLY))))
     goto done;
 
   // construct a command to run Cscope
@@ -80,8 +74,6 @@ static int run_cscope(const char *filename, const char *cscope_out) {
 
 done:
   free(dash_f);
-  if (devnull >= 0)
-    (void)close(devnull);
   fa_destroy(&fa);
 
   return rc;
