@@ -7,11 +7,13 @@
 #include <clink/db.h>
 #include <clink/symbol.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 // regex for recognising a #define
 static const char DEFINE[] =
@@ -237,6 +239,29 @@ static void state_free(state_t *s) {
   s->in = NULL;
 }
 
+/// `fopen` with "r" that also sets close-on-exec
+static FILE *fopen_r(const char *path) {
+  assert(path != NULL);
+
+#ifdef __APPLE__
+  // macOS does not support 'e' to `fopen`, so work around this
+  const int fd = open(path, O_RDONLY | O_CLOEXEC);
+  if (fd < 0)
+    return NULL;
+
+  FILE *f = fdopen(fd, "r");
+  if (f == NULL) {
+    const int err = errno;
+    (void)close(fd);
+    errno = err;
+  }
+
+  return f;
+#else
+  return fopen(path, "re");
+#endif
+}
+
 int clink_parse_asm(clink_db_t *db, const char *filename) {
 
   if (ERROR(db == NULL))
@@ -252,7 +277,7 @@ int clink_parse_asm(clink_db_t *db, const char *filename) {
   state_t s = {.db = db, .filename = filename};
 
   // open the input file
-  s.in = fopen(filename, "r");
+  s.in = fopen_r(filename);
   if (s.in == NULL) {
     rc = errno;
     goto done;
