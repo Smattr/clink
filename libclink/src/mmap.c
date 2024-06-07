@@ -18,7 +18,7 @@ int mmap_open(mmap_t *m, const char *filename) {
   int rc = 0;
   int fd = -1;
 
-  fd = open(filename, O_RDONLY);
+  fd = open(filename, O_RDONLY | O_CLOEXEC);
   if (fd < 0) {
     rc = errno;
     goto done;
