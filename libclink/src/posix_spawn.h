@@ -5,6 +5,7 @@
 
 #include "get_environ.h"
 #include <assert.h>
+#include <fcntl.h>
 #include <spawn.h>
 #include <stddef.h>
 
@@ -14,6 +15,15 @@ static inline int adddup2(posix_spawn_file_actions_t *file_actions, int fildes,
   assert(fildes >= 0);
   assert(newfildes >= 0);
   return posix_spawn_file_actions_adddup2(file_actions, fildes, newfildes);
+}
+
+static inline int addopen(posix_spawn_file_actions_t *file_actions, int fildes,
+                          const char *path, int oflag) {
+  assert(file_actions != NULL);
+  assert(fildes >= 0);
+  assert(path != NULL);
+  assert(oflag == O_RDONLY || oflag == O_WRONLY || oflag == O_RDWR);
+  return posix_spawn_file_actions_addopen(file_actions, fildes, path, oflag, 0);
 }
 
 static inline int fa_init(posix_spawn_file_actions_t *file_actions) {

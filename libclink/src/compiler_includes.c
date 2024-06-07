@@ -173,7 +173,6 @@ int clink_compiler_includes(const char *compiler, char ***includes,
 
   int rc = 0;
   posix_spawn_file_actions_t fa;
-  int devnull = -1;
   int channel[2] = {-1, -1};
   FILE *child_err = NULL;
 
@@ -181,14 +180,9 @@ int clink_compiler_includes(const char *compiler, char ***includes,
     return rc;
 
   // wire the child’s stdin and stdout to /dev/null
-  devnull = open("/dev/null", O_RDWR);
-  if (ERROR(devnull < 0)) {
-    rc = errno;
+  if (ERROR((rc = addopen(&fa, STDIN_FILENO, "/dev/null", O_RDONLY))))
     goto done;
-  }
-  if (ERROR((rc = adddup2(&fa, devnull, STDIN_FILENO))))
-    goto done;
-  if (ERROR((rc = adddup2(&fa, devnull, STDOUT_FILENO))))
+  if (ERROR((rc = addopen(&fa, STDOUT_FILENO, "/dev/null", O_WRONLY))))
     goto done;
 
   // create a pipe for communicating with the compiler
@@ -240,8 +234,6 @@ done:
     close(channel[1]);
   if (channel[0] != -1)
     close(channel[0]);
-  if (devnull != -1)
-    close(devnull);
   fa_destroy(&fa);
 
   return rc;
