@@ -1,5 +1,6 @@
 #include "help.h"
 #include <errno.h>
+#include <fcntl.h>
 #include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +49,7 @@ int help(void) {
     return ENOMEM;
 
   // create a file there
-  int fd = mkstemp(path);
+  int fd = mkostemp(path, O_CLOEXEC);
   if (fd == -1) {
     rc = errno;
     goto done;
