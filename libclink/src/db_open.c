@@ -22,8 +22,10 @@ static int exec_all(sqlite3 *db, size_t queries_length, const char **queries) {
 
   for (size_t i = 0; i < queries_length; ++i) {
     assert(queries[i] != NULL);
-    if (ERROR((rc = sql_exec(db, queries[i]))))
+    if (ERROR((rc = sql_exec(db, queries[i])))) {
+      DEBUG("failed to exec SQL '%s'", queries[i]);
       return rc;
+    }
   }
 
   return rc;
