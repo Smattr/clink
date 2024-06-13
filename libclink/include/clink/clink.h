@@ -2,7 +2,7 @@
 
 #ifndef CLINK_API
 #ifdef __GNUC__
-#define CLINK_API __attribute__((visibility("hidden")))
+#define CLINK_API /* nothing */
 #elif defined(_MSC_VER)
 #define CLINK_API __declspec(dllimport)
 #else
