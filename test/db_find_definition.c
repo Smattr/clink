@@ -1,5 +1,5 @@
 #include "test.h"
-#include <clink/db.h>
+#include <clink/clink.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>

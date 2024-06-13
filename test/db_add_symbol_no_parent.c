@@ -1,5 +1,5 @@
 #include "test.h"
-#include <clink/db.h>
+#include <clink/clink.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
