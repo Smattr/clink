@@ -10,7 +10,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # make asprintf(), pipe2() prototypes visible
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  add_definitions(-D_GNU_SOURCE)
+  add_compile_definitions(_GNU_SOURCE)
 endif()
 
 # enable --as-needed, present on GNU ld on Linux, to minimise dependencies
