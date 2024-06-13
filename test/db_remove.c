@@ -6,6 +6,8 @@
 
 TEST("clink_db_remove()") {
 
+  (void)clink_set_debug(stderr);
+
   // construct a unique path
   char *target = test_tmpnam();
 

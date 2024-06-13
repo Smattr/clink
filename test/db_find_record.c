@@ -9,6 +9,8 @@
 
 TEST("clink_db_find_record()") {
 
+  (void)clink_set_debug(stderr);
+
   // construct a unique path
   char *target = test_tmpnam();
 
