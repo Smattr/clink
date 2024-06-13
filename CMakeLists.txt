@@ -9,14 +9,27 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # make asprintf(), pipe2() prototypes visible
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-  add_definitions(-D_GNU_SOURCE)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_compile_definitions(_GNU_SOURCE)
 endif()
 
 # enable --as-needed, present on GNU ld on Linux, to minimise dependencies
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--as-needed")
+endif()
+
+if(APPLE)
+  list(APPEND CMAKE_INSTALL_RPATH "@executable_path/../${CMAKE_INSTALL_LIBDIR}")
+else()
+  list(APPEND CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
+
+# when building static libraries, at best the visibility annotations are
+# redundant and at worst they are incorrect (`__declspec(dllimport)` on MSVC),
+# so suppress them
+if(NOT BUILD_SHARED_LIBS)
+  add_compile_definitions(CLINK_API=)
 endif()
 
 # enable even more warnings if the compiler supports them
