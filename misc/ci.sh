@@ -11,13 +11,11 @@ python3 --version
 git submodule init
 git submodule update
 
-mkdir build
-cd build
-cmake ${CMAKE_FLAGS:-} ..
-cmake --build .
-cmake --build . -- check
+cmake ${CMAKE_FLAGS:-} -B build -S .
+cmake --build build
+cmake --build build --target check
 printf "find-me says: "
-./test/find-me/find-me
+./build/test/find-me/find-me
 
 if [ "$(uname -s)" = "Darwin" ]; then
   SUDO=sudo
@@ -25,4 +23,4 @@ else
   # sudo not needed
   SUDO=
 fi
-${SUDO} cmake --build . -- install
+${SUDO} cmake --install build
