@@ -11,7 +11,7 @@ task:
       environment:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: pkg upgrade -y && pkg install -y bash cmake git llvm py39-pytest vim
+      install_script: pkg upgrade -y && pkg install -y bash cmake git llvm py311-pytest vim
       test_script: ./misc/ci.sh
 
     - name: Linux
