@@ -13,6 +13,20 @@
 #include <string.h>
 #include <unistd.h>
 
+/// debug-dump extra details about a SQLite error that just occurred
+#define SQL_ERROR_DETAIL(db, query)                                            \
+  do {                                                                         \
+    if (UNLIKELY(clink_debug != NULL)) {                                       \
+      const int errcode_ = sqlite3_errcode(db);                                \
+      const int extended_ = sqlite3_extended_errcode(db);                      \
+      const int offset_ = sqlite3_error_offset(db);                            \
+      const char *msg_ = sqlite3_errmsg(db);                                   \
+      DEBUG(                                                                   \
+          "SQLite error %d, extended error %d: “%s” at character %d of “%s”",  \
+          errcode_, extended_, msg_, offset_, (query));                        \
+    }                                                                          \
+  } while (0)
+
 static int exec_all(sqlite3 *db, size_t queries_length, const char **queries) {
 
   assert(db != NULL);
@@ -22,8 +36,10 @@ static int exec_all(sqlite3 *db, size_t queries_length, const char **queries) {
 
   for (size_t i = 0; i < queries_length; ++i) {
     assert(queries[i] != NULL);
-    if (ERROR((rc = sql_exec(db, queries[i]))))
+    if (ERROR((rc = sql_exec(db, queries[i])))) {
+      SQL_ERROR_DETAIL(db, queries[i]);
       return rc;
+    }
   }
 
   return rc;
@@ -53,7 +69,7 @@ static int check_schema_version(sqlite3 *db) {
   assert(db != NULL);
 
   static const char QUERY[] =
-      "select value from metadata where key = \"schema_version\";";
+      "select value from metadata where key = 'schema_version';";
 
   int rc = 0;
 
@@ -67,6 +83,7 @@ static int check_schema_version(sqlite3 *db) {
       goto done;
     }
     if (ERROR(r)) {
+      SQL_ERROR_DETAIL(db, QUERY);
       rc = sql_err_to_errno(r);
       goto done;
     }
@@ -78,6 +95,7 @@ static int check_schema_version(sqlite3 *db) {
       if (r == SQLITE_DONE) {
         rc = ENOENT;
       } else {
+        SQL_ERROR_DETAIL(db, QUERY);
         rc = sql_err_to_errno(r);
       }
       goto done;
@@ -121,10 +139,32 @@ int clink_db_open(clink_db_t **db, const char *path) {
 
   int rc = 0;
 
-  int err = sqlite3_open(path, &d->db);
-  if (err != SQLITE_OK) {
-    rc = sql_err_to_errno(err);
-    goto done;
+  {
+    const int err = sqlite3_open(path, &d->db);
+    if (err != SQLITE_OK) {
+      rc = sql_err_to_errno(err);
+      goto done;
+    }
+  }
+
+  // disable double-quotes for string literals in CREATE
+  {
+    const int err = sqlite3_db_config(d->db, SQLITE_DBCONFIG_DQS_DDL, 0, NULL);
+    if (ERROR(err != SQLITE_OK)) {
+      SQL_ERROR_DETAIL(d->db, ".dbconfig DQS_DDL 0");
+      rc = sql_err_to_errno(err);
+      goto done;
+    }
+  }
+
+  // disable double-quotes for string literals in DELETE/INSERT/SELECT/UPDATE
+  {
+    const int err = sqlite3_db_config(d->db, SQLITE_DBCONFIG_DQS_DML, 0, NULL);
+    if (ERROR(err != SQLITE_OK)) {
+      SQL_ERROR_DETAIL(d->db, ".dbconfig DQS_DML 0");
+      rc = sql_err_to_errno(err);
+      goto done;
+    }
   }
 
   // now that the database exists, find an absolute path to it

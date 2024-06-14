@@ -54,6 +54,8 @@ static void find(clink_db_t *db, const char *path) {
 
 TEST("test looking up an included file by its final component works (1)") {
 
+  (void)clink_set_debug(stderr);
+
   // construct a unique path
   char *target = test_tmpnam();
 
@@ -97,6 +99,8 @@ TEST("test looking up an included file by its final component works (1)") {
 
 TEST("test looking up an included file by its final component works (2)") {
 
+  (void)clink_set_debug(stderr);
+
   // construct a unique path
   char *target = test_tmpnam();
 
@@ -139,6 +143,8 @@ TEST("test looking up an included file by its final component works (2)") {
 }
 
 TEST("test looking up an included file by its final component works (3)") {
+
+  (void)clink_set_debug(stderr);
 
   // construct a unique path
   char *target = test_tmpnam();

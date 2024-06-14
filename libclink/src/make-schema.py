@@ -91,7 +91,7 @@ def main(args: [str]) -> int:
     # write a version of the schema itself
     version = get_hash(schema_sql)
     schema_c.write(
-        f'  "insert into metadata (key, value) values (\\"schema_version\\", \\"{version}\\");",\n'
+        f"  \"insert into metadata (key, value) values ('schema_version', '{version}');\",\n"
     )
     statement_count += 1
 

@@ -1,5 +1,5 @@
 #include "test.h"
-#include <clink/db.h>
+#include <clink/clink.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stddef.h>
@@ -8,6 +8,8 @@
 #include <string.h>
 
 TEST("clink_db_find_record()") {
+
+  (void)clink_set_debug(stderr);
 
   // construct a unique path
   char *target = test_tmpnam();

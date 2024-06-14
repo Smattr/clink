@@ -1,7 +1,7 @@
 #include "../common/compiler.h"
 #include "test.h"
 #include <assert.h>
-#include <clink/cscope.h>
+#include <clink/clink.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +60,8 @@ static int error(unsigned long lineno UNUSED, unsigned long colno UNUSED,
 
 TEST("clink_parse_namefile basic") {
 
+  (void)clink_set_debug(stderr);
+
   // a list of some path names
   char content[] = "foo bar\nbaz/qux";
 
@@ -92,6 +94,8 @@ TEST("clink_parse_namefile basic") {
 /// multiple separators should be coalesced
 TEST("clink_parse_namefile multiple separators") {
 
+  (void)clink_set_debug(stderr);
+
   char content[] = "foo \n\t bar";
   FILE *namefile = fmemopen(content, strlen(content), "r");
   ASSERT_NOT_NULL(namefile);
@@ -121,6 +125,8 @@ TEST("clink_parse_namefile multiple separators") {
 /// a trailing separator should be ignored
 TEST("clink_parse_namefile trailing separators") {
 
+  (void)clink_set_debug(stderr);
+
   char content[] = "foo bar\n";
   FILE *namefile = fmemopen(content, strlen(content), "r");
   ASSERT_NOT_NULL(namefile);
@@ -148,6 +154,8 @@ TEST("clink_parse_namefile trailing separators") {
 }
 
 TEST("clink_parse_namefile empty") {
+
+  (void)clink_set_debug(stderr);
 
   // cannot use `fmemopen` for this one because some implementations like
   // FreeBSD do not support `size == 0`
@@ -178,6 +186,8 @@ TEST("clink_parse_namefile empty") {
 
 TEST("clink_parse_namefile quoted") {
 
+  (void)clink_set_debug(stderr);
+
   char content[] = "foo \"bar/baz\" qux";
   FILE *namefile = fmemopen(content, strlen(content), "r");
   ASSERT_NOT_NULL(namefile);
@@ -205,6 +215,8 @@ TEST("clink_parse_namefile quoted") {
 }
 
 TEST("clink_parse_namefile escape sequences") {
+
+  (void)clink_set_debug(stderr);
 
   char content[] = "foo \"ba\\\"r/ba\\\\z\" qux";
   FILE *namefile = fmemopen(content, strlen(content), "r");
@@ -236,6 +248,8 @@ TEST("clink_parse_namefile escape sequences") {
 /// mismatched quotes should be rejected
 TEST("clink_parse_namefile mismatched quote") {
 
+  (void)clink_set_debug(stderr);
+
   char content[] = "foo \"bar/baz";
   FILE *namefile = fmemopen(content, strlen(content), "r");
   ASSERT_NOT_NULL(namefile);
@@ -255,6 +269,8 @@ TEST("clink_parse_namefile mismatched quote") {
 }
 
 TEST("clink_parse_namefile trailing quote") {
+
+  (void)clink_set_debug(stderr);
 
   char content[] = "foo \"";
   FILE *namefile = fmemopen(content, strlen(content), "r");
@@ -276,6 +292,8 @@ TEST("clink_parse_namefile trailing quote") {
 
 /// generously accept the empty string as a path
 TEST("clink_parse_namefile empty string") {
+
+  (void)clink_set_debug(stderr);
 
   char content[] = "foo \"\" bar";
   FILE *namefile = fmemopen(content, strlen(content), "r");
@@ -306,6 +324,8 @@ TEST("clink_parse_namefile empty string") {
 /// escapes other than \" and \\ should be rejected
 TEST("clink_parse_namefile bad escape") {
 
+  (void)clink_set_debug(stderr);
+
   char content[] = "foo \"bar/\\nbaz\" qux";
   FILE *namefile = fmemopen(content, strlen(content), "r");
   ASSERT_NOT_NULL(namefile);
@@ -326,6 +346,8 @@ TEST("clink_parse_namefile bad escape") {
 
 /// unquoted path with a quote should be rejected
 TEST("clink_parse_namefile bare quote") {
+
+  (void)clink_set_debug(stderr);
 
   char content[] = "foo bar/\"baz qux";
   FILE *namefile = fmemopen(content, strlen(content), "r");
