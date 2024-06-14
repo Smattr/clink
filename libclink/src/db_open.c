@@ -139,10 +139,12 @@ int clink_db_open(clink_db_t **db, const char *path) {
 
   int rc = 0;
 
-  int err = sqlite3_open(path, &d->db);
-  if (err != SQLITE_OK) {
-    rc = sql_err_to_errno(err);
-    goto done;
+  {
+    const int err = sqlite3_open(path, &d->db);
+    if (err != SQLITE_OK) {
+      rc = sql_err_to_errno(err);
+      goto done;
+    }
   }
 
   // now that the database exists, find an absolute path to it
