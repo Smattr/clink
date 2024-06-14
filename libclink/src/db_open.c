@@ -147,6 +147,26 @@ int clink_db_open(clink_db_t **db, const char *path) {
     }
   }
 
+  // disable double-quotes for string literals in CREATE
+  {
+    const int err = sqlite3_db_config(d->db, SQLITE_DBCONFIG_DQS_DDL, 0, NULL);
+    if (ERROR(err != SQLITE_OK)) {
+      SQL_ERROR_DETAIL(d->db, ".dbconfig DQS_DDL 0");
+      rc = sql_err_to_errno(err);
+      goto done;
+    }
+  }
+
+  // disable double-quotes for string literals in DELETE/INSERT/SELECT/UPDATE
+  {
+    const int err = sqlite3_db_config(d->db, SQLITE_DBCONFIG_DQS_DML, 0, NULL);
+    if (ERROR(err != SQLITE_OK)) {
+      SQL_ERROR_DETAIL(d->db, ".dbconfig DQS_DML 0");
+      rc = sql_err_to_errno(err);
+      goto done;
+    }
+  }
+
   // now that the database exists, find an absolute path to it
   if (path[0] != '/') {
     char *abs = realpath(path, NULL);
