@@ -69,7 +69,7 @@ static int check_schema_version(sqlite3 *db) {
   assert(db != NULL);
 
   static const char QUERY[] =
-      "select value from metadata where key = \"schema_version\";";
+      "select value from metadata where key = 'schema_version';";
 
   int rc = 0;
 
