@@ -113,7 +113,6 @@ def test_case(tmp_path: Path, case: str):
     lit(tmp_path, Path(__file__).parent / "cases" / case)
 
 
-@pytest.mark.xfail(reason="https://github.com/Smattr/clink/issues/243", strict=True)
 def test_243(tmp_path: Path):
     """
     https://github.com/Smattr/clink/issues/243

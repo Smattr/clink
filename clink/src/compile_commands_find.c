@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "compile_commands.h"
+#include "path.h"
 #include <assert.h>
 #include <clang-c/CXCompilationDatabase.h>
 #include <errno.h>
@@ -19,6 +20,25 @@ static bool is_cc(const char *path) {
     return true;
   if (strlen(path) >= 4 && strcmp(path + strlen(path) - 4, "/c++") == 0)
     return true;
+  return false;
+}
+
+/// does this look like a source file being passed to the compiler?
+static bool is_source_arg(const char *path) {
+  assert(path != NULL);
+
+  // does this look like a compiler flag?
+  if (path[0] == '-')
+    return false;
+
+  // does it look like a source file Clang would understand?
+  if (is_asm(path))
+    return true;
+  if (is_c(path))
+    return true;
+  if (is_cxx(path))
+    return true;
+
   return false;
 }
 
@@ -73,15 +93,6 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
     }
   }
 
-  // only accept the command if its last parameter is the source itself
-  if (strcmp(av[ac - 1], source) != 0) {
-    rc = ENOMSG;
-    goto done;
-  }
-  free(av[ac - 1]);
-  av[ac - 1] = NULL;
-  --ac;
-
   // For some reason, libclang’s interface to the compilation database will
   // return hits for headers that do _not_ have specific compile commands in the
   // database. This is useful to us. Except that the returned command often does
@@ -89,18 +100,33 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // not understand the argument separator (`--`) but then also uses the
   // argument separator in the command. When instructing libclang to parse using
   // this command, it then fails. See if we can detect that situation here and
-  // drop the `--`.
-  if (ac >= 2) {
-    do {
-      if (!is_cc(av[0]))
+  // drop the `--` and everything following.
+  if (is_cc(av[0])) {
+    for (size_t i = 1; i < ac; ++i) {
+      if (strcmp(av[i], "--") == 0) {
+        for (size_t j = i; j < ac; ++j) {
+          free(av[j]);
+          av[j] = NULL;
+        }
+        ac = i;
         break;
-
-      if (strcmp(av[ac - 1], "--") == 0) {
-        free(av[ac - 1]);
-        av[ac - 1] = NULL;
-        --ac;
       }
-    } while (0);
+    }
+  }
+
+  // Drop anything that looks like a source being passed to the compiler. We do
+  // this rather than more specific matching of `source` itself because the
+  // command may reference the source via a relative or symlink-containing path.
+  for (size_t i = 1; i < ac;) {
+    if (is_source_arg(av[i])) {
+      free(av[i]);
+      for (size_t j = i; j + 1 < ac; ++j)
+        av[j] = av[j + 1];
+      av[ac - 1] = NULL;
+      --ac;
+    } else {
+      ++i;
+    }
   }
 
   // success
