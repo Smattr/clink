@@ -2,13 +2,13 @@
 Clink integration test suite
 """
 
-import os
+import os  # pylint: disable=unused-import
 import re
 import subprocess
 from pathlib import Path
 
 import pytest
-from packaging import version
+from packaging import version  # pylint: disable=unused-import
 
 
 def is_python(path: Path) -> bool:
