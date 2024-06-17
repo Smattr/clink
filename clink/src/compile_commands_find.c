@@ -54,48 +54,6 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   assert(num_args > 0);
   assert(num_args < SIZE_MAX);
 
-  // only accept the command if its last parameter is the source itself
-  {
-    CXString last = clang_CompileCommand_getArg(cmd, (unsigned)num_args - 1);
-    const char *laststr = clang_getCString(last);
-    assert(laststr != NULL);
-    bool matches = strcmp(laststr, source) == 0;
-    clang_disposeString(last);
-    if (!matches) {
-      rc = ENOMSG;
-      goto done;
-    }
-  }
-  --num_args;
-
-  // For some reason, libclang’s interface to the compilation database will
-  // return hits for headers that do _not_ have specific compile commands in the
-  // database. This is useful to us. Except that the returned command often does
-  // not work. Specifically it uses the inner compiler driver (`cc`) which does
-  // not understand the argument separator (`--`) but then also uses the
-  // argument separator in the command. When instructing libclang to parse using
-  // this command, it then fails. See if we can detect that situation here and
-  // drop the `--`.
-  if (num_args >= 2) {
-    do {
-      CXString first = clang_CompileCommand_getArg(cmd, 0);
-      const char *firststr = clang_getCString(first);
-      assert(firststr != NULL);
-      bool first_is_cc = is_cc(firststr);
-      clang_disposeString(first);
-      if (!first_is_cc)
-        break;
-
-      CXString last = clang_CompileCommand_getArg(cmd, (unsigned)num_args - 1);
-      const char *laststr = clang_getCString(last);
-      assert(laststr != NULL);
-      bool is_dashdash = strcmp(laststr, "--") == 0;
-      clang_disposeString(last);
-      if (is_dashdash)
-        --num_args;
-    } while (0);
-  }
-
   // extract the arguments with a trailing NULL
   av = calloc(num_args + 1, sizeof(av[0]));
   if (UNLIKELY(av == NULL)) {
@@ -113,6 +71,36 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
       rc = ENOMEM;
       goto done;
     }
+  }
+
+  // only accept the command if its last parameter is the source itself
+  if (strcmp(av[ac - 1], source) != 0) {
+    rc = ENOMSG;
+    goto done;
+  }
+  free(av[ac - 1]);
+  av[ac - 1] = NULL;
+  --ac;
+
+  // For some reason, libclang’s interface to the compilation database will
+  // return hits for headers that do _not_ have specific compile commands in the
+  // database. This is useful to us. Except that the returned command often does
+  // not work. Specifically it uses the inner compiler driver (`cc`) which does
+  // not understand the argument separator (`--`) but then also uses the
+  // argument separator in the command. When instructing libclang to parse using
+  // this command, it then fails. See if we can detect that situation here and
+  // drop the `--`.
+  if (ac >= 2) {
+    do {
+      if (!is_cc(av[0]))
+        break;
+
+      if (strcmp(av[ac - 1], "--") == 0) {
+        free(av[ac - 1]);
+        av[ac - 1] = NULL;
+        --ac;
+      }
+    } while (0);
   }
 
   // success
