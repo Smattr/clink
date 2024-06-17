@@ -129,6 +129,24 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
     }
   }
 
+  // If the compiler in use when the compilation database was generated was not
+  // Clang, commands may include warning options Clang does not understand (e.g.
+  // -Wcast-align=strict). Passing `displayDiagnostics=0` to `clang_createIndex`
+  // seems insufficient to silence the resulting -Wunknown-warning-option
+  // diagnostics that are then printed to stderr. To work around this, strip
+  // anything that looks like a warning option.
+  for (size_t i = 1; i < ac;) {
+    if (av[i][0] == '-' && av[i][1] == 'W') {
+      free(av[i]);
+      for (size_t j = i; j + 1 < ac; ++j)
+        av[j] = av[j + 1];
+      av[ac - 1] = NULL;
+      --ac;
+    } else {
+      ++i;
+    }
+  }
+
   // success
   *argc = ac;
   *argv = av;
