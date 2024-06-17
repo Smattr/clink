@@ -111,3 +111,54 @@ def test_case(tmp_path: Path, case: str):
     run Clink on the given test case and validate its CHECK lines
     """
     lit(tmp_path, Path(__file__).parent / "cases" / case)
+
+
+@pytest.mark.xfail(reason="https://github.com/Smattr/clink/issues/243", strict=True)
+def test_243(tmp_path: Path):
+    """
+    https://github.com/Smattr/clink/issues/243
+    Clink should not get confused by compile command argument ordering
+    """
+
+    # create a directory structure representative of typical compilation
+    src = tmp_path / "src"
+    src.mkdir()
+    build = tmp_path / "build"
+    build.mkdir()
+
+    # create an arbitrary source file
+    foo_c = src / "foo.c"
+    foo_c.write_text("int x;\n")
+
+    # create a compilation database with command line arguments unusually ordered
+    db = build / "compile_commands.json"
+    db.write_text(
+        f"""\
+    [
+      {{
+        "arguments": [
+          "gcc",
+          "-c",
+          "../src/foo.c",
+          "-o",
+          "foo.o"
+        ],
+        "directory": "f{build.absolute()}",
+        "file": "{foo_c.absolute()}"
+      }}
+    ]
+    """,
+        encoding="utf-8",
+    )
+
+    # run Clink on this working directory
+    stderr = subprocess.check_output(
+        ["clink", "--build-only", "--debug", "--jobs=1"],
+        cwd=tmp_path,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+
+    assert (
+        "no compile_commands.json entry found" not in stderr
+    ), "failed to find a compilation entry that exists"
