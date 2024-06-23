@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "compile_commands.h"
+#include "debug.h"
 #include "path.h"
 #include <assert.h>
 #include <clang-c/CXCompilationDatabase.h>
@@ -112,6 +113,7 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
     for (size_t i = 1; i < ac; ++i) {
       if (streq(av[i], "--")) {
         for (size_t j = i; j < ac; ++j) {
+          DEBUG("dropping compiler option %s", av[j]);
           free(av[j]);
           av[j] = NULL;
         }
@@ -126,6 +128,7 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // command may reference the source via a relative or symlink-containing path.
   for (size_t i = 1; i < ac;) {
     if (is_source_arg(av[i])) {
+      DEBUG("dropping compiler option %s", av[i]);
       free(av[i]);
       for (size_t j = i; j + 1 < ac; ++j)
         av[j] = av[j + 1];
@@ -145,6 +148,7 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   for (size_t i = 1; i < ac;) {
     if (av[i][0] == '-' && av[i][1] == 'W' &&
         (av[i][2] == '\0' || av[i][3] != ',')) {
+      DEBUG("dropping compiler option %s", av[i]);
       free(av[i]);
       for (size_t j = i; j + 1 < ac; ++j)
         av[j] = av[j + 1];
