@@ -10,15 +10,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+/// are two strings equal?
+static bool streq(const char *a, const char *b) {
+  assert(a != NULL);
+  assert(b != NULL);
+  return strcmp(a, b) == 0;
+}
+
 /// is this the raw compiler driver (as opposed to a front end wrapper)?
 static bool is_cc(const char *path) {
-  if (strcmp(path, "cc") == 0)
+  if (streq(path, "cc"))
     return true;
-  if (strlen(path) >= 3 && strcmp(path + strlen(path) - 3, "/cc") == 0)
+  if (strlen(path) >= 3 && streq(path + strlen(path) - 3, "/cc"))
     return true;
-  if (strcmp(path, "c++") == 0)
+  if (streq(path, "c++"))
     return true;
-  if (strlen(path) >= 4 && strcmp(path + strlen(path) - 4, "/c++") == 0)
+  if (strlen(path) >= 4 && streq(path + strlen(path) - 4, "/c++"))
     return true;
   return false;
 }
@@ -103,7 +110,7 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // drop the `--` and everything following.
   if (is_cc(av[0])) {
     for (size_t i = 1; i < ac; ++i) {
-      if (strcmp(av[i], "--") == 0) {
+      if (streq(av[i], "--")) {
         for (size_t j = i; j < ac; ++j) {
           free(av[j]);
           av[j] = NULL;
