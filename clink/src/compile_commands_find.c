@@ -136,7 +136,8 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // diagnostics that are then printed to stderr. To work around this, strip
   // anything that looks like a warning option.
   for (size_t i = 1; i < ac;) {
-    if (av[i][0] == '-' && av[i][1] == 'W') {
+    if (av[i][0] == '-' && av[i][1] == 'W' &&
+        (av[i][2] == '\0' || av[i][3] != ',')) {
       free(av[i]);
       for (size_t j = i; j + 1 < ac; ++j)
         av[j] = av[j + 1];
