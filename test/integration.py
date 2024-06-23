@@ -163,7 +163,6 @@ def test_243(tmp_path: Path):
     ), "failed to find a compilation entry that exists"
 
 
-@pytest.mark.xfail(reason="https://github.com/Smattr/clink/issues/243", strict=True)
 def test_243_1(tmp_path: Path):
     """
     https://github.com/Smattr/clink/issues/243
@@ -221,7 +220,6 @@ def test_243_1(tmp_path: Path):
     ), "missing replacement of relative include paths in `-I a/path/arg`"
 
 
-@pytest.mark.xfail(reason="https://github.com/Smattr/clink/issues/243", strict=True)
 def test_243_2(tmp_path: Path):
     """
     https://github.com/Smattr/clink/issues/243
