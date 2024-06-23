@@ -142,7 +142,7 @@ def test_243(tmp_path: Path):
           "-o",
           "foo.o"
         ],
-        "directory": "f{build.absolute()}",
+        "directory": "{build.absolute()}",
         "file": "{foo_c.absolute()}"
       }}
     ]
