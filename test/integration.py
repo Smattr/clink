@@ -142,7 +142,7 @@ def test_243(tmp_path: Path):
           "-o",
           "foo.o"
         ],
-        "directory": "f{build.absolute()}",
+        "directory": "{build.absolute()}",
         "file": "{foo_c.absolute()}"
       }}
     ]
@@ -161,3 +161,116 @@ def test_243(tmp_path: Path):
     assert (
         "no compile_commands.json entry found" not in stderr
     ), "failed to find a compilation entry that exists"
+
+
+def test_243_1(tmp_path: Path):
+    """
+    https://github.com/Smattr/clink/issues/243
+    Clink should not get confused by relative include paths in compile commands
+    """
+
+    # create a directory structure representative of typical compilation
+    src = tmp_path / "src"
+    src.mkdir()
+    inc = tmp_path / "inc"
+    inc.mkdir()
+    build = tmp_path / "build"
+    build.mkdir()
+
+    # create a source file that includes something assuming a `-I…` flag to the
+    # compiler
+    foo_c = src / "foo.c"
+    foo_c.write_text('#include "bar.h"\n')
+
+    # create a header as the target of this #include
+    bar_h = inc / "bar.h"
+    bar_h.write_text("extern int x;\n")
+
+    # create a compilation database with command line arguments including `-I…`
+    db = build / "compile_commands.json"
+    db.write_text(
+        f"""\
+    [
+      {{
+        "arguments": [
+          "gcc",
+          "-I",
+          "../inc",
+          "-c",
+          "../src/foo.c",
+        ],
+        "directory": "{build.absolute()}",
+        "file": "{foo_c.absolute()}"
+      }}
+    ]
+    """,
+        encoding="utf-8",
+    )
+
+    # run Clink on this working directory
+    output = subprocess.check_output(
+        ["clink", "--build-only", "--debug", "--jobs=1", "src"],
+        cwd=tmp_path,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+
+    assert re.search(
+        r"\breplacing compiler option \.\./inc with\b", output
+    ), "missing replacement of relative include paths in `-I a/path/arg`"
+
+
+def test_243_2(tmp_path: Path):
+    """
+    https://github.com/Smattr/clink/issues/243
+    Clink should not get confused by relative include paths in compile commands
+    """
+
+    # create a directory structure representative of typical compilation
+    src = tmp_path / "src"
+    src.mkdir()
+    inc = tmp_path / "inc"
+    inc.mkdir()
+    build = tmp_path / "build"
+    build.mkdir()
+
+    # create a source file that includes something assuming a `-I…` flag to the
+    # compiler
+    foo_c = src / "foo.c"
+    foo_c.write_text('#include "bar.h"\n')
+
+    # create a header as the target of this #include
+    bar_h = inc / "bar.h"
+    bar_h.write_text("extern int x;\n")
+
+    # create a compilation database with command line arguments including `-I…`
+    db = build / "compile_commands.json"
+    db.write_text(
+        f"""\
+    [
+      {{
+        "arguments": [
+          "gcc",
+          "-I../inc",
+          "-c",
+          "../src/foo.c",
+        ],
+        "directory": "{build.absolute()}",
+        "file": "{foo_c.absolute()}"
+      }}
+    ]
+    """,
+        encoding="utf-8",
+    )
+
+    # run Clink on this working directory
+    output = subprocess.check_output(
+        ["clink", "--build-only", "--debug", "--jobs=1", "src"],
+        cwd=tmp_path,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+
+    assert re.search(
+        r"\breplacing compiler option -I\.\./inc with\b", output
+    ), "missing replacement of relative include paths in `-Ia/path/arg`"

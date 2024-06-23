@@ -2,7 +2,9 @@
 
 #pragma once
 
+#include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /** get current working directory
@@ -88,6 +90,16 @@ bool is_lex(const char *path);
  * \return True if this is a Python file
  */
 bool is_python(const char *path);
+
+/** is this a relative (as opposed to an absolute) path?
+ *
+ * \param path Path to inspect
+ * \return True if this is a relative path
+ */
+static inline bool is_relative(const char *path) {
+  assert(path != NULL);
+  return path[0] != '/';
+}
 
 /** is this the root directory of the file system?
  *

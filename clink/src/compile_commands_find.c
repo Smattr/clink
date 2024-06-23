@@ -1,5 +1,6 @@
 #include "../../common/compiler.h"
 #include "compile_commands.h"
+#include "debug.h"
 #include "path.h"
 #include <assert.h>
 #include <clang-c/CXCompilationDatabase.h>
@@ -7,18 +8,33 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/// are two strings equal?
+static bool streq(const char *a, const char *b) {
+  assert(a != NULL);
+  assert(b != NULL);
+  return strcmp(a, b) == 0;
+}
+
+/// does a string start with the given prefix?
+static bool startswith(const char *s, const char *prefix) {
+  assert(s != NULL);
+  assert(prefix != NULL);
+  return strncmp(s, prefix, strlen(prefix)) == 0;
+}
+
 /// is this the raw compiler driver (as opposed to a front end wrapper)?
 static bool is_cc(const char *path) {
-  if (strcmp(path, "cc") == 0)
+  if (streq(path, "cc"))
     return true;
-  if (strlen(path) >= 3 && strcmp(path + strlen(path) - 3, "/cc") == 0)
+  if (strlen(path) >= 3 && streq(path + strlen(path) - 3, "/cc"))
     return true;
-  if (strcmp(path, "c++") == 0)
+  if (streq(path, "c++"))
     return true;
-  if (strlen(path) >= 4 && strcmp(path + strlen(path) - 4, "/c++") == 0)
+  if (strlen(path) >= 4 && streq(path + strlen(path) - 4, "/c++"))
     return true;
   return false;
 }
@@ -42,6 +58,102 @@ static bool is_source_arg(const char *path) {
   return false;
 }
 
+/// expand relative paths into absolute paths in a compiler option
+///
+/// The `ai` parameter is advanced over any argument(s) that are acted upon
+/// (optionally replaced) by this function.
+///
+/// \param argv Compiler arguments
+/// \param argc Number of elements in `argv`
+/// \param ai [inout] Argument to examine
+/// \param wd Absolute path to working directory in which this command was run
+/// \param try Compiler option to check for
+/// \param uses_sysroot Whether to account  `=` and `$SYSROOT` prefixes
+/// \return 0 on success or an errno on failure
+static int make_absolute(char **argv, size_t argc, size_t *ai, const char *wd,
+                         const char *try, bool uses_sysroot) {
+  assert(argv != NULL || argc == 0);
+  assert(*ai < argc);
+  assert(wd != NULL);
+  assert(!is_relative(wd));
+  assert(try != NULL);
+
+  // does this look like `-I a/path/arg`?
+  if (streq(argv[*ai], try)) {
+
+    // are we out of arguments?
+    if (*ai + 1 == argc)
+      return 0;
+    ++*ai;
+
+    do {
+
+      // Quoting GCC docs, “If _dir_ begins with ‘=’ or `$SYSROOT`, then the ‘=’
+      // or `$SYSROOT` is replaced by the sysroot prefix”
+      if (uses_sysroot) {
+        if (startswith(argv[*ai], "=") || startswith(argv[*ai], "$SYSROOT"))
+          break;
+      }
+
+      // we only need to replace relative paths
+      if (!is_relative(argv[*ai]))
+        break;
+
+      // construct an absolute path
+      char *replacement = NULL;
+      const int rc = join(wd, argv[*ai], &replacement);
+      if (ERROR(rc))
+        return rc;
+
+      DEBUG("replacing compiler option %s with %s", argv[*ai], replacement);
+      free(argv[*ai]);
+      argv[*ai] = replacement;
+    } while (0);
+
+    ++*ai;
+    return 0;
+  }
+
+  // does this look like `-Ia/path/arg`?
+  if (startswith(argv[*ai], try)) {
+    const char *stem = argv[*ai] + strlen(try);
+    do {
+
+      if (uses_sysroot) {
+        if (startswith(try, "=") || startswith(try, "$SYSROOT"))
+          break;
+      }
+
+      if (!is_relative(stem))
+        break;
+
+      char *suffix = NULL;
+      const int rc = join(wd, stem, &suffix);
+      if (ERROR(rc))
+        return rc;
+
+      const size_t replacement_size = strlen(try) + strlen(suffix) + 1;
+      char *replacement = malloc(replacement_size);
+      if (ERROR(replacement == NULL)) {
+        free(suffix);
+        return ENOMEM;
+      }
+
+      snprintf(replacement, replacement_size, "%s%s", try, suffix);
+      free(suffix);
+      DEBUG("replacing compiler option %s with %s", argv[*ai], replacement);
+      free(argv[*ai]);
+      argv[*ai] = replacement;
+
+    } while (0);
+
+    ++*ai;
+    return 0;
+  }
+
+  return 0;
+}
+
 int compile_commands_find(compile_commands_t *cc, const char *source,
                           size_t *argc, char ***argv) {
 
@@ -51,6 +163,8 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   int rc = 0;
   size_t ac = 0;
   char **av = NULL;
+  CXString working;
+  const char *wd = NULL;
 
   rc = pthread_mutex_lock(&cc->lock);
   if (UNLIKELY(rc != 0))
@@ -93,6 +207,11 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
     }
   }
 
+  // extract the working directory this command was run from
+  working = clang_CompileCommand_getDirectory(cmd);
+  wd = clang_getCString(working);
+  assert(wd != NULL);
+
   // For some reason, libclang’s interface to the compilation database will
   // return hits for headers that do _not_ have specific compile commands in the
   // database. This is useful to us. Except that the returned command often does
@@ -103,8 +222,9 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // drop the `--` and everything following.
   if (is_cc(av[0])) {
     for (size_t i = 1; i < ac; ++i) {
-      if (strcmp(av[i], "--") == 0) {
+      if (streq(av[i], "--")) {
         for (size_t j = i; j < ac; ++j) {
+          DEBUG("dropping compiler option %s", av[j]);
           free(av[j]);
           av[j] = NULL;
         }
@@ -119,6 +239,7 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // command may reference the source via a relative or symlink-containing path.
   for (size_t i = 1; i < ac;) {
     if (is_source_arg(av[i])) {
+      DEBUG("dropping compiler option %s", av[i]);
       free(av[i]);
       for (size_t j = i; j + 1 < ac; ++j)
         av[j] = av[j + 1];
@@ -136,7 +257,9 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   // diagnostics that are then printed to stderr. To work around this, strip
   // anything that looks like a warning option.
   for (size_t i = 1; i < ac;) {
-    if (av[i][0] == '-' && av[i][1] == 'W') {
+    if (av[i][0] == '-' && av[i][1] == 'W' &&
+        (av[i][2] == '\0' || av[i][3] != ',')) {
+      DEBUG("dropping compiler option %s", av[i]);
       free(av[i]);
       for (size_t j = i; j + 1 < ac; ++j)
         av[j] = av[j + 1];
@@ -147,6 +270,39 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
     }
   }
 
+  // Scan for #include-like options that may contain relative paths. We need to
+  // expand these into absolute paths in order to avoid either (a) relying on
+  // the current working directory or (b) chdir-ing into the directory this
+  // command was run from. We do not want to do (b) even if it would work to
+  // avoid thinking about thread safety and whether or not the working directory
+  // still exists or is accessible.
+  for (size_t i = 1; i < ac;) {
+    const size_t saved_i = i;
+
+    // the documented GCC options that take a relative directory we should remap
+    const struct {
+      const char *option; ///< the option text
+      bool uses_sysroot; ///< whether to account for `=` and `$SYSROOT` prefixes
+    } dir_options[] = {
+        {"-I", true},         {"-iquote", true},    {"-isystem", true},
+        {"-idirafter", true}, {"-isysroot", false}, {"-imultilib", false},
+        {"--sysroot", false},
+    };
+
+    for (size_t j = 0; j < sizeof(dir_options) / sizeof(dir_options[0]); ++j) {
+      // detect option and make any paths it refers to absolute
+      if (ERROR((rc = make_absolute(av, ac, &i, wd, dir_options[j].option,
+                                    dir_options[j].uses_sysroot))))
+        goto done;
+      // did this consume the current argument?
+      if (saved_i != i)
+        break;
+    }
+
+    if (saved_i == i)
+      ++i;
+  }
+
   // success
   *argc = ac;
   *argv = av;
@@ -154,6 +310,9 @@ int compile_commands_find(compile_commands_t *cc, const char *source,
   av = NULL;
 
 done:
+  if (wd != NULL)
+    clang_disposeString(working);
+
   for (size_t i = 0; i < ac; ++i)
     free(av[i]);
   free(av);
