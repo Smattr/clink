@@ -1,4 +1,5 @@
 #include "help.h"
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <spawn.h>
@@ -52,42 +53,52 @@ int help(void) {
   int fd = mkostemp(path, O_CLOEXEC);
   if (fd == -1) {
     rc = errno;
+    free(path);
+    path = NULL;
     goto done;
   }
 
   // write the manpage to the temporary file
-  {
-    ssize_t r = write(fd, clink_1, (size_t)clink_1_len);
-    if (r < 0 || (size_t)r != clink_1_len) {
+  for (size_t offset = 0; offset < (size_t)clink_1_len;) {
+    const ssize_t r = write(fd, &clink_1[offset], (size_t)clink_1_len - offset);
+    if (r < 0) {
+      if (errno == EINTR)
+        continue;
       rc = errno;
       goto done;
     }
+    assert((size_t)r <= (size_t)clink_1_len - offset);
+    offset += (size_t)r;
   }
 
-  // ensure the full content will be visible to subsequent readers
-  (void)fsync(fd);
+  (void)close(fd);
+  fd = -1;
 
   // run man to display the help text
+  pid_t man = 0;
   {
-    const char *argv[] = {"man",
+    const char *argv[] = {
+        "man",
 #ifdef __linux__
-                          "--local-file",
+        "--local-file",
+        "--prompt= Manual page clink(1) ?ltline %lt?L/%L.:byte %bB?s/%s..? "
+        "(END):?pB %pB\\%.. (press h for help or q to quit)",
 #endif
-                          path, NULL};
+        path, NULL};
     char *const *args = (char *const *)argv;
-    if ((rc = posix_spawnp(NULL, argv[0], NULL, NULL, args, get_environ())))
+    if ((rc = posix_spawnp(&man, argv[0], NULL, NULL, args, get_environ())))
       goto done;
   }
 
   // wait for man to finish
-  (void)wait(&(int){0});
+  (void)waitpid(man, &(int){0}, 0);
 
   // cleanup
 done:
-  if (fd >= 0) {
-    (void)unlink(path);
+  if (fd >= 0)
     (void)close(fd);
-  }
+  if (path != NULL)
+    (void)unlink(path);
   free(path);
 
   return rc;

@@ -1,3 +1,4 @@
+#include "../common/pipe.h"
 #include "../libclink/src/run.h"
 #include "test.h"
 #include <stdlib.h>
@@ -11,7 +12,7 @@ TEST("running `echo hello world` via libclink’s run() function does what we "
   // create a pipe for the child’s stdout
   int fd[2];
   {
-    int r = pipe(fd);
+    int r = pipe_(fd);
     ASSERT_EQ(r, 0);
   }
 
@@ -56,4 +57,6 @@ TEST("running `echo hello world` via libclink’s run() function does what we "
     ASSERT_EQ((size_t)r, strlen("hello world\n"));
     ASSERT_STREQ(buffer, "hello world\n");
   }
+
+  (void)close(fd[0]);
 }
