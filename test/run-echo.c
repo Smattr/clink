@@ -57,4 +57,6 @@ TEST("running `echo hello world` via libclink’s run() function does what we "
     ASSERT_EQ((size_t)r, strlen("hello world\n"));
     ASSERT_STREQ(buffer, "hello world\n");
   }
+
+  (void)close(fd[0]);
 }
