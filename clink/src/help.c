@@ -75,6 +75,7 @@ int help(void) {
   fd = -1;
 
   // run man to display the help text
+  pid_t man = 0;
   {
     const char *argv[] = {
         "man",
@@ -85,12 +86,12 @@ int help(void) {
 #endif
         path, NULL};
     char *const *args = (char *const *)argv;
-    if ((rc = posix_spawnp(NULL, argv[0], NULL, NULL, args, get_environ())))
+    if ((rc = posix_spawnp(&man, argv[0], NULL, NULL, args, get_environ())))
       goto done;
   }
 
   // wait for man to finish
-  (void)wait(&(int){0});
+  (void)waitpid(man, &(int){0}, 0);
 
   // cleanup
 done:
