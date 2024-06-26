@@ -1,4 +1,5 @@
 #include "help.h"
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <spawn.h>
@@ -56,12 +57,16 @@ int help(void) {
   }
 
   // write the manpage to the temporary file
-  {
-    ssize_t r = write(fd, clink_1, (size_t)clink_1_len);
-    if (r < 0 || (size_t)r != clink_1_len) {
+  for (size_t offset = 0; offset < (size_t)clink_1_len;) {
+    const ssize_t r = write(fd, &clink_1[offset], (size_t)clink_1_len - offset);
+    if (r < 0) {
+      if (errno == EINTR)
+        continue;
       rc = errno;
       goto done;
     }
+    assert((size_t)r <= (size_t)clink_1_len - offset);
+    offset += (size_t)r;
   }
 
   // ensure the full content will be visible to subsequent readers
