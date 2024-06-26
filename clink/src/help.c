@@ -53,6 +53,8 @@ int help(void) {
   int fd = mkostemp(path, O_CLOEXEC);
   if (fd == -1) {
     rc = errno;
+    free(path);
+    path = NULL;
     goto done;
   }
 
@@ -69,8 +71,8 @@ int help(void) {
     offset += (size_t)r;
   }
 
-  // ensure the full content will be visible to subsequent readers
-  (void)fsync(fd);
+  (void)close(fd);
+  fd = -1;
 
   // run man to display the help text
   {
@@ -89,10 +91,10 @@ int help(void) {
 
   // cleanup
 done:
-  if (fd >= 0) {
-    (void)unlink(path);
+  if (fd >= 0)
     (void)close(fd);
-  }
+  if (path != NULL)
+    (void)unlink(path);
   free(path);
 
   return rc;
