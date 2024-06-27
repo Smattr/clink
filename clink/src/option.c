@@ -170,7 +170,6 @@ int set_clang_flags(void) {
   char **argv = calloc(argc + 1, sizeof(argv[0]));
   if (UNLIKELY(argv == NULL)) {
     rc = ENOMEM;
-    argc = 0;
     goto done;
   }
 
@@ -194,7 +193,7 @@ int set_clang_flags(void) {
 
 done:
   if (rc) {
-    for (size_t i = 0; i < argc; ++i)
+    for (size_t i = 0; argv != NULL && i < argc; ++i)
       free(argv[i]);
     free(argv);
   } else {
