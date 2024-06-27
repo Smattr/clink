@@ -114,9 +114,16 @@ static int make_absolute(char **argv, size_t argc, size_t *ai, const char *wd,
     return 0;
   }
 
+  // if it is a getopt-style long argument, the alternative form will be
+  // `--foo=BAR` rather than `-fooBAR`
+  const bool needs_equals = startswith(try, "--");
+
   // does this look like `-Ia/path/arg`?
-  if (startswith(argv[*ai], try)) {
+  if (startswith(argv[*ai], try) &&
+      (!needs_equals || argv[*ai][strlen(try)] == '=')) {
     const char *stem = argv[*ai] + strlen(try);
+    if (needs_equals)
+      ++stem;
     do {
 
       if (uses_sysroot) {
@@ -132,14 +139,16 @@ static int make_absolute(char **argv, size_t argc, size_t *ai, const char *wd,
       if (ERROR(rc))
         return rc;
 
-      const size_t replacement_size = strlen(try) + strlen(suffix) + 1;
+      const size_t replacement_size =
+          strlen(try) + (needs_equals ? 1 : 0) + strlen(suffix) + 1;
       char *replacement = malloc(replacement_size);
       if (ERROR(replacement == NULL)) {
         free(suffix);
         return ENOMEM;
       }
 
-      snprintf(replacement, replacement_size, "%s%s", try, suffix);
+      snprintf(replacement, replacement_size, "%s%s%s", try,
+               needs_equals ? "=" : "", suffix);
       free(suffix);
       DEBUG("replacing compiler option %s with %s", argv[*ai], replacement);
       free(argv[*ai]);
