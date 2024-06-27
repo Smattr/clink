@@ -127,7 +127,7 @@ static int make_absolute(char **argv, size_t argc, size_t *ai, const char *wd,
     do {
 
       if (uses_sysroot) {
-        if (startswith(try, "=") || startswith(try, "$SYSROOT"))
+        if (startswith(stem, "=") || startswith(stem, "$SYSROOT"))
           break;
       }
 
