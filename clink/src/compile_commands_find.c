@@ -313,7 +313,7 @@ done:
   if (wd != NULL)
     clang_disposeString(working);
 
-  for (size_t i = 0; i < ac; ++i)
+  for (size_t i = 0; av != NULL && i < ac; ++i)
     free(av[i]);
   free(av);
 
