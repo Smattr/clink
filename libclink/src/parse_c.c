@@ -2,12 +2,14 @@
 /// \brief fuzzy C parser
 
 #include "debug.h"
+#include <assert.h>
 #include <clink/c.h>
 #include <clink/db.h>
 #include <clink/generic.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 #include <unistd.h>
 
 int clink_parse_c(clink_db_t *db, const char *filename) {
@@ -25,12 +27,12 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
   if (ERROR(access(filename, R_OK) < 0))
     return errno;
 
-  static const char *KEYWORDS[] = {
   // enable all C keywords
-#define C99(keyword) #keyword,
-#define C11(keyword) #keyword,
-#define C23(keyword) #keyword,
-#define CXX_C(keyword) #keyword,
+  const char *KEYWORDS[
+#define C99(keyword) 1 +
+#define C11(keyword) 1 +
+#define C23(keyword) 1 +
+#define CXX_C(keyword) 1 +
 #define CXX(keyword)    /* nothing */
 #define CXX_11(keyword) /* nothing */
 #define CXX_20(keyword) /* nothing */
@@ -42,7 +44,34 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
 #undef CXX
 #undef CXX_11
 #undef CXX_20
-      NULL};
+      1] = {0};
+#define ADD(keyword)                                                           \
+  for (size_t i = 0;; ++i) {                                                   \
+    assert(i < sizeof(KEYWORDS) / sizeof(KEYWORDS[0]));                        \
+    if (KEYWORDS[i] == NULL) {                                                 \
+      KEYWORDS[i] = #keyword;                                                  \
+      break;                                                                   \
+    }                                                                          \
+    if (strcmp(KEYWORDS[i], #keyword) == 0) {                                  \
+      break;                                                                   \
+    }                                                                          \
+  }
+#define C99(keyword) ADD(keyword)
+#define C11(keyword) ADD(keyword)
+#define C23(keyword) ADD(keyword)
+#define CXX_C(keyword) ADD(keyword)
+#define CXX(keyword)    /* nothing */
+#define CXX_11(keyword) /* nothing */
+#define CXX_20(keyword) /* nothing */
+#include "c_keywords.inc"
+#undef C99
+#undef C11
+#undef C23
+#undef CXX_C
+#undef CXX
+#undef CXX_11
+#undef CXX_20
+#undef ADD
 
   static const char *DEFN_LEADERS[] = {
       "auto",  "bool",   "char",   "double", "enum",     "float", "int", "long",
@@ -56,7 +85,7 @@ int clink_parse_c(clink_db_t *db, const char *filename) {
       {.start = "'", .end = "'", .escapes = true},
       {0}};
 
-  static const clink_lang_t C = {
+  const clink_lang_t C = {
       .keywords = KEYWORDS, .defn_leaders = DEFN_LEADERS, .comments = COMMENTS};
 
   return clink_parse_generic(db, filename, &C);
