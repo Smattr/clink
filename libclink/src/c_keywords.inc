@@ -1,12 +1,12 @@
 /// C/C++ keywords
 ///
-///   C99 - something only available in C and only ≥C99
-///   C11 - something only available in C and only ≥C11
-///   C23 - something only available in C and only ≥C23
+///   C99 - something available in C but only ≥C99
+///   C11 - something available in C but only ≥C11
+///   C23 - something available in C but only ≥C23
 ///   CXX_C - something available in C and C++ in all standards
 ///   CXX - something only available in C++ but in all standards
-///   CXX_11 - something only available in C++ and only ≥C++11
-///   CXX_20 - something only available in C++ and only ≥C++20
+///   CXX_11 - something available in C++ but only ≥C++11
+///   CXX_20 - something available in C++ but only ≥C++20
 
 CXX_11(alignas)
 CXX_11(alignof)
