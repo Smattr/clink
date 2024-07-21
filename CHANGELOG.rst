@@ -1,6 +1,51 @@
 Change log
 ==========
 
+v2024.07.21
+-----------
+* Bug fix: record insertion failures during database construction are no longer
+  ignored but instead surface as errors (commit
+  23cec2bf6fd8f86c4afa92d2923567c417695019).
+* Bug fix: single-quotes are used to delimit strings in SQL queries. This fixes
+  a problem wherein stricter SQLite installations would reject Clink queries
+  because technically double-quotes are not valid string delimiters (commit
+  e25a260ae0b6dff7f7d27da0c9d0e527039053a9).
+* Bug fix: close-on-exec is set on file descriptors that were not intended to be
+  inherited by subprocesses (commits aefcb45070bc4b938ce4d7a06e9d8730362360d2,
+  f5deb08121c7789cfabe79f4f103ef52f138ca77,
+  6fbb005521b6389bcaeff4a9c5d5f1dc1b721517,
+  6754b47cf95871ac5605b1b05abc8006fe899434,
+  f07bc4ea3ba88a0d95ca89405310367a6c34147f,
+  fc884782c8e5abacbe2408cfaf4b9a22b0a8f472,
+  36fb96ce989a83230df67651418e714c637dfdf8,
+  bb4754eda396c7c8e3ff552ea553a6b6285db2bf).
+* Bug fix: null pointer dereferences during out-of-memory handling (commits
+  29d5cf21586c5e1345fdbf56f5788ac765eda241,
+  435e87a5cbcc225d9cec7ef6cc5308e8648c6a0e).
+* Cscope’s ``-inamefile`` option is implemented. This is also accessible through
+  a libclink function, ``clink_parse_namefile`` (commits
+  b274ac9f21ca8ef0e152644c12ad6d52d0b3648d,
+  b1c2ee34b9e8f3fdaae668e22141b4b3a01db8ae).
+* Parsing of compile_commands.json has been improved (commits
+  2a88bdcc53cbfd8a3f6e3dfffef51f04456f95cd,
+  84ee5f9ce088c70cc0636ec88c5f970d4f881ab8,
+  9a220563b5ad844b8132764d22f8c3ff0b26ddbb,
+  b2d1848faafd716597e473a4894b9e2ec813d4e8,
+  f02256c418fc298a2f3a6f836daac61c9281b06d,
+  54ef6d38f5755f52cf6f75f3c6119222c111fa9a).
+* Clink now opens files in the user’s preferred editor instead of assuming Vim.
+  This also comes with a libclink function, ``clink_editor_open``, for opening
+  the selected editor (commits 4d857dba320ead21d4e855cbb61cb1326a0a922a,
+  29fc81116ca0d8f78443ad6916ceb40fda214c32,
+  cac36c4ffc2e7005155c4f7322fc8da8fad4f448).
+* A libclink function for inspecting the current editor,
+  ``clink_is_editor_vim``, has been added (commit
+  fc0ca8731023f89638958ef9fe8c5e1beff558d0).
+* The list of keywords recognised when parsing C has been updated to support C23
+  (commit 0a5aee3ff258304f31e37df4be0a63d1b560e3d7).
+* Parsing ignores the active locale when determining identifier/digit characters
+  (commit fc0d59f52be19c8af4b8918d0e5889a67d3e85f1).
+
 v2023.11.13
 -----------
 * Bug fix: Symbol visibility for ``clink_parse_with_clang`` was corrected
