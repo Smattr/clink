@@ -496,10 +496,8 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
                                   &start_colno, NULL);
 
         // extract end into usable numbers
-        CXFile end_file = NULL;
         unsigned end_lineno, end_colno;
-        clang_getSpellingLocation(end, &end_file, &end_lineno, &end_colno,
-                                  NULL);
+        clang_getSpellingLocation(end, NULL, &end_lineno, &end_colno, NULL);
 
         // see which macros we can re-parent
         for (size_t i = 0; i < st->macro_expansions_length; ++i) {
