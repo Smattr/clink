@@ -28,8 +28,9 @@ static int parse(clink_db_t *db, const char *filename, const clink_lang_t *lang,
                    .lineno = s.lineno,
                    .colno = s.colno};
       for (eat_one(&s); s.offset < s.size && isid(s.base[s.offset]);
-           eat_one(&s))
+           eat_one(&s)) {
         ++id.size;
+      }
 
       // is this one of the restricted keywords?
       bool is_keyword = false;

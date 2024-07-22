@@ -62,7 +62,8 @@ typedef struct {
 } state_t;
 
 static int add(state_t *state, clink_category_t category, const char *name,
-               const char *path, unsigned lineno, unsigned colno) {
+               const char *path, unsigned lineno, unsigned colno,
+               clink_location_t start, clink_location_t end) {
 
   assert(state != NULL);
 
@@ -71,6 +72,8 @@ static int add(state_t *state, clink_category_t category, const char *name,
                            .path = (char *)path,
                            .lineno = lineno,
                            .colno = colno,
+                           .start = start,
+                           .end = end,
                            .parent = (char *)state->current_parent};
   state->rc = clink_db_add_symbol(state->db, &symbol);
 
@@ -105,10 +108,12 @@ static int add_tokens(clink_db_t *db, const char *path, const char *parent,
   int rc = 0;
 
   // find all the tokens covered by this cursor
-  CXSourceRange range = clang_getCursorExtent(cursor);
   CXToken *tokens = NULL;
   unsigned tokens_len = 0;
-  clang_tokenize(tu, range, &tokens, &tokens_len);
+  {
+    const CXSourceRange range = clang_getCursorExtent(cursor);
+    clang_tokenize(tu, range, &tokens, &tokens_len);
+  }
 
   for (unsigned i = 0; i < tokens_len; ++i) {
 
@@ -140,9 +145,29 @@ static int add_tokens(clink_db_t *db, const char *path, const char *parent,
       continue;
 
     // get the position of this token
-    CXSourceLocation loc = clang_getTokenLocation(tu, tokens[i]);
-    unsigned lineno, colno;
-    clang_getSpellingLocation(loc, NULL, &lineno, &colno, NULL);
+    clink_location_t start = {0};
+    clink_location_t end = {0};
+    {
+      const CXSourceRange range = clang_getTokenExtent(tu, tokens[i]);
+      {
+        const CXSourceLocation range_start = clang_getRangeStart(range);
+        unsigned lineno, colno, byte;
+        clang_getSpellingLocation(range_start, NULL, &lineno, &colno, &byte);
+        start =
+            (clink_location_t){.lineno = lineno, .colno = colno, .byte = byte};
+      }
+      {
+        const CXSourceLocation range_end = clang_getRangeEnd(range);
+        unsigned lineno, colno, byte;
+        clang_getSpellingLocation(range_end, NULL, &lineno, &colno, &byte);
+        assert(colno > 1 && "libclang gave us a column number that appears "
+                            "inclusive instead of exclusive");
+        assert(byte > start.byte && "libclang gave us a byte offset that "
+                                    "appears inclusive instead of exclusive");
+        end = (clink_location_t){
+            .lineno = lineno, .colno = colno - 1, .byte = byte - 1};
+      }
+    }
 
     // get the text of this token
     CXString text = clang_getTokenSpelling(tu, tokens[i]);
@@ -151,8 +176,10 @@ static int add_tokens(clink_db_t *db, const char *path, const char *parent,
     clink_symbol_t symbol = {.category = CLINK_REFERENCE,
                              .name = (char *)textcstr,
                              .path = (char *)path,
-                             .lineno = lineno,
-                             .colno = colno,
+                             .lineno = start.lineno,
+                             .colno = start.colno,
+                             .start = start,
+                             .end = end,
                              .parent = (char *)parent};
     rc = clink_db_add_symbol(db, &symbol);
 
@@ -441,6 +468,29 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     if (file == NULL)
       goto done;
 
+    // retrieve the range of the covering semantic entity
+    clink_location_t start = {0};
+    clink_location_t end = {0};
+    {
+      const CXSourceRange range = clang_getCursorExtent(cursor);
+      {
+        const CXSourceLocation range_start = clang_getRangeStart(range);
+        unsigned l, c, b;
+        clang_getSpellingLocation(range_start, NULL, &l, &c, &b);
+        start = (clink_location_t){.lineno = l, .colno = c, .byte = b};
+      }
+      {
+        const CXSourceLocation range_end = clang_getRangeEnd(range);
+        unsigned l, c, b;
+        clang_getSpellingLocation(range_end, NULL, &l, &c, &b);
+        assert(c > 1 && "libclang gave us a column number that appears "
+                        "inclusive instead of exclusive");
+        assert(b > start.byte && "libclang gave us a byte offset that appears "
+                                 "inclusive instead of exclusive");
+        end = (clink_location_t){.lineno = l, .colno = c - 1, .byte = b - 1};
+      }
+    }
+
     filename = clang_getFileName(file);
     const char *fname = clang_getCString(filename);
 
@@ -455,7 +505,9 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
       clink_symbol_t symbol = {.category = category,
                                .name = strdup(name),
                                .lineno = lineno,
-                               .colno = colno};
+                               .colno = colno,
+                               .start = start,
+                               .end = end};
       if (ERROR(symbol.name == NULL)) {
         rc = ENOMEM;
         goto done;
@@ -477,40 +529,23 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
 
     } else {
       // add this symbol to the database
-      rc = add(state, category, name, fname, lineno, colno);
+      rc = add(state, category, name, fname, lineno, colno, start, end);
       if (ERROR(rc != 0))
         goto done;
 
       // see if we can parent any prior macro expansions
       if (is_parent(cursor)) {
 
-        // what is the start and end of this function etc?
-        CXSourceRange range = clang_getCursorExtent(cursor);
-        CXSourceLocation start = clang_getRangeStart(range);
-        CXSourceLocation end = clang_getRangeEnd(range);
-
-        // extract start into usable numbers
-        CXFile start_file = NULL;
-        unsigned start_lineno, start_colno;
-        clang_getSpellingLocation(start, &start_file, &start_lineno,
-                                  &start_colno, NULL);
-
-        // extract end into usable numbers
-        CXFile end_file = NULL;
-        unsigned end_lineno, end_colno;
-        clang_getSpellingLocation(end, &end_file, &end_lineno, &end_colno,
-                                  NULL);
-
         // see which macros we can re-parent
         for (size_t i = 0; i < st->macro_expansions_length; ++i) {
           clink_symbol_t symbol = st->macro_expansions[i];
-          if (symbol.lineno < start_lineno)
+          if (symbol.lineno < start.lineno)
             continue;
-          if (symbol.lineno == start_lineno && symbol.colno < start_colno)
+          if (symbol.lineno == start.lineno && symbol.colno < start.colno)
             continue;
-          if (symbol.lineno > end_lineno)
+          if (symbol.lineno > end.lineno)
             continue;
-          if (symbol.lineno == end_lineno && symbol.colno > end_colno)
+          if (symbol.lineno == end.lineno && symbol.colno > end.colno)
             continue;
 
           symbol.parent = (char *)name;

@@ -36,6 +36,8 @@ int clink_symbol_copy(clink_symbol_t *restrict dst,
 
   dst->lineno = src->lineno;
   dst->colno = src->colno;
+  dst->start = src->start;
+  dst->end = src->end;
 
   if (src->parent != NULL) {
     dst->parent = strdup(src->parent);
