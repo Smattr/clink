@@ -21,6 +21,12 @@ typedef enum {
   CLINK_INCLUDE = 3,
 } clink_category_t;
 
+/// a point within a source file
+typedef struct {
+  unsigned long lineno;
+  unsigned long colno;
+} clink_location_t;
+
 typedef struct {
 
   /// the type of this symbol
@@ -35,6 +41,23 @@ typedef struct {
   /// location within the containing file
   unsigned long lineno;
   unsigned long colno;
+
+  /// range of containing semantic entity within the containing file
+  ///
+  /// When using a sophisticated parser like libclang, in contrast to `lineno`
+  /// and `colno`, these fields typically cover more than just the symbol
+  /// itself. E.g.:
+  ///
+  ///   int foo;
+  ///   ▲   ▲ ▲
+  ///   │   │ └─ `end`
+  ///   │   └─ `lineno`, `colno`
+  ///   └─ `start`
+  ///
+  /// If this precise information is unavailable (e.g. when using the
+  /// Cscope-based parser), these fields will be 0.
+  clink_location_t start;
+  clink_location_t end;
 
   /// optional containing definition
   char *parent;

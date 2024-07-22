@@ -4,6 +4,10 @@ create table if not exists symbols (
   category integer not null,
   line integer not null,
   col integer not null,
+  start_line integer not null,
+  start_col integer not null,
+  end_line integer not null,
+  end_col integer not null,
   parent text,
   unique(name, path, category, line, col),
   foreign key(path) references records(id));

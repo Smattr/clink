@@ -45,8 +45,9 @@ static int parse(clink_db_t *db, const char *filename, scanner_t s) {
                     .colno = s.colno};
 
       for (eat_one(&s); s.offset < s.size && isid(s.base[s.offset]);
-           eat_one(&s))
+           eat_one(&s)) {
         ++sym.size;
+      }
 
       span_t no_parent = {0};
       symbol_t symbol = {.category = CLINK_REFERENCE,

@@ -38,10 +38,22 @@ static int add(sqlite3_stmt *stmt, clink_category_t category, span_t name,
   if (ERROR((rc = sql_bind_int(stmt, 5, name.colno))))
     goto done;
 
+  if (ERROR((rc = sql_bind_int(stmt, 6, name.start.lineno))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_int(stmt, 7, name.start.colno))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_int(stmt, 8, name.end.lineno))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_int(stmt, 9, name.end.colno))))
+    goto done;
+
   {
     if (parent.base == NULL)
       parent = (span_t){.base = "", .size = 0};
-    if (ERROR((rc = sql_bind_span(stmt, 6, parent))))
+    if (ERROR((rc = sql_bind_span(stmt, 10, parent))))
       goto done;
   }
 
@@ -67,9 +79,10 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
   // insert into the symbol table
 
   static const char SYMBOL_INSERT[] =
-      "insert or replace into symbols (name, "
-      "path, category, line, col, parent) values (@name, @path, @category, "
-      "@line, @col, @parent);";
+      "insert or replace into symbols (name, path, category, line, col, "
+      "start_line, start_col, end_line, end_col, parent) values (@name, "
+      "@path, @category, @line, @col, @start_line, @start_col, @end_line, "
+      "@end_col, @parent);";
 
   int rc = 0;
 
@@ -152,8 +165,11 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   if (ERROR(symbol->path == NULL || symbol->path[0] != '/'))
     return EINVAL;
 
-  span_t name = {
-      .base = symbol->name, .lineno = symbol->lineno, .colno = symbol->colno};
+  span_t name = {.base = symbol->name,
+                 .lineno = symbol->lineno,
+                 .colno = symbol->colno,
+                 .start = symbol->start,
+                 .end = symbol->end};
   if (symbol->name != NULL)
     name.size = strlen(symbol->name);
 
