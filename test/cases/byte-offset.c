@@ -9,7 +9,6 @@ int foo(void) {
   return 1;
 }
 
-// XFAIL: True
 // RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s} >/dev/null
 
 // RUN: echo "select start_byte from symbols where name = 'bar';" | sqlite3 {%t}

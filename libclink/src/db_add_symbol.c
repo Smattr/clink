@@ -44,16 +44,22 @@ static int add(sqlite3_stmt *stmt, clink_category_t category, span_t name,
   if (ERROR((rc = sql_bind_int(stmt, 7, name.start.colno))))
     goto done;
 
-  if (ERROR((rc = sql_bind_int(stmt, 8, name.end.lineno))))
+  if (ERROR((rc = sql_bind_int(stmt, 8, name.start.byte))))
     goto done;
 
-  if (ERROR((rc = sql_bind_int(stmt, 9, name.end.colno))))
+  if (ERROR((rc = sql_bind_int(stmt, 9, name.end.lineno))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_int(stmt, 10, name.end.colno))))
+    goto done;
+
+  if (ERROR((rc = sql_bind_int(stmt, 11, name.end.byte))))
     goto done;
 
   {
     if (parent.base == NULL)
       parent = (span_t){.base = "", .size = 0};
-    if (ERROR((rc = sql_bind_span(stmt, 10, parent))))
+    if (ERROR((rc = sql_bind_span(stmt, 12, parent))))
       goto done;
   }
 
@@ -80,9 +86,9 @@ int add_symbols(clink_db_t *db, size_t syms_size, symbol_t *syms,
 
   static const char SYMBOL_INSERT[] =
       "insert or replace into symbols (name, path, category, line, col, "
-      "start_line, start_col, end_line, end_col, parent) values (@name, "
-      "@path, @category, @line, @col, @start_line, @start_col, @end_line, "
-      "@end_col, @parent);";
+      "start_line, start_col, start_byte, end_line, end_col, end_byte, parent) "
+      "values (@name, @path, @category, @line, @col, @start_line, @start_col, "
+      "@start_byte, @end_line, @end_col, @end_byte, @parent);";
 
   int rc = 0;
 

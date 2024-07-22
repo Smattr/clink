@@ -151,17 +151,21 @@ static int add_tokens(clink_db_t *db, const char *path, const char *parent,
       const CXSourceRange range = clang_getTokenExtent(tu, tokens[i]);
       {
         const CXSourceLocation range_start = clang_getRangeStart(range);
-        unsigned lineno, colno;
-        clang_getSpellingLocation(range_start, NULL, &lineno, &colno, NULL);
-        start = (clink_location_t){.lineno = lineno, .colno = colno};
+        unsigned lineno, colno, byte;
+        clang_getSpellingLocation(range_start, NULL, &lineno, &colno, &byte);
+        start =
+            (clink_location_t){.lineno = lineno, .colno = colno, .byte = byte};
       }
       {
         const CXSourceLocation range_end = clang_getRangeEnd(range);
-        unsigned lineno, colno;
-        clang_getSpellingLocation(range_end, NULL, &lineno, &colno, NULL);
+        unsigned lineno, colno, byte;
+        clang_getSpellingLocation(range_end, NULL, &lineno, &colno, &byte);
         assert(colno > 1 && "libclang gave us a column number that appears "
                             "inclusive instead of exclusive");
-        end = (clink_location_t){.lineno = lineno, .colno = colno - 1};
+        assert(byte > start.byte && "libclang gave us a byte offset that "
+                                    "appears inclusive instead of exclusive");
+        end = (clink_location_t){
+            .lineno = lineno, .colno = colno - 1, .byte = byte - 1};
       }
     }
 
@@ -471,17 +475,19 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
       const CXSourceRange range = clang_getCursorExtent(cursor);
       {
         const CXSourceLocation range_start = clang_getRangeStart(range);
-        unsigned l, c;
-        clang_getSpellingLocation(range_start, NULL, &l, &c, NULL);
-        start = (clink_location_t){.lineno = l, .colno = c};
+        unsigned l, c, b;
+        clang_getSpellingLocation(range_start, NULL, &l, &c, &b);
+        start = (clink_location_t){.lineno = l, .colno = c, .byte = b};
       }
       {
         const CXSourceLocation range_end = clang_getRangeEnd(range);
-        unsigned l, c;
-        clang_getSpellingLocation(range_end, NULL, &l, &c, NULL);
+        unsigned l, c, b;
+        clang_getSpellingLocation(range_end, NULL, &l, &c, &b);
         assert(c > 1 && "libclang gave us a column number that appears "
                         "inclusive instead of exclusive");
-        end = (clink_location_t){.lineno = l, .colno = c - 1};
+        assert(b > start.byte && "libclang gave us a byte offset that appears "
+                                 "inclusive instead of exclusive");
+        end = (clink_location_t){.lineno = l, .colno = c - 1, .byte = b - 1};
       }
     }
 

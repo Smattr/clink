@@ -110,10 +110,12 @@ static int next(clink_iter_t *it, const clink_symbol_t **yielded) {
   s->last.colno = sqlite3_column_int64(s->stmt, 3);
   s->last.start.lineno = sqlite3_column_int64(s->stmt, 4);
   s->last.start.colno = sqlite3_column_int64(s->stmt, 5);
-  s->last.end.lineno = sqlite3_column_int64(s->stmt, 6);
-  s->last.end.colno = sqlite3_column_int64(s->stmt, 7);
-  s->last.parent = (char *)sqlite3_column_text(s->stmt, 8);
-  s->last.context = (char *)sqlite3_column_text(s->stmt, 9);
+  s->last.start.byte = sqlite3_column_int64(s->stmt, 6);
+  s->last.end.lineno = sqlite3_column_int64(s->stmt, 7);
+  s->last.end.colno = sqlite3_column_int64(s->stmt, 8);
+  s->last.end.byte = sqlite3_column_int64(s->stmt, 9);
+  s->last.parent = (char *)sqlite3_column_text(s->stmt, 10);
+  s->last.context = (char *)sqlite3_column_text(s->stmt, 11);
 
   // yield it
   *yielded = &s->last;
@@ -143,9 +145,9 @@ int clink_db_find_definition(clink_db_t *db, const char *regex,
 
   static const char QUERY[] =
       "select symbols.name, records.path, symbols.line, symbols.col, "
-      "symbols.start_line, symbols.start_col, symbols.end_line, "
-      "symbols.end_col, symbols.parent, content.body "
-      "from symbols inner join records "
+      "symbols.start_line, symbols.start_col, symbols.start_byte, "
+      "symbols.end_line, symbols.end_col, symbols.end_byte, symbols.parent, "
+      "content.body from symbols inner join records "
       "on symbols.path = records.id left join content on "
       "records.id = content.path and symbols.line = content.line where "
       "symbols.name regexp @name and symbols.category = @category order by "

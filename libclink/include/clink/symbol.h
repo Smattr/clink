@@ -23,8 +23,9 @@ typedef enum {
 
 /// a point within a source file
 typedef struct {
-  unsigned long lineno;
-  unsigned long colno;
+  unsigned long lineno; ///< line number
+  unsigned long colno;  ///< column number
+  unsigned long byte;   ///< byte offset from the start of the containing file
 } clink_location_t;
 
 typedef struct {
