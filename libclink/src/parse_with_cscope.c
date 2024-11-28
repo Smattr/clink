@@ -241,9 +241,13 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 
     // read the symbol itself
     span_t symbol = read_symbol(&s);
-    if (ERROR(symbol.size == 0)) {
-      rc = EPROTO;
-      goto done;
+    if (symbol.size == 0) {
+      // Parsing code that has differing semantics under C and C++ (e.g.
+      // `enum class {}`) can cause Cscope’s database to contain references to
+      // things with no name. Ignore these.
+      DEBUG("ignoring symbol \"\"");
+      eat_rest_of_line(&s);
+      continue;
     }
     symbol.lineno = line;
     symbol.colno = 1; // no column information in Cscope databases

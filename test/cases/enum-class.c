@@ -10,5 +10,4 @@
 
 enum class { };
 
-// XFAIL: True
 // RUN: clink --build-only --database={%t} --debug --parse-c=cscope {%s} >/dev/null
