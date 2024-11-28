@@ -11,7 +11,7 @@ task:
       environment:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: pkg upgrade -y && pkg install -y bash cmake git llvm py311-pytest vim
+      install_script: pkg upgrade -y && pkg install -y bash cmake cscope git llvm py311-pytest vim
       test_script: ./misc/ci.sh
 
     - name: Linux
@@ -22,7 +22,7 @@ task:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined -fuse-ld=gold
         LC_ALL: C.UTF-8
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: apt-get update -y && apt-get install --no-install-recommends -y cmake libclang-dev llvm python3-pytest sqlite3 xxd vim
+      install_script: apt-get update -y && apt-get install --no-install-recommends -y cmake cscope libclang-dev llvm python3-pytest sqlite3 xxd vim
       test_script: ./misc/ci.sh
 
     - name: Linux, release build
@@ -34,7 +34,7 @@ task:
         CMAKE_FLAGS: -DCMAKE_BUILD_TYPE=Release
         LC_ALL: C.UTF-8
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: apt-get update -y && apt-get install --no-install-recommends -y cmake libclang-dev llvm python3-pytest sqlite3 xxd vim
+      install_script: apt-get update -y && apt-get install --no-install-recommends -y cmake cscope libclang-dev llvm python3-pytest sqlite3 xxd vim
       test_script: ./misc/ci.sh
 
     - name: macOS
@@ -44,7 +44,7 @@ task:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         PATH: /opt/homebrew/opt/llvm/bin:${PATH}
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: brew update && brew install llvm && python3 -m pip install --break-system-packages pytest
+      install_script: brew update && brew install cscope llvm && python3 -m pip install --break-system-packages pytest
       test_script: env CMAKE_FLAGS=-DPython3_EXECUTABLE=$(which python3) ./misc/ci.sh
 
     - name: C formatting
