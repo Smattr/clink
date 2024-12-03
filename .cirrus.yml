@@ -44,7 +44,7 @@ task:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         PATH: /opt/homebrew/opt/llvm/bin:${PATH}
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: brew update && brew install cscope llvm && python3 -m pip install --break-system-packages pytest
+      install_script: brew update && brew install coreutils cscope llvm && python3 -m pip install --break-system-packages pytest
       test_script: env CMAKE_FLAGS=-DPython3_EXECUTABLE=$(which python3) ./misc/ci.sh
 
     - name: C formatting

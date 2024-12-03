@@ -1,4 +1,5 @@
 #include "add_symbol.h"
+#include "arena.h"
 #include "debug.h"
 #include "get_environ.h"
 #include "get_id.h"
@@ -51,7 +52,7 @@ static int run_cscope(const char *filename, const char *cscope_out) {
     rc = ENOMEM;
     goto done;
   }
-  const char *argv[] = {"cscope", "-b", "-c", dash_f, "--", filename, NULL};
+  const char *argv[] = {"cscope", "-b", dash_f, "--", filename, NULL};
 
   // run Cscope
   {
@@ -94,10 +95,9 @@ static int eat_header(scanner_t *s) {
     return EPROTO;
   eat_ws(s);
 
-  // we should have generated an uncompressed database
-  if (ERROR(!eat_if(s, "-c ")))
+  // we should have generated a compressed database
+  if (ERROR(eat_if(s, "-c ")))
     return EPROTONOSUPPORT;
-  eat_ws(s);
 
   // we should not have generated an inverted index
   if (ERROR(eat_if(s, "-q")))
@@ -128,6 +128,78 @@ static span_t read_symbol(scanner_t *s) {
   return symbol;
 }
 
+/// is this a Cscope “dicode”?
+///
+/// Cscope’s compression format has the concept of “dicodes,” single bytes that
+/// represent two ASCII characters.
+///
+/// \param byte Character to evaluate
+/// \return True if this is a dicode
+static bool is_dicode(char byte) { return ((unsigned char)byte >> 7) != 0; }
+
+/// expand Cscope-derived data to its uncompressed form
+///
+/// Cscope’s compressed format (the default it writes; when `-c` is not given)
+/// uses two techniques, (1) compressing two ASCII characters into one and (2)
+/// a lookup table of common keywords. This function implements decompression
+/// with respect to (1). It is assumed that we are only ever decompressing
+/// non-keywords and thus do not need to handle (2).
+///
+/// \param text Potentially compressed text
+/// \param arena An allocator to use for new text
+/// \return 0 on success or an errno on failure
+static int decompress(span_t *text, arena_t *arena) {
+  assert(text != NULL);
+  assert(text->base != NULL || text->size == 0);
+  assert(arena != NULL);
+
+  // how many dicodes do we need to expand?
+  size_t dicode_count = 0;
+  for (size_t i = 0; i < text->size; ++i)
+    dicode_count += is_dicode(text->base[i]);
+
+  if (dicode_count == 0)
+    return 0;
+
+  // create backing space to decompress into
+  char *decompressed = arena_alloc(arena, text->size + dicode_count);
+  if (ERROR(decompressed == NULL))
+    return ENOMEM;
+
+  for (size_t src = 0, dst = 0; src < text->size; ++src, ++dst) {
+    if (is_dicode(text->base[src])) {
+      // decode the first half of the dicode
+      {
+        static const char DICODE_LUT1[] = {' ', 't', 'e', 'i', 's', 'a',
+                                           'p', 'r', 'n', 'l', '(', 'o',
+                                           'f', ')', '=', 'c'};
+        const size_t dicode1 = ((unsigned char)text->base[src] - 128) / 8;
+        assert(dicode1 < sizeof(DICODE_LUT1));
+        decompressed[dst] = DICODE_LUT1[dicode1];
+        ++dst;
+      }
+
+      // decode the second half of the dicode
+      {
+        static const char DICODE_LUT2[] = {' ', 't', 'n', 'e',
+                                           'r', 'p', 'l', 'a'};
+        const size_t dicode2 = ((unsigned char)text->base[src] - 128) % 8;
+        assert(dicode2 < sizeof(DICODE_LUT2));
+        decompressed[dst] = DICODE_LUT2[dicode2];
+      }
+
+      continue;
+    }
+    decompressed[dst] = text->base[src];
+  }
+
+  // update span to point at the decompressed data
+  text->base = decompressed;
+  text->size += dicode_count;
+
+  return 0;
+}
+
 static int parse_into(clink_db_t *db, const char *cscope_out,
                       const char *filename, clink_record_id_t id) {
   assert(db != NULL);
@@ -137,6 +209,14 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 
   int rc = 0;
   mmap_t f = {0};
+
+  // symbols queued to be inserted
+  enum { SYMBOL_WINDOW = 1000 };
+  symbol_t pending[SYMBOL_WINDOW];
+  size_t pending_size = 0;
+
+  // scratch space for decompressed symbols
+  arena_t arena = {0};
 
   // if the caller did not give us an identifier, look it up now
   if (id < 0) {
@@ -162,11 +242,6 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
   // function/macro/struct we are within
   span_t parent = {0};
 
-  // symbols queued to be inserted
-  enum { SYMBOL_WINDOW = 1000 };
-  symbol_t pending[SYMBOL_WINDOW];
-  size_t pending_size = 0;
-
   while (s.offset < s.size) {
 
     clink_category_t category = CLINK_REFERENCE;
@@ -178,6 +253,8 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
         switch (mark) {
         case '@': { // entering a new file
           span_t path = read_symbol(&s);
+          if (ERROR((rc = decompress(&path, &arena))))
+            goto done;
           DEBUG("%s:%lu: saw filename \"%.*s\"", cscope_out, s.lineno - 1,
                 (int)path.size, path.base);
           // if we saw an empty file mark, we are done
@@ -241,6 +318,8 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 
     // read the symbol itself
     span_t symbol = read_symbol(&s);
+    if (ERROR((rc = decompress(&symbol, &arena))))
+      goto done;
     if (symbol.size == 0) {
       // Parsing code that has differing semantics under C and C++ (e.g.
       // `enum class {}`) can cause Cscope’s database to contain references to
@@ -277,6 +356,7 @@ done:
   // flush any remaining pending symbols
   if (rc == 0 && pending_size > 0)
     rc = add_symbols(db, pending_size, pending, id);
+  arena_reset(&arena);
 
   mmap_close(f);
 
