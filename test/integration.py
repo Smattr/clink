@@ -4,6 +4,7 @@ Clink integration test suite
 
 import os  # pylint: disable=unused-import
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -30,6 +31,9 @@ def lit(tmp: Path, source: Path):
         "%S": str(source.parent),
         "%t": str(tmp / "tempfile"),
         "%T": str(tmp),
+        "%timeout": shutil.which("timeout")
+        or shutil.which("gtimeout")
+        or "timeout-not-found",
     }
 
     xfail = None
