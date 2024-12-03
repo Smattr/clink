@@ -3,6 +3,8 @@ project(libclink LANGUAGES C)
 add_subdirectory(vimcat/libvimcat)
 
 add_library(libclink
+  src/arena_alloc.c
+  src/arena_reset.c
   src/compiler_includes.c
   src/db_add_line.c
   src/db_add_record.c
