@@ -138,6 +138,11 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
   int rc = 0;
   mmap_t f = {0};
 
+  // symbols queued to be inserted
+  enum { SYMBOL_WINDOW = 1000 };
+  symbol_t pending[SYMBOL_WINDOW];
+  size_t pending_size = 0;
+
   // if the caller did not give us an identifier, look it up now
   if (id < 0) {
     if (ERROR((rc = get_id(db, filename, &id))))
@@ -161,11 +166,6 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
 
   // function/macro/struct we are within
   span_t parent = {0};
-
-  // symbols queued to be inserted
-  enum { SYMBOL_WINDOW = 1000 };
-  symbol_t pending[SYMBOL_WINDOW];
-  size_t pending_size = 0;
 
   while (s.offset < s.size) {
 
