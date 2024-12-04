@@ -200,11 +200,20 @@ static int decompress(span_t *text, arena_t *arena) {
   return 0;
 }
 
-static int parse_into(clink_db_t *db, const char *cscope_out,
+/// parse a Cscope database and insert records into a Clink database
+///
+/// \param db Destination Clink database to insert into
+/// \param cscope_out Source Cscope database to parse from
+/// \param real The fully resolved path of the source file that Cscope parsed
+/// \param filename The original path to the source file
+/// \param id Optional known Clink database identifier of the source file
+/// \return 0 on success or an errno on failure
+static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
                       const char *filename, clink_record_id_t id) {
   assert(db != NULL);
   assert(cscope_out != NULL);
   assert(access(cscope_out, R_OK) == 0);
+  assert(real != NULL);
   assert(filename != NULL);
 
   int rc = 0;
@@ -260,7 +269,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out,
           // if we saw an empty file mark, we are done
           if (span_eq(path, ""))
             goto done;
-          in_file = span_eq(path, filename); // TODO $HOME handling
+          in_file = span_eq(path, real); // TODO $HOME handling
           // discard the blank line following this
           if (ERROR(!eat_eol(&s))) {
             rc = EPROTO;
@@ -386,6 +395,14 @@ int clink_parse_with_cscope(clink_db_t *db, const char *filename,
   int rc = 0;
   char *dir = NULL;
   char *cscope_out = NULL;
+  char *real = NULL; // resolved path of symlink, if filename is one
+
+  // resolve the path in case it is a symlink
+  real = realpath(filename, NULL);
+  if (ERROR(real == NULL)) {
+    rc = errno;
+    goto done;
+  }
 
   // create a temporary directory into which to write the Cscope database
   const char *TMPDIR = getenv("TMPDIR");
@@ -407,11 +424,11 @@ int clink_parse_with_cscope(clink_db_t *db, const char *filename,
   }
 
   // parse the given file with Cscope
-  if (ERROR((rc = run_cscope(filename, cscope_out))))
+  if (ERROR((rc = run_cscope(real, cscope_out))))
     goto done;
 
   // translate Cscope’s output into insertion commands into the Clink database
-  if (ERROR((rc = parse_into(db, cscope_out, filename, id))))
+  if (ERROR((rc = parse_into(db, cscope_out, real, filename, id))))
     goto done;
 
 done:
@@ -421,6 +438,7 @@ done:
   if (dir != NULL)
     (void)rmdir(dir);
   free(dir);
+  free(real);
 
   return rc;
 }
