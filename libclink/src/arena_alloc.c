@@ -4,6 +4,25 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#ifdef __has_feature
+#if __has_feature(address_sanitizer)
+#include <sanitizer/asan_interface.h>
+#define POISON(addr, size) ASAN_POISON_MEMORY_REGION((addr), (size))
+#define UNPOISON(addr, size) ASAN_UNPOISON_MEMORY_REGION((addr), (size))
+#endif
+#endif
+
+#ifndef POISON
+#define POISON(addr, size)                                                     \
+  do {                                                                         \
+  } while (0)
+#endif
+#ifndef UNPOISON
+#define UNPOISON(addr, size)                                                   \
+  do {                                                                         \
+  } while (0)
+#endif
+
 /// prepend a new chunk to allocate from
 ///
 /// \param me Arena to expand
@@ -15,6 +34,9 @@ static int add_chunk(arena_t *me) {
   chunk_t *const next = calloc(1, sizeof(*next));
   if (ERROR(next == NULL))
     return ENOMEM;
+
+  // posion the new, unallocated memory
+  POISON(next->content, sizeof(next->content));
 
   // make it the start of the arena’s linked-list
   next->previous = me->current;
@@ -40,6 +62,9 @@ void *arena_alloc(arena_t *me, size_t size) {
   // allocate from the end of the chunk for simplicity
   void *const answer = &me->current->content[me->remaining - size];
   me->remaining -= size;
+
+  // unpoison what we just allocated
+  UNPOISON(answer, size);
 
   return answer;
 }
