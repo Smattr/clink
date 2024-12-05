@@ -1,3 +1,4 @@
+#include "../../common/ctype.h"
 #include "add_symbol.h"
 #include "arena.h"
 #include "debug.h"
@@ -17,6 +18,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -137,6 +139,13 @@ static span_t read_symbol(scanner_t *s) {
 /// \return True if this is a dicode
 static bool is_dicode(char byte) { return ((unsigned char)byte >> 7) != 0; }
 
+/// lookup table for the first half of a dicode (see `decompress`)
+static const char DICODE_LUT1[] = {' ', 't', 'e', 'i', 's', 'a', 'p', 'r',
+                                   'n', 'l', '(', 'o', 'f', ')', '=', 'c'};
+
+/// lookup table for the second half of a dicode (see `decompress`)
+static const char DICODE_LUT2[] = {' ', 't', 'n', 'e', 'r', 'p', 'l', 'a'};
+
 /// expand Cscope-derived data to its uncompressed form
 ///
 /// Cscope’s compressed format (the default it writes; when `-c` is not given)
@@ -170,9 +179,6 @@ static int decompress(span_t *text, arena_t *arena) {
     if (is_dicode(text->base[src])) {
       // decode the first half of the dicode
       {
-        static const char DICODE_LUT1[] = {' ', 't', 'e', 'i', 's', 'a',
-                                           'p', 'r', 'n', 'l', '(', 'o',
-                                           'f', ')', '=', 'c'};
         const size_t dicode1 = ((unsigned char)text->base[src] - 128) / 8;
         assert(dicode1 < sizeof(DICODE_LUT1));
         decompressed[dst] = DICODE_LUT1[dicode1];
@@ -181,8 +187,6 @@ static int decompress(span_t *text, arena_t *arena) {
 
       // decode the second half of the dicode
       {
-        static const char DICODE_LUT2[] = {' ', 't', 'n', 'e',
-                                           'r', 'p', 'l', 'a'};
         const size_t dicode2 = ((unsigned char)text->base[src] - 128) % 8;
         assert(dicode2 < sizeof(DICODE_LUT2));
         decompressed[dst] = DICODE_LUT2[dicode2];
@@ -198,6 +202,86 @@ static int decompress(span_t *text, arena_t *arena) {
   text->size += dicode_count;
 
   return 0;
+}
+
+/// swallow an assignment operator if possible
+static bool eat_assign(scanner_t *s) {
+  assert(s != NULL);
+
+  // Swallow non-line-ending white space. We do not need to handle the double
+  // space dicode (0b10000000) because Cscope coalesces adjacent spaces and
+  // never produces this.
+  while (s->offset < s->size) {
+    const char c = s->base[s->offset];
+    assert((unsigned char)c != 128 && "Cscope produced double-space dicode");
+    if (c == '\n' || c == '\r' || !isspace_(c))
+      break;
+    eat_one(s);
+  }
+
+  if (s->offset == s->size)
+    return false;
+
+  const char eq1 = s->base[s->offset];
+
+  // is this a dicode beginning with '='?
+  if (is_dicode(eq1)) {
+    const size_t dicode1 = ((unsigned char)eq1 - 128) / 8;
+    assert(dicode1 < sizeof(DICODE_LUT1));
+    assert(memchr(DICODE_LUT2, '=', sizeof(DICODE_LUT2)) == NULL);
+    return DICODE_LUT1[dicode1] == '=';
+  }
+
+  const char eq2 = s->offset + 1 < s->size ? s->base[s->offset + 1] : 0;
+  const bool eq2_is_eq =
+      eq2 == '=' ||
+      (is_dicode(eq2) && DICODE_LUT1[((unsigned char)eq2 - 128) / 8] == '=');
+  const char eq3 = s->offset + 2 < s->size ? s->base[s->offset + 2] : 0;
+  const bool eq3_is_eq =
+      eq3 == '=' ||
+      (is_dicode(eq3) && DICODE_LUT1[((unsigned char)eq3 - 128) / 8] == '=');
+
+  // '=', but not '=='?
+  if (eq1 == '=')
+    return !eq2_is_eq;
+
+  // compound assignment?
+  {
+    assert(memchr(DICODE_LUT1, '+', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT1, '-', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT1, '*', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT1, '/', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT1, '%', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT1, '&', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT1, '|', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT1, '^', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT1, '<', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT2, '<', sizeof(DICODE_LUT2)) == NULL);
+    assert(memchr(DICODE_LUT1, '>', sizeof(DICODE_LUT1)) == NULL);
+    assert(memchr(DICODE_LUT2, '>', sizeof(DICODE_LUT2)) == NULL);
+    const bool is_compound =
+        ((eq1 == '+' || eq1 == '-' || eq1 == '*' || eq1 == '/' || eq1 == '%' ||
+          eq1 == '&' || eq1 == '|' || eq1 == '^') &&
+         eq2_is_eq) ||
+        (eq1 == '<' && eq2 == '<' && eq3_is_eq) ||
+        (eq1 == '>' && eq2 == '>' && eq3_is_eq);
+    if (is_compound)
+      return true;
+  }
+
+  // post-increment/decrement
+  assert(memchr(DICODE_LUT1, '+', sizeof(DICODE_LUT1)) == NULL);
+  assert(memchr(DICODE_LUT2, '+', sizeof(DICODE_LUT2)) == NULL);
+  if (eq1 == '+' && eq2 == '+')
+    return true;
+  assert(memchr(DICODE_LUT1, '-', sizeof(DICODE_LUT1)) == NULL);
+  assert(memchr(DICODE_LUT2, '-', sizeof(DICODE_LUT2)) == NULL);
+  if (eq1 == '-' && eq2 == '-')
+    return true;
+
+  // TODO: handle pre-increment/decrement?
+
+  return false;
 }
 
 /// parse a Cscope database and insert records into a Clink database
@@ -255,6 +339,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
 
     clink_category_t category = CLINK_REFERENCE;
     bool can_be_parent = false;
+    bool can_be_assignment = true;
     {
       char mark = 0;
       // do we have a recognised category for this symbol?
@@ -286,20 +371,24 @@ static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
         case 'u': // union definition
           can_be_parent = true;
           // fall through
-        case 'g': // other global definition
-        case 'l': // function/block local definition
         case 'm': // global enum/struct/union member definition
         case 'p': // function parameter definition
         case 't': // typedef definition
+          can_be_assignment = false;
+          // fall through
+        case 'g': // other global definition
+        case 'l': // function/block local definition
           category = CLINK_DEFINITION;
           break;
 
         case '`': // function call
           category = CLINK_FUNCTION_CALL;
+          can_be_assignment = false;
           break;
 
         case '~': // #include
           category = CLINK_INCLUDE;
+          can_be_assignment = false;
           break;
 
         case '}': // function end
@@ -354,10 +443,28 @@ static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
       ++pending_size;
     }
 
+    if (can_be_assignment) {
+      if (eat_assign(&s)) {
+        DEBUG("adding assignment to symbol \"%.*s\"", (int)symbol.size,
+              symbol.base);
+        symbol_t sym = {
+            .category = CLINK_ASSIGNMENT, .name = symbol, .parent = parent};
+        if (pending_size == sizeof(pending) / sizeof(pending[0])) {
+          // flush the pending symbols
+          if (ERROR((rc = add_symbols(db, pending_size, pending, id))))
+            goto done;
+          pending_size = 0;
+        }
+        // enqueue the current symbol
+        pending[pending_size] = sym;
+        ++pending_size;
+      }
+    }
+
     if (can_be_parent)
       parent = symbol;
 
-    // drain the next context line following
+    // drain the next (or remainder of the current) context line following
     eat_rest_of_line(&s);
   }
 
