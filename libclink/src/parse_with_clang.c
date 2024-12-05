@@ -759,6 +759,15 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
       if (ERROR(rc != 0))
         goto done;
 
+      // if this is a definition with an initialiser, also note an assignment
+      if (kind == CXCursor_VarDecl &&
+          !clang_Cursor_isNull(clang_Cursor_getVarDeclInitializer(cursor))) {
+        rc = add(state, CLINK_ASSIGNMENT, name, fname, lineno, colno, start,
+                 end);
+        if (ERROR(rc != 0))
+          goto done;
+      }
+
       // see if we can parent any prior macro expansions
       if (is_parent(cursor)) {
 
