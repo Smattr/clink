@@ -360,6 +360,185 @@ static bool is_sync_impl(const char *name) {
   return true;
 }
 
+/// does libclang have `CXBinaryOperator…` and `CXUnaryOperator…`?
+#define HAS_OPS                                                                \
+  (CINDEX_VERSION_MAJOR > 0 ||                                                 \
+   (CINDEX_VERSION_MAJOR == 0 && CINDEX_VERSION_MINOR >= 64))
+
+#if HAS_OPS
+/// if this looks like an assignment to a symbol, extract the symbol’s name
+static char *get_assign_lhs(CXCursor cursor) {
+  {
+    const enum CXCursorKind kind = clang_getCursorKind(cursor);
+    assert(kind == CXCursor_BinaryOperator);
+    (void)kind;
+  }
+
+  CXTranslationUnit tu = clang_Cursor_getTranslationUnit(cursor);
+
+  char *rc = NULL;
+
+  // find all the tokens covered by this cursor
+  CXSourceRange range = clang_getCursorExtent(cursor);
+  CXToken *tokens = NULL;
+  unsigned tokens_len = 0;
+  clang_tokenize(tu, range, &tokens, &tokens_len);
+
+  // ignore anything that is not «symbol»«assign op»…
+  if (tokens_len < 2)
+    goto done;
+  {
+    const enum CXBinaryOperatorKind kind =
+        clang_getCursorBinaryOperatorKind(cursor);
+    CXString expected = clang_getBinaryOperatorKindSpelling(kind);
+    const char *const exp = clang_getCString(expected);
+    CXString actual = clang_getTokenSpelling(tu, tokens[1]);
+    const char *const act = clang_getCString(actual);
+
+    const bool is_simple = strcmp(exp, act) == 0;
+    clang_disposeString(actual);
+    clang_disposeString(expected);
+    if (!is_simple)
+      goto done;
+  }
+
+  // the first token must be a valid identifier
+  {
+    CXString lhs = clang_getTokenSpelling(tu, tokens[0]);
+    const char *const lhs_cstr = clang_getCString(lhs);
+
+    bool is_id = strcmp(lhs_cstr, "") != 0;
+    for (size_t i = 0; lhs_cstr[i] != '\0'; ++i) {
+      if (isalpha_(lhs_cstr[i]))
+        continue;
+      if (lhs_cstr[i] == '_')
+        continue;
+      if (i != 0 && isdigit_(lhs_cstr[i]))
+        continue;
+      is_id = false;
+      break;
+    }
+
+    if (is_id) {
+      rc = strdup(lhs_cstr);
+    } else {
+      DEBUG("binary token \"%s\" is not a valid symbol; skipping", lhs_cstr);
+    }
+
+    clang_disposeString(lhs);
+    if (!is_id)
+      goto done;
+  }
+
+done:
+  clang_disposeTokens(tu, tokens, tokens_len);
+  return rc;
+}
+
+/// is this a binary operator that counts as assignment?
+static bool is_assign(enum CXBinaryOperatorKind op) {
+  switch (op) {
+  case CXBinaryOperator_Assign:
+  case CXBinaryOperator_MulAssign:
+  case CXBinaryOperator_DivAssign:
+  case CXBinaryOperator_RemAssign:
+  case CXBinaryOperator_AddAssign:
+  case CXBinaryOperator_SubAssign:
+  case CXBinaryOperator_ShlAssign:
+  case CXBinaryOperator_ShrAssign:
+  case CXBinaryOperator_AndAssign:
+  case CXBinaryOperator_XorAssign:
+  case CXBinaryOperator_OrAssign:
+    return true;
+  default:
+    break;
+  }
+  return false;
+}
+
+/// is this a unary operator that counts as assignment?
+static bool is_assign_unary(enum CXUnaryOperatorKind op) {
+  switch (op) {
+  case CXUnaryOperator_PostInc:
+  case CXUnaryOperator_PostDec:
+  case CXUnaryOperator_PreInc:
+  case CXUnaryOperator_PreDec:
+    return true;
+  default:
+    break;
+  }
+  return false;
+}
+
+/// if this looks like a unary assignment to a symbol, extract the symbol’s name
+static char *get_assign_unary(CXCursor cursor) {
+  {
+    const enum CXCursorKind kind = clang_getCursorKind(cursor);
+    assert(kind == CXCursor_UnaryOperator);
+    (void)kind;
+  }
+
+  CXTranslationUnit tu = clang_Cursor_getTranslationUnit(cursor);
+
+  char *rc = NULL;
+
+  // find all the tokens covered by this cursor
+  CXSourceRange range = clang_getCursorExtent(cursor);
+  CXToken *tokens = NULL;
+  unsigned tokens_len = 0;
+  clang_tokenize(tu, range, &tokens, &tokens_len);
+
+  // ignore anything that is not «symbol»«assign op» or «assign op»«symbol»
+  if (tokens_len != 2) {
+    DEBUG("%u tokens in unary expression; skipping", tokens_len);
+    goto done;
+  }
+
+  // figure out in which position to look for the symbol
+  unsigned symbol_position;
+  {
+    const enum CXUnaryOperatorKind kind =
+        clang_getCursorUnaryOperatorKind(cursor);
+    assert(is_assign_unary(kind));
+    symbol_position =
+        (kind == CXUnaryOperator_PreInc || kind == CXUnaryOperator_PreDec) ? 1
+                                                                           : 0;
+  }
+
+  // the token must be a valid identifier
+  {
+    CXString symbol = clang_getTokenSpelling(tu, tokens[symbol_position]);
+    const char *const sym = clang_getCString(symbol);
+
+    bool is_id = strcmp(sym, "") != 0;
+    for (size_t i = 0; sym[i] != '\0'; ++i) {
+      if (isalpha_(sym[i]))
+        continue;
+      if (sym[i] == '_')
+        continue;
+      if (i != 0 && isdigit_(sym[i]))
+        continue;
+      is_id = false;
+      break;
+    }
+
+    if (is_id) {
+      rc = strdup(sym);
+    } else {
+      DEBUG("unary token \"%s\" is not a valid symbol; skipping", sym);
+    }
+
+    clang_disposeString(symbol);
+    if (!is_id)
+      goto done;
+  }
+
+done:
+  clang_disposeTokens(tu, tokens, tokens_len);
+  return rc;
+}
+#endif
+
 static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
                                      CXClientData state) {
 
@@ -425,6 +604,28 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   case CXCursor_InclusionDirective:
     category = CLINK_INCLUDE;
     break;
+#if HAS_OPS
+  case CXCursor_BinaryOperator: {
+    const enum CXBinaryOperatorKind op =
+        clang_getCursorBinaryOperatorKind(cursor);
+    if (is_assign(op)) {
+      category = CLINK_ASSIGNMENT;
+      break;
+    }
+    DEBUG("recursing past irrelevant cursor %d", (int)kind);
+    return CXChildVisit_Recurse;
+  }
+  case CXCursor_UnaryOperator: {
+    const enum CXUnaryOperatorKind op =
+        clang_getCursorUnaryOperatorKind(cursor);
+    if (is_assign_unary(op)) {
+      category = CLINK_ASSIGNMENT;
+      break;
+    }
+    DEBUG("recursing past irrelevant cursor %d", (int)kind);
+    return CXChildVisit_Recurse;
+  }
+#endif
 
   default: // something irrelevant
     DEBUG("recursing past irrelevant cursor %d", (int)kind);
@@ -453,6 +654,31 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
       }
     }
   }
+
+#if HAS_OPS
+  // for a pre-/post-increment/decrement, try to extract the name of the symbol
+  // being incremented/decremented
+  if (kind == CXCursor_UnaryOperator) {
+    extra_name = get_assign_unary(cursor);
+    if (extra_name != NULL) {
+      name = extra_name;
+      DEBUG("unravelled unary operator to assignment to symbol \"%s\"", name);
+    } else {
+      DEBUG("failed to unravel unary assignment operator");
+    }
+  }
+
+  // for assignments, try to extract the name of the symbol being assigned to
+  if (kind == CXCursor_BinaryOperator) {
+    extra_name = get_assign_lhs(cursor);
+    if (extra_name != NULL) {
+      name = extra_name;
+      DEBUG("unravelled binary operator to assignment to symbol \"%s\"", name);
+    } else {
+      DEBUG("failed to unravel binary assignment operator");
+    }
+  }
+#endif
 
   // skip entities with no name
   if (name == NULL || strcmp(name, "") == 0)
@@ -532,6 +758,15 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
       rc = add(state, category, name, fname, lineno, colno, start, end);
       if (ERROR(rc != 0))
         goto done;
+
+      // if this is a definition with an initialiser, also note an assignment
+      if (kind == CXCursor_VarDecl &&
+          !clang_Cursor_isNull(clang_Cursor_getVarDeclInitializer(cursor))) {
+        rc = add(state, CLINK_ASSIGNMENT, name, fname, lineno, colno, start,
+                 end);
+        if (ERROR(rc != 0))
+          goto done;
+      }
 
       // see if we can parent any prior macro expansions
       if (is_parent(cursor)) {

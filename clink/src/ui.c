@@ -110,6 +110,7 @@ static int find_definition(const char *query);
 static int find_call(const char *query);
 static int find_caller(const char *query);
 static int find_includer(const char *query);
+static int find_assign(const char *query);
 
 static const struct searcher {
   const char *prompt;
@@ -120,6 +121,7 @@ static const struct searcher {
     {"Find functions called by this function", find_call},
     {"Find functions calling this function", find_caller},
     {"Find files #including this file", find_includer},
+    {"Find assignments to this symbol", find_assign},
 };
 
 static const size_t FUNCTIONS_SZ = sizeof(functions) / sizeof(functions[0]);
@@ -279,6 +281,16 @@ static int find_includer(const char *query) {
 
   clink_iter_t *it = NULL;
   int rc = clink_db_find_includer(database, query, &it);
+  if (UNLIKELY(rc))
+    return rc;
+
+  return format_results(it);
+}
+
+static int find_assign(const char *query) {
+
+  clink_iter_t *it = NULL;
+  int rc = clink_db_find_assignment(database, query, &it);
   if (UNLIKELY(rc))
     return rc;
 

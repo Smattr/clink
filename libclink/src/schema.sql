@@ -1,4 +1,6 @@
-create table if not exists symbols (
+create table if not exists symbols
+  /* symbols found within source files */
+(
   name text not null,
   path integer not null,
   category integer not null,
@@ -12,21 +14,31 @@ create table if not exists symbols (
   end_byte integer not null,
   parent text,
   unique(name, path, category, line, col),
-  foreign key(path) references records(id));
+  foreign key(path) references records(id)
+);
 
-create table if not exists content (
+create table if not exists content
+  /* lines of ANSI-colour-enriched source code text */
+(
   path integer not null,
   line integer not null,
   body text not null,
   unique(path, line),
-  foreign key(path) references records(id));
+  foreign key(path) references records(id)
+);
 
-create table if not exists records (
+create table if not exists records
+  /* paths to source code files that were scanned */
+(
   id integer primary key,
   path text not null unique,
   hash integer not null,
-  timestamp integer not null);
+  timestamp integer not null
+);
 
-create table if not exists metadata (
+create table if not exists metadata
+  /* versioning information used internally by Clink */
+(
   key text not null unique,
-  value text not null);
+  value text not null
+);
