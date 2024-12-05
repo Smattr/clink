@@ -19,6 +19,7 @@ typedef enum {
   CLINK_FUNCTION_CALL = 1,
   CLINK_REFERENCE = 2,
   CLINK_INCLUDE = 3,
+  CLINK_ASSIGNMENT = 4,
 } clink_category_t;
 
 /// a point within a source file

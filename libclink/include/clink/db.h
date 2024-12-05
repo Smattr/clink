@@ -108,6 +108,18 @@ CLINK_API int clink_db_add_line(clink_db_t *db, const char *path,
  */
 CLINK_API void clink_db_remove(clink_db_t *db, const char *path);
 
+/** find assignments to a symbol in the database
+ *
+ * Symbols paths in the returned iterator are always absolute.
+ *
+ * \param db Database to search
+ * \param regex Regular expression of a symbol to search for
+ * \param it [out] Created symbol iterator on success
+ * \return 0 on success or an errno on failure
+ */
+CLINK_API int clink_db_find_assignment(clink_db_t *db, const char *regex,
+                                       clink_iter_t **it);
+
 /** find function calls within a given function in the database
  *
  * Symbols paths in the returned iterator are always absolute.
