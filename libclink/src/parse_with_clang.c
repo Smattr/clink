@@ -709,11 +709,13 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
         const CXSourceLocation range_end = clang_getRangeEnd(range);
         unsigned l, c, b;
         clang_getSpellingLocation(range_end, NULL, &l, &c, &b);
-        assert(c > 1 && "libclang gave us a column number that appears "
-                        "inclusive instead of exclusive");
-        assert(b > start.byte && "libclang gave us a byte offset that appears "
-                                 "inclusive instead of exclusive");
-        end = (clink_location_t){.lineno = l, .colno = c - 1, .byte = b - 1};
+        // End locations are typically exclusive. But if Libclang is reporting
+        // something that has no well-defined source location it can report 0
+        // for these fields, so simulate a zero-length range.
+        const unsigned end_colno = c > 0 ? c - 1 : start.colno;
+        const unsigned end_byte = b > 0 ? b - 1 : start.byte;
+        end = (clink_location_t){
+            .lineno = l, .colno = end_colno, .byte = end_byte};
       }
     }
 

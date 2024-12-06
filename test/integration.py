@@ -105,7 +105,7 @@ root = Path(__file__).parent / "cases"
 cases = sorted(
     x.name
     for x in root.iterdir()
-    if x.suffix in (".c", ".def", ".l", ".py", ".td", ".y")
+    if x.suffix in (".c", ".cc", ".def", ".l", ".py", ".td", ".y")
 )
 
 
