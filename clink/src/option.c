@@ -161,12 +161,12 @@ int set_clang_flags(void) {
     return rc;
 
   // ensure calculating the allocation below will not overflow
-  if (UNLIKELY(SIZE_MAX / 2 - 2 < system_len))
+  if (UNLIKELY(SIZE_MAX / 2 - 3 < system_len))
     return EOVERFLOW;
 
   // allocate space for the system directories with a prefix
   assert(option.clang_argv == NULL && "setting up Clang arguments twice");
-  size_t argc = 2 * system_len + 1;
+  size_t argc = 2 * system_len + 2;
   char **argv = calloc(argc + 1, sizeof(argv[0]));
   if (UNLIKELY(argv == NULL)) {
     rc = ENOMEM;
@@ -180,14 +180,25 @@ int set_clang_flags(void) {
     goto done;
   }
 
+  // Clang supports a pragma for asking the compiler to crash itself. This spell
+  // is so powerful, it will crash libclang when asked to parse a file
+  // containing it. There appears to be no programmatic way to disable this
+  // behaviour in libclang, nor in the command line options of Clang. So reach
+  // through to cc1 to disable it.
+  argv[1] = strdup("-Xclang=-disable-pragma-debug-crash");
+  if (UNLIKELY(argv[1] == NULL)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
   // copy in the system paths, taking ownership
   for (size_t i = 0; i < system_len; ++i) {
-    argv[1 + i * 2] = strdup("-isystem");
-    if (UNLIKELY(argv[1 + i * 2] == NULL)) {
+    argv[2 + i * 2] = strdup("-isystem");
+    if (UNLIKELY(argv[2 + i * 2] == NULL)) {
       rc = ENOMEM;
       goto done;
     }
-    argv[1 + i * 2 + 1] = system[i];
+    argv[2 + i * 2 + 1] = system[i];
     system[i] = NULL;
   }
 
