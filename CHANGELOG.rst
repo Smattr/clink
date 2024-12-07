@@ -1,6 +1,39 @@
 Change log
 ==========
 
+v2024.12.07
+-----------
+* Bug fix: an instance of Undefined Behaviour in the Cscope-based parser has
+  been removed (commit da90fb79e79288af8d9c095203f44547bf67aa29).
+* Bug fix: parsing a function parameter that has a type of pointer to a member
+  function no longer crashes the Clang-based parser (commit
+  c6e64fed6a284f0cc8fcb50248fd992817fa097e).
+* Bug fix: source files containing ``#pragma clang __debug parser_crash`` no
+  longer crash the Clang-based parser (commit
+  1231e3157313ea9dbbe44e97caebb87c2bfc13d5).
+* Bug fix: when Cscope returns symbols named the empty string (e.g. for the
+  expression ``enum class {}``), Clink no longer fails parsing (commit
+  f2d1059031761ac251b98fd5d49451d2f800f9e2).
+* Bug fix: parsing files containing NUL bytes with the Cscope-based parser no
+  longer causes an infinite loop (commit
+  432f20420f30fb8ffb8234191ab598daa81ae47b).
+* Bug fix: a typo in the man page has been corrected (commit
+  9bf2d7948129ef5d65227d33cdc31766a158f839).
+* Recoverable crashes in libclang no longer abort directory scanning (commit
+  91970c3c48cbe78e5d28246e54ce02afbe179911).
+* Finding assignments to given symbols has been added, moving towards Cscope
+  parity (commits 292a746a472b4043acb86dea2c4b432a48d3b669,
+  bd088f00ae0354a9b4a07083bf624be8cb0031a1,
+  8ab58581fcfeb676ca7debff17960ee529642a24,
+  2df3bd743f60a47549ec4e98e085741359a9be38,
+  d471c71c464530872b8430f7576ee658a4f93400,
+  ef64c862d3d24156c0552ba0bb83eb5e29abff0d).
+* Symlinks are now successfully parsed by the Cscope-based parser (commit
+  1f5077feaa7cbc8e991dd8039fcef52a6c4c010c).
+* The database now includes fields for semantic range and byte range (commits
+  de607224e2168323b11c75b549a209ce70342943,
+  402a8ec21621e857fc9cf6ee1bc3f8d725499ec6).
+
 v2024.07.21
 -----------
 * Bug fix: record insertion failures during database construction are no longer
