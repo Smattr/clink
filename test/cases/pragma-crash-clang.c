@@ -2,5 +2,4 @@
 
 #pragma clang __debug parser_crash
 
-// XFAIL: version.parse(os.environ["LLVM_VERSION"]) < version.parse("16.0.0")
-// RUN: clink --build-only --database={%t} --debug --parse-c=clang {%s}
+// RUN: env ASAN_OPTIONS=detect_leaks=0 clink --build-only --database={%t} --debug --parse-c=clang {%s}

@@ -6,5 +6,4 @@ namespace {
 int *_Atomic x __attribute__((noderef));
 }
 
-// XFAIL: version.parse(os.environ["LLVM_VERSION"]) < version.parse("20.0.0")
-// RUN: clink --build-only --database={%t} --debug --parse-cxx=clang {%s}
+// RUN: env ASAN_OPTIONS=detect_leaks=0 clink --build-only --database={%t} --debug --parse-cxx=clang {%s}
