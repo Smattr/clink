@@ -7,9 +7,25 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Union
 
 import pytest
 from packaging import version  # pylint: disable=unused-import
+
+
+def is_using_asan(binary: Union[Path, str]) -> bool:
+    """
+    is this executable ASan-instrumented?
+    """
+    if shutil.which("objdump") is not None:
+        symbols = subprocess.check_output(["objdump", "--syms", binary])
+    elif shutil.which("nm") is not None:
+        symbols = subprocess.check_output(["nm", "--extern-only", binary])
+    elif shutil.which("readelf") is not None:
+        symbols = subprocess.check_output(["readelf", "--symbols", binary])
+    else:
+        raise RuntimeError("no disassembler found")
+    return re.search(rb"\b__asan_", symbols) is not None
 
 
 def is_python(path: Path) -> bool:

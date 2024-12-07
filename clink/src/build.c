@@ -31,7 +31,8 @@
 static char *cur_dir;
 
 /// use a compilation database to parse the given source with libclang
-static int parse_with_comp_db(clink_db_t *db, const char *path) {
+static int parse_with_comp_db(unsigned long thread_id, clink_db_t *db,
+                              const char *path) {
 
   assert(db != NULL);
   assert(path != NULL);
@@ -69,6 +70,10 @@ static int parse_with_comp_db(clink_db_t *db, const char *path) {
   }
 
   rc = clink_parse_with_clang(db, path, ac, av);
+  if (rc == EIO) {
+    progress_warn(thread_id, "libclang crashed when parsing %s", path);
+    rc = 0;
+  }
   if (rc != 0)
     goto done;
 
@@ -129,7 +134,7 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path,
     do {
       // if we have a compile commands database, use it
       if (option.compile_commands.db != NULL) {
-        rc = parse_with_comp_db(db, path);
+        rc = parse_with_comp_db(thread_id, db, path);
         if (rc != ENOMSG)
           break;
 
@@ -142,6 +147,10 @@ static int parse(unsigned long thread_id, clink_db_t *db, const char *path,
       assert(option.clang_argc > 0 && option.clang_argv != NULL);
       const char **argv = (const char **)option.clang_argv;
       rc = clink_parse_with_clang(db, path, option.clang_argc, argv);
+      if (rc == EIO) {
+        progress_warn(thread_id, "libclang crashed when parsing %s", path);
+        rc = 0;
+      }
     } while (0);
 
     // parse with the preprocessor
