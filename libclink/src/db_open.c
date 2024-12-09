@@ -1,3 +1,4 @@
+#include "../../common/compiler.h"
 #include "db.h"
 #include "debug.h"
 #include "re.h"
@@ -12,6 +13,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+/// shim `sqlite3_error_offset` which was introduced in 3.38.0
+#if SQLITE_VERSION_NUMBER < 3 * 1000000 + 38 * 1000 + 0
+static int sqlite3_error_offset(sqlite3 *db UNUSED) { return -1; }
+#endif
 
 /// debug-dump extra details about a SQLite error that just occurred
 #define SQL_ERROR_DETAIL(db, query)                                            \
