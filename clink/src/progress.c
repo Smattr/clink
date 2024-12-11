@@ -62,6 +62,46 @@ static void update(unsigned long thread_id, char *line) {
   funlockfile(stdout);
 }
 
+/** show the progress line
+ *
+ * Assumes that (1) we are either single-threaded or the caller has flockfile-d
+ * stdout and (2) the cursor is on the progress line.
+ */
+static void progress(void) {
+  assert(done <= total && "progress exceeding total item count");
+
+  // print progress
+  const int printed =
+      printf("%zu / %zu (%.02f%%) ", done, total, (double)done / total * 100);
+
+  // determine terminal width
+  struct winsize ws = {0};
+  (void)ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+  const size_t columns = ws.ws_col;
+
+  // if we have room, print a progress bar
+  if (option.animation && printed >= 0 && columns > (size_t)printed + 2) {
+    const size_t available = columns - (size_t)printed;
+
+    // how many segments of `9 × available` should be filled?
+    const char *blocks[] = {" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"};
+    const size_t blocks_len = sizeof(blocks) / sizeof(blocks[0]);
+    const size_t filled =
+        (size_t)(available * blocks_len * (double)done / total);
+
+    for (size_t i = 0; i < available; ++i) {
+      if (filled < blocks_len * i) {
+        printf(" ");
+      } else if (filled >= blocks_len * (i + 1)) {
+        printf("█");
+      } else {
+        printf("%s", blocks[filled % blocks_len]);
+      }
+    }
+  }
+  printf("\n");
+}
+
 /** reconstruct the progress output that may have been overwritten
  *
  * Assumes that we are either single-threaded or the caller has flockfile-d
@@ -81,7 +121,7 @@ static void refresh(void) {
   }
 
   // reshow the progress
-  printf("%zu / %zu (0.00%%)\n", done, total);
+  progress();
 }
 
 void progress_status(unsigned long thread_id, const char *fmt, ...) {
@@ -165,36 +205,9 @@ void progress_increment(void) {
   if (smart_progress())
     printf("\033[1A\033[K");
 
-  // print a progress update
+  // update progress
   ++done;
-  int printed =
-      printf("%zu / %zu (%.02f%%) ", done, total, (double)done / total * 100);
-
-  // determine terminal width
-  struct winsize ws = {0};
-  (void)ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
-  size_t columns = ws.ws_col;
-
-  // if we have room, print a progress bar
-  if (option.animation && printed >= 0 && columns > (size_t)printed + 2) {
-    size_t available = columns - (size_t)printed;
-
-    // how many segments of `9 × available` should be filled?
-    const char *blocks[] = {" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"};
-    const size_t blocks_len = sizeof(blocks) / sizeof(blocks[0]);
-    size_t filled = (size_t)(available * blocks_len * (double)done / total);
-
-    for (size_t i = 0; i < available; ++i) {
-      if (filled < blocks_len * i) {
-        printf(" ");
-      } else if (filled >= blocks_len * (i + 1)) {
-        printf("█");
-      } else {
-        printf("%s", blocks[filled % blocks_len]);
-      }
-    }
-  }
-  printf("\n");
+  progress();
 
   funlockfile(stdout);
 }
