@@ -240,6 +240,10 @@ int progress_init(size_t count) {
   done = 0;
   total = count;
 
+  // hide the cursor
+  if (smart_progress())
+    printf("\033[?25l");
+
   // set up progress output table
   refresh();
 
@@ -256,6 +260,12 @@ done:
 }
 
 void progress_free(void) {
+  // show the cursor
+  if (smart_progress()) {
+    printf("\033[?25h");
+    fflush(stdout);
+  }
+
   if (status != NULL) {
     for (unsigned long i = 0; i < option.threads; ++i)
       free(status[i]);
