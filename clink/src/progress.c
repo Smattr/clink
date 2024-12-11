@@ -49,13 +49,13 @@ static void update(unsigned long thread_id, char *line) {
 
   // move up to this thread’s progress line
   if (smart_progress())
-    printf("\033[%luA\033[K", option.threads - thread_id + 1);
+    printf("\033[%luF\033[K", option.threads - thread_id);
 
   printf("%lu: %s\n", thread_id, status[thread_id]);
 
   // move back to the bottom
   if (smart_progress()) {
-    printf("\033[%luB", option.threads - thread_id);
+    printf("\033[%luB", option.threads - thread_id - 1);
     fflush(stdout);
   }
 
@@ -99,7 +99,12 @@ static void progress(void) {
       }
     }
   }
-  printf("\n");
+  if (smart_progress()) {
+    printf("\033[K");
+    fflush(stdout);
+  } else {
+    printf("\n");
+  }
 }
 
 /** reconstruct the progress output that may have been overwritten
@@ -145,7 +150,7 @@ void progress_warn(unsigned long thread_id, const char *fmt, ...) {
 
   // move to the first line
   if (smart_progress())
-    printf("\033[%luA\033[K", option.threads + 1);
+    printf("\033[%luF\033[K", option.threads);
 
   // “warning: [thread <x>] ”
   if (option.colour == ALWAYS)
@@ -201,9 +206,9 @@ void progress_increment(void) {
 
   flockfile(stdout);
 
-  // move up to the line the progress is on
+  // move to the beginning of the line
   if (smart_progress())
-    printf("\033[1A\033[K");
+    printf("\033[1G");
 
   // update progress
   ++done;
