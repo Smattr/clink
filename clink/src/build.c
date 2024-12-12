@@ -1,6 +1,7 @@
 #include "build.h"
 #include "../../common/compiler.h"
 #include "compile_commands.h"
+#include "fdbuf.h"
 #include "file_queue.h"
 #include "option.h"
 #include "path.h"
@@ -410,6 +411,7 @@ int build(clink_db_t *db) {
 
   assert(db != NULL);
 
+  fdbuf_t err = {0};
   int rc = 0;
 
   // setup a work queue to manage our tasks
@@ -462,6 +464,15 @@ int build(clink_db_t *db) {
     goto done;
   }
 
+  // redirect stderr into memory
+  if (!option.debug) {
+    if (UNLIKELY((rc = fdbuf_new(&err, stderr)))) {
+      progress_free();
+      fprintf(stderr, "failed to redirect stderr: %s\n", strerror(rc));
+      goto done;
+    }
+  }
+
   // notify the user if we cannot leverage Clang fully
   if (option.parse_c == CLANG || option.parse_cxx == CLANG) {
     if (option.compile_commands.db == NULL)
@@ -477,8 +488,28 @@ int build(clink_db_t *db) {
                                         : process(0, NULL, db, q))))
     goto done;
 
+  progress_free();
+  printf("\n");
+
+  if (!option.debug) {
+    // see if libclang crashed or Cscope errored
+    assert(err.subject != NULL && "operating on uninitialised fd buffer");
+    if (UNLIKELY((rc = fdbuf_writeback(
+                      "warning: parser(s) generated error output:\n"
+                      "───────────────────────────────────── parser stderr "
+                      "─────────────────────────────────────\n",
+                      &err,
+                      "─────────────────────────────────── end parser stderr "
+                      "───────────────────────────────────\n")))) {
+      fdbuf_free(&err);
+      fprintf(stderr, "failed to write back parser errors: %s\n", strerror(rc));
+      goto done;
+    }
+  }
+
 done:
   (void)clink_db_commit_transaction(db);
+  (void)fdbuf_free(&err);
   progress_free();
   (void)sigint_unblock();
   free(cur_dir);

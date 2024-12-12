@@ -7,6 +7,9 @@ add_executable(clink
   src/cwd.c
   src/dirname.c
   src/disppath.c
+  src/fdbuf_free.c
+  src/fdbuf_new.c
+  src/fdbuf_writeback.c
   src/file_queue.c
   src/find_me.c
   src/find_repl.c
