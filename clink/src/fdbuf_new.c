@@ -15,6 +15,7 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   int copy = -1;
   char *path = NULL;
   int fd = -1;
+  FILE *origin = NULL;
   int rc = 0;
 
   // it should be OK to use `ERROR` in the following code, even though the
@@ -35,13 +36,20 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
     goto done;
   }
   copy = dup(target_fd);
-  assert(copy != 0 && "copy cannot be unambiguously stored in an fdbuf_t");
   if (ERROR(copy < 0)) {
     rc = errno;
     goto done;
   }
   // deliberately do not set `O_CLOEXEC` because we want subprocesses to also
   // write into this pipe
+
+  // turn the copy into a file handle so we can more easily manage it
+  origin = fdopen(copy, "w");
+  if (ERROR(origin == NULL)) {
+    rc = errno;
+    goto done;
+  }
+  copy = -1;
 
   // find temporary storage space
   const char *TMPDIR = getenv("TMPDIR");
@@ -70,8 +78,8 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   }
 
   // success
-  *buffer = (fdbuf_t){.target = target, .origin = copy, .path = path};
-  copy = -1;
+  *buffer = (fdbuf_t){.target = target, .origin = origin, .path = path};
+  origin = NULL;
   path = NULL;
 
 done:
@@ -80,6 +88,8 @@ done:
   if (path != NULL)
     (void)unlink(path);
   free(path);
+  if (origin != NULL)
+    (void)fclose(origin);
   if (copy >= 0)
     (void)close(copy);
 

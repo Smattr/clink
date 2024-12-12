@@ -13,9 +13,9 @@ void fdbuf_free(fdbuf_t *buffer) {
     (void)fflush(buffer->target);
 
   // restore the original description
-  if (buffer->origin > 0) {
-    (void)dup2(buffer->origin, fileno(buffer->target));
-    (void)close(buffer->origin);
+  if (buffer->origin != NULL) {
+    (void)dup2(fileno(buffer->origin), fileno(buffer->target));
+    (void)fclose(buffer->origin);
   }
 
   if (buffer->path != NULL)

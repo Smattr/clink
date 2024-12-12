@@ -17,7 +17,7 @@
 /// as long as you destruct the buffers in reverse order.
 typedef struct {
   FILE *target; ///< the stream being switched
-  int origin;   ///< a copy of the original descriptor
+  FILE *origin; ///< a copy of the original stream
   char *path;   ///< a temporary file where the buffered data is accrued
 } fdbuf_t;
 
