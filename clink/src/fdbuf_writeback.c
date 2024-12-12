@@ -13,6 +13,17 @@ int fdbuf_writeback(const char *header, fdbuf_t *buffer, const char *footer) {
 
   int rc = 0;
 
+  // ensure any pending data is flushed through to our pipe before trying to
+  // examine it
+  if (fflush(buffer->target) < 0) {
+    rc = errno;
+    goto done;
+  }
+
+  // if our buffer is empty, nothing to be done
+  if (ftell(buffer->target) == 0)
+    return 0;
+
   // write the header
   for (size_t i = 0; header != NULL && i < strlen(header);) {
     const ssize_t w = write(buffer->origin, &header[i], strlen(&header[i]));

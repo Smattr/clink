@@ -22,6 +22,12 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   // action we take, so any `ERROR` encountered should write to the actual
   // stderr.
 
+  // ensure any pending data is flushed before we begin replacing the descriptor
+  if (ERROR(fflush(target) < 0)) {
+    rc = errno;
+    goto done;
+  }
+
   // duplicate the original descriptor so we can later restore it
   const int target_fd = fileno(target);
   if (ERROR(target_fd < 0)) {

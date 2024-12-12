@@ -32,8 +32,8 @@ INTERNAL int fdbuf_new(fdbuf_t *buffer, FILE *target);
 ///
 /// This does not unbuffer the stream. It remains interposed upon.
 ///
-/// Conceptually, this discards data in the buffer by its actions. Writes
-/// following this will accrue into the new emptied buffer.
+/// This discards data in the buffer by its actions. Writes following this will
+/// accrue into the new emptied buffer.
 ///
 /// \param header Optional data to write preceding the buffered content
 /// \param buffer The buffer to write back
