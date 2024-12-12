@@ -28,28 +28,21 @@ int fdbuf_writeback(const char *header, fdbuf_t *buffer, const char *footer) {
   }
 
   // rewind to the start of the buffered data
-  if (lseek(buffer->target, 0, SEEK_SET) < 0) {
-    rc = errno;
-    goto done;
-  }
+  rewind(buffer->target);
 
   // copy data back to the original stream
   while (true) {
     char window[BUFSIZ] = {0};
-    const ssize_t r = read(buffer->target, window, sizeof(window));
-    if (r < 0) {
-      if (errno != EINTR) {
-        rc = errno;
-        goto done;
-      }
-      continue;
+    const size_t r = fread(window, 1, sizeof(window), buffer->target);
+    assert(r <= sizeof(window));
+    if (r == 0) {
+      if (feof(buffer->target))
+        break;
+      rc = EIO;
+      goto done;
     }
-    if (r == 0)
-      break;
-    assert((size_t)r <= sizeof(window));
-    for (size_t offset = 0; offset < (size_t)r;) {
-      const ssize_t w =
-          write(buffer->origin, &window[offset], (size_t)r - offset);
+    for (size_t offset = 0; offset < r;) {
+      const ssize_t w = write(buffer->origin, &window[offset], r - offset);
       if (w < 0) {
         if (errno != EINTR) {
           rc = errno;
@@ -57,7 +50,7 @@ int fdbuf_writeback(const char *header, fdbuf_t *buffer, const char *footer) {
         }
         continue;
       }
-      assert((size_t)w <= (size_t)r - offset);
+      assert((size_t)w <= r - offset);
       offset += (size_t)w;
     }
   }
@@ -77,10 +70,7 @@ int fdbuf_writeback(const char *header, fdbuf_t *buffer, const char *footer) {
   }
 
   // rewind back to the start of the buffer so it appears empty
-  if (lseek(buffer->target, 0, SEEK_SET) < 0) {
-    rc = errno;
-    goto done;
-  }
+  rewind(buffer->target);
 
 done:
   return rc;

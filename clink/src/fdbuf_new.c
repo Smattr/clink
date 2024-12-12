@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int fdbuf_new(fdbuf_t *buffer, int target) {
+int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   assert(buffer != NULL);
-  assert(target >= 0);
+  assert(target != NULL);
 
   *buffer = (fdbuf_t){0};
   int copy = -1;
@@ -23,7 +23,12 @@ int fdbuf_new(fdbuf_t *buffer, int target) {
   // stderr.
 
   // duplicate the original descriptor so we can later restore it
-  copy = dup(target);
+  const int target_fd = fileno(target);
+  if (ERROR(target_fd < 0)) {
+    rc = errno;
+    goto done;
+  }
+  copy = dup(target_fd);
   assert(copy != 0 && "copy cannot be unambiguously stored in an fdbuf_t");
   if (ERROR(copy < 0)) {
     rc = errno;
@@ -53,7 +58,7 @@ int fdbuf_new(fdbuf_t *buffer, int target) {
   }
 
   // dup this over the target
-  if (ERROR(dup2(fd, target) < 0)) {
+  if (ERROR(dup2(fd, target_fd) < 0)) {
     rc = errno;
     goto done;
   }

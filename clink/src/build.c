@@ -467,7 +467,7 @@ int build(clink_db_t *db) {
   // redirect stderr into memory
   if (!option.debug) {
     fflush(stderr);
-    if (UNLIKELY((rc = fdbuf_new(&err, STDERR_FILENO)))) {
+    if (UNLIKELY((rc = fdbuf_new(&err, stderr)))) {
       progress_free();
       fprintf(stderr, "failed to redirect stderr: %s\n", strerror(rc));
       goto done;
@@ -498,8 +498,8 @@ int build(clink_db_t *db) {
     fflush(stderr);
 
     // see if libclang crashed or Cscope errored
-    assert(err.origin > 0 && "operating on uninitialised fd buffer");
-    if (lseek(err.target, 0, SEEK_CUR) > 0) {
+    assert(err.target != NULL && "operating on uninitialised fd buffer");
+    if (ftell(err.target) > 0) {
       if (UNLIKELY((rc = fdbuf_writeback(
                         "warning: parser(s) generated error output:\n"
                         "───────────────────────────────────── parser stderr "

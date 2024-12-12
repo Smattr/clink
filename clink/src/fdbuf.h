@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../../common/compiler.h"
+#include <stdio.h>
 
 /// a file descriptor buffer handle
 ///
@@ -15,9 +16,9 @@
 /// composable. Buffering a stream that is already being buffered should work,
 /// as long as you destruct the buffers in reverse order.
 typedef struct {
-  int target; ///< the file descriptor being switched
-  int origin; ///< a copy of the original descriptor
-  char *path; ///< a temporary file where the buffered data is accrued
+  FILE *target; ///< the stream being switched
+  int origin;   ///< a copy of the original descriptor
+  char *path;   ///< a temporary file where the buffered data is accrued
 } fdbuf_t;
 
 /// buffer an existing stream
@@ -25,7 +26,7 @@ typedef struct {
 /// \param buffer [out] A handle to the buffered stream on success
 /// \param target The stream to interpose on
 /// \return 0 on success or an errno on failure
-INTERNAL int fdbuf_new(fdbuf_t *buffer, int target);
+INTERNAL int fdbuf_new(fdbuf_t *buffer, FILE *target);
 
 /// write buffered data back to the original stream
 ///
