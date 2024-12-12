@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 /// create a temporary file
@@ -17,6 +18,26 @@ static int make_temp(int *out) {
   char *path = NULL;
   int fd = -1;
   int rc = 0;
+
+#ifdef __linux__
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)
+#if defined(__GLIBC__)
+#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27)
+  fd = memfd_create("clink stderr shadow", MFD_CLOEXEC);
+  if (fd >= 0) {
+    // success
+    *out = fd;
+    fd = -1;
+    goto done;
+  }
+  DEBUG("memfd_create was attempted but failed: %s", strerror(errno));
+
+  // if we failed, fallback on regular temporary file creation
+#endif
+#endif
+#endif
+#endif
 
   // find temporary storage space
   const char *TMPDIR = getenv("TMPDIR");
