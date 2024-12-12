@@ -18,9 +18,5 @@ void fdbuf_free(fdbuf_t *buffer) {
     (void)fclose(buffer->origin);
   }
 
-  if (buffer->path != NULL)
-    (void)unlink(buffer->path);
-  free(buffer->path);
-
   *buffer = (fdbuf_t){0};
 }

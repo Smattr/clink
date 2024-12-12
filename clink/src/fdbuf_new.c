@@ -66,8 +66,12 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   fd = mkostemp(path, O_CLOEXEC);
   if (ERROR(fd < 0)) {
     rc = errno;
-    free(path);
-    path = NULL;
+    goto done;
+  }
+
+  // we can remove it from disk now that we have an open descriptor to it
+  if (ERROR(unlink(path) < 0)) {
+    rc = errno;
     goto done;
   }
 
@@ -78,15 +82,12 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   }
 
   // success
-  *buffer = (fdbuf_t){.target = target, .origin = origin, .path = path};
+  *buffer = (fdbuf_t){.target = target, .origin = origin};
   origin = NULL;
-  path = NULL;
 
 done:
   if (fd >= 0)
     (void)close(fd);
-  if (path != NULL)
-    (void)unlink(path);
   free(path);
   if (origin != NULL)
     (void)fclose(origin);
