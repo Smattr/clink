@@ -16,8 +16,8 @@
 /// composable. Buffering a stream that is already being buffered should work,
 /// as long as you destruct the buffers in reverse order.
 typedef struct {
-  FILE *target; ///< the stream being switched
-  FILE *origin; ///< a copy of the original stream
+  FILE *subject; ///< the stream being switched
+  FILE *origin;  ///< a copy of the original stream
 } fdbuf_t;
 
 /// buffer an existing stream
@@ -25,7 +25,7 @@ typedef struct {
 /// \param buffer [out] A handle to the buffered stream on success
 /// \param target The stream to interpose on
 /// \return 0 on success or an errno on failure
-INTERNAL int fdbuf_new(fdbuf_t *buffer, FILE *target);
+INTERNAL int fdbuf_new(fdbuf_t *buffer, FILE *subject);
 
 /// write buffered data back to the original stream
 ///

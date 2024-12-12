@@ -493,7 +493,7 @@ int build(clink_db_t *db) {
 
   if (!option.debug) {
     // see if libclang crashed or Cscope errored
-    assert(err.target != NULL && "operating on uninitialised fd buffer");
+    assert(err.subject != NULL && "operating on uninitialised fd buffer");
     if (UNLIKELY((rc = fdbuf_writeback(
                       "warning: parser(s) generated error output:\n"
                       "───────────────────────────────────── parser stderr "

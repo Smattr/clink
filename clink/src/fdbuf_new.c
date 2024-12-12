@@ -75,9 +75,9 @@ done:
   return rc;
 }
 
-int fdbuf_new(fdbuf_t *buffer, FILE *target) {
+int fdbuf_new(fdbuf_t *buffer, FILE *subject) {
   assert(buffer != NULL);
-  assert(target != NULL);
+  assert(subject != NULL);
 
   *buffer = (fdbuf_t){0};
   int copy = -1;
@@ -91,18 +91,18 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   // stderr.
 
   // ensure any pending data is flushed before we begin replacing the descriptor
-  if (ERROR(fflush(target) < 0)) {
+  if (ERROR(fflush(subject) < 0)) {
     rc = errno;
     goto done;
   }
 
   // duplicate the original descriptor so we can later restore it
-  const int target_fd = fileno(target);
-  if (ERROR(target_fd < 0)) {
+  const int subject_fd = fileno(subject);
+  if (ERROR(subject_fd < 0)) {
     rc = errno;
     goto done;
   }
-  copy = dup(target_fd);
+  copy = dup(subject_fd);
   if (ERROR(copy < 0)) {
     rc = errno;
     goto done;
@@ -128,14 +128,14 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   if (ERROR((rc = make_temp(&fd))))
     goto done;
 
-  // dup this over the target
-  if (ERROR(dup2(fd, target_fd) < 0)) {
+  // dup this over the subject
+  if (ERROR(dup2(fd, subject_fd) < 0)) {
     rc = errno;
     goto done;
   }
 
   // success
-  *buffer = (fdbuf_t){.target = target, .origin = origin};
+  *buffer = (fdbuf_t){.subject = subject, .origin = origin};
   origin = NULL;
 
 done:

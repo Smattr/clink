@@ -9,12 +9,13 @@ void fdbuf_free(fdbuf_t *buffer) {
 
   // ensure everything that has previously been written is flushed before doing
   // our replacement
-  if (buffer->target != NULL)
-    (void)fflush(buffer->target);
+  if (buffer->subject != NULL)
+    (void)fflush(buffer->subject);
 
   // restore the original description
   if (buffer->origin != NULL) {
-    (void)dup2(fileno(buffer->origin), fileno(buffer->target));
+    assert(buffer->subject != NULL);
+    (void)dup2(fileno(buffer->origin), fileno(buffer->subject));
     (void)fclose(buffer->origin);
   }
 

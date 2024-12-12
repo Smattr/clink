@@ -13,13 +13,13 @@ int fdbuf_writeback(const char *header, fdbuf_t *buffer, const char *footer) {
 
   // ensure any pending data is flushed through to our pipe before trying to
   // examine it
-  if (fflush(buffer->target) < 0) {
+  if (fflush(buffer->subject) < 0) {
     rc = errno;
     goto done;
   }
 
   // if our buffer is empty, nothing to be done
-  if (ftell(buffer->target) == 0)
+  if (ftell(buffer->subject) == 0)
     return 0;
 
   // write the header
@@ -31,15 +31,15 @@ int fdbuf_writeback(const char *header, fdbuf_t *buffer, const char *footer) {
   }
 
   // rewind to the start of the buffered data
-  rewind(buffer->target);
+  rewind(buffer->subject);
 
   // copy data back to the original stream
   while (true) {
     char window[BUFSIZ] = {0};
-    const size_t r = fread(window, 1, sizeof(window), buffer->target);
+    const size_t r = fread(window, 1, sizeof(window), buffer->subject);
     assert(r <= sizeof(window));
     if (r == 0) {
-      if (feof(buffer->target))
+      if (feof(buffer->subject))
         break;
       rc = EIO;
       goto done;
@@ -59,7 +59,7 @@ int fdbuf_writeback(const char *header, fdbuf_t *buffer, const char *footer) {
   }
 
   // rewind back to the start of the buffer so it appears empty
-  rewind(buffer->target);
+  rewind(buffer->subject);
 
 done:
   return rc;
