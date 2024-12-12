@@ -40,8 +40,14 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
     rc = errno;
     goto done;
   }
-  // deliberately do not set `O_CLOEXEC` because we want subprocesses to also
-  // write into this pipe
+  // assume we are single threaded and thus this is not racy
+  {
+    const int flags = fcntl(copy, F_GETFD);
+    if (ERROR(fcntl(copy, F_SETFD, flags | FD_CLOEXEC) < 0)) {
+      rc = errno;
+      goto done;
+    }
+  }
 
   // turn the copy into a file handle so we can more easily manage it
   origin = fdopen(copy, "w");
