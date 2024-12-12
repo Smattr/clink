@@ -7,13 +7,59 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/// create a temporary file
+///
+/// \param out [out] An R/W descriptor on success
+/// \return 0 on success or an errno on failure
+static int make_temp(int *out) {
+  assert(out != NULL);
+
+  char *path = NULL;
+  int fd = -1;
+  int rc = 0;
+
+  // find temporary storage space
+  const char *TMPDIR = getenv("TMPDIR");
+  if (TMPDIR == NULL)
+    TMPDIR = "/tmp";
+
+  // create a temporary path
+  if (ERROR(asprintf(&path, "%s/temp.XXXXXX", TMPDIR) < 0)) {
+    rc = ENOMEM;
+    goto done;
+  }
+
+  // create a file there
+  fd = mkostemp(path, O_CLOEXEC);
+  if (ERROR(fd < 0)) {
+    rc = errno;
+    goto done;
+  }
+
+  // we can remove it from disk now that we have an open descriptor to it
+  if (ERROR(unlink(path) < 0)) {
+    rc = errno;
+    goto done;
+  }
+
+  // success
+  *out = fd;
+  fd = -1;
+
+done:
+  if (fd >= 0)
+    (void)close(fd);
+  free(path);
+
+  return rc;
+}
+
 int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   assert(buffer != NULL);
   assert(target != NULL);
 
   *buffer = (fdbuf_t){0};
   int copy = -1;
-  char *path = NULL;
   int fd = -1;
   FILE *origin = NULL;
   int rc = 0;
@@ -57,29 +103,9 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
   }
   copy = -1;
 
-  // find temporary storage space
-  const char *TMPDIR = getenv("TMPDIR");
-  if (TMPDIR == NULL)
-    TMPDIR = "/tmp";
-
-  // create a temporary path
-  if (ERROR(asprintf(&path, "%s/temp.XXXXXX", TMPDIR) < 0)) {
-    rc = ENOMEM;
+  // create a temporary file
+  if (ERROR((rc = make_temp(&fd))))
     goto done;
-  }
-
-  // create a file there
-  fd = mkostemp(path, O_CLOEXEC);
-  if (ERROR(fd < 0)) {
-    rc = errno;
-    goto done;
-  }
-
-  // we can remove it from disk now that we have an open descriptor to it
-  if (ERROR(unlink(path) < 0)) {
-    rc = errno;
-    goto done;
-  }
 
   // dup this over the target
   if (ERROR(dup2(fd, target_fd) < 0)) {
@@ -94,7 +120,6 @@ int fdbuf_new(fdbuf_t *buffer, FILE *target) {
 done:
   if (fd >= 0)
     (void)close(fd);
-  free(path);
   if (origin != NULL)
     (void)fclose(origin);
   if (copy >= 0)
