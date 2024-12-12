@@ -41,12 +41,10 @@ static int run_cscope(const char *filename, const char *cscope_out) {
   if (ERROR((rc = fa_init(&fa))))
     return rc;
 
-  // hide all of Cscope’s stdin/stdout/stderr
+  // Hide Cscope’s stdin/stdout. Its stderr may be captured by our caller.
   if (ERROR((rc = addopen(&fa, STDIN_FILENO, "/dev/null", O_RDONLY))))
     goto done;
   if (ERROR((rc = addopen(&fa, STDOUT_FILENO, "/dev/null", O_WRONLY))))
-    goto done;
-  if (ERROR((rc = addopen(&fa, STDERR_FILENO, "/dev/null", O_WRONLY))))
     goto done;
 
   // construct a command to run Cscope
