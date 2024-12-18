@@ -38,6 +38,16 @@ static bool smart_progress(void) {
   return true;
 }
 
+/// how many printable digits is `n`?
+static size_t digits(unsigned long n) {
+  size_t printed = 0;
+  do {
+    n /= 10;
+    ++printed;
+  } while (n != 0);
+  return printed;
+}
+
 static void update(unsigned long thread_id, char *line) {
   assert(line != NULL);
 
@@ -47,9 +57,17 @@ static void update(unsigned long thread_id, char *line) {
   free(status[thread_id]);
   status[thread_id] = line;
 
-  // move up to this thread’s progress line
-  if (smart_progress())
+  if (smart_progress()) {
+    // move up to this thread’s progress line
     printf("\033[%luF\033[K", option.threads - thread_id);
+
+    // indent if necessary
+    const size_t my_digits = digits(thread_id);
+    const size_t most_digits = digits(option.threads - 1);
+    assert(my_digits <= most_digits);
+    for (size_t j = my_digits; j < most_digits; ++j)
+      putchar(' ');
+  }
 
   printf("%lu: %s\n", thread_id, status[thread_id]);
 
@@ -121,6 +139,14 @@ static void refresh(void) {
 
   // reshow all the status lines
   for (unsigned long i = 0; i < option.threads; ++i) {
+
+    // indent if necessary
+    const size_t my_digits = digits(i);
+    const size_t most_digits = digits(option.threads - 1);
+    assert(my_digits <= most_digits);
+    for (size_t j = my_digits; j < most_digits; ++j)
+      putchar(' ');
+
     assert(status[i] != NULL);
     printf("%lu: %s\033[K\n", i, status[i]);
   }
