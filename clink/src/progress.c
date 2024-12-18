@@ -138,17 +138,10 @@ static void refresh(void) {
     return;
 
   // reshow all the status lines
+  const size_t most_digits = digits(option.threads - 1);
   for (unsigned long i = 0; i < option.threads; ++i) {
-
-    // indent if necessary
-    const size_t my_digits = digits(i);
-    const size_t most_digits = digits(option.threads - 1);
-    assert(my_digits <= most_digits);
-    for (size_t j = my_digits; j < most_digits; ++j)
-      putchar(' ');
-
     assert(status[i] != NULL);
-    printf("%lu: %s\033[K\n", i, status[i]);
+    printf("%*lu: %s\033[K\n", (int)most_digits, i, status[i]);
   }
 
   // reshow the progress
