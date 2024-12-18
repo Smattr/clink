@@ -38,6 +38,16 @@ static bool smart_progress(void) {
   return true;
 }
 
+/// how many printable digits is `n`?
+static size_t digits(unsigned long n) {
+  size_t printed = 0;
+  do {
+    n /= 10;
+    ++printed;
+  } while (n != 0);
+  return printed;
+}
+
 static void update(unsigned long thread_id, char *line) {
   assert(line != NULL);
 
@@ -47,16 +57,31 @@ static void update(unsigned long thread_id, char *line) {
   free(status[thread_id]);
   status[thread_id] = line;
 
-  // move up to this thread’s progress line
-  if (smart_progress())
+  if (smart_progress()) {
+    // move up to this thread’s progress line
     printf("\033[%luF\033[K", option.threads - thread_id);
 
-  printf("%lu: %s\n", thread_id, status[thread_id]);
+    const size_t most_digits = digits(option.threads - 1);
 
-  // move back to the bottom
-  if (smart_progress()) {
-    printf("\033[%luB", option.threads - thread_id - 1);
+    // amount of space the "%*lu: " prefix will take
+    const size_t prefix = most_digits + 2;
+
+    // learn the current terminal width
+    struct winsize ws = {0};
+    size_t printable = strlen(status[thread_id]);
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0) {
+      if (ws.ws_col > prefix && printable + prefix > ws.ws_col)
+        printable = ws.ws_col - prefix - 1;
+    }
+
+    printf("%*lu: %.*s%s\033[K", (int)most_digits, thread_id, (int)printable,
+           status[thread_id], printable < strlen(status[thread_id]) ? "…" : "");
+
+    // move back to the bottom
+    printf("\033[%luB", option.threads - thread_id);
     fflush(stdout);
+  } else {
+    printf("%lu: %s\n", thread_id, status[thread_id]);
   }
 
   funlockfile(stdout);
@@ -119,10 +144,26 @@ static void refresh(void) {
   if (!smart_progress())
     return;
 
+  // learn the current terminal width
+  struct winsize ws = {0};
+  const size_t width =
+      ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 ? ws.ws_col : 0;
+
+  const size_t most_digits = digits(option.threads - 1);
+
+  // amount of space the "%*lu: " prefix will take
+  const size_t prefix = most_digits + 2;
+
   // reshow all the status lines
   for (unsigned long i = 0; i < option.threads; ++i) {
+
+    size_t printable = strlen(status[i]);
+    if (width > prefix && printable + prefix > width)
+      printable = width - prefix - 1;
+
     assert(status[i] != NULL);
-    printf("%lu: %s\033[K\n", i, status[i]);
+    printf("%*lu: %.*s%s\033[K\n", (int)most_digits, i, (int)printable,
+           status[i], printable < strlen(status[i]) ? "…" : "");
   }
 
   // reshow the progress
