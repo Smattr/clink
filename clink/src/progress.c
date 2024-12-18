@@ -67,14 +67,14 @@ static void update(unsigned long thread_id, char *line) {
     assert(my_digits <= most_digits);
     for (size_t j = my_digits; j < most_digits; ++j)
       putchar(' ');
-  }
 
-  printf("%lu: %s\n", thread_id, status[thread_id]);
+    printf("%lu: %s\033[K", thread_id, status[thread_id]);
 
-  // move back to the bottom
-  if (smart_progress()) {
-    printf("\033[%luB", option.threads - thread_id - 1);
+    // move back to the bottom
+    printf("\033[%luB", option.threads - thread_id);
     fflush(stdout);
+  } else {
+    printf("%lu: %s\n", thread_id, status[thread_id]);
   }
 
   funlockfile(stdout);
