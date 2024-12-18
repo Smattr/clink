@@ -61,14 +61,21 @@ static void update(unsigned long thread_id, char *line) {
     // move up to this thread’s progress line
     printf("\033[%luF\033[K", option.threads - thread_id);
 
-    // indent if necessary
-    const size_t my_digits = digits(thread_id);
     const size_t most_digits = digits(option.threads - 1);
-    assert(my_digits <= most_digits);
-    for (size_t j = my_digits; j < most_digits; ++j)
-      putchar(' ');
 
-    printf("%lu: %s\033[K", thread_id, status[thread_id]);
+    // amount of space the "%*lu: " prefix will take
+    const size_t prefix = most_digits + 2;
+
+    // learn the current terminal width
+    struct winsize ws = {0};
+    size_t printable = strlen(status[thread_id]);
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0) {
+      if (ws.ws_col > prefix && printable + prefix > ws.ws_col)
+        printable = ws.ws_col - prefix - 1;
+    }
+
+    printf("%*lu: %.*s%s\033[K", (int)most_digits, thread_id, (int)printable,
+           status[thread_id], printable < strlen(status[thread_id]) ? "…" : "");
 
     // move back to the bottom
     printf("\033[%luB", option.threads - thread_id);
@@ -137,11 +144,26 @@ static void refresh(void) {
   if (!smart_progress())
     return;
 
-  // reshow all the status lines
+  // learn the current terminal width
+  struct winsize ws = {0};
+  const size_t width =
+      ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 ? ws.ws_col : 0;
+
   const size_t most_digits = digits(option.threads - 1);
+
+  // amount of space the "%*lu: " prefix will take
+  const size_t prefix = most_digits + 2;
+
+  // reshow all the status lines
   for (unsigned long i = 0; i < option.threads; ++i) {
+
+    size_t printable = strlen(status[i]);
+    if (width > prefix && printable + prefix > width)
+      printable = width - prefix - 1;
+
     assert(status[i] != NULL);
-    printf("%*lu: %s\033[K\n", (int)most_digits, i, status[i]);
+    printf("%*lu: %.*s%s\033[K\n", (int)most_digits, i, (int)printable,
+           status[i], printable < strlen(status[i]) ? "…" : "");
   }
 
   // reshow the progress
