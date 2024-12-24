@@ -8,7 +8,7 @@ include(GNUInstallDirs)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# make asprintf(), pipe2() prototypes visible
+# make asprintf(), mkostemp(), pipe2() prototypes visible
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   add_compile_definitions(_GNU_SOURCE)
 endif()
