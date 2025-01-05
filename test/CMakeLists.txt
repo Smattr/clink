@@ -90,8 +90,9 @@ add_custom_target(check
   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/unit-tests
   COMMAND env LLVM_VERSION=${LIBCLANG_LLVM_VERSION}
     PATH=${CMAKE_CURRENT_SOURCE_DIR}/../clink/src:${CMAKE_BINARY_DIR}/clink:$ENV{PATH}
-    ${Python3_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}/integration.py
-    --verbose
+    ${Python3_EXECUTABLE} -m pytest
+    --override-ini=cache_dir=${CMAKE_CURRENT_BINARY_DIR} --verbose
+    ${CMAKE_CURRENT_SOURCE_DIR}/integration.py
 )
 
 add_dependencies(check clink unit-tests)
