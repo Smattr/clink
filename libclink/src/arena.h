@@ -33,20 +33,17 @@ enum { CHUNK_SIZE = 16384 };
 /// The arena’s free list is stored as a linked-list of chunks from which to
 /// allocate memory. The amount of free space remaining in a chunk is stored at
 /// a higher level in the `arena_t` struct.
-struct chunk {
+typedef struct chunk {
   struct chunk *previous; ///< prior chunk in use
+#if 0
+  /// Conceptually, this member follows. It is not defined explicitly because we
+  /// would then be allocating out of it, handing out typed pointers. While
+  /// strict aliasing permits `char *` to alias other types, it does not permit
+  /// other types to alias a `char[]`.
   char content[CHUNK_SIZE -
                sizeof(struct chunk *)]; ///< backing memory to be allocated
-};
-
-/// pointee type used for `struct chunk` pointers
-///
-/// The allocator itself wants to deal in `struct chunk`s but then hand out
-/// pointers to arbitrary types. While strict aliasing allows `char *` to alias
-/// other pointers it does not allow other pointers to alias `char[]`. So we
-/// cannot address allocatable memory as the `content` member of `struct chunk`
-/// but instead only refer to it through `chunk_t *`s.
-typedef char chunk_t;
+#endif
+} chunk_t;
 
 /// an arena’s state
 ///

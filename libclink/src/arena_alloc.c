@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 
 #ifdef __has_feature
 #if __has_feature(address_sanitizer)
@@ -24,13 +23,14 @@
   } while (0)
 #endif
 
-/// an arbitrary `struct chunk` on which to call `sizeof` on its fields
-///
-/// We want to use `sizeof(some_chunk.content)` below, but all chunks are
-/// addressed through `chunk_t *`s not `struct chunk *`s so this does not work.
-/// This object gives us a way to do it that does not cause UB like the usual
-/// tricks (`sizeof(((struct chunk *)0)->content)`).
-static const struct chunk witness;
+/// the number of bytes available for allocation out of a chunk
+enum { POOL_SIZE = CHUNK_SIZE - sizeof(chunk_t) };
+
+/// find the beginning of a chunk’s allocation region
+static char *pool(chunk_t *base) {
+  assert(base != NULL);
+  return (char *)base + sizeof(*base);
+}
 
 /// prepend a new chunk to allocate from
 ///
@@ -39,30 +39,18 @@ static const struct chunk witness;
 static int add_chunk(arena_t *me) {
   assert(me != NULL);
 
-  // create a new chunk
-  chunk_t *const next = calloc(1, sizeof(struct chunk));
+  // Create a new chunk. We deliberately use something different from
+  // `sizeof(*next)`. See the definition of `chunk_t` for an explanation of why.
+  chunk_t *const next = calloc(1, CHUNK_SIZE);
   if (ERROR(next == NULL))
     return ENOMEM;
 
-    // posion the new, unallocated memory
-#if 0
-  POISON(next->content, sizeof(next->content));
-#else
-  POISON(next + offsetof(struct chunk, content), sizeof(witness.content));
-#endif
+  // posion the new, unallocated memory
+  POISON(pool(next), POOL_SIZE);
 
   // make it the start of the arena’s linked-list
-#if 0
   next->previous = me->current;
-#else
-  memcpy(next + offsetof(struct chunk, previous), &me->current,
-         sizeof(me->current));
-#endif
-#if 0
-  *me = (arena_t){.remaining = sizeof(next->content), .current = next};
-#else
-  *me = (arena_t){.remaining = sizeof(witness.content), .current = next};
-#endif
+  *me = (arena_t){.remaining = POOL_SIZE, .current = next};
 
   return 0;
 }
@@ -71,7 +59,7 @@ void *arena_alloc(arena_t *me, size_t size) {
   assert(me != NULL);
 
   // we cannot allocate something that will not fit in a chunk
-  if (ERROR(size > sizeof(witness.content)))
+  if (ERROR(size > POOL_SIZE))
     return NULL;
 
   // if we do not have enough space, acquire a new chunk
@@ -82,12 +70,7 @@ void *arena_alloc(arena_t *me, size_t size) {
   assert(me->remaining >= size);
 
   // allocate from the end of the chunk for simplicity
-#if 0
-  void *const answer = &me->current->content[me->remaining - size];
-#else
-  void *const answer =
-      me->current + offsetof(struct chunk, content) + me->remaining - size;
-#endif
+  void *const answer = pool(me->current) + me->remaining - size;
   me->remaining -= size;
 
   // unpoison what we just allocated
