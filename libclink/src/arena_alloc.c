@@ -45,7 +45,7 @@ static int add_chunk(arena_t *me) {
   if (ERROR(next == NULL))
     return ENOMEM;
 
-  // posion the new, unallocated memory
+  // poison the new, unallocated memory
   POISON(pool(next), POOL_SIZE);
 
   // make it the start of the arena’s linked-list
