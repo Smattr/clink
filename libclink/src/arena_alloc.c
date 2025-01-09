@@ -58,6 +58,10 @@ static int add_chunk(arena_t *me) {
 void *arena_alloc(arena_t *me, size_t size) {
   assert(me != NULL);
 
+  // simplify later arithmetic edge cases
+  if (size == 0)
+    return NULL;
+
   // we cannot allocate something that will not fit in a chunk
   if (ERROR(size > POOL_SIZE))
     return NULL;
