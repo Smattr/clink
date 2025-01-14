@@ -4,20 +4,12 @@
 Generate contents of a schema.c.
 """
 
-import hashlib
 import io
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 from typing import Iterator
-
-
-def get_hash(sql: Path) -> str:
-    """
-    calculate a digest of a given file
-    """
-    return hashlib.sha256(sql.read_bytes()).hexdigest()
 
 
 def get_statements(sql: Path) -> Iterator[str]:
@@ -88,17 +80,7 @@ def main(args: [str]) -> int:
         schema_c.write(f'  "{stmt}",\n')
         statement_count += 1
 
-    # write a version of the schema itself
-    version = get_hash(schema_sql)
-    schema_c.write(
-        f"  \"insert into metadata (key, value) values ('schema_version', '{version}');\",\n"
-    )
-    statement_count += 1
-
     schema_c.write(f"}};\n\nconst size_t SCHEMA_LENGTH = {statement_count};\n\n")
-
-    # write a way to access the schema version
-    schema_c.write(f'const char *schema_version(void) {{\n  return "{version}";\n}}\n')
 
     # write out schema.c
     Path(args[1]).write_text(schema_c.getvalue(), encoding="utf-8")

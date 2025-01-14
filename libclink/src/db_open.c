@@ -7,9 +7,11 @@
 #include <assert.h>
 #include <clink/db.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <sqlite3.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,6 +35,27 @@ static int sqlite3_error_offset(sqlite3 *db UNUSED) { return -1; }
     }                                                                          \
   } while (0)
 
+/// application identifier to write into the corresponding SQLite header field
+///
+/// In theory, this information can be used by tools like `file` to give more
+/// accurate information about file type. For us, we just use it as a sanity
+/// check that we are actually opening a database created by ourselves. The
+/// value is entirely arbitrary.
+#define APP_ID 0x6e696c63 // “clin” in big endian
+
+/// version of schema.sql
+///
+/// This needs to be bumped whenever the database schema changes to avoid
+/// running queries against mismatched table structures. This includes when a
+/// functional change is made that does not affect the structural identity of
+/// the database tables but impacts backward/forward compatibility.
+#define SCHEMA_VERSION 1
+
+#define STR_(x) #x
+#define STR(x) STR_(x)
+
+const char *schema_version(void) { return STR(SCHEMA_VERSION); }
+
 static int exec_all(sqlite3 *db, size_t queries_length, const char **queries) {
 
   assert(db != NULL);
@@ -53,7 +76,28 @@ static int exec_all(sqlite3 *db, size_t queries_length, const char **queries) {
 
 static int init(sqlite3 *db) {
   assert(db != NULL);
-  return exec_all(db, SCHEMA_LENGTH, SCHEMA);
+
+  int rc = 0;
+
+  // setup the schema
+  if (ERROR((rc = exec_all(db, SCHEMA_LENGTH, SCHEMA))))
+    goto done;
+
+  // write our identifying version information
+  static const char SET_APP_ID[] = "pragma application_id = " STR(APP_ID) ";";
+  if (ERROR((rc = sql_exec(db, SET_APP_ID)))) {
+    SQL_ERROR_DETAIL(db, SET_APP_ID);
+    goto done;
+  }
+  static const char SET_VER[] =
+      "pragma user_version = " STR(SCHEMA_VERSION) ";";
+  if (ERROR((rc = sql_exec(db, SET_VER)))) {
+    SQL_ERROR_DETAIL(db, SET_VER);
+    goto done;
+  }
+
+done:
+  return rc;
 }
 
 static int configure(sqlite3 *db) {
@@ -74,55 +118,83 @@ static int check_schema_version(sqlite3 *db) {
 
   assert(db != NULL);
 
-  static const char QUERY[] =
-      "select value from metadata where key = 'schema_version';";
-
+  sqlite3_stmt *get_app_id = NULL;
+  sqlite3_stmt *get_ver = NULL;
   int rc = 0;
 
-  sqlite3_stmt *stmt = NULL;
+  // lookup the application ID
+  static const char GET_APP_ID[] = "pragma application_id;";
   {
-    int r = sqlite3_prepare_v2(db, QUERY, sizeof(QUERY), &stmt, NULL);
-    // if we failed to prepare, assume that it was the result of database schema
-    // change that affected the metadata table itself
-    if (ERROR(r == SQLITE_ERROR)) {
-      rc = EPROTO;
-      goto done;
-    }
+    const int r = sqlite3_prepare_v2(db, GET_APP_ID, sizeof(GET_APP_ID),
+                                     &get_app_id, NULL);
     if (ERROR(r)) {
-      SQL_ERROR_DETAIL(db, QUERY);
+      SQL_ERROR_DETAIL(db, GET_APP_ID);
       rc = sql_err_to_errno(r);
       goto done;
     }
   }
 
   {
-    int r = sqlite3_step(stmt);
+    const int r = sqlite3_step(get_app_id);
     if (ERROR(r != SQLITE_ROW)) {
       if (r == SQLITE_DONE) {
         rc = ENOENT;
       } else {
-        SQL_ERROR_DETAIL(db, QUERY);
+        SQL_ERROR_DETAIL(db, GET_APP_ID);
         rc = sql_err_to_errno(r);
       }
       goto done;
     }
   }
 
-  const char *ours = schema_version();
-  const char *theirs = (char *)sqlite3_column_text(stmt, 0);
+  // is the SQLite application ID what we expect?
+  const uint32_t app_id = sqlite3_column_int64(get_app_id, 0);
+  if (app_id != APP_ID) {
+    DEBUG("expected SQLite application ID 0x%" PRIx32 " but saw 0x%" PRIx32,
+          (uint32_t)APP_ID, app_id);
+    rc = EPROTO;
+    goto done;
+  }
 
-  assert(ours != NULL);
-  assert(theirs != NULL);
+  // lookup the user version
+  static const char GET_VER[] = "pragma user_version;";
+  {
+    const int r =
+        sqlite3_prepare_v2(db, GET_VER, sizeof(GET_VER), &get_ver, NULL);
+    if (ERROR(r)) {
+      SQL_ERROR_DETAIL(db, GET_VER);
+      rc = sql_err_to_errno(r);
+      goto done;
+    }
+  }
 
-  // reject any version that does not match exactly
-  if (strcmp(ours, theirs) != 0) {
+  {
+    const int r = sqlite3_step(get_ver);
+    if (ERROR(r != SQLITE_ROW)) {
+      if (r == SQLITE_DONE) {
+        rc = ENOENT;
+      } else {
+        SQL_ERROR_DETAIL(db, GET_VER);
+        rc = sql_err_to_errno(r);
+      }
+      goto done;
+    }
+  }
+
+  // is the SQLite user version what we expect?
+  const uint32_t ver = sqlite3_column_int64(get_ver, 0);
+  if (ver != SCHEMA_VERSION) {
+    DEBUG("expection SQLite user version 0x%" PRIx32 " but saw 0x%" PRIx32,
+          (uint32_t)SCHEMA_VERSION, ver);
     rc = EPROTO;
     goto done;
   }
 
 done:
-  if (stmt != NULL)
-    sqlite3_finalize(stmt);
+  if (get_app_id != NULL)
+    sqlite3_finalize(get_app_id);
+  if (get_ver != NULL)
+    sqlite3_finalize(get_ver);
 
   return rc;
 }
@@ -205,6 +277,9 @@ int clink_db_open(clink_db_t **db, const char *path) {
   } else {
     if (ERROR((rc = init(d->db))))
       goto done;
+    assert(check_schema_version(d->db) == 0 &&
+           "a database we created claims to have been created by a different "
+           "Clink version");
   }
 
   if (ERROR((rc = configure(d->db))))

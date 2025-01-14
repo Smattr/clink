@@ -35,10 +35,3 @@ create table if not exists records
   hash integer not null,
   timestamp integer not null
 );
-
-create table if not exists metadata
-  /* versioning information used internally by Clink */
-(
-  key text not null unique,
-  value text not null
-);
