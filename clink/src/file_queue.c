@@ -48,6 +48,32 @@ static int push_file(file_queue_t *fq, const char *path) {
   return str_queue_push(fq->pending, path);
 }
 
+/// `is_dir`, but also taking advantage of dirent information
+static bool is_directory(struct dirent entry, const char *path) {
+  assert(path != NULL);
+
+  if (entry.d_type == DT_DIR)
+    return true;
+
+  if (entry.d_type == DT_UNKNOWN)
+    return is_dir(path);
+
+  return false;
+}
+
+/// `is_file`, but also taking advantage of dirent information
+static bool is_reg_file(struct dirent entry, const char *path) {
+  assert(path != NULL);
+
+  if (entry.d_type == DT_REG)
+    return true;
+
+  if (entry.d_type == DT_UNKNOWN)
+    return is_file(path);
+
+  return false;
+}
+
 static int push_dir(file_queue_t *fq, const char *path) {
 
   assert(fq != NULL);
@@ -74,6 +100,11 @@ static int push_dir(file_queue_t *fq, const char *path) {
     if (entry == NULL)
       return errno;
 
+    // skip this entry if we have enough information to know it is irrelevant
+    if (entry->d_type != DT_REG && entry->d_type != DT_DIR &&
+        entry->d_type != DT_UNKNOWN)
+      continue;
+
     // skip special entries
     if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
       continue;
@@ -85,7 +116,7 @@ static int push_dir(file_queue_t *fq, const char *path) {
       return rc;
 
     // if this is a directory, recurse
-    if (is_dir(sub)) {
+    if (is_directory(*entry, sub)) {
       int r = push_dir(fq, sub);
       free(sub);
       if (r != 0)
@@ -94,7 +125,7 @@ static int push_dir(file_queue_t *fq, const char *path) {
     }
 
     // if this is a file eligible for parsing, enqueue it
-    if (is_file(sub) && is_source(sub)) {
+    if (is_reg_file(*entry, sub) && is_source(sub)) {
       int r = push_file(fq, sub);
       free(sub);
       if (r != 0 && r != EALREADY)
