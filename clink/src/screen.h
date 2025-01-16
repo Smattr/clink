@@ -89,8 +89,8 @@ void screen_free(void);
 #define CLRTOEOL "\033[K"
 
 /// print something, updating the display immediately
-#define PRINT(args...)                                                         \
+#define PRINT(...)                                                             \
   do {                                                                         \
-    printf(args);                                                              \
+    printf(__VA_ARGS__);                                                       \
     fflush(stdout);                                                            \
   } while (0)

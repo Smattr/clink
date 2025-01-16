@@ -10,13 +10,13 @@
 extern FILE *clink_debug INTERNAL;
 
 /// emit a debug message
-#define DEBUG(args...)                                                         \
+#define DEBUG(...)                                                             \
   do {                                                                         \
     if (UNLIKELY(clink_debug != NULL)) {                                       \
       const char *name_ = strrchr(__FILE__, '/');                              \
       flockfile(clink_debug);                                                  \
       fprintf(clink_debug, "[CLINK] libclink/src%s:%d: ", name_, __LINE__);    \
-      fprintf(clink_debug, args);                                              \
+      fprintf(clink_debug, __VA_ARGS__);                                       \
       fprintf(clink_debug, "\n");                                              \
       funlockfile(clink_debug);                                                \
     }                                                                          \

@@ -21,10 +21,10 @@
 
 /// Debug printf. This is implemented as a macro to avoid expensive varargs
 /// handling when we are not in debug mode.
-#define DEBUG(args...)                                                         \
+#define DEBUG(...)                                                             \
   do {                                                                         \
     if (UNLIKELY(option.debug)) {                                              \
-      progress_status(thread_id, args);                                        \
+      progress_status(thread_id, __VA_ARGS__);                                 \
     }                                                                          \
   } while (0)
 

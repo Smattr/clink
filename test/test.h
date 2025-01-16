@@ -140,10 +140,10 @@ void run_cleanups(void);
     }                                                                          \
   } while (0)
 
-#define FAIL(args...)                                                          \
+#define FAIL(...)                                                              \
   do {                                                                         \
     fprintf(stderr, "failed\n    ");                                           \
-    fprintf(stderr, args);                                                     \
+    fprintf(stderr, __VA_ARGS__);                                              \
     fflush(stderr);                                                            \
     run_cleanups();                                                            \
     abort();                                                                   \

@@ -8,13 +8,13 @@
 #include <string.h>
 
 /// emit a debug message
-#define DEBUG(args...)                                                         \
+#define DEBUG(...)                                                             \
   do {                                                                         \
     if (UNLIKELY(option.debug)) {                                              \
       const char *name_ = strrchr(__FILE__, '/');                              \
       flockfile(stderr);                                                       \
       fprintf(stderr, "[CLINK] clink/src%s:%d: ", name_, __LINE__);            \
-      fprintf(stderr, args);                                                   \
+      fprintf(stderr, __VA_ARGS__);                                            \
       fprintf(stderr, "\n");                                                   \
       funlockfile(stderr);                                                     \
     }                                                                          \
