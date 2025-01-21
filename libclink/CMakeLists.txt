@@ -111,6 +111,8 @@ find_package(SQLite3 REQUIRED)
 target_include_directories(libclink SYSTEM PRIVATE ${SQLite3_INCLUDE_DIRS})
 target_link_libraries(libclink PRIVATE ${SQLite3_LIBRARIES})
 
+find_program(SQLITE3 sqlite3 REQUIRED)
+
 install(TARGETS libclink EXPORT libclinkConfig
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
