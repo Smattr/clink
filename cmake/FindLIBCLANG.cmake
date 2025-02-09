@@ -1,6 +1,11 @@
 find_program(LLVM_CONFIG
   NAMES
     llvm-config
+    llvm-config-mp-20 llvm-config-20
+    llvm-config-mp-19 llvm-config-19
+    llvm-config-mp-18 llvm-config-18
+    llvm-config-mp-17 llvm-config-17
+    llvm-config-mp-16 llvm-config-16
     llvm-config-mp-15 llvm-config-15
     llvm-config-mp-14 llvm-config-14
     llvm-config-mp-13 llvm-config-13
