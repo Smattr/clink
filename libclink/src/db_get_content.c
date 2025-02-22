@@ -45,13 +45,13 @@ int clink_db_get_content(clink_db_t *db, const char *path, unsigned long lineno,
     goto done;
 
   // move to the first result
-  rc = sqlite3_step(stmt);
-  if (rc == SQLITE_DONE) {
+  const int r = sqlite3_step(stmt);
+  if (r == SQLITE_DONE) {
     // no content
     rc = ENOMSG;
     goto done;
-  } else if (ERROR((rc != SQLITE_ROW))) {
-    rc = sql_err_to_errno(rc);
+  } else if (ERROR((r != SQLITE_ROW))) {
+    rc = sql_err_to_errno(r);
     goto done;
   }
 
