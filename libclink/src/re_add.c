@@ -37,6 +37,8 @@ int re_add(re_t **re, const char *regex) {
     re_t *head = __atomic_load_n(re, __ATOMIC_ACQUIRE);
     do {
       r->next = head;
+      // synchronise with reads in `re_find`, `re_free`
+      __atomic_thread_fence(__ATOMIC_ACQ_REL);
     } while (!__atomic_compare_exchange_n(re, &head, r, true, __ATOMIC_RELEASE,
                                           __ATOMIC_ACQUIRE));
   }
