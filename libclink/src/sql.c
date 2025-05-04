@@ -10,7 +10,7 @@ int sql_err_to_errno(int err) {
   case SQLITE_DONE:
     return 0;
 
-  // clang-format off
+    // clang-format off
   case SQLITE_ABORT: return EAGAIN;
   case SQLITE_AUTH: return EPERM;
   case SQLITE_BUSY: return EBUSY;

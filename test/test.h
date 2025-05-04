@@ -55,14 +55,14 @@ void run_cleanups(void);
 
 #define PRINT_FMT(x)                                                           \
   _Generic((x),                                                                \
-           int: "%d",                                                          \
-           long: "%ld",                                                        \
-           long long: "%lld",                                                  \
-           unsigned: "%u",                                                     \
-           unsigned long: "%lu",                                               \
-           unsigned long long: "%llu",                                         \
-           void*: "%p",                                                        \
-           const void*: "%p")
+      int: "%d",                                                               \
+      long: "%ld",                                                             \
+      long long: "%lld",                                                       \
+      unsigned: "%u",                                                          \
+      unsigned long: "%lu",                                                    \
+      unsigned long long: "%llu",                                              \
+      void *: "%p",                                                            \
+      const void *: "%p")
 
 #define ASSERT_(a, a_name, op, b, b_name)                                      \
   do {                                                                         \
