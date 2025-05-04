@@ -16,7 +16,7 @@ task:
 
     - name: Linux
       container:
-        image: gcc:14.2
+        image: gcc:15.1
       environment:
         DEBIAN_FRONTEND: noninteractive
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined -fuse-ld=gold
@@ -27,7 +27,7 @@ task:
 
     - name: Linux, release build
       container:
-        image: gcc:14.2
+        image: gcc:15.1
       environment:
         DEBIAN_FRONTEND: noninteractive
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined -fuse-ld=gold
