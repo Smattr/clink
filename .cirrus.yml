@@ -16,7 +16,7 @@ task:
 
     - name: Linux
       container:
-        image: gcc:14.2
+        image: gcc:15.1
       environment:
         DEBIAN_FRONTEND: noninteractive
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined -fuse-ld=gold
@@ -27,7 +27,7 @@ task:
 
     - name: Linux, release build
       container:
-        image: gcc:14.2
+        image: gcc:15.1
       environment:
         DEBIAN_FRONTEND: noninteractive
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined -fuse-ld=gold
@@ -39,17 +39,17 @@ task:
 
     - name: macOS
       macos_instance:
-        image: ghcr.io/cirruslabs/macos-sonoma-base:latest
+        image: ghcr.io/cirruslabs/macos-runner:sequoia
       environment:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         PATH: /opt/homebrew/opt/llvm/bin:${PATH}
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: brew update && brew install coreutils cscope llvm && python3 -m pip install --break-system-packages pytest
-      test_script: env CMAKE_FLAGS=-DPython3_EXECUTABLE=$(which python3) ./misc/ci.sh
+      install_script: brew update && brew install coreutils cscope llvm && env PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install pytest
+      test_script: ./misc/ci.sh
 
     - name: C formatting
       container:
-        image: silkeh/clang:15
+        image: silkeh/clang:19
       install_script: apt-get update -y && apt-get install --no-install-recommends -y git
       test_script: clang-format --version && git ls-files -z -- ':!:test/cases' '**/*.c' '**/*.h' | xargs -0 -- clang-format --dry-run --style=file --Werror
 
