@@ -39,13 +39,13 @@ task:
 
     - name: macOS
       macos_instance:
-        image: ghcr.io/cirruslabs/macos-sonoma-base:latest
+        image: ghcr.io/cirruslabs/macos-runner:sequoia
       environment:
         CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
         PATH: /opt/homebrew/opt/llvm/bin:${PATH}
         UBSAN_OPTIONS: print_stacktrace=1
-      install_script: brew update && brew install coreutils cscope llvm && python3 -m pip install --break-system-packages pytest
-      test_script: env CMAKE_FLAGS=-DPython3_EXECUTABLE=$(which python3) ./misc/ci.sh
+      install_script: brew update && brew install coreutils cscope llvm && env PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install pytest
+      test_script: ./misc/ci.sh
 
     - name: C formatting
       container:
