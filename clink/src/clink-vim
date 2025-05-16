@@ -1,0 +1,274 @@
+#!/usr/bin/env python3
+
+"""
+Vim wrapper for Clink
+
+When opening a file with Vim, any pre-built Clink database remains unconnected and
+inaccessible. This script passes the necessary command line options to Vim to teach it
+Clink and where to access the relevant Clink database.
+
+Known caveats:
+  • Multiple Clink databases are not connected at once. E.g. if you run
+    `vim project1/a.c project2/b.c`, Vim will be opened knowing project1’s Clink
+    database but not project2’s.
+  • Under this wrapper, the limit of pre-executed commands you can pass to Vim (`-c …`
+    or `+…`) is reduced from 10 to 8.
+"""
+
+import os
+import re
+import sys
+from pathlib import Path
+from typing import Optional, Union
+
+
+def is_supported(path: Union[Path, str]) -> bool:
+    """
+    can this path be successfully passed to Vim?
+
+    This function mirrors ../../libclink/src/vim_open.c::is_supported.
+    """
+
+    # There does not seem to be an escaping scheme capable of passing a path through
+    # Vim’s `cs add` to where it calls Cscope. Technically we _can_ escape a `cscopeprg`
+    # value (see `fnameescape`), but the interactions are a little complex. Lets
+    # conservatively reject anything unusual for now.
+    for char in str(path):
+        if "a" <= char <= "z":
+            continue
+        if "A" <= char <= "Z":
+            continue
+        if "0" <= char <= "9":
+            continue
+        if char in "_.,+-:@%/":
+            continue
+        return False
+
+    return True
+
+
+def find_file_option(args: list[str]) -> Optional[str]:
+    """
+    find the first command line option that looks like a file path
+
+    Args:
+        args: Command line options
+
+    Returns:
+        A file path if something like one is found
+    """
+
+    skip_next = False
+    for arg in args[1:]:
+
+        if skip_next:
+            skip_next = False
+            continue
+
+        # Vim command line options that accept a following parameter
+        param_options = set(
+            [
+                "-c",
+                "--cmd",
+                "-d",
+                "-dev",
+                "--gui-dialog-file",
+                "-i",
+                "--log",
+                "-P",
+                "-r",
+                "--remote-expr",
+                "--remote-send",
+                "-s",
+                "-S",
+                "--servername",
+                "--socketid",
+                "--startuptime",
+                "-t",
+                "-T",
+                "-u",
+                "-U",
+                "-w",
+                "-W",
+                "--windowid",
+            ]
+        )
+
+        if arg in param_options:
+            skip_next = True
+            continue
+
+        if arg[0] in ("-", "+"):
+            continue
+
+        return arg
+
+    return None
+
+
+def find_database(origin: Path) -> Optional[Path]:
+    """
+    locate the Clink database
+
+    Args:
+        origin: A directory from which to begin the search
+
+    Returns:
+        A path to the Clink database if found
+    """
+
+    # replicate the heuristic search performed by Clink
+    branch = origin
+    while True:
+
+        candidate = branch / ".clink.db"
+        if candidate.exists():
+            return candidate
+
+        for vcs in (".git", ".hg", ".svn"):
+            vcs_dir = branch / vcs
+            if not vcs_dir.exists():
+                continue
+
+            # stop search if we have identified a repository boundary
+            return None
+
+        if branch.samefile(branch.root):
+            break
+        branch = branch.parent
+    return None
+
+
+def find_repl() -> Optional[Path]:
+    """
+    locate `clink-repl`
+
+    Returns:
+        A path to `clink-repl` or `None` if it cannot be found
+    """
+    # assume a usable `clink-repl` should be adjacent to us
+    me = Path(__file__).absolute()
+    repl = me.parent / "clink-repl"
+    if repl.exists():
+        return repl
+    return None
+
+
+def find_vim(hint: str) -> Optional[Path]:
+    """
+    find the path to Vim
+
+    Args:
+        hint: How we ourselves were invoked, as a suggestion of which Vim alias to
+            preference
+
+    Returns:
+        A path to a Vim-like command or `None` if nothing suitable can be found
+    """
+
+    # from e.g. “/foo/bar/view” extract the hint “view”
+    variant = Path(hint).name
+
+    # aliases Vim goes by
+    vim_names = set(
+        [
+            "eview",
+            "evim",
+            "ex",
+            "gex",
+            "gview",
+            "gvim",
+            "rview",
+            "rgview",
+            "rgvim",
+            "rvim",
+            "vi",
+            "view",
+            "vim",
+            "vimx",
+        ]
+    )
+
+    # if the hint does not look like a Vim alias, fallback to other hint sources
+    if variant not in vim_names:
+        variant = os.environ.get("VISUAL", os.environ.get("EDITOR", "vim"))
+
+        candidate = Path(variant)
+        if candidate.is_absolute():
+            if candidate.exists():
+                return candidate
+            return None
+
+    # locate the real Vim
+    for prefix in os.environ.get("PATH", "").split(":"):
+        candidate = Path(prefix) / variant
+
+        if not candidate.exists():
+            continue
+
+        # ignore ourselves
+        me = Path(__file__).resolve()
+        if candidate.resolve().samefile(me):
+            continue
+
+        return candidate
+
+    return None
+
+
+def main(args: list[str]) -> int:
+    """entry point"""
+
+    # find the first file being opened in our command line
+    subject = find_file_option(args)
+
+    # use its directory as our context, or the current directory if we have none
+    if subject is None:
+        root = Path.cwd()
+    else:
+        root = Path(subject).absolute().parent
+
+    # from this, locate a Clink database
+    db = find_database(root)
+
+    # decide which Vim-like thing to run
+    vim = find_vim(args[0])
+    if vim is None:
+        sys.stderr.write("vim not found\n")
+        return -1
+
+    # if no database was found, fallback to just running Vim
+    if db is None:
+        os.execv(vim, [vim] + args[1:])
+
+    # find the Clink REPL
+    repl = find_repl()
+
+    def give_up(message: str):
+        sys.stderr.write(f"warning: {message}; running without Clink connection\n")
+        os.execv(vim, [vim] + args[1:])
+
+    # check the paths we will need to pass to Vim
+    if not is_supported(db):
+        give_up(f'path "{db}" cannot safely be passed to Vim')
+    if repl is None:
+        give_up("clink-repl not found")
+    if not is_supported(repl):
+        give_up(f'path "{repl}" cannot safely be passed to Vim')
+
+    # check we can add our instrumentation
+    commands = 0
+    for arg in args[1:]:
+        if arg == "-c" or re.match(r"\+[a-zA-Z]", arg) is not None:
+            commands += 1
+    if commands > 8:
+        give_up('more than 8 "-c"/"+…" options passed to Vim')
+
+    # configure Vim for Clink and run it
+    connect = ["+set nocscopeverbose", f"+set cscopeprg={repl}", f"+cs add {db}"]
+    argv = [vim] + connect + args[1:]
+    os.execv(argv[0], argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

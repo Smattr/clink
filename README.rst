@@ -43,6 +43,13 @@ Building Clink
   cmake -B build
   cmake --build build
 
+  # install
+  cmake --install build
+
+After installation, you may want to symlink ``vim`` to Clink’s Vim wrapper,
+``clink-vim``. This ensures that an existing Clink database will be connected
+when you start Vim from the command line.
+
 Notes for devs
 --------------
 
