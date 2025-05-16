@@ -14,7 +14,7 @@ import shlex
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 CLINK_DEFINITION = 0
 CLINK_FUNCTION_CALL = 1
@@ -50,8 +50,8 @@ def find_database() -> Optional[Path]:
 
 
 def select(
-    db: sqlite3.Connection, sql: str, parameters: Dict[str, Any]
-) -> List[Tuple[str, ...]]:
+    db: sqlite3.Connection, sql: str, parameters: dict[str, Any]
+) -> list[tuple[str, ...]]:
     cursor = db.execute(sql, parameters)
     return cursor.fetchall()
 
@@ -216,7 +216,7 @@ def find_includers(db_path: Path, db: sqlite3.Connection, path: str):
         print(f"{path} {row[1]} {row[2]} {content}")
 
 
-def main(args: List[str]) -> int:
+def main(args: list[str]) -> int:
 
     logging.basicConfig(
         filename=os.environ.get("CLINK_DEBUG_LOG", os.devnull),
