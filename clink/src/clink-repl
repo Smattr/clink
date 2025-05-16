@@ -40,9 +40,7 @@ def find_database() -> Optional[Path]:
             if not vcs_dir.exists():
                 continue
 
-            candidate = vcs_dir / ".clink.db"
-            if candidate.exists():
-                return candidate
+            # stop search if we have identified a repository boundary
             return None
 
         if branch.samefile(branch.root):
