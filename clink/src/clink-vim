@@ -149,7 +149,7 @@ def find_repl() -> Optional[Path]:
         A path to `clink-repl` or `None` if it cannot be found
     """
     # assume a usable `clink-repl` should be adjacent to us
-    me = Path(__file__).absolute()
+    me = Path(__file__).resolve()
     repl = me.parent / "clink-repl"
     if repl.exists():
         return repl
