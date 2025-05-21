@@ -237,16 +237,17 @@ def main(args: list[str]) -> int:
         sys.stderr.write("vim not found\n")
         return -1
 
+    def give_up(message: Optional[str] = None):
+        if message is not None:
+            sys.stderr.write(f"warning: {message}; running without Clink connection\n")
+        os.execv(vim, [vim] + args[1:])
+
     # if no database was found, fallback to just running Vim
     if db is None:
-        os.execv(vim, [vim] + args[1:])
+        give_up()
 
     # find the Clink REPL
     repl = find_repl()
-
-    def give_up(message: str):
-        sys.stderr.write(f"warning: {message}; running without Clink connection\n")
-        os.execv(vim, [vim] + args[1:])
 
     # check the paths we will need to pass to Vim
     if not is_supported(db):
