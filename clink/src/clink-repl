@@ -223,7 +223,7 @@ def main(args: list[str]) -> int:
         level=logging.DEBUG,
     )
 
-    logging.info("clink-repl run as: %s", " ".join(shlex.quote(a) for a in args))
+    logging.info("clink-repl run as: %s", shlex.join(args))
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-d", action="store_true", help="ignored")
