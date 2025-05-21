@@ -43,6 +43,13 @@ Building Clink
   cmake -B build
   cmake --build build
 
+  # install
+  cmake --install build
+
+After installation, you may want to symlink ``vim`` to Clink’s Vim wrapper,
+``clink-vim``. This ensures that an existing Clink database will be connected
+when you start Vim from the command line.
+
 Notes for devs
 --------------
 
@@ -50,10 +57,6 @@ Notes for devs
   implement any abstraction for this because Vim is my unabashed weapon of
   choice. If you want support for another editor, please ask me and I’ll
   probably do it.
-* Cscope’s “find assignments to this symbol” is not implemented. Honestly, I
-  have never used this query. Have you? It actually sounds really useful, but I
-  have never once thought of this until enumerating Cscope’s options while
-  implementing Clink.
 * Some open questions about Cscope that I haven’t yet explored:
 
   * Why do Cscope’s line-oriented and curses interface results differ? The
