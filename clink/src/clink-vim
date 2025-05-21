@@ -12,11 +12,13 @@ Known caveats:
     `vim project1/a.c project2/b.c`, Vim will be opened knowing project1’s Clink
     database but not project2’s.
   • Under this wrapper, the limit of pre-executed commands you can pass to Vim (`-c …`
-    or `+…`) is reduced from 10 to 8.
+    or `+…`) is reduced from 10 to 7. A tag request (`-t …`) counts as 1 too.
 """
 
+import logging
 import os
 import re
+import shlex
 import sys
 from pathlib import Path
 from typing import Optional, Union
@@ -147,7 +149,7 @@ def find_repl() -> Optional[Path]:
         A path to `clink-repl` or `None` if it cannot be found
     """
     # assume a usable `clink-repl` should be adjacent to us
-    me = Path(__file__).absolute()
+    me = Path(__file__).resolve()
     repl = me.parent / "clink-repl"
     if repl.exists():
         return repl
@@ -219,6 +221,13 @@ def find_vim(hint: str) -> Optional[Path]:
 def main(args: list[str]) -> int:
     """entry point"""
 
+    logging.basicConfig(
+        filename=os.environ.get("CLINK_DEBUG_LOG", os.devnull),
+        level=logging.DEBUG,
+    )
+
+    logging.info("clink-vim run as: %s", shlex.join(args))
+
     # find the first file being opened in our command line
     subject = find_file_option(args)
 
@@ -237,16 +246,18 @@ def main(args: list[str]) -> int:
         sys.stderr.write("vim not found\n")
         return -1
 
+    def give_up(message: Optional[str] = None):
+        if message is not None:
+            sys.stderr.write(f"warning: {message}; running without Clink connection\n")
+        logging.info("falling back to running %s", shlex.join([vim] + args[1:]))
+        os.execv(vim, [vim] + args[1:])
+
     # if no database was found, fallback to just running Vim
     if db is None:
-        os.execv(vim, [vim] + args[1:])
+        give_up()
 
     # find the Clink REPL
     repl = find_repl()
-
-    def give_up(message: str):
-        sys.stderr.write(f"warning: {message}; running without Clink connection\n")
-        os.execv(vim, [vim] + args[1:])
 
     # check the paths we will need to pass to Vim
     if not is_supported(db):
@@ -256,18 +267,32 @@ def main(args: list[str]) -> int:
     if not is_supported(repl):
         give_up(f'path "{repl}" cannot safely be passed to Vim')
 
-    # check we can add our instrumentation
+    # how many commands do we have?
     commands = 0
     for arg in args[1:]:
         if arg == "-c" or re.match(r"\+[a-zA-Z]", arg) is not None:
             commands += 1
-    if commands > 8:
-        give_up('more than 8 "-c"/"+…" options passed to Vim')
+
+    # convert any `-t …` into `+cstag …` because otherwise tag lookup runs too early
+    argv = args[1:]
+    if len(args) > 1 and re.match(r"-t\w+$", args[-1]) is not None:
+        argv = args[1:-1] + [f"+cstag {args[-1][len('-t'):]}"]
+        commands += 1
+    elif len(args) > 2 and args[-2] == "-t" and re.match(r"\w+$", args[-1]) is not None:
+        argv = args[1:-2] + [f"+cstag {args[-1]}"]
+        commands += 1
+    else:
+        argv = args[1:]
+
+    # check we can add our instrumentation
+    if commands > 7:
+        give_up('more than 7 "-c"/"+…"/"-t" options passed to Vim')
 
     # configure Vim for Clink and run it
     connect = ["+set nocscopeverbose", f"+set cscopeprg={repl}", f"+cs add {db}"]
-    argv = [vim] + connect + args[1:]
-    os.execv(argv[0], argv)
+    av = [vim] + connect + argv
+    logging.info("running %s", shlex.join(str(a) for a in av))
+    os.execv(av[0], av)
 
 
 if __name__ == "__main__":
