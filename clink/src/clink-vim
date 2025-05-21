@@ -15,8 +15,10 @@ Known caveats:
     or `+…`) is reduced from 10 to 7. A tag request (`-t …`) counts as 1 too.
 """
 
+import logging
 import os
 import re
+import shlex
 import sys
 from pathlib import Path
 from typing import Optional, Union
@@ -219,6 +221,13 @@ def find_vim(hint: str) -> Optional[Path]:
 def main(args: list[str]) -> int:
     """entry point"""
 
+    logging.basicConfig(
+        filename=os.environ.get("CLINK_DEBUG_LOG", os.devnull),
+        level=logging.DEBUG,
+    )
+
+    logging.info("clink-vim run as: %s", shlex.join(args))
+
     # find the first file being opened in our command line
     subject = find_file_option(args)
 
@@ -240,6 +249,7 @@ def main(args: list[str]) -> int:
     def give_up(message: Optional[str] = None):
         if message is not None:
             sys.stderr.write(f"warning: {message}; running without Clink connection\n")
+        logging.info("falling back to running %s", shlex.join([vim] + args[1:]))
         os.execv(vim, [vim] + args[1:])
 
     # if no database was found, fallback to just running Vim
@@ -281,6 +291,7 @@ def main(args: list[str]) -> int:
     # configure Vim for Clink and run it
     connect = ["+set nocscopeverbose", f"+set cscopeprg={repl}", f"+cs add {db}"]
     av = [vim] + connect + argv
+    logging.info("running %s", shlex.join(str(a) for a in av))
     os.execv(av[0], av)
 
 
