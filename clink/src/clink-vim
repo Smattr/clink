@@ -12,7 +12,7 @@ Known caveats:
     `vim project1/a.c project2/b.c`, Vim will be opened knowing project1’s Clink
     database but not project2’s.
   • Under this wrapper, the limit of pre-executed commands you can pass to Vim (`-c …`
-    or `+…`) is reduced from 10 to 7.
+    or `+…`) is reduced from 10 to 7. A tag request (`-t …`) counts as 1 too.
 """
 
 import os
@@ -256,18 +256,31 @@ def main(args: list[str]) -> int:
     if not is_supported(repl):
         give_up(f'path "{repl}" cannot safely be passed to Vim')
 
-    # check we can add our instrumentation
+    # how many commands do we have?
     commands = 0
     for arg in args[1:]:
         if arg == "-c" or re.match(r"\+[a-zA-Z]", arg) is not None:
             commands += 1
+
+    # convert any `-t …` into `+cstag …` because otherwise tag lookup runs too early
+    argv = args[1:]
+    if len(args) > 1 and re.match(r"-t\w+$", args[-1]) is not None:
+        argv = args[1:-1] + [f"+cstag {args[-1][len('-t'):]}"]
+        commands += 1
+    elif len(args) > 2 and args[-2] == "-t" and re.match(r"\w+$", args[-1]) is not None:
+        argv = args[1:-2] + [f"+cstag {args[-1]}"]
+        commands += 1
+    else:
+        argv = args[1:]
+
+    # check we can add our instrumentation
     if commands > 7:
-        give_up('more than 7 "-c"/"+…" options passed to Vim')
+        give_up('more than 7 "-c"/"+…"/"-t" options passed to Vim')
 
     # configure Vim for Clink and run it
     connect = ["+set nocscopeverbose", f"+set cscopeprg={repl}", f"+cs add {db}"]
-    argv = [vim] + connect + args[1:]
-    os.execv(argv[0], argv)
+    av = [vim] + connect + argv
+    os.execv(av[0], av)
 
 
 if __name__ == "__main__":
