@@ -249,7 +249,7 @@ def main(args: list[str]) -> int:
     def give_up(message: Optional[str] = None):
         if message is not None:
             sys.stderr.write(f"warning: {message}; running without Clink connection\n")
-        logging.info("falling back to running %s", shlex.join([vim] + args[1:]))
+        logging.info("falling back to running %s", shlex.join([str(vim)] + args[1:]))
         os.execv(vim, [vim] + args[1:])
 
     # if no database was found, fallback to just running Vim
