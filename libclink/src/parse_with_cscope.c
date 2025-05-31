@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "get_environ.h"
 #include "get_id.h"
+#include "isid.h"
 #include "mmap.h"
 #include "posix_spawn.h"
 #include "scanner.h"
@@ -282,6 +283,14 @@ static bool eat_assign(scanner_t *s) {
   return false;
 }
 
+/// is this a valid C/C++ symbol?
+static bool is_symbol(span_t text) {
+  bool valid = text.size > 0 && isid0(text.base[0]);
+  for (size_t i = 1; i < text.size; ++i)
+    valid &= isid(text.base[i]);
+  return valid;
+}
+
 /// parse a Cscope database and insert records into a Clink database
 ///
 /// \param db Destination Clink database to insert into
@@ -416,12 +425,12 @@ static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
     span_t symbol = read_symbol(&s);
     if (ERROR((rc = decompress(&symbol, &arena))))
       goto done;
-    if (symbol.size == 0) {
+    if (category != CLINK_INCLUDE && !is_symbol(symbol)) {
       // Parsing code that has differing semantics under C and C++ (e.g.
       // `enum class {}`) can cause Cscope’s database to contain references to
-      // things with no name. Ignore these.
-      DEBUG("ignoring symbol \"\"");
-      eat_rest_of_line(&s);
+      // things with no name. Alternatively non-definition content can be just
+      // punctuation/operators. Ignore these.
+      DEBUG("ignoring symbol \"%.*s\"", (int)symbol.size, symbol.base);
       continue;
     }
     symbol.lineno = line;
@@ -441,7 +450,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
       ++pending_size;
     }
 
-    if (can_be_assignment) {
+    if (in_file && can_be_assignment) {
       if (eat_assign(&s)) {
         DEBUG("adding assignment to symbol \"%.*s\"", (int)symbol.size,
               symbol.base);
@@ -461,9 +470,6 @@ static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
 
     if (can_be_parent)
       parent = symbol;
-
-    // drain the next (or remainder of the current) context line following
-    eat_rest_of_line(&s);
   }
 
 done:
