@@ -202,7 +202,7 @@ def find_vim(hint: str) -> Optional[Path]:
             return None
 
     # locate the real Vim
-    for prefix in os.environ.get("PATH", "").split(":"):
+    for prefix in os.environ.get("PATH", "").split(os.pathsep):
         candidate = Path(prefix) / variant
 
         if not candidate.exists():
