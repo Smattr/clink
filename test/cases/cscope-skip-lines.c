@@ -7,7 +7,6 @@ int main(void) {
   return 0;
 }
 
-// XFAIL: True
 // RUN: clink --build-only --database={%t} --debug --parse-c=cscope {%s} >/dev/null
 // RUN: echo "select name from symbols where name = 'a';" | sqlite3 {%t}
 // CHECK: a

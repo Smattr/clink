@@ -461,9 +461,6 @@ static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
 
     if (can_be_parent)
       parent = symbol;
-
-    // drain the next (or remainder of the current) context line following
-    eat_rest_of_line(&s);
   }
 
 done:
