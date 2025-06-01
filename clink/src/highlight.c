@@ -38,7 +38,7 @@ static void *do_work(void *arg) {
     // Update what we are doing. Inline the move and `CLRTOEOL` so we can do
     // it all while holding the stdout lock and avoid racing with the
     // spinner.
-    PRINT("\033[%zu;4Hsyntax highlighting %s…%s", st->screen_row, display_path,
+    PRINT("\033[%zuH   syntax highlighting %s…%s", st->screen_row, display_path,
           CLRTOEOL);
 
     // ignore non-fatal failure of highlighting
