@@ -441,7 +441,7 @@ static int parse_into(clink_db_t *db, const char *cscope_out, const char *real,
       ++pending_size;
     }
 
-    if (can_be_assignment) {
+    if (in_file && can_be_assignment) {
       if (eat_assign(&s)) {
         DEBUG("adding assignment to symbol \"%.*s\"", (int)symbol.size,
               symbol.base);
