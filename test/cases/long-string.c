@@ -281,5 +281,4 @@ int main(void) {
   return 0;
 }
 
-// XFAIL: True
 // RUN: clink --build-only --database={%t} --debug --parse-c=cscope {%s}
