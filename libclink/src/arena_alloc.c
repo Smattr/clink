@@ -23,8 +23,10 @@
   } while (0)
 #endif
 
-/// the number of bytes available for allocation out of a chunk
-enum { POOL_SIZE = CHUNK_SIZE - sizeof(chunk_t) };
+/// default size of a `chunk_t`
+///
+/// This is an arbitrary, hopefully-page-size-multiple value.
+enum { CHUNK_SIZE = 16384 };
 
 /// find the beginning of a chunk’s allocation region
 static char *pool(chunk_t *base) {
@@ -36,21 +38,30 @@ static char *pool(chunk_t *base) {
 ///
 /// \param me Arena to expand
 /// \return 0 on success or an errno on failure
-static int add_chunk(arena_t *me) {
+static int add_chunk(arena_t *me, size_t request) {
   assert(me != NULL);
+
+  // how much space should we allocate?
+  size_t chunk_size = CHUNK_SIZE;
+  if (chunk_size - sizeof(chunk_t) < request) {
+    // The default allocation still will not be large enough to satisfy the
+    // request. So enlarge this chunk.
+    chunk_size = request + sizeof(chunk_t);
+  }
+  const size_t pool_size = chunk_size - sizeof(chunk_t);
 
   // Create a new chunk. We deliberately use something different from
   // `sizeof(*next)`. See the definition of `chunk_t` for an explanation of why.
-  chunk_t *const next = calloc(1, CHUNK_SIZE);
+  chunk_t *const next = calloc(1, chunk_size);
   if (ERROR(next == NULL))
     return ENOMEM;
 
   // poison the new, unallocated memory
-  POISON(pool(next), POOL_SIZE);
+  POISON(pool(next), pool_size);
 
   // make it the start of the arena’s linked-list
   next->previous = me->current;
-  *me = (arena_t){.remaining = POOL_SIZE, .current = next};
+  *me = (arena_t){.remaining = pool_size, .current = next};
 
   return 0;
 }
@@ -62,13 +73,9 @@ void *arena_alloc(arena_t *me, size_t size) {
   if (size == 0)
     return NULL;
 
-  // we cannot allocate something that will not fit in a chunk
-  if (ERROR(size > POOL_SIZE))
-    return NULL;
-
   // if we do not have enough space, acquire a new chunk
   if (me->remaining < size) {
-    if (ERROR(add_chunk(me) != 0))
+    if (ERROR(add_chunk(me, size) != 0))
       return NULL;
   }
   assert(me->remaining >= size);

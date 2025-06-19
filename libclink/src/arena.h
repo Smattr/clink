@@ -15,16 +15,6 @@
 #include "../../common/compiler.h"
 #include <stddef.h>
 
-/// size of a `chunk_t`
-///
-/// This is an internal implementation detail that should only be used by
-/// arena*.[ch].
-///
-/// This is an arbitrary, hopefully-page-size-multiple value. It is chosen to
-/// hopefully be large enough to span any single allocation a caller might need
-/// to make.
-enum { CHUNK_SIZE = 16384 };
-
 /// an allocation block
 ///
 /// This is an internal implementation detail that should only be used by
@@ -40,8 +30,7 @@ typedef struct chunk {
   /// would then be allocating out of it, handing out typed pointers. While
   /// strict aliasing permits `char *` to alias other types, it does not permit
   /// other types to alias a `char[]`.
-  char content[CHUNK_SIZE -
-               sizeof(struct chunk *)]; ///< backing memory to be allocated
+  char content[]; ///< backing memory to be allocated
 #endif
 } chunk_t;
 
@@ -56,9 +45,8 @@ typedef struct {
 
 /// allocate memory
 ///
-/// This function may fail for reasons other than out-of-memory, e.g. requested
-/// size cannot be handled by this allocator. If you pass a 0 size, there is no
-/// way to distinguish the success and failure cases.
+/// This function may fail for reasons other than out-of-memory. If you pass a 0
+/// size, there is no way to distinguish the success and failure cases.
 ///
 /// \param me Arena from which to allocate
 /// \param size Bytes to allocate
