@@ -37,6 +37,7 @@ static char *pool(chunk_t *base) {
 /// prepend a new chunk to allocate from
 ///
 /// \param me Arena to expand
+/// \param request Allocation size that led to this need for expansion
 /// \return 0 on success or an errno on failure
 static int add_chunk(arena_t *me, size_t request) {
   assert(me != NULL);
