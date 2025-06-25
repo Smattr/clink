@@ -12,7 +12,7 @@ Known caveats:
     `vim project1/a.c project2/b.c`, Vim will be opened knowing project1’s Clink
     database but not project2’s.
   • Under this wrapper, the limit of pre-executed commands you can pass to Vim (`-c …`
-    or `+…`) is reduced from 10 to 7. A tag request (`-t …`) counts as 1 too.
+    or `+…`) is reduced from 10 to 8. A tag request (`-t …`) counts as 1 too.
 """
 
 import logging
@@ -285,11 +285,11 @@ def main(args: list[str]) -> int:
         argv = args[1:]
 
     # check we can add our instrumentation
-    if commands > 7:
-        give_up('more than 7 "-c"/"+…"/"-t" options passed to Vim')
+    if commands > 8:
+        give_up('more than 8 "-c"/"+…"/"-t" options passed to Vim')
 
     # configure Vim for Clink and run it
-    connect = ["+set nocscopeverbose", f"+set cscopeprg={repl}", f"+cs add {db}"]
+    connect = [f"+set nocscopeverbose cscopeprg={repl}", f"+cs add {db}"]
     av = [vim] + connect + argv
     logging.info("running %s", shlex.join(str(a) for a in av))
     os.execv(av[0], av)
