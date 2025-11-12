@@ -273,8 +273,7 @@ event_t screen_read(void) {
     nfds_t nfds = sizeof(input) / sizeof(input[0]);
     if (poll(input, nfds, 0) > 0) {
       assert(more <= sizeof(buffer) / sizeof(buffer[0]) - 1);
-      ssize_t ignored = read(STDIN_FILENO, &buffer[1], more);
-      (void)ignored;
+      (ssize_t){0} = read(STDIN_FILENO, &buffer[1], more);
     }
   }
 
