@@ -179,7 +179,7 @@ static int format_results(clink_iter_t *it) {
       clink_symbol_t *r = realloc(results.rows, s * sizeof(results.rows[0]));
       if (UNLIKELY(r == NULL)) {
         rc = ENOMEM;
-        break;
+        goto done;
       }
       results.rows = r;
       results.size = s;
