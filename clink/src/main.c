@@ -138,6 +138,7 @@ static void parse_args(int argc, char **argv) {
           exit(EX_OSERR);
         }
         strcat(s, optarg);
+        option.script = s;
       }
       break;
 
