@@ -1,0 +1,39 @@
+name: Github Actions CI
+permissions: {}
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  freebsd15:
+    name: FreeBSD 15.0
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: vmactions/freebsd-vm@7ca82f79fe3078fecded6d3a2bff094995447bbd
+      with:
+        sync: no
+        release: "15.0"
+        usesh: true
+        run: |
+          set -e
+          set -o pipefail
+          set -u
+          set -x
+          uname -rms
+          pkg install -y bash cmake cscope git llvm python3 py311-pytest sqlite3 py311-sqlite3 vim
+          python3 --version
+          git clone --no-checkout --recurse-submodules -- ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} wd
+          cd wd
+          git fetch -- origin ${{ github.event.pull_request.head.sha }}
+          git checkout FETCH_HEAD
+          git submodule init
+          git submodule update
+          export CFLAGS="-Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=address,undefined"
+          export UBSAN_OPTIONS=print_stacktrace=1
+          export TERM=xterm
+          cmake -B build -S .
+          cmake --build build
+          cmake --build build --target check
+          printf "find-me says: "
+          ./build/test/find-me/find-me
+          cmake --install build

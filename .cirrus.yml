@@ -4,16 +4,6 @@ task:
   only_if: $CIRRUS_BRANCH == "main" || $CIRRUS_PR != ""
 
   matrix:
-
-    - name: FreeBSD
-      freebsd_instance:
-        image_family: freebsd-15-0-snap
-      environment:
-        CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined
-        UBSAN_OPTIONS: print_stacktrace=1
-      install_script: pkg upgrade -y && pkg install -y bash cmake cscope git llvm py311-pytest vim
-      test_script: ./misc/ci.sh
-
     - name: Linux
       container:
         image: gcc:15.1
