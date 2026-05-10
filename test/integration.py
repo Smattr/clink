@@ -6,6 +6,7 @@ import os  # pylint: disable=unused-import
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Union
 
@@ -76,18 +77,23 @@ def lit(tmp: Path, source: Path):
 
             # is this a command to be run?
             if directive == "RUN":
+                p = subprocess.run(
+                    ["bash", "-o", "pipefail", "-c", "--", content],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    cwd=tmp,
+                    check=False,
+                    universal_newlines=True,
+                )
+                if p.returncode != 0:
+                    sys.stdout.write(p.stdout)
                 try:
-                    result = subprocess.check_output(
-                        ["bash", "-o", "pipefail", "-c", "--", content],
-                        stdin=subprocess.DEVNULL,
-                        cwd=tmp,
-                        universal_newlines=True,
-                    )
+                    p.check_returncode()
                 except subprocess.CalledProcessError:
                     if xfail is None:
                         raise
                     pytest.xfail(xfail)
-                output += result
+                output += p.stdout
 
             # is this a check of previous output?
             elif directive == "CHECK":
@@ -171,15 +177,20 @@ def test_243(tmp_path: Path):
     )
 
     # run Clink on this working directory
-    stderr = subprocess.check_output(
+    p = subprocess.run(
         ["clink", "--build-only", "--debug", "--jobs=1"],
-        cwd=tmp_path,
+        stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=False,
         universal_newlines=True,
     )
+    if p.returncode != 0:
+        sys.stdout.write(p.stdout)
+    p.check_returncode()
 
     assert (
-        "no compile_commands.json entry found" not in stderr
+        "no compile_commands.json entry found" not in p.stdout
     ), "failed to find a compilation entry that exists"
 
 
@@ -228,15 +239,20 @@ def test_243_1(tmp_path: Path):
     )
 
     # run Clink on this working directory
-    output = subprocess.check_output(
+    p = subprocess.run(
         ["clink", "--build-only", "--debug", "--jobs=1", "src"],
-        cwd=tmp_path,
+        stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=False,
         universal_newlines=True,
     )
+    if p.returncode != 0:
+        sys.stdout.write(p.stdout)
+    p.check_returncode()
 
     assert re.search(
-        r"\breplacing compiler option \.\./inc with\b", output
+        r"\breplacing compiler option \.\./inc with\b", p.stdout
     ), "missing replacement of relative include paths in `-I a/path/arg`"
 
 
@@ -284,15 +300,20 @@ def test_243_2(tmp_path: Path):
     )
 
     # run Clink on this working directory
-    output = subprocess.check_output(
+    p = subprocess.run(
         ["clink", "--build-only", "--debug", "--jobs=1", "src"],
-        cwd=tmp_path,
+        stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=False,
         universal_newlines=True,
     )
+    if p.returncode != 0:
+        sys.stdout.write(p.stdout)
+    p.check_returncode()
 
     assert re.search(
-        r"\breplacing compiler option -I\.\./inc with\b", output
+        r"\breplacing compiler option -I\.\./inc with\b", p.stdout
     ), "missing replacement of relative include paths in `-Ia/path/arg`"
 
 
@@ -335,13 +356,18 @@ def test_sysroot_handling(tmp_path: Path):
     )
 
     # run Clink on this working directory
-    output = subprocess.check_output(
+    p = subprocess.run(
         ["clink", "--build-only", "--debug", "--jobs=1", "src"],
-        cwd=tmp_path,
+        stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        cwd=tmp_path,
+        check=False,
         universal_newlines=True,
     )
+    if p.returncode != 0:
+        sys.stdout.write(p.stdout)
+    p.check_returncode()
 
     assert not re.search(
-        r"\breplacing compiler option -I\$SYSROOT/bar with\b", output
+        r"\breplacing compiler option -I\$SYSROOT/bar with\b", p.stdout
     ), "incorrect modification of $SYSROOT-based path"
