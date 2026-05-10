@@ -85,7 +85,7 @@ void run_cleanups(void);
   } while (0)
 
 #define ASSERT_EQ(a, b) ASSERT_(a, a, ==, b, b)
-#define ASSERT_GE(a, b) ASSERT_(a, b, >=, b, b)
+#define ASSERT_GE(a, b) ASSERT_(a, a, >=, b, b)
 #define ASSERT_GT(a, b) ASSERT_(a, a, >, b, b)
 #define ASSERT_NE(a, b) ASSERT_(a, a, !=, b, b)
 
