@@ -2,7 +2,6 @@
 #include <clink/debug.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <vimcat/vimcat.h>
 
 FILE *clink_debug;
 
