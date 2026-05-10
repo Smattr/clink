@@ -147,7 +147,7 @@ def test_243(tmp_path: Path):
 
     # create an arbitrary source file
     foo_c = src / "foo.c"
-    foo_c.write_text("int x;\n")
+    foo_c.write_text("int x;\n", encoding="utf-8")
 
     # create a compilation database with command line arguments unusually ordered
     db = build / "compile_commands.json"
@@ -200,11 +200,11 @@ def test_243_1(tmp_path: Path):
     # create a source file that includes something assuming a `-I…` flag to the
     # compiler
     foo_c = src / "foo.c"
-    foo_c.write_text('#include "bar.h"\n')
+    foo_c.write_text('#include "bar.h"\n', encoding="utf-8")
 
     # create a header as the target of this #include
     bar_h = inc / "bar.h"
-    bar_h.write_text("extern int x;\n")
+    bar_h.write_text("extern int x;\n", encoding="utf-8")
 
     # create a compilation database with command line arguments including `-I…`
     db = build / "compile_commands.json"
@@ -257,11 +257,11 @@ def test_243_2(tmp_path: Path):
     # create a source file that includes something assuming a `-I…` flag to the
     # compiler
     foo_c = src / "foo.c"
-    foo_c.write_text('#include "bar.h"\n')
+    foo_c.write_text('#include "bar.h"\n', encoding="utf-8")
 
     # create a header as the target of this #include
     bar_h = inc / "bar.h"
-    bar_h.write_text("extern int x;\n")
+    bar_h.write_text("extern int x;\n", encoding="utf-8")
 
     # create a compilation database with command line arguments including `-I…`
     db = build / "compile_commands.json"
@@ -311,7 +311,7 @@ def test_sysroot_handling(tmp_path: Path):
 
     # create an arbitrary source file
     foo_c = src / "foo.c"
-    foo_c.write_text("int x;\n")
+    foo_c.write_text("int x;\n", encoding="utf-8")
 
     # create a compilation database with command line arguments including
     # `-I$SYSROOT…`
