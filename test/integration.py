@@ -82,6 +82,7 @@ def lit(tmp: Path, source: Path):
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.PIPE,
                     cwd=tmp,
+                    timeout=60,
                     check=False,
                     universal_newlines=True,
                 )
@@ -89,7 +90,7 @@ def lit(tmp: Path, source: Path):
                     sys.stdout.write(p.stdout)
                 try:
                     p.check_returncode()
-                except subprocess.CalledProcessError:
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
                     if xfail is None:
                         raise
                     pytest.xfail(xfail)
@@ -182,6 +183,7 @@ def test_243(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=tmp_path,
+        timeout=60,
         check=False,
         universal_newlines=True,
     )
@@ -244,6 +246,7 @@ def test_243_1(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=tmp_path,
+        timeout=60,
         check=False,
         universal_newlines=True,
     )
@@ -305,6 +308,7 @@ def test_243_2(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=tmp_path,
+        timeout=60,
         check=False,
         universal_newlines=True,
     )
@@ -361,6 +365,7 @@ def test_sysroot_handling(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=tmp_path,
+        timeout=60,
         check=False,
         universal_newlines=True,
     )
