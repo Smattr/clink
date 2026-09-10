@@ -20,7 +20,7 @@ jobs:
           set -u
           set -x
           uname -rms
-          pkg install -y bash cmake cscope git llvm python3 py311-pytest sqlite3 py311-sqlite3 vim
+          pkg install -y bash cmake cscope git llvm python3 devel/py-pytest sqlite3 databases/py-sqlite3 vim
           python3 --version
           git clone --no-checkout --recurse-submodules -- ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} wd
           cd wd
