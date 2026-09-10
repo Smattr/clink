@@ -36,6 +36,12 @@ CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
                              unsigned long colno, const char *cscopeprg,
                              const clink_db_t *db);
 
+/** does the user’s editor look like Emacs?
+ *
+ * \return True if the editor appears Emacs-alike
+ */
+CLINK_API bool clink_is_editor_emacs(void);
+
 /** open the given editor with the given file
  *
  * This is a simple wrapper around exec-ing `{editor, "--", filename}`. This is
