@@ -55,3 +55,22 @@ jobs:
           git fetch -- origin ${{ github.event.pull_request.head.sha }} &&
           git checkout FETCH_HEAD &&
           ./misc/ci.sh
+
+  ubuntu2604_release:
+    name: Linux, release build
+    runs-on: ubuntu-26.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=address,undefined
+      CMAKE_FLAGS: -DCMAKE_BUILD_TYPE=Release
+      UBSAN_OPTIONS: print_stacktrace=1
+    steps:
+      - run: sudo apt-get update
+      - run: sudo apt-get install --no-install-recommends -y cscope libclang-dev llvm python3-pytest xxd vim
+      - run: echo "cloning ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+      - run: git clone --no-checkout --recurse-submodules -- ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} wd
+      - run: >
+          cd wd &&
+          git fetch -- origin ${{ github.event.pull_request.head.sha }} &&
+          git checkout FETCH_HEAD &&
+          ./misc/ci.sh
