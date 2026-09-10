@@ -17,10 +17,10 @@
 #include <clink/db.h>
 #include <clink/debug.h>
 #include <clink/def.h>
+#include <clink/editor.h>
 #include <clink/generic.h>
 #include <clink/iter.h>
 #include <clink/python.h>
 #include <clink/symbol.h>
 #include <clink/tablegen.h>
 #include <clink/version.h>
-#include <clink/vim.h>

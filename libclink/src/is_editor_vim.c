@@ -1,6 +1,6 @@
 #include "debug.h"
 #include <assert.h>
-#include <clink/vim.h>
+#include <clink/editor.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
