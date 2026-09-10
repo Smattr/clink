@@ -6,7 +6,7 @@
 #include "sql.h"
 #include <assert.h>
 #include <clink/db.h>
-#include <clink/vim.h>
+#include <clink/editor.h>
 #include <errno.h>
 #include <sqlite3.h>
 #include <stddef.h>

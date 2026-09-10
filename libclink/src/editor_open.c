@@ -1,5 +1,5 @@
 #include "run.h"
-#include <clink/vim.h>
+#include <clink/editor.h>
 #include <errno.h>
 #include <stddef.h>
 
