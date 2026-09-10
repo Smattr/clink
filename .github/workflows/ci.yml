@@ -37,3 +37,21 @@ jobs:
           printf "find-me says: "
           ./build/test/find-me/find-me
           cmake --install build
+
+  ubuntu2604:
+    name: Linux
+    runs-on: ubuntu-26.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=address,undefined
+      UBSAN_OPTIONS: print_stacktrace=1
+    steps:
+      - run: sudo apt-get update
+      - run: sudo apt-get install --no-install-recommends -y cscope libclang-dev llvm python3-pytest xxd vim
+      - run: echo "cloning ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+      - run: git clone --no-checkout --recurse-submodules -- ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} wd
+      - run: >
+          cd wd &&
+          git fetch -- origin ${{ github.event.pull_request.head.sha }} &&
+          git checkout FETCH_HEAD &&
+          ./misc/ci.sh
