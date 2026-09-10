@@ -31,7 +31,7 @@ add_library(libclink
   src/get_environ.c
   src/get_id.c
   src/have_cscope.c
-  src/is_editor_vim.c
+  src/is_editor.c
   src/iter.c
   src/make_relative_to.c
   src/mmap.c
