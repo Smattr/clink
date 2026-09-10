@@ -38,6 +38,25 @@ jobs:
           ./build/test/find-me/find-me
           cmake --install build
 
+  macos26:
+    name: macOS
+    runs-on: macos-26-intel
+    env:
+      CFLAGS: -Werror -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=address,undefined
+      UBSAN_OPTIONS: print_stacktrace=1
+    steps:
+      - run: python3 --version
+      - run: brew update
+      - run: brew install coreutils cscope
+      - run: env PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install pytest
+      - run: echo "cloning ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+      - run: git clone --no-checkout --recurse-submodules -- ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} wd
+      - run: >
+          cd wd &&
+          git fetch -- origin ${{ github.event.pull_request.head.sha }} &&
+          git checkout FETCH_HEAD &&
+          env PATH=$(brew --prefix llvm@20)/bin:${PATH} ./misc/ci.sh
+
   ubuntu2604:
     name: Linux
     runs-on: ubuntu-26.04
