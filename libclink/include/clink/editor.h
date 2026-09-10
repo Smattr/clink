@@ -42,6 +42,16 @@ CLINK_API int clink_vim_open(const char *filename, unsigned long lineno,
  */
 CLINK_API bool clink_is_editor_emacs(void);
 
+/** open Emacs at the given position in the given file
+ *
+ * \param filename File to open with Emacs
+ * \param lineno Line number to position cursor at within the file
+ * \param colno Column number to position cursor at within the file
+ * \return Emacs’s exit status
+ */
+CLINK_API int clink_emacs_open(const char *filename, unsigned long lineno,
+                               unsigned long colno);
+
 /** open the given editor with the given file
  *
  * This is a simple wrapper around exec-ing `{editor, "--", filename}`. This is
