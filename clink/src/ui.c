@@ -941,6 +941,10 @@ static int handle_select(void) {
                            results.rows[select_index].lineno,
                            results.rows[select_index].colno, clink_repl,
                            clink_repl == NULL ? NULL : database);
+    } else if (clink_is_editor_emacs()) {
+      (void)clink_emacs_open(results.rows[select_index].path,
+                             results.rows[select_index].lineno,
+                             results.rows[select_index].colno);
     } else {
       (void)open_editor(results.rows[select_index].path);
     }
