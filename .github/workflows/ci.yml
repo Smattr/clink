@@ -110,3 +110,22 @@ jobs:
       - run: >
           cd wd && git ls-files -z -- ':!:test/cases' '**/*.c' '**/*.h' |
           xargs -0 -- clang-format-22 --dry-run --style=file --Werror --
+
+  python_analysis:
+    name: Python analysis
+    runs-on: ubuntu-26.04
+    steps:
+      - run: uname -rms
+      - run: python3 --version
+      - run: python3 -m pip install --user black
+      - run: echo "cloning ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+      - run: git clone --no-checkout -- ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} wd
+      - run: >
+          cd wd &&
+          git fetch -- origin ${{ github.event.pull_request.head.sha }} &&
+          git checkout FETCH_HEAD
+      - run: >
+          cd wd &&
+          git ls-files -z -- ':!:test/cases' '**/*.py' |
+          xargs -0 -- python3 -m black -- &&
+          git diff --exit-code
