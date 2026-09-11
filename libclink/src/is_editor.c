@@ -1,6 +1,6 @@
 #include "debug.h"
 #include <assert.h>
-#include <clink/vim.h>
+#include <clink/editor.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +9,7 @@
  *
  * \param base Start of the path to test
  * \param length Number of bytes in the path
- * \param alias An alias for Vim
+ * \param alias An alias for Emacs or Vim
  * \return True if this is a path to a binary of the given alias
  */
 static bool is(const char *base, size_t length, const char *alias) {
@@ -62,6 +62,39 @@ bool clink_is_editor_vim(void) {
       return true;
     } else {
       DEBUG("editor \"%s\" did not match \"%s\"", editor, VIM_NAMES[i]);
+    }
+  }
+
+  return false;
+}
+
+bool clink_is_editor_emacs(void) {
+
+  // priority 1: `$VISUAL`
+  const char *editor = getenv("VISUAL");
+
+  // priority 2: `$EDITOR`
+  if (editor == NULL)
+    editor = getenv("EDITOR");
+
+  // else fallback to Vim
+  if (editor == NULL)
+    editor = "vim";
+
+  // `$EDITOR` can contain something like “emacs -q”, so assume only the first
+  // word is the actual path
+  const char *space = strchr(editor, ' ');
+  const size_t len = space == NULL ? strlen(editor) : (size_t)(space - editor);
+
+  // aliases Emacs goes by
+  const char *EMACS_NAMES[] = {"emacs"};
+
+  for (size_t i = 0; i < sizeof(EMACS_NAMES) / sizeof(EMACS_NAMES[0]); ++i) {
+    if (is(editor, len, EMACS_NAMES[i])) {
+      DEBUG("editor \"%s\" matched \"%s\"", editor, EMACS_NAMES[i]);
+      return true;
+    } else {
+      DEBUG("editor \"%s\" did not match \"%s\"", editor, EMACS_NAMES[i]);
     }
   }
 

@@ -2,7 +2,7 @@
 #include "debug.h"
 #include "run.h"
 #include <assert.h>
-#include <clink/vim.h>
+#include <clink/editor.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>

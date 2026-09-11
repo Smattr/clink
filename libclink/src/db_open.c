@@ -258,7 +258,7 @@ int clink_db_open(clink_db_t **db, const char *path) {
     slash[1] = '\0';
     d->dir = abs;
   } else {
-    char *slash = strrchr(path, '/');
+    const char *const slash = strrchr(path, '/');
     d->dir = strndup(path, (size_t)(slash + 1 - path));
     d->filename = strdup(slash + 1);
   }
