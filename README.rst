@@ -21,8 +21,8 @@ What does that mean?
   you.
 * **UTF-8** – Ever wanted to search ``#include`` of a header whose path
   contains non-ASCII characters? Now you can.
-* **Exact jumps** – Clink opens Vim not only at the right line, but at the right
-  column for the entry you’ve asked for.
+* **Exact jumps** – Clink opens your editor not only at the right line, but at
+  the right column for the entry you’ve asked for.
 * **Regex** - Can’t remember the exact name of a symbol? Want to search for
   multiple similar symbols at once? Clink supports extended regex in all search
   fields.
@@ -53,10 +53,6 @@ when you start Vim from the command line.
 Notes for devs
 --------------
 
-* Vim integration is currently hard coded. I didn’t make this parametric or
-  implement any abstraction for this because Vim is my unabashed weapon of
-  choice. If you want support for another editor, please ask me and I’ll
-  probably do it.
 * Some open questions about Cscope that I haven’t yet explored:
 
   * Why do Cscope’s line-oriented and curses interface results differ? The
